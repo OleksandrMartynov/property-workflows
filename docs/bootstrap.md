@@ -16,9 +16,9 @@ Docker не потрібен: локально — лише npm run dev прот
 
 ## 1. Інструменти й репо
 
-- [x] Node 24 (`node -v`), Git, GitHub CLI (`gh auth status`); OpenSpec CLI глобально тієї ж версії, що в `package.json`:
-      `npm i -g @fission-ai/openspec@1.14.1` → `openspec --version` = `1.14.1` — Node v24.12.0, gh 2.102.0;
-      OpenSpec 1.14.1 поки через `npx openspec` (devDependency): глобальне встановлення впало через брак місця на диску C:
+- [x] Node 24 (`node -v`), Git, GitHub CLI (`gh auth status`); OpenSpec 1.14.1 запускається через `npx openspec`
+      (devDependency з `package.json`). Глобальне встановлення `npm i -g @fission-ai/openspec@1.14.1` не вдалося через
+      брак місця на диску C:. Перевірені версії: Node v24.12.0, gh 2.102.0, OpenSpec 1.14.1 (`npx openspec --version`)
 - [x] Репо створено з шаблону (**Use this template → Create a new repository**): власник — ваш особистий акаунт, назва —
       `<team-slug>`, **Public** (ruleset на GitHub Free діє лише в публічних репо; PM у нотатці-порівнянні посилається на
       рядки вашого коду) — https://github.com/OleksandrMartynov/property-workflows
@@ -34,7 +34,8 @@ Docker не потрібен: локально — лише npm run dev прот
 - [x] Authentication: «Allow new users to sign up» **вимкнено**, «Confirm email» **вимкнено**
       (точні назви й місце перемикачів перевірте в інтерфейсі) — [docs/img/auth-signups.png](img/auth-signups.png), [docs/img/auth-email-provider.png](img/auth-email-provider.png)
 - [x] (Після розділу 4, коли є прод-URL) Authentication → URL Configuration: Site URL = прод-URL Vercel; Redirect URLs
-      `http://localhost:3000/**`, `https://*-<slug>.vercel.app/**` — Site URL `https://property-workflows-rho.vercel.app`
+      `http://localhost:3000/**`, `https://*-<slug>.vercel.app/**` — Site URL `https://property-workflows-rho.vercel.app`;
+      Redirect URLs `http://localhost:3000/**`, `https://*-flambs-projects.vercel.app/**`
 - [x] `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
       (Project Settings → API Keys; точну назву розділу перевірте в інтерфейсі) і `DEMO_USER_PASSWORD` (≥ 8 символів).
       Значення не комітимо й не вставляємо в чат — задано всі чотири змінні (`npm run users:demo` пройшов)
