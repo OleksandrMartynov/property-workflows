@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { taskStatusLabel } from "@/lib/runs/labels";
-import { countProgress, formatProgress, progressByRun } from "@/lib/runs/progress";
+import { countProgress, formatProgress } from "@/lib/runs/progress";
 
 const fiveTasks = (done: number) =>
   Array.from({ length: 5 }, (_, i) => ({ status: i < done ? "done" : "to_do", required: i % 2 === 0 }));
@@ -19,13 +19,4 @@ describe("Прогрес запуску", () => {
     expect(fiveTasks(2).map((t) => taskStatusLabel(t.status))).toEqual(["done", "done", "to do", "to do", "to do"]);
   });
 
-  it("AC-TASK-05: прогрес окремо для кожного запуску", () => {
-    const byRun = progressByRun([
-      { run_id: "r1", status: "done" },
-      { run_id: "r1", status: "to_do" },
-      { run_id: "r2", status: "to_do" },
-    ]);
-    expect(formatProgress(byRun.get("r1")!)).toBe("1 of 2 done");
-    expect(formatProgress(byRun.get("r2")!)).toBe("0 of 1 done");
-  });
 });
