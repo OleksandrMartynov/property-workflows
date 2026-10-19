@@ -5,12 +5,12 @@
 
 ## 1. Запуск шаблону
 
-- [ ] 1.1 Міграція: ролі `manager`/`admin` (дані → default → constraint), `demo-users.json` (admin, manager.a/b/c);
+- [x] 1.1 Міграція: ролі `manager`/`admin` (дані → default → constraint), `demo-users.json` (admin, manager.a/b/c);
   таблиці `templates`, `template_sections`, `template_tasks`, `runs`, `run_tasks` з RLS і GRANT; `private.can_see_run`;
   функції `launch_run` і `list_assignable_users`; шаблони «Tenant move-in» і «Apartment repair»; `database.types.ts`.
   Тестова база PGlite (ADR 0002), ADR 0001 (копія задач).
   Done when: AC-RUN-01, AC-RUN-02, AC-RUN-04, AC-RUN-05, AC-RUN-06, AC-RUN-08, AC-RUN-09 — тести бази зелені.
-- [ ] 1.2 `validateCaseName` і тексти PM; сторінки `/templates`, `/templates/[id]/launch`, дія `launchRun`; сторінка
+- [x] 1.2 `validateCaseName` і тексти PM; сторінки `/templates`, `/templates/[id]/launch`, дія `launchRun`; сторінка
   `/runs/[id]` з задачами й виконавцями.
   Done when: AC-RUN-03, AC-RUN-07 — «Enter a case name» і «Case name must be at most 100 characters», запуску немає.
 
