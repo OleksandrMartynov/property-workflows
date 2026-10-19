@@ -45,3 +45,18 @@ export async function launchRun(formData: FormData) {
   revalidatePath("/runs");
   redirect(`/runs/${runId}?done=launched`);
 }
+
+/** AC-TASK-01…04, AC-TASK-07: позначка задачі виконаною. Права й завершення запуску перевіряє функція complete_task. */
+export async function completeTask(formData: FormData) {
+  const { supabase } = await requireViewer();
+  const runId = text(formData, "run_id");
+  const taskId = text(formData, "task_id");
+
+  const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
+  // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
+  if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
+
+  revalidatePath("/runs");
+  revalidatePath(`/runs/${runId}`);
+  redirect(`/runs/${encodeURIComponent(runId)}`);
+}
