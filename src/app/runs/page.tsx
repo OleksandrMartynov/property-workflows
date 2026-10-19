@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { runStatusLabel } from "@/lib/runs/labels";
 import { formatProgress } from "@/lib/runs/progress";
 import { requireViewer } from "@/lib/supabase/viewer";
@@ -21,7 +22,11 @@ export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
     .order("created_at", { ascending: false })
     .order("id")
     .range(from, from + PAGE_SIZE - 1);
-  if (runsError) throw runsError;
+  if (runsError) {
+    // Сторінка за межами результатів (?page=999): PostgREST з count=exact відповідає 416 PGRST103.
+    if (runsError.code === "PGRST103") redirect("/runs");
+    throw runsError;
+  }
 
   const runIds = (runs ?? []).map((r) => r.id);
   const [progressResult, usersResult] = await Promise.all([

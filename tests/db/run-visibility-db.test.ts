@@ -29,6 +29,9 @@ describe("База: список запусків", () => {
     expect(seenByB).toHaveLength(2);
     expect(seenByB).toEqual(expect.arrayContaining([ofB, firstOfA]));
     expect(seenByB).not.toContain(secondOfA);
+    // AC-TASK-09: виконавець B бачить і прогрес запуску A, де він виконавець (view run_progress під RLS).
+    const [{ total }] = await t.asUser<{ total: number }>(MANAGER_B, "select total from public.run_progress where run_id = $1", [firstOfA]);
+    expect(total).toBe(5);
 
     // Задачі другого запуску A менеджер B теж не читає.
     const [{ n }] = await t.asUser<{ n: number }>(MANAGER_B, "select count(*)::int as n from public.run_tasks where run_id = $1", [secondOfA]);
