@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "./login/actions";
+import { PageShell } from "./_components/ui";
 
-// Головна сторінка шаблону: хто увійшов і з якою роллю (з таблиці profiles).
-// Сторінка читає cookies, тому рендериться динамічно (шаблон зібрано з --no-cache-components).
+// Головна: хто увійшов і куди далі. Сторінка читає cookies, тому рендериться динамічно.
 export default async function Home() {
   const supabase = await createClient();
 
@@ -22,22 +22,25 @@ export default async function Home() {
     .maybeSingle();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Проєкт команди</h1>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="text-zinc-500">Email</dt>
-        <dd data-testid="user-email">{profile?.email ?? claims.email ?? "—"}</dd>
-        <dt className="text-zinc-500">Роль</dt>
-        <dd data-testid="user-role">{profile?.role ?? "профіль не знайдено"}</dd>
-      </dl>
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="rounded border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
-        >
-          Вийти
-        </button>
-      </form>
-    </main>
+    <PageShell title="Property workflows" email={profile?.email ?? claims.email} role={profile?.role}>
+      {profile ? (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          <li>
+            <Link href="/templates" className="block rounded border border-zinc-200 p-4 hover:border-zinc-400 dark:border-zinc-800">
+              <span className="font-medium">Templates</span>
+              <span className="block text-sm text-zinc-500">Launch a template for a case</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/runs" className="block rounded border border-zinc-200 p-4 hover:border-zinc-400 dark:border-zinc-800">
+              <span className="font-medium">Runs</span>
+              <span className="block text-sm text-zinc-500">Runs you manage or have tasks in</span>
+            </Link>
+          </li>
+        </ul>
+      ) : (
+        <p className="text-sm text-zinc-500">Profile not found — ask an administrator.</p>
+      )}
+    </PageShell>
   );
 }

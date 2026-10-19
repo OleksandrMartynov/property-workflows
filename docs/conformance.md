@@ -33,15 +33,15 @@
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
-| AC-RUN-01 | запуск шаблону з 5 задачами дає один запуск «in progress» з 5 задачами «to do» | — | — | відкладено (чекає реалізації) |
-| AC-RUN-02 | зміна шаблону після запуску не змінює задач запуску | — | — | відкладено (чекає реалізації) |
-| AC-RUN-03 | порожня назва випадку або лише пробіли — запуску немає, «Enter a case name» | — | — | відкладено (чекає реалізації) |
-| AC-RUN-04 | дві задачі призначено менеджеру B, решта три — менеджер A | — | — | відкладено (чекає реалізації) |
-| AC-RUN-05 | адміністратор запускає шаблон і стає менеджером запуску | — | — | відкладено (чекає реалізації) |
-| AC-RUN-06 | менеджер запускає шаблон і стає менеджером запуску | — | — | відкладено (чекає реалізації) |
-| AC-RUN-07 | назва випадку 101 символ — запуску немає, «Case name must be at most 100 characters» | — | — | відкладено (чекає реалізації) |
-| AC-RUN-08 | менеджер без призначень — виконавець усіх 5 задач | — | — | відкладено (чекає реалізації) |
-| AC-RUN-09 | адміністратор без призначень — виконавець усіх 5 задач | — | — | відкладено (чекає реалізації) |
+| AC-RUN-01 | запуск шаблону з 5 задачами дає один запуск «in progress» з 5 задачами «to do» | `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run), `src/app/runs/actions.ts` (launchRun) | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-02 | зміна шаблону після запуску не змінює задач запуску | `supabase/migrations/20261019174350_run_launch.sql` (run_tasks — копія), `src/app/runs/[id]/page.tsx` | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-03 | порожня назва випадку або лише пробіли — запуску немає, «Enter a case name» | `src/lib/runs/case-name.ts` (validateCaseName), `src/app/runs/actions.ts` (launchRun) | `tests/runs/case-name.test.ts` | реалізовано |
+| AC-RUN-04 | дві задачі призначено менеджеру B, решта три — менеджер A | `src/lib/runs/assignees.ts` (collectAssignees), `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run) | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-05 | адміністратор запускає шаблон і стає менеджером запуску | `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run) | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-06 | менеджер запускає шаблон і стає менеджером запуску | `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run) | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-07 | назва випадку 101 символ — запуску немає, «Case name must be at most 100 characters» | `src/lib/runs/case-name.ts` (validateCaseName), `src/app/runs/actions.ts` (launchRun) | `tests/runs/case-name.test.ts` | реалізовано |
+| AC-RUN-08 | менеджер без призначень — виконавець усіх 5 задач | `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run), `src/lib/runs/assignees.ts` | `tests/db/run-launch-db.test.ts` | реалізовано |
+| AC-RUN-09 | адміністратор без призначень — виконавець усіх 5 задач | `supabase/migrations/20261019174350_run_launch.sql` (private.launch_run), `src/lib/runs/assignees.ts` | `tests/db/run-launch-db.test.ts` | реалізовано |
 | AC-TASK-01 | виконавець позначає свою задачу — «done» | — | — | відкладено (чекає реалізації) |
 | AC-TASK-02 | менеджер запуску позначає чужу задачу свого запуску — «done» | — | — | відкладено (чекає реалізації) |
 | AC-TASK-03 | сторонній менеджер не позначає задачу — «to do» і повідомлення | — | — | відкладено (чекає реалізації) |
