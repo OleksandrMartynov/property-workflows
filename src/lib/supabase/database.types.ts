@@ -1,6 +1,6 @@
 // Типи схеми бази. Оновлюйте разом із міграцією: готовий файл — у Summary прогону job db-check у CI
 // (supabase gen types typescript --local на одноразовій базі); або npm run db:types після npx supabase link на ваш проєкт.
-// Ця версія описує таблиці й функції з міграцій 20261012000000_profiles_and_roles.sql і 20261019174350_run_launch.sql.
+// Ця версія описує таблиці й функції з міграцій 20261012000000_profiles_and_roles.sql, 20261019174350_run_launch.sql і 20261019174954_complete_task.sql.
 
 export type Json =
   | string
@@ -177,6 +177,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      complete_task: {
+        Args: { p_task_id: string };
+        Returns: { task_status: string; run_status: string }[];
+      };
       launch_run: {
         Args: { p_template_id: string; p_case_name: string; p_assignees?: Json };
         Returns: string;

@@ -11,7 +11,7 @@
 Docker не потрібен: локально — лише npm run dev проти вашої бази; міграції на одноразовій базі перевіряє CI (db-check).
 -->
 
-Моє репо: https://github.com/OleksandrMartynov/property-workflows · Прод-URL: https://property-workflows-rho.vercel.app
+Моє репо: [це репо](../../..) · Прод-URL: https://property-workflows-rho.vercel.app
 Репо вимог PM: <!-- https://github.com/<pm>/<team-slug>-spec --> · Організація Supabase: Property Workflows
 
 ## 1. Інструменти й репо
@@ -21,7 +21,7 @@ Docker не потрібен: локально — лише npm run dev прот
       брак місця на диску C:. Перевірені версії: Node v24.12.0, gh 2.102.0, OpenSpec 1.14.1 (`npx openspec --version`)
 - [x] Репо створено з шаблону (**Use this template → Create a new repository**): власник — ваш особистий акаунт, назва —
       `<team-slug>`, **Public** (ruleset на GitHub Free діє лише в публічних репо; PM у нотатці-порівнянні посилається на
-      рядки вашого коду) — https://github.com/OleksandrMartynov/property-workflows
+      рядки вашого коду) — [це репо](../../..)
 - [x] `git clone https://github.com/<dev>/<team-slug>.git` → `npm ci` → `cp .env.example .env.local`
       (у PowerShell: `Copy-Item .env.example .env.local`)
 - [x] CodeRabbit (GitHub App) встановлено на це репо (github.com/apps/coderabbitai → Configure → Only select repositories) — [docs/img/coderabbit-repo-access.png](img/coderabbit-repo-access.png)
@@ -65,12 +65,12 @@ Docker не потрібен: локально — лише npm run dev прот
 
 ## 5. База й перший зелений CI
 
-- [x] Actions → CI → **Run workflow** (гілка `main`, `include_seed` ✓) → job `db-deploy` застосував першу міграцію й сид — https://github.com/OleksandrMartynov/property-workflows/actions/runs/39255466202
+- [x] Actions → CI → **Run workflow** (гілка `main`, `include_seed` ✓) → job `db-deploy` застосував першу міграцію й сид — [actions/runs/39255466202](../../../actions/runs/39255466202)
       (`Applying migration 20261012000000_profiles_and_roles.sql…`, `Seeding data from supabase/seed.sql…`)
 - [x] `npm run users:demo` (синтетичні користувачі з `supabase/demo-users.json`) → `npm run dev` → `http://localhost:3000` →
       вхід як `admin@example.test` працює локально й на прод-URL — створено `admin@example.test` (admin),
       `member1@example.test`, `member2@example.test` (member)
-- [x] CI на `main` зелений: `spec`, `app`, `conformance`, `db-check`, `db-deploy` — https://github.com/OleksandrMartynov/property-workflows/actions/runs/39255466202
+- [x] CI на `main` зелений: `spec`, `app`, `conformance`, `db-check`, `db-deploy` — [actions/runs/39255466202](../../../actions/runs/39255466202)
 
 ## 6. Ruleset `solo-main` (лише після зеленого CI на `main`)
 
@@ -81,12 +81,12 @@ Docker не потрібен: локально — лише npm run dev прот
       **Squash** і **Merge**; Bypass list — **порожній** (навіть для власника); Enforcement — Active
       (точні назви полів перевірте в інтерфейсі) — ruleset `solo-main` (id 25405104) імпортовано з `solo-main.json` через
       `gh api …/rulesets --method POST`: enforcement active, bypass порожній; rules: deletion, non_fast_forward,
-      pull_request, required_status_checks — https://github.com/OleksandrMartynov/property-workflows/rules/25405104, [docs/img/ruleset.png](img/ruleset.png)
+      pull_request, required_status_checks — [rules/25405104](../../../rules/25405104), [docs/img/ruleset.png](img/ruleset.png)
 
 ## 7. Перший PR (перевірка ruleset-у)
 
 - [x] `git switch -c setup/bootstrap` → цей файл із доказами розділів 1–6 → push → `gh pr create --web` (тип «Реалізація»)
-      → окремим коментарем `@coderabbitai review` — https://github.com/OleksandrMartynov/property-workflows/pull/1
+      → окремим коментарем `@coderabbitai review` — [pull/1](../../../pull/1)
 - [x] Поки перевірки не зелені, кнопка merge заблокована; push у `main` напряму відхиляється — `git push origin HEAD:main`
       (порожній тестовий коміт): `remote: error: GH013: Repository rule violations found for refs/heads/main` —
       `Changes must be made through a pull request`, `4 of 4 required status checks are expected`,
@@ -94,7 +94,7 @@ Docker не потрібен: локально — лише npm run dev прот
 - [x] Vercel створив preview для PR — https://property-workflows-git-setup-bootstrap-flambs-projects.vercel.app
 - [x] **Squash and merge** → прод-деплой Vercel пройшов — коміт `cb8b1e9` у `main`:
       https://vercel.com/flambs-projects/property-workflows/HPNEDuREhkkxEbpAePjFnRUkjEx3; CI на `main` після merge —
-      https://github.com/OleksandrMartynov/property-workflows/actions/runs/39259418885
+      [actions/runs/39259418885](../../../actions/runs/39259418885)
 - [ ] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу — <!-- посилання на run -->
 
 ## 8. Вимоги PM і специфікація

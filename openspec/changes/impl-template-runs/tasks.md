@@ -16,9 +16,9 @@
 
 ## 2. Позначка задач і прогрес запуску
 
-- [ ] 2.1 Міграція: функція `complete_task` (права, повторна позначка, завершення запуску).
+- [x] 2.1 Міграція: функція `complete_task` (права, повторна позначка, завершення запуску).
   Done when: AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-04, AC-TASK-07 — тести бази зелені.
-- [ ] 2.2 `canCompleteTask`, `formatProgress`; на `/runs/[id]` — прогрес, статус кожної задачі, кнопка
+- [x] 2.2 `canCompleteTask`, `formatProgress`; на `/runs/[id]` — прогрес, статус кожної задачі, кнопка
   «Mark as done» і дія `completeTask` з повідомленням AC-TASK-03.
   Done when: AC-TASK-05, AC-TASK-08 — «2 of 5 done» і статус кожної з 5 задач.
 

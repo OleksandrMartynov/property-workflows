@@ -8,6 +8,7 @@ import { dbErrorCode } from "@/lib/runs/messages";
 import { requireViewer } from "@/lib/supabase/viewer";
 
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "");
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** AC-RUN-01…09: запуск шаблону для випадку. Запуск і копія задач — однією функцією бази launch_run. */
 export async function launchRun(formData: FormData) {
@@ -44,4 +45,22 @@ export async function launchRun(formData: FormData) {
 
   revalidatePath("/runs");
   redirect(`/runs/${runId}?done=launched`);
+}
+
+/** AC-TASK-01…04, AC-TASK-07: позначка задачі виконаною. Права й завершення запуску перевіряє функція complete_task. */
+export async function completeTask(formData: FormData) {
+  const { supabase } = await requireViewer();
+  const runId = text(formData, "run_id");
+  const taskId = text(formData, "task_id");
+  // Некоректні id з форми — до бази не йдемо (інакше Postgres дав би загальну помилку замість TASK_NOT_FOUND).
+  if (!UUID_RE.test(runId)) redirect("/runs");
+  if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
+
+  const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
+  // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
+  if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
+
+  revalidatePath("/runs");
+  revalidatePath(`/runs/${runId}`);
+  redirect(`/runs/${encodeURIComponent(runId)}`);
 }
