@@ -164,14 +164,14 @@ describe("База: менеджер запуску й виконавці", () =
 });
 
 describe("База: доступ до шаблонів і запусків", () => {
-  it("менеджер бачить шаблони; список виконавців — лише id, email і роль менеджерів та адміністраторів", async () => {
+  it("менеджер бачить шаблони; список виконавців — лише id і email менеджерів та адміністраторів", async () => {
     const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.templates order by name");
     expect(templates.map((x) => x.name)).toEqual(["Apartment repair", "Tenant move-in"]);
     const assignable = await t.asUser<{ email: string }>(MANAGER_A, "select * from public.list_assignable_users()");
     expect(assignable.map((x) => x.email)).toEqual(
       expect.arrayContaining(["admin@example.test", "manager.a@example.test", "manager.b@example.test"]),
     );
-    expect(Object.keys(assignable[0]).sort()).toEqual(["email", "id", "role"]);
+    expect(Object.keys(assignable[0]).sort()).toEqual(["email", "id"]);
   });
 
   it("анонімний відвідувач не читає шаблони й запуски і не запускає шаблон", async () => {

@@ -60,7 +60,7 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
                     <option value={viewer.id}>{viewer.email ?? "me"} (me, run manager)</option>
                     {others.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.email} ({u.role})
+                        {u.email}
                       </option>
                     ))}
                   </select>

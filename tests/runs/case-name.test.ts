@@ -26,4 +26,9 @@ describe("Назва випадку", () => {
     expect(dbErrorCode({ message: 'new row violates "something"' })).toBe("DB_ERROR");
     expect(errorMessage("UNKNOWN")).toBeUndefined();
   });
+
+  it("AC-RUN-06: відмова в запуску має власний текст, а не текст позначки задачі з AC-TASK-03", () => {
+    expect(dbErrorCode({ message: "LAUNCH_NOT_ALLOWED" })).toBe("LAUNCH_NOT_ALLOWED");
+    expect(dbErrorCode({ message: "NOT_ALLOWED" })).toBe("NOT_ALLOWED");
+  });
 });

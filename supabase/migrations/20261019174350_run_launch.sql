@@ -190,7 +190,7 @@ begin
   select p.role into v_role from public.profiles as p where p.id = v_uid;
   -- Матриця прав «Launch a template»: manager і admin.
   if v_uid is null or v_role is null or v_role not in ('manager', 'admin') then
-    raise exception 'NOT_ALLOWED';
+    raise exception 'LAUNCH_NOT_ALLOWED';
   end if;
 
   -- AC-RUN-03, AC-RUN-07: назва без пробілів на краях, 1–100 символів (робоче припущення Q3).
@@ -269,15 +269,15 @@ revoke execute on function public.launch_run(uuid, text, jsonb) from public, ano
 grant execute on function public.launch_run(uuid, text, jsonb) to authenticated;
 
 -- ── D5. Кого можна призначити виконавцем (AC-RUN-04; робоче припущення Q1) ──
--- Лише id і email менеджерів та адміністраторів; інші поля профілю RLS profiles і далі ховає.
+-- Лише id і email менеджерів та адміністраторів (D5); інші поля профілю RLS profiles і далі ховає.
 create or replace function private.list_assignable_users()
-returns table (id uuid, email text, role text)
+returns table (id uuid, email text)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select p.id, p.email, p.role
+  select p.id, p.email
   from public.profiles as p
   where (select private.current_app_role()) in ('manager', 'admin')
     and p.role in ('manager', 'admin')
@@ -288,13 +288,13 @@ revoke execute on function private.list_assignable_users() from public, anon;
 grant execute on function private.list_assignable_users() to authenticated;
 
 create or replace function public.list_assignable_users()
-returns table (id uuid, email text, role text)
+returns table (id uuid, email text)
 language sql
 stable
 security invoker
 set search_path = ''
 as $$
-  select u.id, u.email, u.role from private.list_assignable_users() as u;
+  select u.id, u.email from private.list_assignable_users() as u;
 $$;
 
 revoke execute on function public.list_assignable_users() from public, anon;

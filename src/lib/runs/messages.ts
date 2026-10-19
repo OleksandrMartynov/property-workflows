@@ -9,6 +9,7 @@ export const MESSAGES = {
   CASE_NAME_TOO_LONG: `Case name must be at most ${CASE_NAME_MAX_LENGTH} characters`,
   // AC-TASK-03
   NOT_ALLOWED: "Only the task's assignee, the run manager, or an administrator can mark a task as done",
+  LAUNCH_NOT_ALLOWED: "Only a manager or an administrator can launch a template",
   INVALID_ASSIGNEE: "An assignee must be a manager or an administrator",
   INVALID_TASK: "The task does not belong to this template",
   TEMPLATE_NOT_FOUND: "Template not found",
@@ -32,5 +33,7 @@ export function errorMessage(code: unknown): string | undefined {
 /** Помилка функції бази (raise exception '<CODE>') → код зі специфікації; решта — загальна помилка. */
 export function dbErrorCode(error: { message?: string } | null | undefined): ErrorCode {
   const message = error?.message ?? "";
-  return CODES.find((code) => code !== "DB_ERROR" && message.includes(code)) ?? "DB_ERROR";
+  // Найдовший збіг: NOT_ALLOWED — підрядок LAUNCH_NOT_ALLOWED.
+  const matches = CODES.filter((code) => code !== "DB_ERROR" && message.includes(code));
+  return matches.sort((a, b) => b.length - a.length)[0] ?? "DB_ERROR";
 }

@@ -183,7 +183,7 @@ export type Database = {
       };
       list_assignable_users: {
         Args: Record<PropertyKey, never>;
-        Returns: { id: string; email: string; role: string }[];
+        Returns: { id: string; email: string }[];
       };
     };
     Enums: {
