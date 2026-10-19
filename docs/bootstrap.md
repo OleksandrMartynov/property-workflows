@@ -35,7 +35,8 @@ Docker не потрібен: локально — лише npm run dev прот
       (точні назви й місце перемикачів перевірте в інтерфейсі) — [docs/img/auth-signups.png](img/auth-signups.png), [docs/img/auth-email-provider.png](img/auth-email-provider.png)
 - [x] (Після розділу 4, коли є прод-URL) Authentication → URL Configuration: Site URL = прод-URL Vercel; Redirect URLs
       `http://localhost:3000/**`, `https://*-<slug>.vercel.app/**` — Site URL `https://property-workflows-rho.vercel.app`;
-      Redirect URLs `http://localhost:3000/**`, `https://*-flambs-projects.vercel.app/**`
+      Redirect URLs `http://localhost:3000/**`, `https://*-flambs-projects.vercel.app/**` —
+      [docs/img/auth-url-config.png](img/auth-url-config.png)
 - [x] `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
       (Project Settings → API Keys; точну назву розділу перевірте в інтерфейсі) і `DEMO_USER_PASSWORD` (≥ 8 символів).
       Значення не комітимо й не вставляємо в чат — задано всі чотири змінні (`npm run users:demo` пройшов)
@@ -44,7 +45,8 @@ Docker не потрібен: локально — лише npm run dev прот
 
 - [x] Settings → Environments → `production` (якщо перший прогін CI вже створив його автоматично — відкрийте наявний;
       `Production`, яке створює Vercel для своїх деплоїв, — те саме середовище: регістр у назвах GitHub не розрізняє):
-      **Deployment branches** = Selected branches → `main` — [docs/img/github-env-production.png](img/github-env-production.png)
+      **Deployment branches** = Selected branches → `main`; «Allow administrators to bypass configured protection rules»
+      вимкнено — [docs/img/github-env-production.png](img/github-env-production.png)
 - [x] Секрет environment `SUPABASE_DB_URL` = рядок **Session pooler** (порт **5432**, не 6543) з Supabase → **Connect**;
       пароль у рядку percent-encoded — секрет environment `production`: `SUPABASE_DB_URL`
 - [x] Запасний шлях (лише якщо `--db-url` не працює): секрети environment `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`,
@@ -55,7 +57,8 @@ Docker не потрібен: локально — лише npm run dev прот
 
 - [x] Add New → Project → імпорт вашого репо, Node 24.x — https://property-workflows-rho.vercel.app
 - [x] Змінні Production і Preview — лише `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
-      `SUPABASE_SECRET_KEY` — **ніколи** — у Vercel лише `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Production і Preview)
+      `SUPABASE_SECRET_KEY` — **ніколи** — у Vercel лише `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Production і Preview) —
+      [docs/img/vercel-env.png](img/vercel-env.png)
 - [x] Settings → Deployment Protection → **Require Log In** вимкнено → Save (інакше PM і викладач не відкриють ваші preview;
       точну назву перемикача перевірте в інтерфейсі) — [docs/img/vercel-protection.png](img/vercel-protection.png)
 - [x] Після змінних — редеплой; прод-URL відкривається — https://property-workflows-rho.vercel.app/login
@@ -78,15 +81,20 @@ Docker не потрібен: локально — лише npm run dev прот
       **Squash** і **Merge**; Bypass list — **порожній** (навіть для власника); Enforcement — Active
       (точні назви полів перевірте в інтерфейсі) — ruleset `solo-main` (id 25405104) імпортовано з `solo-main.json` через
       `gh api …/rulesets --method POST`: enforcement active, bypass порожній; rules: deletion, non_fast_forward,
-      pull_request, required_status_checks — https://github.com/OleksandrMartynov/property-workflows/rules/25405104
+      pull_request, required_status_checks — https://github.com/OleksandrMartynov/property-workflows/rules/25405104, [docs/img/ruleset.png](img/ruleset.png)
 
 ## 7. Перший PR (перевірка ruleset-у)
 
-- [ ] `git switch -c setup/bootstrap` → цей файл із доказами розділів 1–6 → push → `gh pr create --web` (тип «Реалізація»)
-      → окремим коментарем `@coderabbitai review` — <!-- посилання на PR (наступним PR) -->
-- [ ] Поки перевірки не зелені, кнопка merge заблокована; push у `main` напряму відхиляється — <!-- знімок -->
-- [ ] Vercel створив preview для PR — <!-- посилання на preview (наступним PR) -->
-- [ ] **Squash and merge** → прод-деплой Vercel пройшов — <!-- посилання -->
+- [x] `git switch -c setup/bootstrap` → цей файл із доказами розділів 1–6 → push → `gh pr create --web` (тип «Реалізація»)
+      → окремим коментарем `@coderabbitai review` — https://github.com/OleksandrMartynov/property-workflows/pull/1
+- [x] Поки перевірки не зелені, кнопка merge заблокована; push у `main` напряму відхиляється — `git push origin HEAD:main`
+      (порожній тестовий коміт): `remote: error: GH013: Repository rule violations found for refs/heads/main` —
+      `Changes must be made through a pull request`, `4 of 4 required status checks are expected`,
+      `! [remote rejected] HEAD -> main (push declined due to repository rule violations)`
+- [x] Vercel створив preview для PR — https://property-workflows-git-setup-bootstrap-flambs-projects.vercel.app
+- [x] **Squash and merge** → прод-деплой Vercel пройшов — коміт `cb8b1e9` у `main`:
+      https://vercel.com/flambs-projects/property-workflows/HPNEDuREhkkxEbpAePjFnRUkjEx3; CI на `main` після merge —
+      https://github.com/OleksandrMartynov/property-workflows/actions/runs/39259418885
 - [ ] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу — <!-- посилання на run -->
 
 ## 8. Вимоги PM і специфікація
