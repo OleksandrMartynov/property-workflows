@@ -4,6 +4,7 @@ import { runStatusLabel, taskStatusLabel } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { requireViewer } from "@/lib/supabase/viewer";
+import { SubmitButton } from "../../_components/submit-button";
 import { Notice, PageShell, StatusBadge } from "../../_components/ui";
 import { completeTask } from "../actions";
 
@@ -71,9 +72,12 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
                       <form action={completeTask}>
                         <input type="hidden" name="run_id" value={run.id} />
                         <input type="hidden" name="task_id" value={task.id} />
-                        <button type="submit" className="rounded border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                        <SubmitButton
+                          pendingText="Saving…"
+                          className="rounded border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        >
                           Mark as done
-                        </button>
+                        </SubmitButton>
                       </form>
                     ) : null}
                   </span>
