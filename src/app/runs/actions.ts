@@ -22,11 +22,17 @@ export async function launchRun(formData: FormData) {
   if (!caseName.ok) redirect(back(caseName.error));
 
   // Задачі шаблону — щоб узяти з форми лише їхні поля виконавців (AC-RUN-04, AC-RUN-08, AC-RUN-09).
-  const { data: sections } = await supabase.from("template_sections").select("id").eq("template_id", templateId);
+  // Помилка цих запитів — не запускаємо: інакше launch_run поставив би всі задачі на менеджера запуску.
+  const { data: sections, error: sectionsError } = await supabase
+    .from("template_sections")
+    .select("id")
+    .eq("template_id", templateId);
+  if (sectionsError) redirect(back(dbErrorCode(sectionsError)));
   const sectionIds = (sections ?? []).map((s) => s.id);
-  const { data: tasks } = sectionIds.length
+  const { data: tasks, error: tasksError } = sectionIds.length
     ? await supabase.from("template_tasks").select("id").in("section_id", sectionIds)
-    : { data: [] as { id: string }[] };
+    : { data: [] as { id: string }[], error: null };
+  if (tasksError) redirect(back(dbErrorCode(tasksError)));
   const assignees = collectAssignees(formData, (tasks ?? []).map((t) => t.id), viewer.id);
 
   const { data: runId, error } = await supabase.rpc("launch_run", {

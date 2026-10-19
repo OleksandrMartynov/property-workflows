@@ -164,7 +164,7 @@ describe("База: менеджер запуску й виконавці", () =
 });
 
 describe("База: доступ до шаблонів і запусків", () => {
-  it("менеджер бачить шаблони; список виконавців — лише id і email менеджерів та адміністраторів", async () => {
+  it("AC-RUN-04: менеджер бачить шаблони; список виконавців — лише id і email менеджерів та адміністраторів", async () => {
     const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.templates order by name");
     expect(templates.map((x) => x.name)).toEqual(["Apartment repair", "Tenant move-in"]);
     const assignable = await t.asUser<{ email: string }>(MANAGER_A, "select * from public.list_assignable_users()");
@@ -174,11 +174,24 @@ describe("База: доступ до шаблонів і запусків", () 
     expect(Object.keys(assignable[0]).sort()).toEqual(["email", "id"]);
   });
 
-  it("анонімний відвідувач не читає шаблони й запуски і не запускає шаблон", async () => {
+  it("AC-TASK-06: анонімний відвідувач не читає шаблони й запуски і не запускає шаблон", async () => {
     await expect(t.asAnon("select count(*) from public.runs")).rejects.toThrow("permission denied");
     await expect(t.asAnon("select count(*) from public.templates")).rejects.toThrow("permission denied");
     await expect(t.asAnon("select public.launch_run($1, 'x', '{}')", [TENANT_MOVE_IN.id])).rejects.toThrow(
       "permission denied",
     );
+  });
+
+  it("AC-TASK-06: менеджер B не бачить запуску A без своїх задач, але бачить запуск, де він виконавець", async () => {
+    const [first] = TENANT_MOVE_IN.taskIds;
+    const withoutAssignment = await launch(t, MANAGER_A, "Apartment 45, move-in");
+    expect(await runById(MANAGER_B, withoutAssignment)).toBeUndefined();
+    expect(await tasksOf(MANAGER_B, withoutAssignment)).toEqual([]);
+
+    const withAssignment = await launch(t, MANAGER_A, "Apartment 46, move-in", { [first]: MANAGER_B });
+    expect(await runById(MANAGER_B, withAssignment)).toMatchObject({ id: withAssignment });
+    const visible = await tasksOf(MANAGER_B, withAssignment);
+    expect(visible).toHaveLength(5);
+    expect(visible.find((task) => task.template_task_id === first)?.assignee_id).toBe(MANAGER_B);
   });
 });

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { assigneeField } from "@/lib/runs/assignees";
 import { errorMessage, CASE_NAME_MAX_LENGTH } from "@/lib/runs/messages";
 import { requireViewer } from "@/lib/supabase/viewer";
+import { SubmitButton } from "../../../_components/submit-button";
 import { Notice, PageShell, buttonClass, inputClass } from "../../../_components/ui";
 import { launchRun } from "../../../runs/actions";
 
@@ -69,9 +70,9 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
           </fieldset>
         ))}
 
-        <button type="submit" className={`${buttonClass} self-start`}>
+        <SubmitButton pendingText="Launching…" className={`${buttonClass} self-start`}>
           Launch
-        </button>
+        </SubmitButton>
       </form>
     </PageShell>
   );
