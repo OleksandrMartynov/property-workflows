@@ -1,7 +1,7 @@
 // Хто бачить які запуски (RLS runs і run_tasks через private.can_see_run) і прогрес у списку запусків —
 // на справжньому Postgres (PGlite) з усіма міграціями. Специфікація: openspec/specs/run-progress/spec.md.
 import { beforeAll, describe, expect, it } from "vitest";
-import { formatProgress, progressByRun } from "@/lib/runs/progress";
+import { formatProgress } from "@/lib/runs/progress";
 import { createTestDb, launch, TENANT_MOVE_IN, type TestDb } from "./supabase-pglite";
 
 let t: TestDb;
@@ -41,7 +41,7 @@ describe("База: список запусків", () => {
     expect(await visibleRunIds(ADMIN)).toHaveLength(all);
   });
 
-  it("AC-TASK-09: запуск менеджера A з 5 задачами, 2 «done» — у списку A прогрес «2 of 5 done»", async () => {
+  it("AC-TASK-09: запуск менеджера A з 5 задачами, 2 «done» — у списку A прогрес «2 of 5 done» (view run_progress)", async () => {
     const runId = await launch(t, MANAGER_A, "Apartment 43, move-in");
     const tasks = await t.asService<{ id: string }>(
       "select id from public.run_tasks where run_id = $1 order by section_position, position",
@@ -50,13 +50,19 @@ describe("База: список запусків", () => {
     await t.asUser(MANAGER_A, "select public.complete_task($1)", [tasks[0].id]);
     await t.asUser(MANAGER_A, "select public.complete_task($1)", [tasks[3].id]);
 
-    const ids = await visibleRunIds(MANAGER_A);
-    expect(ids).toContain(runId);
-    const visibleTasks = await t.asUser<{ run_id: string; status: string }>(
+    expect(await visibleRunIds(MANAGER_A)).toContain(runId);
+    // Так читає прогрес сторінка /runs: один рядок на запуск, порахований базою.
+    const [row] = await t.asUser<{ done: number; total: number }>(
       MANAGER_A,
-      "select run_id, status from public.run_tasks where run_id = any($1::uuid[])",
-      [ids],
+      "select done, total from public.run_progress where run_id = $1",
+      [runId],
     );
-    expect(formatProgress(progressByRun(visibleTasks).get(runId)!)).toBe("2 of 5 done");
+    expect(formatProgress(row)).toBe("2 of 5 done");
+  });
+
+  it("AC-TASK-09: прогрес чужого запуску view не віддає — діє RLS run_tasks (security_invoker)", async () => {
+    const runId = await launch(t, MANAGER_A, "Apartment 44, move-in");
+    expect(await t.asUser(MANAGER_C, "select * from public.run_progress where run_id = $1", [runId])).toEqual([]);
+    await expect(t.asAnon("select * from public.run_progress")).rejects.toThrow("permission denied");
   });
 });

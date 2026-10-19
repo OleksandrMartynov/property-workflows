@@ -1,27 +1,42 @@
 import Link from "next/link";
 import { runStatusLabel } from "@/lib/runs/labels";
-import { formatProgress, progressByRun } from "@/lib/runs/progress";
+import { formatProgress } from "@/lib/runs/progress";
 import { requireViewer } from "@/lib/supabase/viewer";
 import { PageShell, StatusBadge } from "../_components/ui";
 
 // Список запусків: AC-TASK-06 — менеджер бачить лише запуски, де він менеджер запуску або виконавець хоча б однієї
-// задачі (RLS, private.can_see_run), адміністратор — усі; AC-TASK-09 — прогрес «N of M done» кожного запуску.
-export default async function RunsPage() {
+// задачі (RLS, private.can_see_run), адміністратор — усі; AC-TASK-09 — прогрес «N of M done» кожного запуску
+// (рахує база: view run_progress). Сторінками по PAGE_SIZE, від новіших до старіших.
+const PAGE_SIZE = 50;
+
+export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
+  const { page: rawPage } = await searchParams;
+  const page = Math.max(1, Number.parseInt(typeof rawPage === "string" ? rawPage : "1", 10) || 1);
+  const from = (page - 1) * PAGE_SIZE;
   const { supabase, viewer } = await requireViewer();
 
-  const { data: runs } = await supabase
+  const { data: runs, error: runsError, count } = await supabase
     .from("runs")
-    .select("id, case_name, template_name, status, run_manager_id, created_at")
-    .order("created_at", { ascending: false });
+    .select("id, case_name, template_name, status, run_manager_id, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .order("id")
+    .range(from, from + PAGE_SIZE - 1);
+  if (runsError) throw runsError;
+
   const runIds = (runs ?? []).map((r) => r.id);
-  const [{ data: tasks }, { data: users }] = await Promise.all([
+  const [progressResult, usersResult] = await Promise.all([
     runIds.length
-      ? supabase.from("run_tasks").select("run_id, status").in("run_id", runIds)
-      : Promise.resolve({ data: [] as { run_id: string; status: string }[] }),
+      ? supabase.from("run_progress").select("run_id, done, total").in("run_id", runIds)
+      : Promise.resolve({ data: [] as { run_id: string; done: number; total: number }[], error: null }),
     supabase.rpc("list_assignable_users"),
   ]);
-  const progress = progressByRun(tasks ?? []);
-  const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
+  if (progressResult.error) throw progressResult.error;
+  if (usersResult.error) throw usersResult.error;
+
+  const progress = new Map((progressResult.data ?? []).map((p) => [p.run_id, { done: p.done ?? 0, total: p.total ?? 0 }]));
+  const emailOf = new Map((usersResult.data ?? []).map((u) => [u.id, u.email]));
+  const total = count ?? 0;
+  const hasNext = from + PAGE_SIZE < total;
 
   return (
     <PageShell title="Runs" email={viewer.email} role={viewer.role}>
@@ -54,6 +69,15 @@ export default async function RunsPage() {
           ))}
         </ul>
       )}
+      {page > 1 || hasNext ? (
+        <nav className="flex items-center justify-between text-sm" aria-label="Pages">
+          {page > 1 ? <Link href={`/runs?page=${page - 1}`} className="underline">Newer</Link> : <span />}
+          <span className="text-zinc-500">
+            Page {page} of {Math.max(1, Math.ceil(total / PAGE_SIZE))}
+          </span>
+          {hasNext ? <Link href={`/runs?page=${page + 1}`} className="underline">Older</Link> : <span />}
+        </nav>
+      ) : null}
     </PageShell>
   );
 }

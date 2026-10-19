@@ -1,6 +1,6 @@
 // Типи схеми бази. Оновлюйте разом із міграцією: готовий файл — у Summary прогону job db-check у CI
 // (supabase gen types typescript --local на одноразовій базі); або npm run db:types після npx supabase link на ваш проєкт.
-// Ця версія описує таблиці й функції з міграцій 20261012000000_profiles_and_roles.sql, 20261019174350_run_launch.sql і 20261019174954_complete_task.sql.
+// Ця версія описує таблиці й функції з міграцій 20261012000000_profiles_and_roles.sql, 20261019174350_run_launch.sql, 20261019174954_complete_task.sql і 20261019183128_run_progress_view.sql.
 
 export type Json =
   | string
@@ -174,7 +174,18 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      run_progress: {
+        Row: { run_id: string | null; done: number | null; total: number | null };
+        Relationships: [
+          {
+            foreignKeyName: "run_tasks_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "runs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       complete_task: {
