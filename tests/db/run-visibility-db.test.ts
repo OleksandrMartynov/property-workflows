@@ -159,16 +159,34 @@ describe("База: список запусків після відповіде�
 });
 
 describe("База: політики RLS", () => {
-  it("AC-TASK-06: кожна політика RLS у public — to authenticated і з (select auth.uid()) у using / with check", async () => {
-    const policies = await t.asService<{ tablename: string; policyname: string; roles: string; qual: string | null; with_check: string | null }>(
-      "select tablename, policyname, roles::text as roles, qual, with_check from pg_policies where schemaname = 'public' order by tablename, policyname",
+  type Policy = { tablename: string; policyname: string; roles: string; qual: string | null; with_check: string | null };
+  const policiesOf = (tables: string[]) =>
+    t.asService<Policy>(
+      "select tablename, policyname, roles::text as roles, qual, with_check from pg_policies where schemaname = 'public' and tablename = any($1) order by tablename, policyname",
+      [tables],
     );
-    expect(policies.length).toBeGreaterThanOrEqual(14);
+  const expectAuthenticatedWithUid = (policies: Policy[]) => {
     for (const p of policies) {
       expect(p.roles, p.policyname).toBe("{authenticated}");
       for (const expr of [p.qual, p.with_check].filter((x): x is string => x !== null)) {
-        expect(expr, `${p.tablename}.${p.policyname}`).toContain("auth.uid()");
+        expect(expr, `${p.tablename}.${p.policyname}`).toMatch(/auth\.uid\(\)( as uid)?\s*\)?\s*is not null/i);
       }
+    }
+  };
+
+  it("AC-TASK-06: політики runs і run_tasks — to authenticated, (select auth.uid()) is not null і private.can_see_run", async () => {
+    const policies = await policiesOf(["runs", "run_tasks"]);
+    expect(policies.map((p) => p.policyname)).toEqual(["run_tasks_select_visible", "runs_select_visible"]);
+    expectAuthenticatedWithUid(policies);
+    for (const p of policies) expect(p.qual).toContain("can_see_run");
+  });
+
+  it("AC-RUN-02: політики шаблонів — to authenticated з (select auth.uid()) is not null; змінює лише admin", async () => {
+    const policies = await policiesOf(["templates", "template_sections", "template_tasks"]);
+    expect(policies).toHaveLength(12);
+    expectAuthenticatedWithUid(policies);
+    for (const p of policies.filter((x) => !x.policyname.includes("_select_"))) {
+      expect(p.qual ?? p.with_check, p.policyname).toContain("'admin'");
     }
   });
 });
