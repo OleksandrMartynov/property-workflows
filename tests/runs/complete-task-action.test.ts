@@ -38,9 +38,17 @@ describe("Дія completeTask", () => {
   it("AC-TASK-04: база ще без p_confirmed (PGRST202, ADR 0003) — підтверджену позначку повторено старою сигнатурою", async () => {
     rpc.mockResolvedValueOnce({ error: { code: "PGRST202", message: "Could not find the function public.complete_task" } });
     rpc.mockResolvedValueOnce({ error: null });
-    await expect(completeTask(form("yes"))).rejects.toThrow(`NEXT_REDIRECT /runs/${RUN}`);
+    // Точний redirect успіху (без ?error=…): повтор справді позначив задачу.
+    await expect(completeTask(form("yes"))).rejects.toThrow(new RegExp(`^NEXT_REDIRECT /runs/${RUN}$`));
     expect(rpc).toHaveBeenNthCalledWith(1, "complete_task", { p_task_id: TASK, p_confirmed: true });
     expect(rpc).toHaveBeenNthCalledWith(2, "complete_task", { p_task_id: TASK });
+  });
+
+  it("AC-TASK-04: повтор старою сигнатурою теж відмовив — користувач бачить помилку повтору, а не успіх", async () => {
+    rpc.mockResolvedValueOnce({ error: { code: "PGRST202", message: "Could not find the function public.complete_task" } });
+    rpc.mockResolvedValueOnce({ error: { code: "P0001", message: "NOT_ALLOWED" } });
+    await expect(completeTask(form("yes"))).rejects.toThrow(`NEXT_REDIRECT /runs/${RUN}?error=NOT_ALLOWED`);
+    expect(rpc).toHaveBeenCalledTimes(2);
   });
 
   it("AC-TASK-16: без підтвердження чи з іншою помилкою бази повтору немає — задача лишається «to do»", async () => {

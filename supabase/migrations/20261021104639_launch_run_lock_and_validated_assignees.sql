@@ -1,8 +1,10 @@
 -- ADR 0003 (AC-RUN-01, AC-RUN-02, AC-RUN-04): запуск — атомарний знімок шаблону. Оцінка ризиків CodeRabbit у PR #13
 -- (inferred): призначення, пропущене під час перевірки (задачі ще не було в шаблоні), могло б потрапити в копію задач,
 -- якщо задачу додали між перевіркою й копіюванням. Тепер:
---   1) шаблон, його секції й задачі блокуються `for share` до кінця транзакції — адміністратор не змінить їх посеред
---      запуску (його update/delete чекатиме), тож перевірка й копія бачать той самий шаблон («момент запуску», PM #9);
+--   1) шаблон і його секції блокуються `for update`, задачі — `for share` до кінця транзакції. `for update` конфліктує з
+--      `for key share`, який бере вставка дочірнього рядка (перевірка зовнішнього ключа), тож адміністратор не додасть
+--      секцію чи задачу і не змінить / не видалить наявні посеред запуску — його запит чекатиме. Перевірка й копія
+--      бачать той самий шаблон («момент запуску», PM #9). Ціна: запуски одного шаблону йдуть по черзі (мілісекунди);
 --   2) копія бере виконавців лише з перевірених призначень (v_valid), а не з сирого p_assignees.
 -- Сигнатура та сама, тож create or replace; права — повторно, явно.
 
@@ -37,12 +39,13 @@ begin
     raise exception 'CASE_NAME_TOO_LONG';
   end if;
 
-  -- Знімок шаблону: блокуємо шаблон, секції й задачі до кінця транзакції (ADR 0003).
-  select t.name into v_template from public.templates as t where t.id = p_template_id for share;
+  -- Знімок шаблону до кінця транзакції (ADR 0003): шаблон і секції — for update (блокує й вставку дочірніх рядків),
+  -- задачі — for share (блокує їх зміну й видалення).
+  select t.name into v_template from public.templates as t where t.id = p_template_id for update;
   if v_template is null then
     raise exception 'TEMPLATE_NOT_FOUND';
   end if;
-  perform 1 from public.template_sections as s where s.template_id = p_template_id for share;
+  perform 1 from public.template_sections as s where s.template_id = p_template_id for update;
   perform 1
   from public.template_tasks as tt
   join public.template_sections as s on s.id = tt.section_id
