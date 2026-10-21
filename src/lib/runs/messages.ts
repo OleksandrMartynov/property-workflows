@@ -40,3 +40,11 @@ export function dbErrorCode(error: { message?: string } | null | undefined): Err
   const matches = CODES.filter((code) => code !== "DB_ERROR" && message.includes(code));
   return matches.sort((a, b) => b.length - a.length)[0] ?? "DB_ERROR";
 }
+
+/**
+ * ADR 0003: PostgREST не знайшов функцію з такими аргументами (PGRST202) — застосунок новіший за схему бази
+ * (наприклад, вікно між деплоєм Vercel і db-deploy).
+ */
+export function isMissingRpcSignature(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "PGRST202";
+}
