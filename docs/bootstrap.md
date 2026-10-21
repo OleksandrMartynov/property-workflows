@@ -95,17 +95,22 @@ Docker не потрібен: локально — лише npm run dev прот
 - [x] **Squash and merge** → прод-деплой Vercel пройшов — коміт `cb8b1e9` у `main`:
       https://vercel.com/flambs-projects/property-workflows/HPNEDuREhkkxEbpAePjFnRUkjEx3; CI на `main` після merge —
       [actions/runs/39259418885](../../../actions/runs/39259418885)
-- [ ] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу — <!-- посилання на run -->
+- [x] (З першою задачею, що має міграцію) `db-check` зелений, після merge `db-deploy` застосував її у вашу базу — PR
+      https://github.com/OleksandrMartynov/property-workflows/pull/6 (міграція `20261019174350_run_launch.sql`): `db-check` — https://github.com/OleksandrMartynov/property-workflows/actions/runs/39303776938,
+      `db-deploy` після merge — https://github.com/OleksandrMartynov/property-workflows/actions/runs/39304186700
 
 ## 8. Вимоги PM і специфікація
 
-- [ ] Адресу репо вимог PM узято з чату команди; на зустрічі команди (дні 0–2, до кінця 15.10, організує PM; якщо
-      команда не зібралася — діра в чат команди до обіду 16.10) — перший раунд питань до брифу
-- [ ] PM написав у чаті команди «вимоги оновлено» (у курсі перші вимоги — до кінця 16.10) → у Claude Code чи Cursor
+- [x] Адресу репо вимог PM узято з чату команди; на зустрічі команди (дні 0–2, до кінця 15.10, організує PM; якщо
+      команда не зібралася — діра в чат команди до обіду 16.10) — перший раунд питань до брифу — https://github.com/solomchaak/property-workflows-spec
+- [x] PM написав у чаті команди «вимоги оновлено» (у курсі перші вимоги — до кінця 16.10) → у Claude Code чи Cursor
       `/requirements-sync <pm>/<team-slug>-spec` → PR «Оновлення вимог» злито; шапка `docs/conformance.md` показує
-      адресу, джерело (issues чи docs) і дату знімка — <!-- посилання на PR -->
-- [ ] Читання вимог: скіл `spec-clarify` → питання — issues «Питання до вимог» у репо PM через вебформу → журнал
-      `docs/spec-reading.md` — <!-- посилання на issues -->
-- [ ] Переклад у специфікацію (гілка `spec/add-<зріз>`): `/opsx:propose add-<зріз>` → `npx openspec validate add-<зріз> --strict`
+      адресу, джерело (issues чи docs) і дату знімка — https://github.com/OleksandrMartynov/property-workflows/pull/3 (знімок 2026-10-19); після уточнень PM — гілка
+      `sync/2026-10-21` (знімок 2026-10-21)
+- [x] Читання вимог: скіл `spec-clarify` → питання — issues «Питання до вимог» у репо PM через вебформу → журнал
+      `docs/spec-reading.md` — https://github.com/solomchaak/property-workflows-spec/issues/8, https://github.com/solomchaak/property-workflows-spec/issues/9, коментар
+      https://github.com/solomchaak/property-workflows-spec/issues/5#issuecomment-6274129127; журнал — https://github.com/OleksandrMartynov/property-workflows/pull/9
+- [x] Переклад у специфікацію (гілка `spec/add-<зріз>`): `/opsx:propose add-<зріз>` → `npx openspec validate add-<зріз> --strict`
       → скіл `spec-review` → `npx openspec archive add-<зріз> -y` → `/conformance` → PR «Специфікація» злито;
-      `npm run ac:coverage` без «вимогу PM ще не перекладено» — <!-- посилання на PR -->
+      `npm run ac:coverage` без «вимогу PM ще не перекладено» — https://github.com/OleksandrMartynov/property-workflows/pull/4 (`add-template-runs`); після уточнень PM —
+      зміна `clarify-template-runs` (гілка `spec/clarify-template-runs`)

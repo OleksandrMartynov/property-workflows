@@ -1,16 +1,18 @@
 import { notFound } from "next/navigation";
 import { canCompleteTask } from "@/lib/runs/access";
-import { runStatusLabel, taskStatusLabel } from "@/lib/runs/labels";
+import { requiredLabel, runStatusLabel, taskStatusLabel } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
+import { groupBySection } from "@/lib/runs/sections";
 import { requireViewer } from "@/lib/supabase/viewer";
 import { SubmitButton } from "../../_components/submit-button";
 import { Notice, PageShell, StatusBadge } from "../../_components/ui";
 import { completeTask } from "../actions";
 
-// Сторінка запуску: AC-RUN-02 (задачі запуску — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й виконавці),
-// AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07 (позначка виконаною).
-// Чужий запуск RLS не віддає — 404 (робоче припущення Q2).
+// Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
+// виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
+// виконаною лише на дозволених задачах), AC-TASK-11 (email виконавця), AC-TASK-12 (групи за секціями), AC-TASK-15
+// («required» / «optional»). Чужий запуск RLS не віддає — notFound() і «Run not found» (AC-TASK-10, not-found.tsx).
 export default async function RunPage({ params, searchParams }: PageProps<"/runs/[id]">) {
   const [{ id }, { error, done }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
@@ -32,7 +34,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
     supabase.rpc("list_assignable_users"),
   ]);
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
-  const sections = [...new Set((tasks ?? []).map((t) => t.section_name))];
+  const sections = groupBySection(tasks ?? []);
   const message = errorMessage(error);
 
   return (
@@ -54,16 +56,14 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       </dl>
 
       {sections.map((section) => (
-        <section key={section} className="flex flex-col gap-2">
-          <h2 className="font-medium">{section}</h2>
+        <section key={section.name} className="flex flex-col gap-2" data-testid="run-section">
+          <h2 className="font-medium">{section.name}</h2>
           <ul className="flex flex-col divide-y divide-zinc-200 rounded border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-            {(tasks ?? [])
-              .filter((t) => t.section_name === section)
-              .map((task) => (
+            {section.tasks.map((task) => (
                 <li key={task.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm" data-testid="run-task">
                   <span>
                     {task.name}
-                    <span className="ml-2 text-xs text-zinc-500">{task.required ? "required" : "optional"}</span>
+                    <span className="ml-2 text-xs text-zinc-500" data-testid="task-required">{requiredLabel(task.required)}</span>
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="text-zinc-500">{emailOf.get(task.assignee_id) ?? "—"}</span>

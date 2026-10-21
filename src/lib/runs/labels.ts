@@ -5,3 +5,6 @@ export const RUN_STATUS_LABELS: Record<string, string> = { in_progress: "in prog
 
 export const taskStatusLabel = (status: string) => TASK_STATUS_LABELS[status] ?? status;
 export const runStatusLabel = (status: string) => RUN_STATUS_LABELS[status] ?? status;
+
+/** AC-TASK-15: позначка біля статусу задачі — словами PM «required» / «optional». */
+export const requiredLabel = (required: boolean) => (required ? "required" : "optional");

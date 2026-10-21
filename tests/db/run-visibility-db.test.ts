@@ -69,3 +69,29 @@ describe("База: список запусків", () => {
     await expect(t.asAnon("select * from public.run_progress")).rejects.toThrow("permission denied");
   });
 });
+
+describe("База: сторінка запуску для інших користувачів", () => {
+  it("AC-TASK-10: менеджер C за прямим посиланням не отримує ні запуску, ні жодної задачі — сторінка «Run not found»", async () => {
+    const runId = await launch(t, MANAGER_A, "Apartment 50, move-in", { [TENANT_MOVE_IN.taskIds[0]]: MANAGER_B });
+    // Так читає запуск сторінка /runs/[id]: немає рядка — notFound() і not-found.tsx з «Run not found».
+    expect(await t.asUser(MANAGER_C, "select id from public.runs where id = $1", [runId])).toEqual([]);
+    expect(await t.asUser(MANAGER_C, "select id from public.run_tasks where run_id = $1", [runId])).toEqual([]);
+  });
+
+  it("AC-TASK-11: виконавець B бачить email виконавця кожної задачі запуску A — без імен і ролей", async () => {
+    const runId = await launch(t, MANAGER_A, "Apartment 51, move-in", { [TENANT_MOVE_IN.taskIds[0]]: MANAGER_B });
+    const tasks = await t.asUser<{ assignee_id: string }>(MANAGER_B, "select assignee_id from public.run_tasks where run_id = $1 order by section_position, position", [runId]);
+    expect(tasks).toHaveLength(5);
+    // Так сторінка /runs/[id] бере email біля задач: list_assignable_users — лише id і email.
+    const users = await t.asUser<Record<string, unknown>>(MANAGER_B, "select * from public.list_assignable_users()");
+    const emailOf = new Map(users.map((u) => [u.id, u.email]));
+    expect(tasks.map((x) => emailOf.get(x.assignee_id))).toEqual([
+      "manager.b@example.test",
+      "manager.a@example.test",
+      "manager.a@example.test",
+      "manager.a@example.test",
+      "manager.a@example.test",
+    ]);
+    for (const u of users) expect(Object.keys(u).sort()).toEqual(["email", "id"]);
+  });
+});
