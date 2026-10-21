@@ -30,10 +30,12 @@
   змінює. Так «done лише після підтвердження» тримає база, а не лише інтерфейс.
 - Data API: так само `drop` + `create` для обгортки `public.complete_task(p_task_id uuid, p_confirmed boolean default
   false)`, яка передає обидва аргументи в `private.complete_task`; `revoke` / `grant` — для нової сигнатури обох функцій.
-- Інтерфейс: `src/lib/runs/confirmation.ts` — `isLastRequiredTask(task, tasks)` і `confirmationText(taskName)` (назва
-  задачі й «This cannot be undone»). На сторінці запуску кнопку останньої обов'язкової задачі рендерить клієнтський
-  `MarkDoneButton`: `window.confirm(confirmationText(…))`; «Cancel» — форма не надсилається, задача лишається «to do»
-  (AC-TASK-16); «OK» — приховане поле `confirmed=yes`, дія `completeTask` передає `p_confirmed: true` (AC-TASK-04).
+- Інтерфейс: `src/lib/runs/confirmation.ts` — `isLastRequiredTask(task, tasks)`, `confirmationText(taskName)` (назва
+  задачі й «This cannot be undone») і `withConfirmation(action, taskName, confirm)`. На сторінці запуску кнопку рендерить
+  клієнтський `MarkDoneForm` (`src/app/runs/[id]/mark-done-form.tsx`). Для останньої обов'язкової задачі дія форми —
+  `withConfirmation`: `window.confirm(confirmationText(…))`; «Cancel» — серверну дію не викликано, задача лишається «to do»
+  (AC-TASK-16); «OK» — `confirmed=yes` у FormData і дія `completeTask` з `p_confirmed: true` (AC-TASK-04). Поля
+  `confirmed` у HTML від сервера немає, тож без підтвердження (до гідратації, без JavaScript) його не надіслати.
   Решта задач — без підтвердження, як і раніше.
 
 ### D14. Сторінка запуску (AC-TASK-11, AC-TASK-12, AC-TASK-15, AC-TASK-18, AC-RUN-10)

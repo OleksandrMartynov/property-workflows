@@ -19,13 +19,18 @@ export const CANNOT_BE_UNDONE = "This cannot be undone";
 export const confirmationText = (taskName: string) => `${taskName}\n\n${CANNOT_BE_UNDONE}`;
 
 /**
- * Чи надсилати форму «Mark as done»: без підтвердження — так; для останньої обов'язкової — лише якщо користувач
- * підтвердив (confirm повертає true). «Cancel» — форма не надсилається, задача лишається «to do».
+ * Дія форми «Mark as done» для останньої обов'язкової задачі: спершу підтвердження з назвою задачі й «This cannot be
+ * undone»; лише після «OK» — поле confirmed=yes і серверна дія (AC-TASK-04). «Cancel» — серверну дію не викликано,
+ * задача лишається «to do» (AC-TASK-16). Поле confirmed не рендериться в HTML, тож без підтвердження його не надіслати.
  */
-export function shouldSubmitMarkDone(
-  needsConfirmation: boolean,
+export function withConfirmation(
+  action: (formData: FormData) => Promise<void>,
   taskName: string,
   confirm: (message: string) => boolean,
-): boolean {
-  return needsConfirmation ? confirm(confirmationText(taskName)) : true;
+): (formData: FormData) => Promise<void> {
+  return async (formData) => {
+    if (!confirm(confirmationText(taskName))) return;
+    formData.set("confirmed", "yes");
+    await action(formData);
+  };
 }

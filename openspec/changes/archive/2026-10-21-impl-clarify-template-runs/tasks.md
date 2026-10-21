@@ -14,7 +14,7 @@
 ## 5. Підтвердження і список запусків
 
 - [x] 5.1 Міграція: `complete_task(p_task_id, p_confirmed)` з `CONFIRMATION_REQUIRED` (D13); `isLastRequiredTask`,
-  `confirmationText`, клієнтський `MarkDoneButton`, `confirmed` у дії `completeTask`; тести.
+  `confirmationText`, `withConfirmation`, клієнтський `MarkDoneForm`, `confirmed` у дії `completeTask`; тести.
   Done when: AC-TASK-04 — після підтвердження запуск «completed»; AC-TASK-16 — скасування лишає задачу «to do».
 - [x] 5.2 Тести списку запусків на базі (D15).
   Done when: AC-TASK-13, AC-TASK-14, AC-TASK-17.

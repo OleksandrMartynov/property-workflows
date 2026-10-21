@@ -59,11 +59,10 @@ export async function completeTask(formData: FormData) {
   if (!UUID_RE.test(runId)) redirect("/runs");
   if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
 
-  // confirmed=yes надсилає лише підтверджена форма останньої обов'язкової задачі (MarkDoneForm).
-  const { error } = await supabase.rpc("complete_task", {
-    p_task_id: taskId,
-    p_confirmed: text(formData, "confirmed") === "yes",
-  });
+  // confirmed=yes додає лише підтверджена дія останньої обов'язкової задачі (withConfirmation у MarkDoneForm).
+  // p_confirmed передаємо лише як true: звичайна позначка не залежить від нового параметра функції бази.
+  const confirmed = text(formData, "confirmed") === "yes";
+  const { error } = await supabase.rpc("complete_task", { p_task_id: taskId, ...(confirmed ? { p_confirmed: true } : {}) });
   // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
   if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
 
