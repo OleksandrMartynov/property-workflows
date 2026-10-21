@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/1 · оновлено 2026-10-19T16:13:08Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/1 · оновлено 2026-10-20T15:59:51Z
 
 # Product
 
@@ -28,6 +28,7 @@ Two roles work in this slice. Users are created by the administrator: invitation
 |---|---|---|
 | See own profile | yes | yes |
 | See other users' profiles | — | yes |
+| See the email of managers and administrators (assignee picker, next to tasks) | yes | yes |
 | Create users and assign roles | — | yes, except their own role |
 | See templates | yes | yes |
 | Create and change templates | — | yes |
@@ -72,3 +73,4 @@ Two roles work in this slice. Users are created by the administrator: invitation
 - Integration with a property accounting system: the training project has no real keys or external systems; later slices will use a stub or a file import.
 - Incoming email on a dedicated address as a trigger: it does not exist on free tiers; it is replaced by an external form or a webhook in later slices.
 - Tenant portal: the tenant does not use the application; their case is entered by a manager.
+- User and role management screens: in WS6 users and roles are prepared outside the application (for example as initial data).
