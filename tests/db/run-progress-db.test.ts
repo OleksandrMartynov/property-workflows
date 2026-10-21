@@ -26,8 +26,8 @@ const taskStatus = async (taskId: string) =>
   (await t.asService<{ status: string }>("select status from public.run_tasks where id = $1", [taskId]))[0].status;
 const runStatus = async (runId: string) =>
   (await t.asService<{ status: string }>("select status from public.runs where id = $1", [runId]))[0].status;
-const complete = (userId: string, taskId: string) =>
-  t.asUser<{ task_status: string; run_status: string }>(userId, "select * from public.complete_task($1)", [taskId]);
+const complete = (userId: string, taskId: string, confirmed = false) =>
+  t.asUser<{ task_status: string; run_status: string }>(userId, "select * from public.complete_task($1, $2)", [taskId, confirmed]);
 const completeError = (userId: string, taskId: string) =>
   complete(userId, taskId).then(
     () => "",
@@ -86,7 +86,7 @@ describe("База: хто позначає задачу виконаною", ()
 });
 
 describe("База: завершення запуску", () => {
-  it("AC-TASK-04: 2 з 3 обов'язкових уже «done», виконавець позначає третю — запуск «completed»", async () => {
+  it("AC-TASK-04: 2 з 3 обов'язкових уже «done», виконавець позначає третю й підтверджує — запуск «completed»", async () => {
     const runId = await launch(t, MANAGER_A, "Apartment 7, move-in");
     const tasks = await tasksOf(runId);
     const required = tasks.filter((x) => x.required);
@@ -97,11 +97,22 @@ describe("База: завершення запуску", () => {
     await complete(MANAGER_A, required[1].id);
     expect(await runStatus(runId)).toBe("in_progress");
 
-    expect(await complete(MANAGER_A, required[2].id)).toEqual([{ task_status: "done", run_status: "completed" }]);
+    expect(await complete(MANAGER_A, required[2].id, true)).toEqual([{ task_status: "done", run_status: "completed" }]);
     expect(await runStatus(runId)).toBe("completed");
     // Завершення запуску не змінює статусу необов'язкових задач (припущення PM).
     const optional = (await tasksOf(runId)).filter((x) => !x.required);
     expect(optional.map((x) => x.status)).toEqual(["to_do", "to_do"]);
+  });
+
+  it("AC-TASK-16: третя обов'язкова задача менеджера B без підтвердження (скасовано) — «to do», запуск «in progress»", async () => {
+    const runId = await launch(t, MANAGER_A, "Apartment 10, move-in", { [TENANT_MOVE_IN.taskIds[3]]: MANAGER_B });
+    const required = (await tasksOf(runId)).filter((x) => x.required);
+    const third = required.find((x) => x.template_task_id === TENANT_MOVE_IN.taskIds[3])!;
+    for (const task of required.filter((x) => x.id !== third.id)) await complete(MANAGER_A, task.id);
+
+    expect(await completeError(MANAGER_B, third.id)).toContain("CONFIRMATION_REQUIRED");
+    expect(await taskStatus(third.id)).toBe("to_do");
+    expect(await runStatus(runId)).toBe("in_progress");
   });
 
   it("AC-TASK-04: необов'язкові задачі не завершують запуск", async () => {

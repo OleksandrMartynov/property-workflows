@@ -95,3 +95,65 @@ describe("База: сторінка запуску для інших корис
     for (const u of users) expect(Object.keys(u).sort()).toEqual(["email", "id"]);
   });
 });
+
+describe("База: список запусків після відповідей PM", () => {
+  /** Так читає список сторінка /runs: від нових до старих, з назвою випадку, шаблону й статусом. */
+  const listedRuns = (userId: string) =>
+    t.asUser<{ id: string; case_name: string; template_name: string; status: string }>(
+      userId,
+      "select id, case_name, template_name, status from public.runs order by created_at desc, id",
+    );
+  const progressOf = async (userId: string, runId: string) => {
+    const [row] = await t.asUser<{ done: number; total: number }>(userId, "select done, total from public.run_progress where run_id = $1", [runId]);
+    return formatProgress(row);
+  };
+  const tasksOf = (runId: string) =>
+    t.asService<{ id: string; required: boolean }>("select id, required from public.run_tasks where run_id = $1 order by section_position, position", [runId]);
+
+  it("AC-TASK-13: завершений запуск (4 з 5, 1 необов'язкова «to do») і запуск «in progress» — обидва в списку зі статусом і прогресом", async () => {
+    const completed = await launch(t, MANAGER_A, "Apartment 60, move-in");
+    const inProgress = await launch(t, MANAGER_A, "Apartment 61, move-in");
+    const tasks = await tasksOf(completed);
+    const optional = tasks.filter((x) => !x.required);
+    const required = tasks.filter((x) => x.required);
+    await t.asUser(MANAGER_A, "select public.complete_task($1)", [optional[0].id]);
+    await t.asUser(MANAGER_A, "select public.complete_task($1)", [required[0].id]);
+    await t.asUser(MANAGER_A, "select public.complete_task($1)", [required[1].id]);
+    await t.asUser(MANAGER_A, "select public.complete_task($1, true)", [required[2].id]);
+
+    const rows = await listedRuns(MANAGER_A);
+    expect(rows.find((r) => r.id === completed)?.status).toBe("completed");
+    expect(rows.find((r) => r.id === inProgress)?.status).toBe("in_progress");
+    expect(await progressOf(MANAGER_A, completed)).toBe("4 of 5 done");
+    expect(await progressOf(MANAGER_A, inProgress)).toBe("0 of 5 done");
+  });
+
+  it("AC-TASK-14: «Tenant move-in», а пізніше «Repair» для «Apartment 12» — «Repair» першим, з назвою випадку й шаблону", async () => {
+    // Тестовий шаблон «Repair», як в AC (у міграції — «Apartment repair»); готує адміністратор.
+    const [{ id: repair }] = await t.asUser<{ id: string }>(ADMIN, "insert into public.templates (name) values ('Repair') returning id");
+    const [{ id: section }] = await t.asUser<{ id: string }>(
+      ADMIN,
+      "insert into public.template_sections (template_id, name, position) values ($1, 'Repair', 1) returning id",
+      [repair],
+    );
+    await t.asUser(ADMIN, "insert into public.template_tasks (section_id, name, required, position) values ($1, 'Fix the tap', true, 1)", [section]);
+
+    const moveIn = await launch(t, MANAGER_A, "Apartment 12");
+    const repairRun = await launch(t, MANAGER_A, "Apartment 12", {}, repair);
+    const rows = (await listedRuns(MANAGER_A)).filter((r) => r.id === moveIn || r.id === repairRun);
+    expect(rows.map((r) => [r.case_name, r.template_name])).toEqual([
+      ["Apartment 12", "Repair"],
+      ["Apartment 12", "Tenant move-in"],
+    ]);
+  });
+
+  it("AC-TASK-17: виконавець B бачить у списку запуск менеджера A з прогресом «2 of 5 done»", async () => {
+    const runId = await launch(t, MANAGER_A, "Apartment 62, move-in", { [TENANT_MOVE_IN.taskIds[4]]: MANAGER_B });
+    const tasks = await tasksOf(runId);
+    await t.asUser(MANAGER_A, "select public.complete_task($1)", [tasks[0].id]);
+    await t.asUser(MANAGER_A, "select public.complete_task($1)", [tasks[2].id]);
+
+    expect((await listedRuns(MANAGER_B)).map((r) => r.id)).toContain(runId);
+    expect(await progressOf(MANAGER_B, runId)).toBe("2 of 5 done");
+  });
+});
