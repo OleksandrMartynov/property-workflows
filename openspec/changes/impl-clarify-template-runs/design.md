@@ -28,6 +28,8 @@
   `create`, бо змінюється сигнатура; `revoke` / `grant` заново). Якщо задача обов'язкова й решта обов'язкових задач
   запуску вже «done» (тобто вона остання), а `p_confirmed` не `true`, функція кидає `CONFIRMATION_REQUIRED` і нічого не
   змінює. Так «done лише після підтвердження» тримає база, а не лише інтерфейс.
+- Data API: так само `drop` + `create` для обгортки `public.complete_task(p_task_id uuid, p_confirmed boolean default
+  false)`, яка передає обидва аргументи в `private.complete_task`; `revoke` / `grant` — для нової сигнатури обох функцій.
 - Інтерфейс: `src/lib/runs/confirmation.ts` — `isLastRequiredTask(task, tasks)` і `confirmationText(taskName)` (назва
   задачі й «This cannot be undone»). На сторінці запуску кнопку останньої обов'язкової задачі рендерить клієнтський
   `MarkDoneButton`: `window.confirm(confirmationText(…))`; «Cancel» — форма не надсилається, задача лишається «to do»
