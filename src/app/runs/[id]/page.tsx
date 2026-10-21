@@ -56,7 +56,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       </dl>
 
       {sections.map((section) => (
-        <section key={section.name} className="flex flex-col gap-2" data-testid="run-section">
+        <section key={section.key} className="flex flex-col gap-2" data-testid="run-section">
           <h2 className="font-medium">{section.name}</h2>
           <ul className="flex flex-col divide-y divide-zinc-200 rounded border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {section.tasks.map((task) => (

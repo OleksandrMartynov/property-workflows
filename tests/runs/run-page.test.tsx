@@ -36,6 +36,22 @@ describe("Сторінка запуску", () => {
     expect(groups[0].tasks.map((t) => t.name)).toEqual(["Sign the lease agreement", "Inspect the apartment"]);
   });
 
+  it("AC-TASK-12: дві секції з однаковою позицією в шаблоні — дві цілі групи, не розірвані задачами одна одної", () => {
+    const samePosition = [
+      task("Inspect the apartment", "Before move-in", 0, 2),
+      task("Hand over the keys", "Move-in day", 0, 1),
+      task("Sign the lease agreement", "Before move-in", 0, 1),
+      task("Order cleaning", "Move-in day", 0, 2),
+      task("Record meter readings", "Move-in day", 0, 3),
+    ];
+    const groups = groupBySection(samePosition);
+    expect(groups.map((g) => [g.name, g.tasks.length])).toEqual([
+      ["Before move-in", 2],
+      ["Move-in day", 3],
+    ]);
+    expect(new Set(groups.map((g) => g.key)).size).toBe(groups.length);
+  });
+
   it("AC-TASK-15: біля статусу кожної задачі — «required» або «optional»: 3 «required» і 2 «optional»", () => {
     const labels = runTasks.map((t) => requiredLabel(t.required));
     expect(labels.filter((l) => l === "required")).toHaveLength(3);

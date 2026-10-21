@@ -1,6 +1,6 @@
 // Правила запуску шаблону, які виконує база (функція launch_run, RLS, check), — на справжньому Postgres (PGlite)
 // з усіма міграціями. Специфікація: openspec/specs/run-launch/spec.md.
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { createTestDb, launch, TENANT_MOVE_IN, type TestDb } from "./supabase-pglite";
 
 let t: TestDb;
@@ -106,9 +106,39 @@ describe("База: запуск шаблону", () => {
     expect(saved).toHaveLength(100);
   });
 
-  it("AC-RUN-12: секцію перейменовано й задачу перенесено в шаблоні — запуск і далі має секції й задачі як у момент запуску", async () => {
-    const id = await launch(t, MANAGER_A, "Apartment 17, move-in");
-    const sectionsOf = async () =>
+  it("AC-RUN-12: секцію «Move-in day» перейменовано й її задачу перенесено — запуск і далі має «Before move-in» (2) і «Move-in day» (3)", async () => {
+    // Шаблон точно як в AC: «Before move-in» — 2 задачі, «Move-in day» — 3 задачі; готує адміністратор.
+    const [{ id: templateId }] = await t.asUser<{ id: string }>(ADMIN, "insert into public.templates (name) values ('Tenant move-in (AC-RUN-12)') returning id");
+    // Тестовий шаблон прибираємо: інші тести рахують шаблони (запуск лишається, template_id стає null).
+    onTestFinished(async () => {
+      await t.asService("delete from public.templates where id = $1", [templateId]);
+    });
+    const section = async (name: string, position: number) =>
+      (
+        await t.asUser<{ id: string }>(
+          ADMIN,
+          "insert into public.template_sections (template_id, name, position) values ($1, $2, $3) returning id",
+          [templateId, name, position],
+        )
+      )[0].id;
+    const beforeMoveIn = await section("Before move-in", 1);
+    const moveInDay = await section("Move-in day", 2);
+    const addTask = async (sectionId: string, name: string, position: number) =>
+      (
+        await t.asUser<{ id: string }>(
+          ADMIN,
+          "insert into public.template_tasks (section_id, name, required, position) values ($1, $2, true, $3) returning id",
+          [sectionId, name, position],
+        )
+      )[0].id;
+    await addTask(beforeMoveIn, "Sign the lease agreement", 1);
+    await addTask(beforeMoveIn, "Inspect the apartment", 2);
+    const handOverKeys = await addTask(moveInDay, "Hand over the keys", 1);
+    await addTask(moveInDay, "Order cleaning", 2);
+    await addTask(moveInDay, "Record meter readings", 3);
+
+    const id = await launch(t, MANAGER_A, "Apartment 17, move-in", {}, templateId);
+    const sectionsOfRun = async () =>
       (
         await t.asUser<{ section_name: string; n: number }>(
           MANAGER_A,
@@ -117,21 +147,15 @@ describe("База: запуск шаблону", () => {
           [id],
         )
       ).map((x) => [x.section_name, x.n]);
-    const moveInDay = "20000000-0000-0000-0000-000000000012";
-    const beforeMoveIn = "20000000-0000-0000-0000-000000000011";
-    const handOverKeys = TENANT_MOVE_IN.taskIds[3];
-    // У міграції «Tenant move-in» має 3 + 2 задачі; PM в AC пише 2 + 3 — правило те саме: секції запуску — як у момент запуску.
-    const atLaunch = await sectionsOf();
-    expect(atLaunch.map(([name]) => name)).toEqual(["Before move-in", "Move-in day"]);
+    const expected = [
+      ["Before move-in", 2],
+      ["Move-in day", 3],
+    ];
+    expect(await sectionsOfRun()).toEqual(expected);
 
     await t.asUser(ADMIN, "update public.template_sections set name = 'Key handover' where id = $1", [moveInDay]);
     await t.asUser(ADMIN, "update public.template_tasks set section_id = $2 where id = $1", [handOverKeys, beforeMoveIn]);
-    try {
-      expect(await sectionsOf()).toEqual(atLaunch);
-    } finally {
-      await t.asService("update public.template_sections set name = 'Move-in day' where id = $1", [moveInDay]);
-      await t.asService("update public.template_tasks set section_id = $2 where id = $1", [handOverKeys, moveInDay]);
-    }
+    expect(await sectionsOfRun()).toEqual(expected);
   });
 
   it("AC-RUN-01: прямий insert у runs клієнту заборонено — запуск лише функцією з копією задач", async () => {
