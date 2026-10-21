@@ -25,8 +25,9 @@ Docker не потрібен: локально — лише npm run dev прот
 - [x] `git clone https://github.com/<dev>/<team-slug>.git` → `npm ci` → `cp .env.example .env.local`
       (у PowerShell: `Copy-Item .env.example .env.local`)
 - [x] CodeRabbit (GitHub App) встановлено на це репо (github.com/apps/coderabbitai → Configure → Only select repositories) — [docs/img/coderabbit-repo-access.png](img/coderabbit-repo-access.png)
-- [ ] (Якщо PM надіслав список справжніх назв клієнта особистим повідомленням) — локальний `product/denylist.local.txt`
-      (у `.gitignore`; `npm run spec:check` читає його й значень не друкує)
+- [x] (Якщо PM надіслав список справжніх назв клієнта особистим повідомленням) — локальний `product/denylist.local.txt`
+      (у `.gitignore`; `npm run spec:check` читає його й значень не друкує) — не застосовно: PM списку не надсилав, команда
+      працює лише з синтетичними даними (`*@example.test`); `npm run spec:check` — «слів у denylist: 0»
 
 ## 2. Supabase: власна база
 
@@ -51,7 +52,8 @@ Docker не потрібен: локально — лише npm run dev прот
       пароль у рядку percent-encoded — секрет environment `production`: `SUPABASE_DB_URL`
 - [x] Запасний шлях (лише якщо `--db-url` не працює): секрети environment `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`,
       `SUPABASE_PROJECT_ID` (README, «Міграції в прод: запасний шлях») — не потрібно: `db-deploy` працює через `SUPABASE_DB_URL`
-- [ ] (Необов'язково) секрет репо `SPEC_DENYLIST` — ті самі справжні назви через кому, для CI
+- [x] (Необов'язково) секрет репо `SPEC_DENYLIST` — ті самі справжні назви через кому, для CI — не задано: списку справжніх
+      назв немає (див. пункт про `product/denylist.local.txt`)
 
 ## 4. Vercel
 
