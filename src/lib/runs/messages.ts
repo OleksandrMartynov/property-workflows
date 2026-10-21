@@ -17,6 +17,8 @@ export const MESSAGES = {
   // AC-TASK-10
   RUN_NOT_FOUND: "Run not found",
   RUN_COMPLETED: "The run is already completed",
+  // AC-TASK-04, AC-TASK-16: без підтвердження остання обов'язкова задача лишається «to do».
+  CONFIRMATION_REQUIRED: "Confirm marking the last required task as done: This cannot be undone",
   DB_ERROR: "Something went wrong. Try again.",
 } as const;
 

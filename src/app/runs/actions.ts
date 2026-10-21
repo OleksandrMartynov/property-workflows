@@ -47,7 +47,10 @@ export async function launchRun(formData: FormData) {
   redirect(`/runs/${runId}?done=launched`);
 }
 
-/** AC-TASK-01…04, AC-TASK-07: позначка задачі виконаною. Права й завершення запуску перевіряє функція complete_task. */
+/**
+ * AC-TASK-01…04, AC-TASK-07, AC-TASK-16: позначка задачі виконаною. Права, підтвердження останньої обов'язкової задачі
+ * (CONFIRMATION_REQUIRED) і завершення запуску перевіряє функція complete_task.
+ */
 export async function completeTask(formData: FormData) {
   const { supabase } = await requireViewer();
   const runId = text(formData, "run_id");
@@ -56,7 +59,11 @@ export async function completeTask(formData: FormData) {
   if (!UUID_RE.test(runId)) redirect("/runs");
   if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
 
-  const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
+  // confirmed=yes надсилає лише підтверджена форма останньої обов'язкової задачі (MarkDoneForm).
+  const { error } = await supabase.rpc("complete_task", {
+    p_task_id: taskId,
+    p_confirmed: text(formData, "confirmed") === "yes",
+  });
   // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
   if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
 
