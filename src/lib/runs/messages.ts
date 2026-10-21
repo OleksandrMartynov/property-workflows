@@ -11,10 +11,11 @@ export const MESSAGES = {
   NOT_ALLOWED: "Only the task's assignee, the run manager, or an administrator can mark a task as done",
   LAUNCH_NOT_ALLOWED: "Only a manager or an administrator can launch a template",
   INVALID_ASSIGNEE: "An assignee must be a manager or an administrator",
-  INVALID_TASK: "The task does not belong to this template",
   TEMPLATE_NOT_FOUND: "Template not found",
   TEMPLATE_EMPTY: "The template has no tasks",
   TASK_NOT_FOUND: "Task not found",
+  // AC-TASK-10
+  RUN_NOT_FOUND: "Run not found",
   RUN_COMPLETED: "The run is already completed",
   DB_ERROR: "Something went wrong. Try again.",
 } as const;

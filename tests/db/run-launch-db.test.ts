@@ -1,6 +1,6 @@
 // Правила запуску шаблону, які виконує база (функція launch_run, RLS, check), — на справжньому Postgres (PGlite)
 // з усіма міграціями. Специфікація: openspec/specs/run-launch/spec.md.
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { createTestDb, launch, TENANT_MOVE_IN, type TestDb } from "./supabase-pglite";
 
 let t: TestDb;
@@ -96,6 +96,68 @@ describe("База: запуск шаблону", () => {
     expect(await runsCount()).toBe(before + 1);
   });
 
+  it("AC-RUN-11: назва зі 100 символів і пробілом перед нею (101 як введено) — один запуск, назва без пробілу", async () => {
+    const before = await runsCount();
+    const name = "c".repeat(100);
+    const id = await launch(t, MANAGER_A, ` ${name}`);
+    expect(await runsCount()).toBe(before + 1);
+    const saved = (await runById(MANAGER_A, id)).case_name;
+    expect(saved).toBe(name);
+    expect(saved).toHaveLength(100);
+  });
+
+  it("AC-RUN-12: секцію «Move-in day» перейменовано й її задачу перенесено — запуск і далі має «Before move-in» (2) і «Move-in day» (3)", async () => {
+    // Шаблон точно як в AC: «Before move-in» — 2 задачі, «Move-in day» — 3 задачі; готує адміністратор.
+    const [{ id: templateId }] = await t.asUser<{ id: string }>(ADMIN, "insert into public.templates (name) values ('Tenant move-in (AC-RUN-12)') returning id");
+    // Тестовий шаблон прибираємо: інші тести рахують шаблони (запуск лишається, template_id стає null).
+    onTestFinished(async () => {
+      await t.asService("delete from public.templates where id = $1", [templateId]);
+    });
+    const section = async (name: string, position: number) =>
+      (
+        await t.asUser<{ id: string }>(
+          ADMIN,
+          "insert into public.template_sections (template_id, name, position) values ($1, $2, $3) returning id",
+          [templateId, name, position],
+        )
+      )[0].id;
+    const beforeMoveIn = await section("Before move-in", 1);
+    const moveInDay = await section("Move-in day", 2);
+    const addTask = async (sectionId: string, name: string, position: number) =>
+      (
+        await t.asUser<{ id: string }>(
+          ADMIN,
+          "insert into public.template_tasks (section_id, name, required, position) values ($1, $2, true, $3) returning id",
+          [sectionId, name, position],
+        )
+      )[0].id;
+    await addTask(beforeMoveIn, "Sign the lease agreement", 1);
+    await addTask(beforeMoveIn, "Inspect the apartment", 2);
+    const handOverKeys = await addTask(moveInDay, "Hand over the keys", 1);
+    await addTask(moveInDay, "Order cleaning", 2);
+    await addTask(moveInDay, "Record meter readings", 3);
+
+    const id = await launch(t, MANAGER_A, "Apartment 17, move-in", {}, templateId);
+    const sectionsOfRun = async () =>
+      (
+        await t.asUser<{ section_name: string; n: number }>(
+          MANAGER_A,
+          `select section_name, count(*)::int as n from public.run_tasks
+           where run_id = $1 group by section_name, section_position order by section_position`,
+          [id],
+        )
+      ).map((x) => [x.section_name, x.n]);
+    const expected = [
+      ["Before move-in", 2],
+      ["Move-in day", 3],
+    ];
+    expect(await sectionsOfRun()).toEqual(expected);
+
+    await t.asUser(ADMIN, "update public.template_sections set name = 'Key handover' where id = $1", [moveInDay]);
+    await t.asUser(ADMIN, "update public.template_tasks set section_id = $2 where id = $1", [handOverKeys, beforeMoveIn]);
+    expect(await sectionsOfRun()).toEqual(expected);
+  });
+
   it("AC-RUN-01: прямий insert у runs клієнту заборонено — запуск лише функцією з копією задач", async () => {
     await expect(
       t.asUser(
@@ -116,16 +178,25 @@ describe("База: менеджер запуску й виконавці", () =
     expect(tasks.filter((x) => x.assignee_id === MANAGER_A)).toHaveLength(3);
   });
 
-  it("AC-RUN-04: виконавцем можна призначити лише менеджера чи адміністратора і лише задачу цього шаблону", async () => {
+  it("AC-RUN-04: виконавцем можна призначити лише менеджера чи адміністратора — інакше запуску немає", async () => {
     const before = await runsCount();
     const [first] = TENANT_MOVE_IN.taskIds;
     expect(await launchError(MANAGER_A, "Apartment 22", { [first]: "a0000000-0000-0000-0000-999999999999" })).toContain(
       "INVALID_ASSIGNEE",
     );
-    expect(await launchError(MANAGER_A, "Apartment 22", { "30000000-0000-0000-0000-000000000211": MANAGER_B })).toContain(
-      "INVALID_TASK",
-    );
     expect(await runsCount()).toBe(before);
+  });
+
+  it("AC-RUN-04: призначення для задачі, якої вже немає в шаблоні, відкидається — запуск створено (рішення PM #9)", async () => {
+    const before = await runsCount();
+    const [first] = TENANT_MOVE_IN.taskIds;
+    // Задача іншого шаблону — так само, як задача, яку адміністратор прибрав, поки менеджер заповнював форму.
+    const removedTask = "30000000-0000-0000-0000-000000000211";
+    const id = await launch(t, MANAGER_A, "Apartment 22, move-in", { [first]: MANAGER_B, [removedTask]: MANAGER_B });
+    expect(await runsCount()).toBe(before + 1);
+    const tasks = await tasksOf(MANAGER_A, id);
+    expect(tasks.map((x) => x.template_task_id)).toEqual([...TENANT_MOVE_IN.taskIds]);
+    expect(tasks.filter((x) => x.assignee_id === MANAGER_B).map((x) => x.template_task_id)).toEqual([first]);
   });
 
   it("AC-RUN-05: адміністратор запускає «Tenant move-in» для «Apartment 14, move-in» — один запуск, менеджер запуску — адміністратор", async () => {
@@ -172,6 +243,15 @@ describe("База: доступ до шаблонів і запусків", () 
       expect.arrayContaining(["admin@example.test", "manager.a@example.test", "manager.b@example.test"]),
     );
     expect(Object.keys(assignable[0]).sort()).toEqual(["email", "id"]);
+  });
+
+  it("AC-RUN-10: менеджер A у виборі виконавця бачить email менеджера B і адміністратора — без імен, ролей і профілів", async () => {
+    const assignable = await t.asUser<Record<string, unknown>>(MANAGER_A, "select * from public.list_assignable_users()");
+    expect(assignable.map((x) => x.email)).toEqual(expect.arrayContaining(["manager.b@example.test", "admin@example.test"]));
+    for (const row of assignable) expect(Object.keys(row).sort()).toEqual(["email", "id"]);
+    // Профілі інших користувачів (ім'я, роль) менеджер напряму не читає — лише свій (матриця прав).
+    const profiles = await t.asUser<{ id: string }>(MANAGER_A, "select id from public.profiles");
+    expect(profiles.map((x) => x.id)).toEqual([MANAGER_A]);
   });
 
   it("AC-TASK-06: анонімний відвідувач не читає шаблони й запуски і не запускає шаблон", async () => {

@@ -5,10 +5,10 @@
 
 ## 4. Запуск і сторінка запуску
 
-- [ ] 4.1 Міграція: `private.launch_run` відкидає призначення для задачі, якої немає в шаблоні (D11); тести бази.
+- [x] 4.1 Міграція: `private.launch_run` відкидає призначення для задачі, якої немає в шаблоні (D11); тести бази.
   Done when: AC-RUN-04 — призначення для прибраної задачі відкинуто, запуск створено; AC-RUN-10, AC-RUN-11, AC-RUN-12 —
   тести бази й юніт-тести зелені.
-- [ ] 4.2 `not-found.tsx` з «Run not found» (D12); `groupBySection`, `requiredLabel` на сторінці запуску (D14); тести.
+- [x] 4.2 `not-found.tsx` з «Run not found» (D12); `groupBySection`, `requiredLabel` на сторінці запуску (D14); тести.
   Done when: AC-TASK-10, AC-TASK-11, AC-TASK-12, AC-TASK-15, AC-TASK-18.
 
 ## 5. Підтвердження і список запусків
