@@ -96,9 +96,9 @@ RLS на кожній таблиці, `revoke all` + явні `grant`, полі�
 
 - Доменні функції — Vitest (`tests/runs/*.test.ts`): назва випадку (AC-RUN-03, AC-RUN-07), виконавці з форми
   (AC-RUN-04, AC-RUN-08, AC-RUN-09), хто бачить кнопку позначки (AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-07), прогрес
-  «N of M done» (AC-TASK-05, AC-TASK-09).
+  «N of M done» і статуси задач (AC-TASK-05, AC-TASK-08).
 - Правила бази (RLS, функції) — справжній Postgres у WASM (PGlite) з усіма міграціями, без Docker (AC-RUN-01,
-  AC-RUN-02, AC-RUN-04, AC-RUN-05, AC-RUN-06, AC-RUN-08, AC-RUN-09, AC-TASK-01…AC-TASK-09):
+  AC-RUN-02, AC-RUN-03, AC-RUN-04, AC-RUN-05, AC-RUN-06, AC-RUN-07, AC-RUN-08, AC-RUN-09, AC-TASK-01…AC-TASK-09):
   `tests/db/supabase-pglite.ts` взято з демо курсу
   (https://github.com/koldovsky/2026-quitcode-06-leave-portal-demo/blob/main/tests/db/supabase-pglite.ts), нова
   devDependency `@electric-sql/pglite` (ADR 0002). Назва кожного тесту поведінки починається з AC ID.
