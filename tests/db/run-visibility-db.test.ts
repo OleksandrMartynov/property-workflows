@@ -157,3 +157,52 @@ describe("База: список запусків після відповіде�
     expect(await progressOf(MANAGER_B, runId)).toBe("2 of 5 done");
   });
 });
+
+describe("База: політики RLS", () => {
+  type Policy = { tablename: string; policyname: string; cmd: string; roles: string; qual: string | null; with_check: string | null };
+  const policiesOf = (tables: string[]) =>
+    t.asService<Policy>(
+      "select tablename, policyname, cmd, roles::text as roles, qual, with_check from pg_policies where schemaname = 'public' and tablename = any($1) order by tablename, policyname",
+      [tables],
+    );
+  const expectAuthenticatedWithUid = (policies: Policy[]) => {
+    for (const p of policies) {
+      expect(p.roles, p.policyname).toBe("{authenticated}");
+      // Предикат обов’язковий для кожної команди: SELECT / DELETE — using, INSERT — with check, UPDATE — обидва.
+      if (p.cmd !== "INSERT") expect(p.qual, `${p.tablename}.${p.policyname}: using`).not.toBeNull();
+      if (p.cmd === "INSERT" || p.cmd === "UPDATE") expect(p.with_check, `${p.tablename}.${p.policyname}: with check`).not.toBeNull();
+      for (const expr of [p.qual, p.with_check].filter((x): x is string => x !== null)) {
+        expect(expr, `${p.tablename}.${p.policyname}`).toMatch(/auth\.uid\(\)( as uid)?\s*\)?\s*is not null/i);
+      }
+    }
+  };
+
+  it("AC-TASK-06: політики runs і run_tasks — to authenticated, (select auth.uid()) is not null і private.can_see_run", async () => {
+    const policies = await policiesOf(["runs", "run_tasks"]);
+    expect(policies.map((p) => p.policyname)).toEqual(["run_tasks_select_visible", "runs_select_visible"]);
+    expectAuthenticatedWithUid(policies);
+    for (const p of policies) expect(p.qual).toContain("can_see_run");
+  });
+
+  it("AC-RUN-02: політики шаблонів — to authenticated з (select auth.uid()) is not null; змінює лише admin", async () => {
+    const policies = await policiesOf(["templates", "template_sections", "template_tasks"]);
+    expect(policies).toHaveLength(12);
+    expectAuthenticatedWithUid(policies);
+    for (const p of policies.filter((x) => !x.policyname.includes("_select_"))) {
+      expect(p.qual ?? p.with_check, p.policyname).toContain("'admin'");
+    }
+  });
+
+  it("AC-TASK-06: роль authenticated без ідентичності (auth.uid() = null) не бачить ні запусків, ні задач, ні шаблонів і не змінює їх", async () => {
+    await launch(t, MANAGER_A, "Apartment 80, move-in");
+    for (const table of ["runs", "run_tasks", "run_progress", "templates", "template_sections", "template_tasks"]) {
+      expect(await t.asAuthenticatedWithoutUid(`select 1 from public.${table}`), table).toEqual([]);
+    }
+    await expect(t.asAuthenticatedWithoutUid("insert into public.templates (name) values ('x')")).rejects.toThrow(
+      "row-level security",
+    );
+    await expect(t.asAuthenticatedWithoutUid("select public.launch_run($1, 'x', '{}')", [TENANT_MOVE_IN.id])).rejects.toThrow(
+      "LAUNCH_NOT_ALLOWED",
+    );
+  });
+});
