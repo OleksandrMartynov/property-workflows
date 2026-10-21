@@ -10,7 +10,7 @@ RLS на кожній таблиці, `revoke all` + явні `grant`, полі�
 
 ## Рішення
 
-### D1. Ролі `manager` / `admin` (усі AC)
+### D1. Ролі `manager` / `admin` (AC-RUN-04, AC-RUN-05, AC-RUN-06, AC-RUN-08, AC-RUN-09, AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-06, AC-TASK-07)
 
 Нова міграція замінює ролі шаблону `member` / `admin` на ролі з матриці прав `requirements/product.md`: зняти
 `profiles_role_check` → `update … set role = 'manager' where role = 'member'` → `default 'manager'` → новий
@@ -81,18 +81,24 @@ RLS на кожній таблиці, `revoke all` + явні `grant`, полі�
 (робоче припущення Q4: прогрес бачить кожен, кому видно запуск). Після рев'ю CodeRabbit (PR #8): у списку done і total
 рахує база — view `run_progress` (`security_invoker`, RLS від `run_tasks`), список — сторінками по 50.
 
-### D9. Сторінки й дії
+### D9. Сторінки й дії (AC-RUN-01…AC-RUN-09, AC-TASK-01…AC-TASK-09)
 
 - `/` — посилання «Templates», «Runs».
 - `/templates` — шаблони з кількістю задач; `/templates/[id]/launch` — назва випадку й вибір виконавця на кожну
-  задачу (за замовчуванням «me — run manager»); дія `launchRun` → `/runs/[id]`.
-- `/runs` — список (D7, D8); `/runs/[id]` — сторінка запуску; дія `completeTask`.
-- Помилки — `?error=<CODE>` → текст PM з `messages.ts` (як у демо курсу).
+  задачу (за замовчуванням «me — run manager»); дія `launchRun` → `/runs/[id]` (AC-RUN-01, AC-RUN-03, AC-RUN-04,
+  AC-RUN-05, AC-RUN-06, AC-RUN-07, AC-RUN-08, AC-RUN-09).
+- `/runs` — список (D7, D8; AC-TASK-06, AC-TASK-09); `/runs/[id]` — сторінка запуску (AC-RUN-02, AC-TASK-05,
+  AC-TASK-08); дія `completeTask` (AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-04, AC-TASK-07).
+- Помилки — `?error=<CODE>` → текст PM з `messages.ts` (як у демо курсу): «Enter a case name» (AC-RUN-03), «Case name
+  must be at most 100 characters» (AC-RUN-07), повідомлення про заборону позначки (AC-TASK-03).
 
-### D10. Тести
+### D10. Тести (AC-RUN-01…AC-RUN-09, AC-TASK-01…AC-TASK-09)
 
-- Доменні функції — Vitest (`tests/runs/*.test.ts`).
-- Правила бази (RLS, функції) — справжній Postgres у WASM (PGlite) з усіма міграціями, без Docker:
+- Доменні функції — Vitest (`tests/runs/*.test.ts`): назва випадку (AC-RUN-03, AC-RUN-07), виконавці з форми
+  (AC-RUN-04, AC-RUN-08, AC-RUN-09), хто бачить кнопку позначки (AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-07), прогрес
+  «N of M done» (AC-TASK-05, AC-TASK-09).
+- Правила бази (RLS, функції) — справжній Postgres у WASM (PGlite) з усіма міграціями, без Docker (AC-RUN-01,
+  AC-RUN-02, AC-RUN-04, AC-RUN-05, AC-RUN-06, AC-RUN-08, AC-RUN-09, AC-TASK-01…AC-TASK-09):
   `tests/db/supabase-pglite.ts` взято з демо курсу
   (https://github.com/koldovsky/2026-quitcode-06-leave-portal-demo/blob/main/tests/db/supabase-pglite.ts), нова
   devDependency `@electric-sql/pglite` (ADR 0002). Назва кожного тесту поведінки починається з AC ID.
