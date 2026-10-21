@@ -275,3 +275,40 @@ describe("База: доступ до шаблонів і запусків", () 
     expect(visible.find((task) => task.template_task_id === first)?.assignee_id).toBe(MANAGER_B);
   });
 });
+
+describe("База: атомарний знімок шаблону під час запуску (ADR 0003)", () => {
+  /** Визначення функції запуску, яке діє в базі після всіх міграцій (останнє create or replace). */
+  // Схема private закрита для клієнтських ролей, тож читаємо від імені власника бази (як міграції).
+  const launchRunDefinition = async () =>
+    (
+      await t.db.query<{ def: string }>("select pg_get_functiondef('private.launch_run(uuid, text, jsonb)'::regprocedure) as def")
+    ).rows[0].def.toLowerCase();
+
+  it("AC-RUN-01: запуск блокує шаблон і його секції for update — нова секція чи задача не з'явиться між перевіркою й копією", async () => {
+    const def = await launchRunDefinition();
+    expect(def).toMatch(/from public\.templates as t where t\.id = p_template_id for update/);
+    expect(def).toMatch(/from public\.template_sections as s where s\.template_id = p_template_id for update/);
+    // Запуск із блокуваннями працює як і раніше: один запуск з усіма 5 задачами.
+    const before = await runsCount();
+    const id = await launch(t, MANAGER_A, "Apartment 70, move-in");
+    expect(await runsCount()).toBe(before + 1);
+    expect(await tasksOf(MANAGER_A, id)).toHaveLength(5);
+  });
+
+  it("AC-RUN-02: задачі шаблону заблоковано for share до кінця запуску — їх не змінять і не видалять посеред запуску", async () => {
+    const def = await launchRunDefinition();
+    expect(def).toMatch(/for share of tt/);
+  });
+
+  it("AC-RUN-04: копія задач бере виконавців лише з перевірених призначень (v_valid), не з сирого p_assignees", async () => {
+    const def = await launchRunDefinition();
+    expect(def).toContain("coalesce((v_valid ->> tt.id::text)::uuid, v_uid)");
+    expect(def).not.toContain("v_assignees ->> tt.id");
+    const [first, second] = TENANT_MOVE_IN.taskIds;
+    const stale = "30000000-0000-0000-0000-000000000999";
+    const id = await launch(t, MANAGER_A, "Apartment 71, move-in", { [first]: MANAGER_B, [second]: MANAGER_B, [stale]: MANAGER_B });
+    const tasks = await tasksOf(MANAGER_A, id);
+    expect(tasks.filter((x) => x.assignee_id === MANAGER_B).map((x) => x.template_task_id)).toEqual([first, second]);
+    expect(tasks.filter((x) => x.assignee_id === MANAGER_A)).toHaveLength(3);
+  });
+});

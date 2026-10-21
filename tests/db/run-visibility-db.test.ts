@@ -157,3 +157,18 @@ describe("База: список запусків після відповіде�
     expect(await progressOf(MANAGER_B, runId)).toBe("2 of 5 done");
   });
 });
+
+describe("База: політики RLS", () => {
+  it("AC-TASK-06: кожна політика RLS у public — to authenticated і з (select auth.uid()) у using / with check", async () => {
+    const policies = await t.asService<{ tablename: string; policyname: string; roles: string; qual: string | null; with_check: string | null }>(
+      "select tablename, policyname, roles::text as roles, qual, with_check from pg_policies where schemaname = 'public' order by tablename, policyname",
+    );
+    expect(policies.length).toBeGreaterThanOrEqual(14);
+    for (const p of policies) {
+      expect(p.roles, p.policyname).toBe("{authenticated}");
+      for (const expr of [p.qual, p.with_check].filter((x): x is string => x !== null)) {
+        expect(expr, `${p.tablename}.${p.policyname}`).toContain("auth.uid()");
+      }
+    }
+  });
+});
