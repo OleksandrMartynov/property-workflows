@@ -303,6 +303,26 @@ describe("База: атомарний знімок шаблону під час
     expect(def).toMatch(/for share of tt/);
   });
 
+  it("AC-RUN-02: блокування стоять до перевірки призначень і до копії — знімок береться із заблокованого шаблону", async () => {
+    const def = await launchRunDefinition();
+    const at = (fragment: RegExp | string) => {
+      const i = typeof fragment === "string" ? def.indexOf(fragment) : def.search(fragment);
+      expect(i, String(fragment)).toBeGreaterThanOrEqual(0);
+      return i;
+    };
+    const lockTemplate = at(/from public\.templates as t where t\.id = p_template_id for update/);
+    const lockSections = at(/from public\.template_sections as s where s\.template_id = p_template_id for update/);
+    const lockTasks = at("for share of tt");
+    const validate = at("jsonb_each_text(v_assignees)");
+    const insertRun = at("insert into public.runs");
+    const copyTasks = at("insert into public.run_tasks");
+    expect(lockTemplate).toBeLessThan(lockSections);
+    expect(lockSections).toBeLessThan(lockTasks);
+    expect(lockTasks).toBeLessThan(validate);
+    expect(validate).toBeLessThan(insertRun);
+    expect(insertRun).toBeLessThan(copyTasks);
+  });
+
   it("AC-RUN-04: копія задач бере виконавців лише з перевірених призначень (v_valid), не з сирого p_assignees", async () => {
     const def = await launchRunDefinition();
     expect(def).toContain("coalesce((v_valid ->> tt.id::text)::uuid, v_uid)");
