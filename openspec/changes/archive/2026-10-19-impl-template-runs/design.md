@@ -91,6 +91,9 @@ RLS на кожній таблиці, `revoke all` + явні `grant`, полі�
   AC-TASK-08); дія `completeTask` (AC-TASK-01, AC-TASK-02, AC-TASK-03, AC-TASK-04, AC-TASK-07).
 - Помилки — `?error=<CODE>` → текст PM з `messages.ts` (як у демо курсу): «Enter a case name» (AC-RUN-03), «Case name
   must be at most 100 characters» (AC-RUN-07), повідомлення про заборону позначки (AC-TASK-03).
+- Трасування AC після уточнень PM: AC-RUN-10…AC-RUN-12 і AC-TASK-10…AC-TASK-18 з’явились у знімку 2026-10-21, тож
+  у цьому плані їх немає; сторінку запуску для них (зокрема секції запуску, AC-RUN-12) описують рішення D12–D14 плану
+  `impl-clarify-template-runs` (`openspec/changes/archive/2026-10-21-impl-clarify-template-runs/design.md`).
 
 ### D10. Тести (AC-RUN-01…AC-RUN-09, AC-TASK-01…AC-TASK-09)
 
@@ -102,6 +105,8 @@ RLS на кожній таблиці, `revoke all` + явні `grant`, полі�
   `tests/db/supabase-pglite.ts` взято з демо курсу
   (https://github.com/koldovsky/2026-quitcode-06-leave-portal-demo/blob/main/tests/db/supabase-pglite.ts), нова
   devDependency `@electric-sql/pglite` (ADR 0002). Назва кожного тесту поведінки починається з AC ID.
+- Тести AC-RUN-10…AC-RUN-12 і AC-TASK-10…AC-TASK-18 (зокрема AC-RUN-12 — секції запуску після змін шаблону, тест
+  бази на шаблоні 2 + 3) — у плані `impl-clarify-template-runs` (D16), не в цьому.
 
 ## Ризики
 
