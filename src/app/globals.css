@@ -154,7 +154,7 @@
 
 
   /* Компенсація ваги тексту: на темному тлі трохи важчий */
-  --weight-body: 430;
+  --weight-body: 400;
 }
 
 /* --------------------------------------------------------------------------
@@ -230,7 +230,7 @@
     --chart-5: oklch(0.62 0.03 80);
 
 
-    --weight-body: 470;
+    --weight-body: 420;
   }
 }
 
@@ -366,8 +366,8 @@
    6. Tailwind: імена токенів → утиліти
    -------------------------------------------------------------------------- */
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
   --font-display: var(--font-instrument-serif), ui-serif, "Iowan Old Style", Georgia, serif;
 
   --color-accent-float: var(--accent-float);
@@ -482,8 +482,8 @@
   --text-display--font-weight: 600;
   --text-hero: clamp(2.25rem, 3.7vw, 3.75rem);
   --text-hero--line-height: 1.04;
-  --text-hero--letter-spacing: -0.032em;
-  --text-hero--font-weight: 540;
+  --text-hero--letter-spacing: -0.038em;
+  --text-hero--font-weight: 600;
   --text-eyebrow: 0.6875rem;
   --text-eyebrow--line-height: 1rem;
   --text-eyebrow--letter-spacing: 0.14em;
@@ -501,7 +501,7 @@
   --text-body--letter-spacing: -0.006em;
   --text-label: 0.8125rem;
   --text-label--line-height: 1.125rem;
-  --text-label--font-weight: 520;
+  --text-label--font-weight: 500;
   --text-meta: 0.75rem;
   --text-meta--line-height: 1rem;
   --text-meta--letter-spacing: 0.004em;

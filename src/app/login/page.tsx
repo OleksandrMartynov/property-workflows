@@ -41,7 +41,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             style={{ "--reveal-delay": "120ms" } as CSSProperties}
             className="animate-ui-reveal flex flex-col gap-8 rounded-xl border border-border bg-card/85 p-8 shadow-md backdrop-blur-sm"
           >
-            <h1 className="font-display text-[2.75rem] font-normal leading-none tracking-[-0.01em]">Sign in</h1>
+            <h1 className="text-[2rem] font-semibold leading-9 tracking-[-0.03em]">Sign in</h1>
             <LoginForm action={login} serverError={message} />
           </div>
         </div>

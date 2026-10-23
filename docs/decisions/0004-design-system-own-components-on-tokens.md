@@ -12,11 +12,13 @@
 
 ## Рішення
 
+- **Шрифти:** Inter (змінний, вісь optical size) для тексту й заголовків, JetBrains Mono для моно; через `next/font/google`, без npm-пакетів. Geist відхилено після перегляду 8 стеків на реальних екранах: Inter читається чіткіше в щільних таблицях (tabular-цифри) і на Windows.
+
 - **Токени** в `src/app/globals.css`: OKLCH, світла тема в `:root`, темна в `@media (prefers-color-scheme: dark)`, `@theme inline` з `--color-*`. Імена shadcn/ui плюс статуси домену (`status-*`: тло, текст, іконка), `ai*`, `variable*` для майбутнього конструктора, `stage*` для сцени входу, стани (`state-hover/pressed/selected`) як альфа-шар.
 - **Компоненти власні** в `src/components/ui/` на цих токенах, без shadcn CLI і без нових залежностей: Button, Input/Textarea/PasswordInput, Select (власний listbox), Combobox, MultiSelect, DatePicker, DateRangePicker, TimeField (київський час), NumberField, CurrencyField, Checkbox, RadioGroup, Switch, Segmented, Slider, FileDrop, Popover, Label, Field, Card, Table, Badge, StatusBadge, Alert, Progress, Avatar, EmptyState, Dialog/ConfirmDialog, TaskCheck/CompletionGlow (оживлення завершення), Skeleton, AppShell із ⌘K, Logo. Діалоги — нативний `<dialog>`: фокус-пастка, Esc і inert-фон дає браузер.
 - **Підтвердження незворотної дії** (AC-TASK-04, 16) — `ConfirmDialog`; `withConfirmation` з `src/lib/runs/confirmation.ts` не змінено, тож тести правила лишились дослівними.
 - **Правило в CI:** `scripts/check-design-tokens.mjs`, `scripts/check-contrast.mjs` і `scripts/check-ui-copy.mjs` (жодних пояснювальних підзаголовків і копірайтів в інтерфейсі; хук Claude Code в `.claude/settings.json` запускає її після кожної правки `src/**/*.tsx`) у `.github/workflows/architecture.yml`. Контраст пар токенів у `DESIGN.md` генерує скрипт, а не рука.
-- **Вхід** — єдиний екран із рухом і єдине місце з другим шрифтом (Instrument Serif через `next/font/google`, без npm-пакета; акцентне слово hero й заголовок «Sign in»): WebGL-шейдер без залежностей (DPR ≤ 1.5 ×0.55, ≤ 30 кадрів/с, пауза поза екраном і за кнопкою «Pause animation», запасний CSS-фон, статичний кадр за `prefers-reduced-motion`), кольори шейдера читаються з токенів `--stage*`.
+- **Вхід** — єдиний екран із рухом і єдине місце з другим шрифтом (Instrument Serif Italic через `next/font/google`, без npm-пакета; лише акцентне слово hero): WebGL-шейдер без залежностей (DPR ≤ 1.5 ×0.55, ≤ 30 кадрів/с, пауза поза екраном і за кнопкою «Pause animation», запасний CSS-фон, статичний кадр за `prefers-reduced-motion`), кольори шейдера читаються з токенів `--stage*`.
 
 ## Розглянуті варіанти
 
