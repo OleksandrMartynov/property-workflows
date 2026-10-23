@@ -98,7 +98,7 @@ export function Select({
   options: optionsProp,
   loading = false,
   emptyTitle = "No matches",
-  emptyHint = "Try a different search.",
+  emptyHint,
   className,
   children,
   disabled,

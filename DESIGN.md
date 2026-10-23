@@ -1,4 +1,4 @@
-[Claude Design: Property Workflows](https://claude.ai/artifact/C57BDJJXCSjiDhnDyMfz6e)
+[Claude Design: Property Workflows](https://claude.ai/artifact/BamW4LNTPFw37TFKkzJU9Z)
 
 # Дизайн-система: Property Workflows
 

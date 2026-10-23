@@ -76,7 +76,7 @@ export function MultiSelect({
   onQueryChange,
   filter = true,
   emptyTitle = "No matches",
-  emptyHint = "Try a different search.",
+  emptyHint,
   className,
   ...ariaProps
 }: MultiSelectProps) {

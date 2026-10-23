@@ -46,8 +46,8 @@ export function checkSource(source) {
     }
   }
 
-  // description="…", hint="…", subtitle="…" з довгим літералом.
-  for (const match of source.matchAll(/\b(description|hint|subtitle|helperText)="([^"]+)"/g)) {
+  // description="…", hint="…", emptyHint = "…" (проп чи значення за замовчуванням), subtitle="…" з довгим літералом.
+  for (const match of source.matchAll(/\b(description|hint|emptyHint|subtitle|helperText)\s*=\s*"([^"]+)"/g)) {
     if (words(match[2]) >= 4) report(lineOf(match.index), `${match[1]}="${match[2].slice(0, 40)}…" — пояснювальний текст`);
   }
 

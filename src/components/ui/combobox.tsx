@@ -69,7 +69,7 @@ export function Combobox({
   onQueryChange,
   filter = true,
   emptyTitle = "No matches",
-  emptyHint = "Try a different name or email.",
+  emptyHint,
   className,
   ...ariaProps
 }: ComboboxProps) {
