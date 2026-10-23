@@ -1,50 +1,56 @@
+import type { CSSProperties } from "react";
+import { HeroStage } from "@/components/ui/hero-stage";
+import { Logo, LogoMark } from "@/components/ui/logo";
 import { login } from "./actions";
+import { LoginForm } from "./login-form";
 
 const ERRORS: Record<string, string> = {
-  missing: "Вкажіть email і пароль.",
-  invalid: "Невірний email або пароль.",
+  missing: "Enter your email and password.",
+  invalid: "Invalid email or password.",
 };
+
+export const metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { error } = await searchParams;
   const message = typeof error === "string" ? ERRORS[error] : undefined;
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Вхід</h1>
-      <form action={login} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Email
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Пароль
-          <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-          />
-        </label>
-        {message ? (
-          <p role="alert" className="text-sm text-red-600">
-            {message}
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          className="rounded bg-foreground px-4 py-2 font-medium text-background"
-        >
-          Увійти
-        </button>
-      </form>
+    <main className="grid min-h-dvh flex-1 lg:grid-cols-[minmax(28rem,0.82fr)_minmax(0,1.18fr)]">
+      <div
+        aria-hidden="true"
+        className="relative h-28 overflow-hidden bg-stage bg-[radial-gradient(70%_120%_at_15%_0%,var(--stage-glow-1),transparent),radial-gradient(60%_110%_at_90%_100%,var(--stage-glow-2),transparent)] lg:hidden"
+      >
+        <LogoMark className="absolute -bottom-6 -right-4 size-32 text-stage-foreground/15" />
+      </div>
+      <section className="relative isolate flex flex-col overflow-hidden px-6 py-8 sm:px-14">
+        {/* Фактура панелі: м'яке сяйво primary зверху й точкова сітка, що розчиняється до краю. Лише токени. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(90%_55%_at_25%_0%,color-mix(in_oklab,var(--primary)_11%,transparent),transparent)]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(color-mix(in_oklab,var(--foreground)_14%,transparent)_1px,transparent_1.2px)] [background-size:22px_22px] [mask-image:radial-gradient(75%_60%_at_40%_45%,var(--foreground),transparent)]"
+        />
+
+        <Logo className="animate-ui-reveal" />
+
+        <div className="mx-auto flex w-full max-w-[25rem] flex-1 flex-col justify-center py-10">
+          <div
+            style={{ "--reveal-delay": "120ms" } as CSSProperties}
+            className="animate-ui-reveal flex flex-col gap-8 rounded-xl border border-border bg-card/85 p-8 shadow-md backdrop-blur-sm"
+          >
+            <h1 className="font-display text-[2.75rem] font-normal leading-none tracking-[-0.01em]">Sign in</h1>
+            <LoginForm action={login} serverError={message} />
+          </div>
+        </div>
+
+      </section>
+
+      <aside className="hidden lg:block">
+        <HeroStage />
+      </aside>
     </main>
   );
 }

@@ -1,14 +1,11 @@
 import { notFound } from "next/navigation";
-import { canCompleteTask } from "@/lib/runs/access";
-import { isLastRequiredTask } from "@/lib/runs/confirmation";
-import { requiredLabel, runStatusLabel, taskStatusLabel } from "@/lib/runs/labels";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { runStatusLabel } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
-import { countProgress, formatProgress } from "@/lib/runs/progress";
-import { groupBySection } from "@/lib/runs/sections";
 import { requireViewer } from "@/lib/supabase/viewer";
-import { Notice, PageShell, StatusBadge } from "../../_components/ui";
+import { Notice, PageShell } from "../../_components/ui";
 import { completeTask } from "../actions";
-import { MarkDoneForm } from "./mark-done-form";
+import { RunDetail } from "./_components/run-detail";
 
 // Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
 // виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
@@ -35,55 +32,20 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
     supabase.rpc("list_assignable_users"),
   ]);
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
-  const sections = groupBySection(tasks ?? []);
   const message = errorMessage(error);
 
   return (
-    <PageShell title={run.case_name} email={viewer.email} role={viewer.role}>
+    <PageShell
+      title={run.case_name}
+      description={run.template_name}
+      back={{ href: "/runs", label: "Runs" }}
+      email={viewer.email}
+      role={viewer.role}
+      actions={<StatusBadge status={run.status === "completed" ? "done" : "progress"}>{runStatusLabel(run.status)}</StatusBadge>}
+    >
       {done === "launched" ? <Notice kind="success">Run launched.</Notice> : null}
       {message ? <Notice kind="error">{message}</Notice> : null}
-
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="text-zinc-500">Template</dt>
-        <dd>{run.template_name}</dd>
-        <dt className="text-zinc-500">Run manager</dt>
-        <dd data-testid="run-manager">{emailOf.get(run.run_manager_id) ?? "—"}</dd>
-        <dt className="text-zinc-500">Status</dt>
-        <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>
-        <dt className="text-zinc-500">Progress</dt>
-        <dd data-testid="run-progress" className="font-medium">
-          {formatProgress(countProgress(tasks ?? []))}
-        </dd>
-      </dl>
-
-      {sections.map((section) => (
-        <section key={section.key} className="flex flex-col gap-2" data-testid="run-section">
-          <h2 className="font-medium">{section.name}</h2>
-          <ul className="flex flex-col divide-y divide-zinc-200 rounded border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-            {section.tasks.map((task) => (
-                <li key={task.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm" data-testid="run-task">
-                  <span>
-                    {task.name}
-                    <span className="ml-2 text-xs text-zinc-500" data-testid="task-required">{requiredLabel(task.required)}</span>
-                  </span>
-                  <span className="flex items-center gap-3">
-                    <span className="text-zinc-500">{emailOf.get(task.assignee_id) ?? "—"}</span>
-                    <StatusBadge done={task.status === "done"}>{taskStatusLabel(task.status)}</StatusBadge>
-                    {canCompleteTask(viewer, task, run) ? (
-                      <MarkDoneForm
-                        action={completeTask}
-                        runId={run.id}
-                        taskId={task.id}
-                        taskName={task.name}
-                        needsConfirmation={isLastRequiredTask(task, tasks ?? [])}
-                      />
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </section>
-      ))}
+      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} />
     </PageShell>
   );
 }
