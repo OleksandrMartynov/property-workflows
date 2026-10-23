@@ -20,6 +20,7 @@
   --size-control-lg: 36px;
   --size-header: 44px;
   --size-sidebar: 240px;
+  --size-sidebar-rail: 3.5rem;
 
   /* Фокус: чіткий 2px outline з відступом, ніколи не «світіння» */
   --ring-width: 2px;

@@ -122,17 +122,17 @@ export function RunDetail({
           </div>
           <ProgressBar done={progress.done} total={progress.total} />
         </div>
-        <dl className="grid grid-cols-[max-content_minmax(0,1fr)] items-center gap-x-4 gap-y-3 text-body">
-          <dt className="text-muted-foreground">Template</dt>
+        <dl className="flex flex-col text-body [&>dd]:mb-3.5 [&>dd:last-child]:mb-0">
+          <dt className="mb-1 text-meta text-muted-foreground">Template</dt>
           <dd className="min-w-0 break-words">{run.template_name}</dd>
-          <dt className="text-muted-foreground">Run manager</dt>
+          <dt className="mb-1 text-meta text-muted-foreground">Run manager</dt>
           <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
             {managerEmail ? <Avatar email={managerEmail} /> : null}
-            <span className="min-w-0 break-all">{managerEmail ?? "—"}</span>
+            <span className="min-w-0 break-words">{managerEmail ?? "—"}</span>
           </dd>
-          <dt className="text-muted-foreground">Status</dt>
+          <dt className="mb-1 text-meta text-muted-foreground">Status</dt>
           <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>
-          <dt className="text-muted-foreground">Assignees</dt>
+          <dt className="mb-1 text-meta text-muted-foreground">Assignees</dt>
           <dd>
             <AvatarStack emails={assignees} max={4} />
           </dd>
