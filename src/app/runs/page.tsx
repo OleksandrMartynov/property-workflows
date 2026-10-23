@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { runStatusLabel } from "@/lib/runs/labels";
-import { formatProgress } from "@/lib/runs/progress";
+import { buttonVariants } from "@/components/ui/button";
 import { requireViewer } from "@/lib/supabase/viewer";
-import { PageShell, StatusBadge } from "../_components/ui";
+import { PageShell } from "../_components/ui";
+import { RunsList } from "./_components/runs-list";
+import { loadRunSummaries } from "./_lib/summaries";
+
+export const metadata = { title: "Runs" };
 
 // Список запусків: AC-TASK-06 — менеджер бачить лише запуски, де він менеджер запуску або виконавець хоча б однієї
 // задачі (RLS, private.can_see_run), адміністратор — усі; AC-TASK-09 — прогрес «N of M done» кожного запуску
@@ -28,59 +31,36 @@ export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
     throw runsError;
   }
 
-  const runIds = (runs ?? []).map((r) => r.id);
-  const [progressResult, usersResult] = await Promise.all([
-    runIds.length
-      ? supabase.from("run_progress").select("run_id, done, total").in("run_id", runIds)
-      : Promise.resolve({ data: [] as { run_id: string; done: number; total: number }[], error: null }),
-    supabase.rpc("list_assignable_users"),
-  ]);
-  if (progressResult.error) throw progressResult.error;
-  if (usersResult.error) throw usersResult.error;
-
-  const progress = new Map((progressResult.data ?? []).map((p) => [p.run_id, { done: p.done ?? 0, total: p.total ?? 0 }]));
-  const emailOf = new Map((usersResult.data ?? []).map((u) => [u.id, u.email]));
+  const { summary, emailOf } = await loadRunSummaries(
+    supabase,
+    (runs ?? []).map((r) => r.id),
+  );
   const total = count ?? 0;
   const hasNext = from + PAGE_SIZE < total;
+  const managerOf = (run: { run_manager_id: string }) => (run.run_manager_id === viewer.id ? "me" : (emailOf.get(run.run_manager_id) ?? "—"));
 
   return (
     <PageShell title="Runs" email={viewer.email} role={viewer.role}>
-      {!runs?.length ? (
-        <p className="text-sm text-zinc-500">
-          No runs yet. <Link href="/templates" className="underline">Launch a template</Link>.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {runs.map((run) => (
-            <li key={run.id} data-testid="run-row">
-              <Link
-                href={`/runs/${run.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 rounded border border-zinc-200 p-4 hover:border-zinc-400 dark:border-zinc-800"
-              >
-                <span>
-                  <span className="block font-medium">{run.case_name}</span>
-                  <span className="block text-sm text-zinc-500">
-                    {run.template_name} · run manager {run.run_manager_id === viewer.id ? "me" : (emailOf.get(run.run_manager_id) ?? "—")}
-                  </span>
-                </span>
-                <span className="flex items-center gap-3 text-sm">
-                  <span data-testid="run-progress" className="font-medium">
-                    {formatProgress(progress.get(run.id) ?? { done: 0, total: 0 })}
-                  </span>
-                  <StatusBadge done={run.status === "completed"}>{runStatusLabel(run.status)}</StatusBadge>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <RunsList runs={runs ?? []} summary={summary} managerOf={managerOf} />
       {page > 1 || hasNext ? (
-        <nav className="flex items-center justify-between text-sm" aria-label="Pages">
-          {page > 1 ? <Link href={`/runs?page=${page - 1}`} className="underline">Newer</Link> : <span />}
-          <span className="text-zinc-500">
+        <nav className="flex items-center justify-between text-body" aria-label="Pages">
+          {page > 1 ? (
+            <Link href={`/runs?page=${page - 1}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Newer
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="tabular text-muted-foreground">
             Page {page} of {Math.max(1, Math.ceil(total / PAGE_SIZE))}
           </span>
-          {hasNext ? <Link href={`/runs?page=${page + 1}`} className="underline">Older</Link> : <span />}
+          {hasNext ? (
+            <Link href={`/runs?page=${page + 1}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Older
+            </Link>
+          ) : (
+            <span />
+          )}
         </nav>
       ) : null}
     </PageShell>

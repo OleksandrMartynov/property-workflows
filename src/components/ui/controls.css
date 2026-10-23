@@ -1,0 +1,347 @@
+/* ==========================================================================
+   Контролі форм: повідомлення поля, checkbox, radio, switch, segmented, slider, file drop.
+   Джерело — forms.css дизайн-лабораторії. Лише токени (var(--…)), жодних hex і сирих палітр.
+   Усе в @layer components, щоб утиліти Tailwind (className з боку сторінки) перебивали ці правила.
+   ========================================================================== */
+@layer theme, base, components, utilities;
+
+:root {
+  /* Наведення на межу поля: на крок темніша за `input`. Локальний похідний токен. */
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
+  /* Пружина з легким перельотом (~4.5 %) — лише для малих перемикачів, ніколи для кольору й прозорості */
+  --spring-bouncy: linear(0, 0.015 2%, 0.07 4.5%, 0.169 7.5%, 0.594 18%, 0.731 22%, 0.841 26%, 0.923 30%, 0.986 34.5%, 1.026 39.5%, 1.045 46%, 1.035 57.5%, 1.002 79.5%, 1);
+  --spring-bouncy-duration: 360ms;
+}
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root { --spring-bouncy: cubic-bezier(0.34, 1.3, 0.64, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --spring-bouncy: var(--ease-standard); --spring-bouncy-duration: var(--duration-fast); }
+}
+
+@layer components {
+  @keyframes ctl-pop { from { opacity: 0; transform: scale(0.5); } }
+  @keyframes ctl-check-pop { from { transform: scale(0.98); } }
+  @keyframes ctl-spin { to { transform: rotate(1turn); } }
+  @keyframes ctl-march { to { stroke-dashoffset: -20; } }
+  @keyframes ctl-enter { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+  @keyframes ctl-exit { to { opacity: 0; transform: translateY(-2px) scale(0.98); } }
+
+  /* ----------------------------------------------------------------------
+     Повідомлення поля: підказка й помилка в одній клітинці сітки — перемикання без стрибка макета.
+     Поле без підказки розкриває рядок помилки пружиною.
+     ---------------------------------------------------------------------- */
+  .ctl-foot { display: flex; align-items: flex-start; gap: 12px; }
+  .ctl-msg {
+    flex: 1; min-width: 0; display: grid; grid-template-rows: 0fr;
+    transition: grid-template-rows var(--spring-smooth-duration) var(--spring-smooth);
+  }
+  .ctl-msg[data-open] { grid-template-rows: 1fr; }
+  .ctl-hint, .ctl-error {
+    grid-area: 1 / 1; min-height: 0; overflow: hidden; padding-top: 6px;
+    font-size: 12px; line-height: 16px;
+    transition: opacity var(--duration-base) var(--ease-standard), transform var(--spring-smooth-duration) var(--spring-smooth);
+  }
+  .ctl-hint { color: var(--muted-foreground); }
+  .ctl-error {
+    color: var(--destructive); display: flex; align-items: flex-start; gap: 6px;
+    opacity: 0; transform: translateY(-4px); pointer-events: none;
+  }
+  .ctl-error svg { width: 14px; height: 14px; margin-top: 1px; flex: none; }
+  .ctl-msg[data-invalid] .ctl-error { opacity: 1; transform: none; pointer-events: auto; }
+  .ctl-msg[data-invalid] .ctl-hint { opacity: 0; transform: translateY(4px); }
+  .ctl-counter {
+    flex: none; padding-top: 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+    transition: color var(--duration-base) var(--ease-standard);
+  }
+  .ctl-counter[data-state="near"] { color: var(--status-due-soon-foreground); }
+  .ctl-counter[data-state="over"] { color: var(--destructive); }
+
+  /* Невеликі значки в полі (помилка, «очистити», caps lock): з'являються пружиною, місця не займають, доки не потрібні */
+  .ctl-pop { animation: ctl-pop var(--spring-snappy-duration) var(--spring-bouncy) both; }
+
+  /* ----------------------------------------------------------------------
+     Checkbox · radio · switch: справжні <input>, наш вигляд
+     ---------------------------------------------------------------------- */
+  .ctl-check, .ctl-radio, .ctl-switch {
+    --_tone: var(--primary); --_on: var(--primary-foreground);
+    position: relative; display: inline-flex; align-items: flex-start; gap: 8px; min-height: 24px;
+    padding: 2px 0; font-size: 14px; line-height: 20px; color: var(--foreground);
+    cursor: default; -webkit-user-select: none; user-select: none; max-width: 100%;
+  }
+  .ctl-check[data-tone="done"] { --_tone: var(--status-done-mark); --_on: var(--background); }
+  .ctl-check__input, .ctl-radio__input, .ctl-switch__input {
+    position: absolute; left: 0; top: 2px; margin: 0; opacity: 0; cursor: inherit;
+    appearance: none; -webkit-appearance: none;
+  }
+  .ctl-check__input, .ctl-radio__input { width: var(--size-check); height: var(--size-check); margin-block: 2px; }
+  .ctl-switch__input { width: var(--size-switch-w); height: var(--size-switch-h); margin-block: 2px; }
+  .ctl-check__box, .ctl-radio__box {
+    position: relative; width: var(--size-check); height: var(--size-check); margin-block: 2px; flex: none;
+    display: grid; place-items: center; color: var(--_on); background: var(--field);
+    box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    transition: background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+  }
+  .ctl-check__box { border-radius: 4px; }
+  .ctl-radio__box { border-radius: 50%; }
+  .ctl-check__box svg { width: 12px; height: 12px; grid-area: 1 / 1; overflow: visible; }
+  .ctl-check__box path {
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+    transition: stroke-dashoffset var(--duration-base) var(--ease-standard) 30ms;
+  }
+  .ctl-check__text, .ctl-radio__text, .ctl-switch__text { display: grid; min-width: 0; }
+  .ctl-switch__text { padding-top: 2px; }
+  .ctl-check__label { display: block; }
+  .ctl-check__desc { font-size: 12px; line-height: 16px; color: var(--muted-foreground); margin-top: 2px; }
+
+  .ctl-check:hover .ctl-check__input:not(:checked, :indeterminate, :disabled) + .ctl-check__box,
+  .ctl-radio:hover .ctl-radio__input:not(:checked, :disabled) + .ctl-radio__box { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+  .ctl-check:hover .ctl-check__input:is(:checked, :indeterminate):not(:disabled) + .ctl-check__box {
+    background: color-mix(in oklab, var(--_tone), var(--foreground) 10%);
+    box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--_tone), var(--foreground) 10%);
+  }
+  .ctl-radio:hover .ctl-radio__input:checked:not(:disabled) + .ctl-radio__box { background: var(--primary-hover); box-shadow: inset 0 0 0 1.5px var(--primary-hover); }
+  .ctl-check__input:active:not(:disabled) + .ctl-check__box, .ctl-radio__input:active:not(:disabled) + .ctl-radio__box { transform: scale(var(--scale-press)); }
+  .ctl-check__input:is(:checked, :indeterminate) + .ctl-check__box { background: var(--_tone); box-shadow: inset 0 0 0 1.5px var(--_tone); }
+  .ctl-check__input:checked + .ctl-check__box .tick, .ctl-check__input:indeterminate + .ctl-check__box .dash { stroke-dashoffset: 0; }
+  .ctl-check__input:indeterminate + .ctl-check__box .tick { stroke-dashoffset: 1; }
+  .ctl-check__box[data-pop], .ctl-radio__box[data-pop] { animation: ctl-check-pop var(--spring-bouncy-duration) var(--spring-bouncy) both; }
+  .ctl-check__input:focus-visible + .ctl-check__box, .ctl-radio__input:focus-visible + .ctl-radio__box { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+  .ctl-radio__box::after {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--_on);
+    transform: scale(0); transition: transform var(--spring-bouncy-duration) var(--spring-bouncy);
+  }
+  .ctl-radio__input:checked + .ctl-radio__box { background: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+  .ctl-radio__input:checked + .ctl-radio__box::after { transform: scale(1); }
+
+  .ctl-check[data-invalid] .ctl-check__input:not(:checked, :indeterminate) + .ctl-check__box,
+  .ctl-radio[data-invalid] .ctl-radio__input:not(:checked) + .ctl-radio__box { box-shadow: inset 0 0 0 1.5px var(--destructive); background: var(--destructive-tint); }
+  .ctl-check[data-invalid] .ctl-check__input:focus-visible + .ctl-check__box, .ctl-radio[data-invalid] .ctl-radio__input:focus-visible + .ctl-radio__box { outline-color: var(--destructive); }
+
+  .ctl-check:has(:disabled), .ctl-radio:has(:disabled), .ctl-switch:has(:disabled) { color: var(--muted-foreground); cursor: not-allowed; }
+  .ctl-check:has(:disabled) .ctl-check__box, .ctl-radio:has(:disabled) .ctl-radio__box { background: var(--muted); box-shadow: inset 0 0 0 1.5px var(--border); --_on: var(--muted-foreground); }
+  .ctl-check__input:disabled:is(:checked, :indeterminate) + .ctl-check__box,
+  .ctl-radio__input:disabled:checked + .ctl-radio__box { background: var(--control-disabled-fill); box-shadow: none; --_on: var(--muted); }
+
+  .ctl-choices { display: grid; gap: 4px; border: 0; padding: 0; margin: 0; min-width: 0; }
+  .ctl-choices[data-dir="row"] { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .ctl-choices__legend { font-size: 13px; line-height: 18px; font-weight: 500; padding: 0; margin-bottom: 8px; color: var(--foreground); }
+
+  /* Switch ---------------------------------------------------------------- */
+  .ctl-switch__track {
+    --_thumb: calc(var(--size-switch-h) - 6px);
+    position: relative; flex: none; width: var(--size-switch-w); height: var(--size-switch-h); margin-block: 2px; border-radius: 9999px;
+    background: var(--control-off); box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    transition: background-color var(--duration-base) var(--ease-in-out-soft), box-shadow var(--duration-base) var(--ease-in-out-soft);
+  }
+  .ctl-switch__thumb {
+    position: absolute; left: 3px; top: 3px; width: var(--_thumb); height: var(--_thumb); border-radius: 50%;
+    background: var(--border-strong); display: grid; place-items: center;
+    transform: translateX(var(--_x, 0)) scaleX(var(--_sx, 1)); transform-origin: var(--_ox, left center);
+    transition: transform var(--spring-bouncy-duration) var(--spring-bouncy), background-color var(--duration-base) var(--ease-in-out-soft);
+  }
+  .ctl-switch__input:checked + .ctl-switch__track { background: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+  .ctl-switch__input:checked + .ctl-switch__track .ctl-switch__thumb { --_x: calc(var(--size-switch-w) - var(--size-switch-h)); --_ox: right center; background: var(--primary-foreground); }
+  .ctl-switch:hover .ctl-switch__input:not(:checked, :disabled) + .ctl-switch__track { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+  .ctl-switch:hover .ctl-switch__input:not(:checked, :disabled) + .ctl-switch__track .ctl-switch__thumb { background: var(--foreground); }
+  .ctl-switch:hover .ctl-switch__input:checked:not(:disabled) + .ctl-switch__track { background: var(--primary-hover); box-shadow: inset 0 0 0 1.5px var(--primary-hover); }
+  .ctl-switch__input:active:not(:disabled) + .ctl-switch__track .ctl-switch__thumb { --_sx: 1.18; }
+  .ctl-switch__input:focus-visible + .ctl-switch__track { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+  .ctl-switch__input:disabled + .ctl-switch__track { background: var(--muted); box-shadow: inset 0 0 0 1.5px var(--border); }
+  .ctl-switch__input:disabled + .ctl-switch__track .ctl-switch__thumb { background: var(--control-disabled-fill); }
+  .ctl-switch__input:disabled:checked + .ctl-switch__track { background: var(--control-disabled-fill); box-shadow: none; }
+  .ctl-switch__input:disabled:checked + .ctl-switch__track .ctl-switch__thumb { background: var(--muted); }
+  /* Зайнятий: на кульці крутиться дуга, доки зміну зберігають */
+  .ctl-switch[data-busy] .ctl-switch__thumb::after {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid color-mix(in oklch, var(--control-off) 85%, transparent); border-top-color: transparent;
+    animation: ctl-spin 800ms linear infinite;
+  }
+  .ctl-switch[data-busy] .ctl-switch__input:checked + .ctl-switch__track .ctl-switch__thumb::after { border-color: color-mix(in oklch, var(--primary) 85%, transparent); border-top-color: transparent; }
+  .ctl-switch[data-busy] { cursor: progress; }
+  .ctl-switch--lead { flex-direction: row-reverse; justify-content: space-between; width: 100%; }
+
+  /* ----------------------------------------------------------------------
+     Segmented control: бігунок, що ковзає (radiogroup, roving tabindex)
+     ---------------------------------------------------------------------- */
+  .ctl-seg {
+    --_bh: 26px; position: relative; display: inline-flex; width: fit-content; padding: 2px; gap: 2px; max-width: 100%;
+    background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .ctl-seg[data-size="sm"] { --_bh: 22px; }
+  .ctl-seg[data-size="lg"] { --_bh: 30px; }
+  .ctl-seg[data-block] { display: flex; width: 100%; }
+  .ctl-seg[data-block] > .ctl-seg__btn { flex: 1 1 0; justify-content: center; }
+  .ctl-seg__thumb {
+    position: absolute; top: 2px; left: 0; height: var(--_bh); width: 0; border-radius: 4px; pointer-events: none;
+    background: var(--background); box-shadow: 0 0 0 1px var(--border), var(--elevation-1);
+    transition: transform var(--spring-snappy-duration) var(--spring-snappy), width var(--spring-snappy-duration) var(--spring-snappy);
+  }
+  /* До першого виміру (SSR) вибраний пункт сам має фон бігунка */
+  .ctl-seg:not([data-placed]) .ctl-seg__btn[aria-checked="true"] { background: var(--background); box-shadow: 0 0 0 1px var(--border); }
+  .ctl-seg__btn {
+    position: relative; z-index: 1; height: var(--_bh); padding: 0 12px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; line-height: 18px; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; cursor: default;
+    transition: color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+  }
+  .ctl-seg[data-size="sm"] .ctl-seg__btn { padding: 0 8px; font-size: 12px; line-height: 16px; }
+  .ctl-seg__btn svg { width: 14px; height: 14px; flex: none; }
+  .ctl-seg__btn:hover:not([aria-disabled="true"]), .ctl-seg__btn[aria-checked="true"] { color: var(--foreground); }
+  .ctl-seg__btn:active:not([aria-disabled="true"]) { transform: scale(var(--scale-press)); }
+  .ctl-seg__btn:focus-visible { outline-offset: 0; }
+  .ctl-seg__btn[aria-disabled="true"] { color: var(--control-disabled-fill); cursor: not-allowed; }
+  .ctl-seg[data-disabled] { background: transparent; }
+
+  /* ----------------------------------------------------------------------
+     Slider: бігунок одинарний або діапазон, бульбашка зі значенням
+     ---------------------------------------------------------------------- */
+  .ctl-slider {
+    position: relative; display: block; height: var(--size-hit); touch-action: none; cursor: default;
+    -webkit-user-select: none; user-select: none; margin-inline: calc(var(--size-thumb) / 2);
+  }
+  .ctl-slider[data-bubble] { margin-top: 24px; }
+  .ctl-slider__rail {
+    position: absolute; left: 0; right: 0; top: 50%; height: var(--size-track); margin-top: calc(var(--size-track) / -2);
+    border-radius: 9999px; background: var(--control-off); box-shadow: inset 0 0 0 1px var(--border);
+  }
+  /* Поле натискання ширше за рейку на радіус бігунка з кожного боку */
+  .ctl-slider::before { content: ""; position: absolute; left: calc(var(--size-thumb) / -2); right: calc(var(--size-thumb) / -2); top: 0; bottom: 0; }
+  .ctl-slider__fill {
+    position: absolute; inset: 0; border-radius: inherit; background: var(--primary); transform-origin: left center;
+    transform: translateX(calc(var(--p0, 0) * 100%)) scaleX(calc(var(--p1, 0) - var(--p0, 0)));
+    transition: transform var(--spring-snappy-duration) var(--spring-snappy), background-color var(--duration-base) var(--ease-in-out-soft);
+  }
+  .ctl-slider[data-tone="ai"] .ctl-slider__fill { background: var(--ai-mark); }
+  .ctl-slider__thumb {
+    --_ring: var(--primary);
+    position: absolute; left: calc(var(--p) * 100%); top: 50%; width: var(--size-thumb); height: var(--size-thumb);
+    margin: calc(var(--size-thumb) / -2) 0 0 calc(var(--size-thumb) / -2);
+    border-radius: 50%; background: var(--background);
+    box-shadow: inset 0 0 0 2px var(--_ring), 0 0 0 0 var(--primary-tint);
+    transform: scale(var(--_s, 1));
+    transition: left var(--spring-snappy-duration) var(--spring-snappy), transform var(--spring-snappy-duration) var(--spring-snappy), box-shadow var(--duration-fast) var(--ease-standard);
+    outline: none;
+  }
+  .ctl-slider[data-tone="ai"] .ctl-slider__thumb { --_ring: var(--ai-mark); }
+  .ctl-slider__thumb:hover { box-shadow: inset 0 0 0 2px var(--_ring), 0 0 0 6px color-mix(in oklch, var(--_ring) 14%, transparent); }
+  .ctl-slider__thumb:focus-visible { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+  .ctl-slider[data-dragging] .ctl-slider__thumb, .ctl-slider[data-dragging] .ctl-slider__fill { transition: none; }
+  .ctl-slider[data-dragging] .ctl-slider__thumb[data-active] { --_s: var(--scale-thumb); box-shadow: inset 0 0 0 2px var(--_ring), var(--elevation-1); }
+  .ctl-slider__bubble {
+    position: absolute; left: 50%; bottom: calc(100% + 8px); translate: -50% 0; pointer-events: none;
+    min-width: 28px; height: 20px; padding: 0 6px; border-radius: 4px; display: grid; place-items: center; white-space: nowrap;
+    background: var(--foreground); color: var(--background); font-size: 11px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums;
+    opacity: 0; transform: translateY(4px) scale(var(--scale-enter)); transform-origin: bottom center;
+    transition: opacity var(--duration-fast) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-snappy);
+  }
+  .ctl-slider__bubble::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; background: inherit; transform: translateX(-50%) rotate(45deg); border-radius: 1px; }
+  .ctl-slider__thumb:is(:hover, :focus-visible) .ctl-slider__bubble,
+  .ctl-slider[data-dragging] .ctl-slider__thumb[data-active] .ctl-slider__bubble,
+  .ctl-slider[data-bubble] .ctl-slider__bubble { opacity: 1; transform: none; }
+  .ctl-slider[data-disabled] { cursor: not-allowed; }
+  .ctl-slider[data-disabled] .ctl-slider__fill { background: var(--control-disabled-fill); }
+  .ctl-slider[data-disabled] .ctl-slider__thumb { background: var(--muted); box-shadow: inset 0 0 0 2px var(--control-disabled-fill); pointer-events: none; }
+  .ctl-slider__scale {
+    display: flex; justify-content: space-between; margin-top: -4px; font-size: 12px; line-height: 16px;
+    color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+  }
+  .ctl-slider-field { display: grid; gap: 4px; min-width: 0; }
+  .ctl-slider-field__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .ctl-slider-field__value { font-size: 13px; line-height: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* ----------------------------------------------------------------------
+     File drop: пунктирна межа в SVG (щоб анімувалась), список файлів
+     ---------------------------------------------------------------------- */
+  .ctl-drop {
+    position: relative; display: grid; justify-items: center; gap: 4px; padding: 24px 16px 20px;
+    border-radius: 8px; text-align: center; color: var(--foreground);
+    transition: background-color var(--duration-base) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-snappy);
+  }
+  .ctl-drop__border { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .ctl-drop__border rect {
+    x: 0.75px; y: 0.75px; width: calc(100% - 1.5px); height: calc(100% - 1.5px); rx: 8px; ry: 8px;
+    fill: none; stroke: var(--input); stroke-width: 1.5; stroke-dasharray: 5 5; stroke-linecap: round;
+    transition: stroke var(--duration-base) var(--ease-standard);
+  }
+  .ctl-drop:hover .ctl-drop__border rect { stroke: var(--border-hover); }
+  .ctl-drop__icon {
+    width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 8px;
+    background: var(--muted); color: var(--muted-foreground); box-shadow: inset 0 0 0 1px var(--border);
+    transition: background-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-bouncy), box-shadow var(--duration-base) var(--ease-standard);
+  }
+  .ctl-drop__icon svg { width: 18px; height: 18px; }
+  .ctl-drop__title { font-size: 13px; line-height: 18px; font-weight: 500; }
+  .ctl-drop__hint { font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
+  .ctl-drop > button { margin-top: 12px; }
+  .ctl-drop[data-state="dragover"] { background: var(--primary-tint); }
+  .ctl-drop[data-state="dragover"] .ctl-drop__border rect { stroke: var(--primary); animation: ctl-march 1200ms linear infinite; }
+  .ctl-drop[data-state="dragover"] .ctl-drop__icon { background: var(--primary); color: var(--primary-foreground); box-shadow: none; transform: translateY(-4px) scale(1.06); }
+  .ctl-drop[data-invalid] .ctl-drop__border rect { stroke: var(--destructive); }
+  .ctl-drop[data-invalid] .ctl-drop__icon { background: var(--destructive-tint); color: var(--destructive); }
+  .ctl-drop[data-invalid] .ctl-drop__hint { color: var(--destructive); }
+  .ctl-drop[aria-disabled="true"] { background: var(--muted); color: var(--muted-foreground); cursor: not-allowed; }
+  .ctl-drop[aria-disabled="true"] .ctl-drop__border rect { stroke: var(--border); }
+  .ctl-drop[aria-disabled="true"] .ctl-drop__icon { background: transparent; color: var(--control-disabled-fill); }
+  @media (prefers-reduced-motion: reduce) {
+    .ctl-drop[data-state="dragover"] .ctl-drop__border rect { animation: none; }
+    .ctl-switch[data-busy] .ctl-switch__thumb::after { animation-duration: 1600ms; }
+  }
+
+  .ctl-files { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+  .ctl-files:empty { display: none; }
+  .ctl-file {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; align-items: center;
+    padding: 8px 8px 8px 12px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--border);
+    transition: box-shadow var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard);
+  }
+  .ctl-file { animation: ctl-enter var(--spring-smooth-duration) var(--spring-smooth) both; }
+  .ctl-file[data-leaving] { animation: ctl-exit calc(var(--duration-base) * var(--exit-factor)) var(--ease-exit) both; pointer-events: none; }
+  .ctl-file__icon {
+    width: 32px; height: 32px; border-radius: var(--radius); display: grid; place-items: center;
+    background: var(--muted); color: var(--muted-foreground); position: relative;
+    transition: background-color var(--duration-base) var(--ease-in-out-soft), color var(--duration-base) var(--ease-in-out-soft);
+  }
+  .ctl-file__icon svg { width: 16px; height: 16px; grid-area: 1 / 1; transition: opacity var(--duration-fast) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-bouncy); }
+  .ctl-file__icon svg[data-state] { opacity: 0; transform: scale(0.5); }
+  .ctl-file[data-state="done"] .ctl-file__icon { background: var(--done-tint); color: var(--status-done-foreground); }
+  .ctl-file[data-state="done"] .ctl-file__icon svg[data-state="done"] { opacity: 1; transform: none; }
+  .ctl-file[data-state="done"] .ctl-file__icon svg:not([data-state]) { opacity: 0; transform: scale(0.5); }
+  .ctl-file[data-state="error"] .ctl-file__icon { background: var(--destructive-tint); color: var(--destructive); }
+  .ctl-file[data-state="error"] .ctl-file__icon svg[data-state="error"] { opacity: 1; transform: none; }
+  .ctl-file[data-state="error"] .ctl-file__icon svg:not([data-state]) { opacity: 0; transform: scale(0.5); }
+  .ctl-file[data-state="error"] { box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--destructive) 45%, transparent); }
+  .ctl-file__main { display: grid; min-width: 0; gap: 2px; }
+  .ctl-file__name { font-size: 13px; line-height: 18px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ctl-file__meta { font-size: 12px; line-height: 16px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .ctl-file__meta svg { width: 14px; height: 14px; flex: none; }
+  .ctl-file[data-state="error"] .ctl-file__meta { color: var(--destructive); }
+  .ctl-file[data-state="done"] .ctl-file__meta { color: var(--status-done-foreground); }
+  .ctl-file__prog { grid-column: 2 / -1; display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--spring-smooth-duration) var(--spring-smooth); }
+  .ctl-file__prog > div { min-height: 0; overflow: hidden; padding-top: 8px; }
+  .ctl-file:not([data-state="uploading"]) .ctl-file__prog { grid-template-rows: 0fr; }
+  .ctl-progress { height: 4px; border-radius: 9999px; background: var(--muted); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
+  .ctl-progress > i {
+    display: block; height: 100%; border-radius: inherit; background: var(--status-progress-mark);
+    transform-origin: left center; transform: scaleX(var(--p, 0));
+    transition: transform var(--spring-smooth-duration) var(--spring-smooth), background-color var(--duration-base) var(--ease-in-out-soft);
+  }
+  .ctl-file[data-state="done"] .ctl-progress > i { background: var(--status-done-mark); }
+
+  /* Кнопка-іконка в контролах (очистити, око, видалити файл): 24 px — мінімальна ціль вказівника */
+  .ctl-iconbtn {
+    display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 4px;
+    color: var(--muted-foreground);
+    transition: color var(--duration-instant) var(--ease-standard), background-color var(--duration-instant) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+  }
+  .ctl-iconbtn:hover:not(:disabled) { background: var(--state-hover); color: var(--foreground); }
+  .ctl-iconbtn:active:not(:disabled) { transform: scale(var(--scale-press)); }
+  .ctl-iconbtn:focus-visible { outline-offset: 0; }
+  .ctl-iconbtn svg { width: 16px; height: 16px; }
+
+  @media (forced-colors: active) {
+    .ctl-check__box, .ctl-radio__box, .ctl-switch__track { border: 1px solid CanvasText; }
+    .ctl-slider__thumb { border: 2px solid CanvasText; }
+  }
+}

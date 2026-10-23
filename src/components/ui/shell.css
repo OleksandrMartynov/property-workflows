@@ -1,0 +1,33 @@
+/* Бічна панель: плавна зміна ширини й власні підказки (замість системного title) для згорнутого вигляду. Лише токени. */
+@keyframes ui-tip-in { from { opacity: 0; transform: translate(-4px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+
+@layer components {
+  .shell-rail {
+    transition: width var(--spring-smooth-duration) var(--spring-smooth);
+  }
+  [data-collapsed="true"] .rail-tip { position: relative; }
+  [data-collapsed="true"] .rail-tip:is(:hover, :focus-visible)::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    z-index: 60;
+    transform: translate(0, -50%);
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    box-shadow: var(--elevation-2);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: ui-tip-in var(--duration-fast) var(--ease-standard) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-collapsed="true"] .rail-tip:is(:hover, :focus-visible)::after { animation: none; }
+}

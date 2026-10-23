@@ -28,7 +28,7 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 
 - `npm run dev` · `npm run build` (має показати `ƒ Proxy (Middleware)`) · `npm run lint` (0 warnings)
 - `npm run typecheck` (`next typegen && tsc --noEmit`) · `npm test` (Vitest)
-- `npm run spec:validate` · `npm run spec:check` · `npm run ac:coverage`
+- `npm run spec:validate` · `npm run spec:check` · `npm run ac:coverage` · `npm run check:design` · `npm run check:contrast` · `npm run check:copy`
 - `node scripts/check-migration-order.mjs` — нова міграція новіша за `origin/main`, застосовані не змінено (у CI — `db-check`)
 - `npx supabase migration new <назва>` → SQL → PR. Застосовує міграції у вашу базу ЛИШЕ CI (`db-deploy` після merge у `main`)
 - Типи БД: готовий `database.types.ts` — у Summary прогону job `db-check` (Docker не потрібен); або `npm run db:types`
@@ -51,8 +51,8 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
   `openspec/config.yaml` — правила перекладу
 - `product/` — лише списки denylist для `spec:check`; `docs/` — `bootstrap.md` (чекліст дня 0),
   `conformance.md` (ваша матриця; у шапці — звідки й коли знімок вимог), `spec-reading.md` (журнал), `decisions/` (ADR)
-- `.github/` — `ci.yml`, шаблон PR
-- `scripts/` — перевірки спеки й покриття AC; `tests/` — тести (`tests/fixtures/` — дані тестів скриптів)
+- `.github/` — `ci.yml`, `workflows/architecture.yml` (правила дизайн-системи), шаблон PR
+- `src/components/ui/` — компоненти дизайн-системи; `DESIGN.md` — її правила; `scripts/` — перевірки спеки, покриття AC і дизайн-системи (`check-design-tokens.mjs`, `check-contrast.mjs`); `tests/` — тести (`tests/fixtures/` — дані тестів скриптів)
 - `.claude/commands/` — наші `requirements-sync.md` і `conformance.md` (у `.cursor/commands/` — посилання на них);
   `.claude/skills/` — наші скіли `spec-clarify` і `spec-review`; Cursor читає їх звідти ж. `openspec-*` і `/opsx*`
   у `.claude/` та `.cursor/` згенерував OpenSpec (однакові копії для двох інструментів) — вручну не редагуй.
@@ -144,6 +144,15 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
   як `node --env-file=.env.local …` — вони значень не друкують.
 - Supabase MCP (`.mcp.json`, лише Claude Code; Cursor бере MCP з `.cursor/mcp.json`) — лише читання, один проєкт: перед запуском задай `SUPABASE_PROJECT_REF`.
 - `product/denylist.local*` — справжні назви клієнта (список PM надсилає особистим повідомленням; git файл не відстежує): не відкривай і не цитуй (найкраще зусилля, не гарантія: у Claude Code — deny `Read(product/denylist.local*)` у `.claude/settings.json`, у Cursor — `.cursorignore`, який за документацією Cursor не закриває термінал і MCP; чи deny діє на пошук і `cat`, звіряємо на репетиції).
+
+## Дизайн-система
+
+- Правила вигляду — `DESIGN.md` (джерело — артефакт Claude Design за посиланням у його першому рядку). Кольори — лише семантичні утиліти з токенів (`bg-primary`, `text-muted-foreground`, `border-input`…); жодних hex, `bg-[#…]`, сирих палітр (`zinc-500`, `bg-white`) і кольорів в inline style.
+- Компоненти — лише з `@/components/ui` (власний код на токенах; змінюються в цій теці). Власних `<button>`, `<input>`, `<select>` зі стилями в сторінках немає. Незворотна дія — `ConfirmDialog`, не `window.confirm`. Статус — `StatusBadge` (іконка + слово), не лише колір.
+- Новий токен: `DESIGN.md` → `:root` і темна тема в `src/app/globals.css` → `--color-<назва>` у `@theme inline` → пара в `scripts/check-contrast.mjs`. Нових кольорів у компонентах не вигадуй.
+- Текст у інтерфейсі — лише потрібний: заголовки, підписи полів, значення, помилки й тексти з AC. Жодних пояснювальних підзаголовків, підказок-«води», копірайтів і рядків «ось що тут можна зробити».
+- Email, імена й статуси не обрізаємо і не розриваємо посеред слова (`break-words`, у вузьких панелях підпис над значенням); роль користувача — у вікні акаунта, не бейджем у панелі; бічна панель згортається (кнопка, `[`, ⌘K); «Sign out» і подібні дії — `outline` з іконкою, не приглушений `ghost`. Кожна дія має видимий відгук (`InteractionFeedback`, спінер у кнопці).
+- Перевірка: `npm run check:design`, `npm run check:contrast` і `npm run check:copy` (CI: `.github/workflows/architecture.yml`). Зміна вигляду — зі знімками світлої й темної теми.
 
 ## Межі
 
