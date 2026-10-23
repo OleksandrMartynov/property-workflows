@@ -27,6 +27,7 @@ uniform float uIntro;
 uniform vec2 uPtr;
 uniform vec2 uVel;
 uniform vec3 uClick;
+uniform float uLight;
 uniform vec3 uBase;
 uniform vec3 uA;
 uniform vec3 uB;
@@ -108,18 +109,31 @@ void main() {
   vec3 col = mix(uBase, uA, smoothstep(-0.25, 0.85, f) * 0.9);
   col = mix(col, uB, smoothstep(0.05, 0.95, r.x) * 0.5);
   col = mix(col, uC, smoothstep(0.35, 1.1, q.y) * 0.28);
-  col *= 0.42 + 0.95 * diff;
-  col += mix(uA, uC, 0.5) * spec * 0.55;
-  col += uB * rim * 0.35;
+  if (uLight > 0.5) {
+    // Світла сцена: м'яка пастельна «шовкова» поверхня; тінь і відблиск ледь помітні, краї й ліва частина під текстом тануть до основи.
+    col *= 0.84 + 0.22 * diff;
+    col += vec3(1.0) * spec * 0.32;
+    col += uB * rim * 0.12;
+    col += (uA + uB) * 0.5 * 0.05 * smoothstep(0.55, 0.0, length(d));
+    col += vec3(1.0) * ring * 0.25;
+    float vigL = 1.0 - 0.55 * smoothstep(0.3, 1.1, length(uv - vec2(0.55, 0.5)));
+    col = mix(uBase, col, vigL * mix(0.5, 1.0, smoothstep(0.0, 0.85, uv.x)));
+    col = mix(uBase, col, smoothstep(0.0, 1.0, uIntro * 1.6 - length(uv - 0.5) * 1.1));
+  } else {
+    col *= 0.42 + 0.95 * diff;
+    col += mix(uA, uC, 0.5) * spec * 0.55;
+    col += uB * rim * 0.35;
 
-  // Світіння курсора й хвилі
-  col += (uA + uB) * 0.5 * 0.14 * smoothstep(0.55, 0.0, length(d));
-  col += mix(uA, uC, 0.5) * ring * 0.55;
+    // Світіння курсора й хвилі
+    col += (uA + uB) * 0.5 * 0.14 * smoothstep(0.55, 0.0, length(d));
+    col += mix(uA, uC, 0.5) * ring * 0.55;
 
-  // Віньєтка, затемнення під текстом і вступна поява від центру
-  float vig = 1.0 - 0.62 * smoothstep(0.3, 1.1, length(uv - vec2(0.55, 0.5)));
-  col *= vig * mix(0.7, 1.0, smoothstep(0.0, 0.85, uv.x));
-  col *= smoothstep(0.0, 1.0, uIntro * 1.6 - length(uv - 0.5) * 1.1);
+    // Віньєтка, затемнення під текстом і вступна поява від центру
+    float vig = 1.0 - 0.62 * smoothstep(0.3, 1.1, length(uv - vec2(0.55, 0.5)));
+    col *= vig * mix(0.7, 1.0, smoothstep(0.0, 0.85, uv.x));
+    col *= smoothstep(0.0, 1.0, uIntro * 1.6 - length(uv - 0.5) * 1.1);
+
+  }
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -210,7 +224,9 @@ export function HeroShader({ playing, speed = 1, className }: { playing: boolean
     probe.width = probe.height = 1;
     const ctx = probe.getContext("2d", { willReadFrequently: true });
     if (ctx) {
-      gl.uniform3fv(u("uBase"), readToken("--stage", ctx));
+      const base = readToken("--stage", ctx);
+      gl.uniform1f(u("uLight"), 0.2126 * base[0] + 0.7152 * base[1] + 0.0722 * base[2] > 0.5 ? 1 : 0);
+      gl.uniform3fv(u("uBase"), base);
       gl.uniform3fv(u("uA"), readToken("--stage-glow-1", ctx));
       gl.uniform3fv(u("uB"), readToken("--stage-glow-2", ctx));
       gl.uniform3fv(u("uC"), readToken("--stage-glow-3", ctx));

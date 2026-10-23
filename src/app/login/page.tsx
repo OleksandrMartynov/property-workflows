@@ -34,12 +34,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(color-mix(in_oklab,var(--foreground)_14%,transparent)_1px,transparent_1.2px)] [background-size:22px_22px] [mask-image:radial-gradient(75%_60%_at_40%_45%,var(--foreground),transparent)]"
         />
 
+        <LogoMark
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-36 -left-28 -z-10 size-[38rem] text-primary/[0.07]"
+        />
+
         <Logo className="animate-ui-reveal" />
 
-        <div className="mx-auto flex w-full max-w-[25rem] flex-1 flex-col justify-center py-10">
+        <div className="mx-auto flex w-full max-w-[27rem] flex-1 flex-col justify-center py-10">
           <div
             style={{ "--reveal-delay": "120ms" } as CSSProperties}
-            className="animate-ui-reveal flex flex-col gap-8 rounded-xl border border-border bg-card/85 p-8 shadow-md backdrop-blur-sm"
+            className="animate-ui-reveal flex flex-col gap-9 rounded-2xl border border-border bg-card/85 p-10 shadow-lg backdrop-blur-sm"
           >
             <h1 className="text-[2rem] font-semibold leading-9 tracking-[-0.03em]">Sign in</h1>
             <LoginForm action={login} serverError={message} />

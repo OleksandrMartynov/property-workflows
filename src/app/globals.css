@@ -58,17 +58,17 @@
   }
 }
 
-/* Сцена: темна поверхня hero на сторінці входу. В обох темах однакова — це «кінематографічна» вітрина, а не тло роботи. */
+/* Сцена hero входу. Світла тема — світла сцена (бліда лавандова основа, пастельні хвилі, темний текст), темна — кінематографічна. */
 :root {
-  --stage: oklch(0.145 0.035 268);
-  --stage-foreground: oklch(0.97 0.008 268);
-  --stage-muted: oklch(0.80 0.02 268);
-  --stage-card: oklch(0.24 0.035 268 / 0.55);
-  --stage-border: oklch(1 0 0 / 0.14);
-  --stage-accent: oklch(0.78 0.12 268);
-  --stage-glow-1: oklch(0.52 0.18 268);
-  --stage-glow-2: oklch(0.50 0.20 325);
-  --stage-glow-3: oklch(0.60 0.12 192);
+  --stage: oklch(0.955 0.02 268);
+  --stage-foreground: oklch(0.22 0.04 268);
+  --stage-muted: oklch(0.42 0.035 268);
+  --stage-card: oklch(1 0 0 / 0.62);
+  --stage-border: oklch(0.25 0.04 268 / 0.14);
+  --stage-accent: oklch(0.47 0.17 268);
+  --stage-glow-1: oklch(0.74 0.13 268);
+  --stage-glow-2: oklch(0.78 0.12 325);
+  --stage-glow-3: oklch(0.84 0.08 192);
 }
 
 /* --------------------------------------------------------------------------
@@ -231,6 +231,15 @@
 
 
     --weight-body: 420;
+    --stage: oklch(0.145 0.035 268);
+    --stage-foreground: oklch(0.97 0.008 268);
+    --stage-muted: oklch(0.80 0.02 268);
+    --stage-card: oklch(0.24 0.035 268 / 0.55);
+    --stage-border: oklch(1 0 0 / 0.14);
+    --stage-accent: oklch(0.78 0.12 268);
+    --stage-glow-1: oklch(0.52 0.18 268);
+    --stage-glow-2: oklch(0.50 0.20 325);
+    --stage-glow-3: oklch(0.60 0.12 192);
   }
 }
 
