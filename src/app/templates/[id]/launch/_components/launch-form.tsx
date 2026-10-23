@@ -86,7 +86,7 @@ export function LaunchForm({
   const assignAll = (id: string) => id && setAssignment(Object.fromEntries(tasks.map((t) => [t.id, id])));
   const personOptions = people.map((p) => ({
     value: p.id,
-    label: p.me ? `Me (${p.name})` : p.name,
+    label: p.name,
     avatar: p.name,
     trailing: p.me ? <span className="text-meta text-muted-foreground">run manager</span> : undefined,
   }));
@@ -163,7 +163,7 @@ export function LaunchForm({
                           {task.required ? "required" : "optional"}
                         </Badge>
                       </span>
-                      <div className="w-full sm:w-64">
+                      <div className="w-full sm:w-80">
                         <Combobox
                           name={assigneeField(task.id)}
                           value={assignment[task.id]}
