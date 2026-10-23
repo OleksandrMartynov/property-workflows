@@ -40,7 +40,7 @@ function PersonLabel({ person }: { person: Person }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       <Avatar email={person.name} />
-      <span className="truncate">{person.me ? "Me" : person.name}</span>
+      <span className="min-w-0 break-all">{person.me ? "Me" : person.name}</span>
       {person.me ? <span className="shrink-0 text-meta text-muted-foreground">run manager</span> : null}
     </span>
   );

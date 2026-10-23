@@ -8,6 +8,7 @@ import { Avatar } from "./avatar";
 import { Badge } from "./badge";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
+import { LogOutIcon } from "./icons";
 import { Logo } from "./logo";
 
 const NAV = [
@@ -94,20 +95,23 @@ export function AppShell({
 
         <div className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-3">
           {email ? (
-            <div className="flex items-center gap-2 px-2">
+            <div className="flex items-start gap-2 px-2 pb-1">
               <Avatar email={email} />
-              <span data-testid="user-email" className="min-w-0 flex-1 truncate text-label" title={email}>
-                {email}
-              </span>
-              {role ? (
-                <Badge data-testid="user-role" variant="outline">
-                  {role}
-                </Badge>
-              ) : null}
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                <span data-testid="user-email" className="break-all text-label leading-4">
+                  {email}
+                </span>
+                {role ? (
+                  <Badge data-testid="user-role" variant="outline">
+                    {role}
+                  </Badge>
+                ) : null}
+              </div>
             </div>
           ) : null}
           <form action={signOutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="w-full justify-start px-2 text-muted-foreground">
+            <Button type="submit" variant="outline" className="w-full justify-start gap-2 text-foreground">
+              <LogOutIcon className="size-4 text-muted-foreground" />
               Sign out
             </Button>
           </form>
@@ -132,7 +136,8 @@ export function AppShell({
             ))}
           </nav>
           <form action={signOutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground">
+            <Button type="submit" variant="outline" size="sm" className="gap-1.5 text-foreground">
+              <LogOutIcon className="size-3.5 text-muted-foreground" />
               Sign out
             </Button>
           </form>

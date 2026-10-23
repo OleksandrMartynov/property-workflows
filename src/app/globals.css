@@ -37,7 +37,7 @@
   --distance-2: 4px;
   --distance-3: 6px;
   --scale-enter: 0.98;
-  --scale-press: 0.98;
+  --scale-press: 0.97;
   --shimmer-duration: 1600ms;
 
   /* Пружини — linear() наближення; opacity і колір ніколи не на пружині з перельотом */

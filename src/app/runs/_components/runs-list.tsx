@@ -75,7 +75,7 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
                   </span>
                 </span>
               </TableCell>
-              <TableCell className="max-w-56 truncate text-muted-foreground">{s.nextTask ?? "—"}</TableCell>
+              <TableCell className="max-w-72 whitespace-normal text-muted-foreground">{s.nextTask ?? "—"}</TableCell>
               <TableCell>
                 <AvatarStack emails={s.assignees} />
               </TableCell>

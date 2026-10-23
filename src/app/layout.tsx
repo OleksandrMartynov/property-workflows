@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 
 // Inter з віссю optical size: на великих розмірах дає «display»-форми (щільніші), на 14 px — текстові. Один шрифт на весь інтерфейс.
 const inter = Inter({
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <InteractionFeedback />
+        {children}
+      </body>
     </html>
   );
 }

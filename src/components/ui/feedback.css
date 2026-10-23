@@ -1,0 +1,37 @@
+/* Відгук на дію: пульс-кільце після кліку й смуга навігації. Лише токени. */
+@keyframes ui-click-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--ring) 60%, transparent); }
+  to { box-shadow: 0 0 0 7px color-mix(in oklch, var(--ring) 0%, transparent); }
+}
+@keyframes ui-route-run {
+  from { transform: scaleX(0.04); }
+  to { transform: scaleX(0.88); }
+}
+@keyframes ui-route-done {
+  from { transform: scaleX(0.88); opacity: 1; }
+  60% { transform: scaleX(1); opacity: 1; }
+  to { transform: scaleX(1); opacity: 0; }
+}
+
+@layer components {
+  [data-clicked] {
+    animation: ui-click-ring 520ms var(--ease-standard) both;
+  }
+  .route-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 100;
+    height: 2px;
+    transform-origin: left center;
+    background: linear-gradient(90deg, var(--primary), var(--ai));
+    box-shadow: 0 0 8px color-mix(in oklch, var(--primary) 55%, transparent);
+    pointer-events: none;
+  }
+  .route-progress[data-state="running"] { animation: ui-route-run 9s cubic-bezier(0.1, 0.6, 0.2, 1) both; }
+  .route-progress[data-state="done"] { animation: ui-route-done 420ms var(--ease-standard) both; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-clicked] { animation: none; outline: 2px solid var(--ring); outline-offset: 1px; }
+  .route-progress[data-state] { animation: none; transform: scaleX(1); }
+}

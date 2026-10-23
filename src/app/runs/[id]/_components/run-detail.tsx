@@ -128,7 +128,7 @@ export function RunDetail({
           <dt className="text-muted-foreground">Run manager</dt>
           <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
             {managerEmail ? <Avatar email={managerEmail} /> : null}
-            <span className="truncate">{managerEmail ?? "—"}</span>
+            <span className="min-w-0 break-all">{managerEmail ?? "—"}</span>
           </dd>
           <dt className="text-muted-foreground">Status</dt>
           <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>

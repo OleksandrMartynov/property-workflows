@@ -151,6 +151,7 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 - Компоненти — лише з `@/components/ui` (власний код на токенах; змінюються в цій теці). Власних `<button>`, `<input>`, `<select>` зі стилями в сторінках немає. Незворотна дія — `ConfirmDialog`, не `window.confirm`. Статус — `StatusBadge` (іконка + слово), не лише колір.
 - Новий токен: `DESIGN.md` → `:root` і темна тема в `src/app/globals.css` → `--color-<назва>` у `@theme inline` → пара в `scripts/check-contrast.mjs`. Нових кольорів у компонентах не вигадуй.
 - Текст у інтерфейсі — лише потрібний: заголовки, підписи полів, значення, помилки й тексти з AC. Жодних пояснювальних підзаголовків, підказок-«води», копірайтів і рядків «ось що тут можна зробити».
+- Email, імена й статуси не обрізаємо (`break-all`, `break-words`); «Sign out» і подібні дії — `outline` з іконкою, не приглушений `ghost`. Кожна дія має видимий відгук (`InteractionFeedback`, спінер у кнопці).
 - Перевірка: `npm run check:design`, `npm run check:contrast` і `npm run check:copy` (CI: `.github/workflows/architecture.yml`). Зміна вигляду — зі знімками світлої й темної теми.
 
 ## Межі
