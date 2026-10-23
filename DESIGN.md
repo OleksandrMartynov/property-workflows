@@ -143,7 +143,7 @@
 | `EmptyState` | — | що тут буде + одна дія, що допоможе |
 | `Dialog`, `ConfirmDialog` | `dialog`, `alertdialog` | нативний `<dialog>`; незворотна дія — `ConfirmDialog` (не `window.confirm`), фокус на «OK» |
 | `AppShell` | — | сайдбар, пошук і команди ⌘K / Ctrl K; у `PageShell`. «Sign out» — `Button variant="outline"` з іконкою на всю ширину панелі (не ghost: має читатись як кнопка); email користувача виводиться повністю, переноситься `break-all`, роль під ним |
-| `InteractionFeedback` | — | один на застосунок (у `layout.tsx`): пульс-кільце `data-clicked` (520 мс, токен `ring`) на кожну кнопку, посилання, пункт списку й вкладку; смуга прогресу зверху (`primary` → `ai`), поки йде перехід за внутрішнім посиланням; за `prefers-reduced-motion` — статичний контур |
+| `InteractionFeedback` | — | один на застосунок (у `layout.tsx`): пульс-кільце `data-clicked` (520 мс, токен `ring`) на кожну кнопку, посилання, пункт списку й вкладку; смуга прогресу зверху (`primary` → `ai-mark`), поки йде перехід за внутрішнім посиланням; за `prefers-reduced-motion` — статичний контур |
 | `Logo`, `LogoMark` | — | знак «Echo Roof» у `primary`; без жодного кольору поза токенами |
 | `HeroStage`, `HeroShader` | — | лише вхід: шейдер із кольорами `--stage*`, чипи можливостей (лише назви), чекліст, що виконується сам, а за кліком — користувачем («Start over») |
 | `icons` | `HomeIcon`, `TemplateIcon`, `UsersIcon`, `GaugeIcon`, `KeyIcon`… | лінійні 16 px, штрих 1.5, `currentColor`; лише декор, підпис завжди поруч |
