@@ -1,0 +1,78 @@
+{
+  "v": 3,
+  "assetGroups": {
+    "Logos": {
+      "files": {
+        "pw-app-icon.svg": {
+          "blob": "d77d3bb9dc21c0091eb73336e3b1e570",
+          "name": "pw-app-icon.svg",
+          "size": 951,
+          "type": "image/svg+xml"
+        },
+        "pw-favicon.svg": {
+          "blob": "45402e4e02adcbb9184898d8da4e88ea",
+          "name": "pw-favicon.svg",
+          "size": 403,
+          "type": "image/svg+xml"
+        },
+        "pw-lockup.svg": {
+          "blob": "68431a2155711c8d3dc23bb6de3e3bb0",
+          "name": "pw-lockup.svg",
+          "size": 640,
+          "type": "image/svg+xml"
+        },
+        "pw-mark-16.svg": {
+          "blob": "09c0aa5828d6417563a4a94bdcab60ab",
+          "name": "pw-mark-16.svg",
+          "size": 277,
+          "type": "image/svg+xml"
+        },
+        "pw-mark-20.svg": {
+          "blob": "b71b73af7974014005ec1e0cbff595e8",
+          "name": "pw-mark-20.svg",
+          "size": 370,
+          "type": "image/svg+xml"
+        },
+        "pw-mark.svg": {
+          "blob": "d74e476926d7208739bd2760661ffc57",
+          "name": "pw-mark.svg",
+          "size": 371,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "Logos",
+      "order": [
+        "pw-mark.svg",
+        "pw-lockup.svg",
+        "pw-app-icon.svg",
+        "pw-mark-20.svg",
+        "pw-mark-16.svg",
+        "pw-favicon.svg"
+      ],
+      "tile": "l"
+    }
+  },
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-10-23T10:00:08Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "groups": [
+    "Logos"
+  ],
+  "lastChange": {
+    "by": "Oleksandr Martynov",
+    "at": "2026-10-23T14:09:09Z",
+    "via": "Claude Code",
+    "note": "Сайдбар згортається в рейку, акаунт-меню з роллю, Details без розриву email, токен size-sidebar-rail."
+  },
+  "layout": "files",
+  "libraries": [],
+  "namespace": "PropertyWorkflows",
+  "sections": {},
+  "title": "Property Workflows"
+}

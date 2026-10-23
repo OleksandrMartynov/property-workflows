@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Font candidates</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=JetBrains+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400..800&family=Hanken+Grotesk:wght@400..700&family=Figtree:wght@400..700&family=DM+Sans:opsz,wght@9..40,400..700&family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Onest:wght@400..700&family=Fraunces:ital,opsz,wght@1,9..144,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+ body{margin:0;background:var(--background);color:var(--foreground);font:14px/20px var(--font-sans);}
+ .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:20px;max-width:1500px;margin:0 auto}
+ .spec{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:20px;display:grid;gap:14px;font-family:var(--f);}
+ .tag{font:11px/16px 'JetBrains Mono',monospace;color:var(--muted-foreground);display:flex;justify-content:space-between}
+ h1{font-family:var(--fh,var(--f));font-size:28px;line-height:32px;letter-spacing:var(--lt,-.02em);font-weight:var(--hw,600);margin:0}
+ .hero{font-family:var(--fh,var(--f));font-size:40px;line-height:42px;letter-spacing:var(--lh,-.025em);font-weight:var(--hw,600);margin:0}
+ .hero i{font-family:var(--fa,'Instrument Serif');font-weight:400;font-size:1.1em;color:var(--primary)}
+ p{margin:0;color:var(--muted-foreground);font-size:14px;line-height:20px}
+ .row{display:grid;grid-template-columns:1.4fr .8fr .6fr .6fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--border);font-size:14px}
+ .row b{font-weight:500}.num{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted-foreground)}
+ .pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:99px;font-size:12px;font-weight:500;background:var(--status-progress);color:var(--status-progress-foreground)}
+ .pill.d{background:var(--status-done);color:var(--status-done-foreground)}
+ label{font-size:13px;font-weight:500;display:block;margin-bottom:6px}
+ .in{height:32px;border:1px solid var(--input);border-radius:6px;padding:0 12px;display:flex;align-items:center;background:var(--field);font-size:14px}
+ .btns{display:flex;gap:8px}.btn{height:32px;padding:0 14px;border-radius:6px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;background:var(--primary);color:var(--primary-foreground)}
+ .btn.o{background:transparent;border:1px solid var(--border);color:var(--foreground)}
+ .mono{font-family:var(--mono,'Geist Mono');font-size:12px;color:var(--muted-foreground)}
+</style></head><body>
+<div class="grid" id="g"></div>
+<script>
+const S=[
+ ["A · Geist (now)","Geist","Geist","Instrument Serif","Geist Mono"],
+ ["B · Inter (Linear-like)","Inter","Inter","Instrument Serif","JetBrains Mono"],
+ ["C · Instrument Sans + Serif","Instrument Sans","Instrument Sans","Instrument Serif","JetBrains Mono"],
+ ["D · Manrope","Manrope","Manrope","Instrument Serif","JetBrains Mono"],
+ ["E · Hanken Grotesk","Hanken Grotesk","Hanken Grotesk","Instrument Serif","JetBrains Mono"],
+ ["F · Inter UI + Bricolage display","Inter","Bricolage Grotesque","Instrument Serif","JetBrains Mono"],
+ ["G · Figtree","Figtree","Figtree","Instrument Serif","JetBrains Mono"],
+ ["H · Onest","Onest","Onest","Instrument Serif","JetBrains Mono"],
+];
+document.getElementById('g').innerHTML=S.map(([n,f,h,a,m])=>`
+<section class="spec" style="--f:'${f}',system-ui,sans-serif;--fh:'${h}',system-ui,sans-serif;--fa:'${a}',serif;--mono:'${m}',monospace;--hw:${h==='Bricolage Grotesque'?600:600};">
+ <div class="tag"><span>${n}</span><span>14 / 20 · 600</span></div>
+ <div class="hero">The same process.<br>Run <i>properly,</i> every time.</div>
+ <h1>Apartment 12, move-in</h1>
+ <p>Templates turn move-ins, inspections and hand-overs into checklists with owners and a clear end.</p>
+ <div>
+  <div class="row"><b>Sign the lease agreement</b><span class="num">ana@example.test</span><span class="pill d">● done</span><span class="num">€1,250.00</span></div>
+  <div class="row"><b>Inspect the apartment</b><span class="num">oleh@example.test</span><span class="pill">◐ in progress</span><span class="num">2 of 5 done</span></div>
+  <div class="row"><b>Hand over the keys</b><span class="num">ira@example.test</span><span class="pill">◐ in progress</span><span class="num">0 of 4 done</span></div>
+ </div>
+ <div><label>Case name</label><div class="in">Apartment 12, move-in</div></div>
+ <div class="btns"><span class="btn">Launch run</span><span class="btn o">Cancel</span><span class="mono">RUN-0142 · 18:00 Kyiv time</span></div>
+</section>`).join('');
+</script></body></html>

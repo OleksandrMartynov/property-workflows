@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="base.css">
+<script src="logo-concepts.js"></script>
+<style>
+body{padding:16px;font:12px Geist,sans-serif}
+.row{display:flex;align-items:flex-end;gap:18px;padding:12px 0;border-bottom:1px solid var(--border)}
+.row b{width:84px}
+.ink{color:var(--foreground);display:contents}
+.tile{display:grid;place-items:center;background:var(--primary);color:var(--primary-foreground);border-radius:6px}
+canvas{image-rendering:pixelated;width:128px;height:128px;border:1px solid var(--border);background:#fdfcf9}
+.dk{background:#12110f;color:#eeecea;padding:6px;border-radius:6px;display:flex;gap:10px;align-items:flex-end}
+</style></head><body>
+<div id="out"></div>
+<script>
+const {C,svg}=PW_LOGO;
+let h='';
+for(const c of C){
+ h+=`<div class="row"><b>${c.name}</b><canvas data-id="${c.id}" width="16" height="16"></canvas>`;
+ for(const s of [16,20,24,32,64,160]) h+=svg(c,s);
+ h+=`<span class="tile" style="width:64px;height:64px;border-radius:14px">${svg(c,40)}</span>`;
+ h+=`<span class="tile" style="width:24px;height:24px;border-radius:5px">${svg(c,16)}</span>`;
+ h+=`<span class="dk">${svg(c,16)}${svg(c,32)}${svg(c,64)}</span></div>`;
+}
+out.innerHTML=h;
+document.querySelectorAll('canvas').forEach(cv=>{const c=C.find(x=>x.id===cv.dataset.id);
+ const src=svg(c,16,"16").replace('<svg ','<svg color="#1a1814" ');
+ const img=new Image();img.onload=()=>{const x=cv.getContext('2d');x.drawImage(img,0,0)};img.src='data:image/svg+xml,'+encodeURIComponent(src);});
+</script></body></html>

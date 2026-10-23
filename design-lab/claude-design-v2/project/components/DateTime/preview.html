@@ -1,0 +1,514 @@
+<!-- @dsCard group="Forms" height=1228 subtitle="DatePicker, діапазон, TimeField, NumberField, CurrencyField" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DateTime — preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=JetBrains+Mono:wght@100..800&display=swap">
+<style>
+:root, [data-theme] {
+  /* Похідні токени: color-mix у oklab, як у globals.css (у tokens.json їх немає) */
+  --state-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --state-pressed: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --state-selected: color-mix(in oklab, var(--primary) 10%, transparent);
+  --primary-hover: color-mix(in oklab, var(--primary), var(--foreground) 10%);
+  --primary-active: color-mix(in oklab, var(--primary), var(--foreground) 18%);
+  --destructive-hover: color-mix(in oklab, var(--destructive), var(--foreground) 10%);
+  /* Похідні токени контролів форм (globals.css, розділ «Контролі форм») */
+  --accent-float: color-mix(in oklab, var(--popover), var(--foreground) 7%);
+  --primary-tint: color-mix(in oklch, var(--primary) 12%, transparent);
+  --primary-tint-strong: color-mix(in oklch, var(--primary) 22%, transparent);
+  --match: color-mix(in oklch, var(--primary) 20%, transparent);
+  --destructive-tint: color-mix(in oklch, var(--destructive) 10%, transparent);
+  --done-tint: color-mix(in oklch, var(--status-done) 14%, transparent);
+  --control-off: color-mix(in oklab, var(--muted), var(--foreground) 6%);
+  --control-disabled-fill: color-mix(in oklab, var(--muted-foreground), var(--background) 62%);
+  --glass-bg: color-mix(in oklch, var(--popover) var(--glass-alpha), transparent);
+  /* Локальні для controls.css: межа поля на hover і пружина з легким перельотом (лише малі перемикачі) */
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
+  --spring-bouncy: linear(0, 0.015 2%, 0.07 4.5%, 0.169 7.5%, 0.594 18%, 0.731 22%, 0.841 26%, 0.923 30%, 0.986 34.5%, 1.026 39.5%, 1.045 46%, 1.035 57.5%, 1.002 79.5%, 1);
+  --spring-bouncy-duration: 360ms;
+  --weight-body: 400;
+}
+[data-theme="dark"] { --weight-body: 420; }
+*, *::before, *::after { box-sizing: border-box; border-color: var(--border); }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; padding: var(--space-4);
+  background: var(--background); color: var(--foreground);
+  font-family: var(--font-sans); font-size: 14px; line-height: 20px; letter-spacing: -0.006em;
+  font-weight: var(--weight-body); font-optical-sizing: auto; font-synthesis: none; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+button, input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; margin: 0; }
+button { cursor: default; background: none; border: 0; padding: 0; }
+button:disabled { cursor: not-allowed; }
+:focus { outline: none; }
+:focus-visible { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+::placeholder { color: var(--muted-foreground); opacity: 1; }
+
+/* Шкала тексту: display · title · heading · body · label · meta */
+.t-display { font-size: 28px; line-height: 32px; letter-spacing: -0.03em; font-weight: 600; }
+.t-title { font-size: 20px; line-height: 28px; letter-spacing: -0.016em; font-weight: 600; }
+.t-heading { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+.t-body { font-size: 14px; line-height: 20px; letter-spacing: -0.006em; }
+.t-label { font-size: 13px; line-height: 18px; font-weight: 500; }
+.t-meta { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; }
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.muted { color: var(--muted-foreground); }
+.cap { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); margin: 0 0 var(--space-2); }
+.sec { display: flex; flex-direction: column; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.stack { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Іконки статусів (14px; lg — 16px, як в Alert) */
+.si { width: 14px; height: 14px; flex-shrink: 0; }
+.si.lg { width: 16px; height: 16px; margin-top: 2px; }
+.si-todo { color: var(--status-todo-mark); }
+.si-progress { color: var(--status-progress-mark); }
+.si-done { color: var(--status-done-mark); }
+.si-overdue { color: var(--status-overdue-mark); }
+.si-due-soon { color: var(--status-due-soon-mark); }
+
+/* Аватар: ініціал + тон за хешем адреси */
+.avatar { display: inline-grid; width: 20px; height: 20px; flex-shrink: 0; place-items: center; border-radius: var(--radius-pill); font-size: 10px; line-height: 1; font-weight: 600; }
+.avatar.tone-0 { background: var(--status-progress); color: var(--status-progress-foreground); }
+.avatar.tone-1 { background: var(--status-done); color: var(--status-done-foreground); }
+.avatar.tone-2 { background: var(--status-due-soon); color: var(--status-due-soon-foreground); }
+.avatar.tone-3 { background: var(--ai); color: var(--ai-foreground); }
+.avatar.tone-4 { background: var(--variable); color: var(--variable-foreground); }
+
+.ring { width: 16px; height: 16px; flex-shrink: 0; }
+.ring.lg { width: 24px; height: 24px; }
+.avstack { display: inline-flex; align-items: center; }
+.avatar.stacked { box-shadow: 0 0 0 2px var(--card); }
+.avatar.overlap { margin-left: -6px; }
+.avstack .more { margin-left: var(--space-1); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500; color: var(--muted-foreground); }
+
+.g { width: 16px; height: 16px; flex: none; }
+.g.sm { width: 12px; height: 12px; }
+.g.xs { width: 10px; height: 10px; }
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+.g-spin { animation: ui-spin 800ms linear infinite; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 1600ms !important; transition-duration: 1ms !important; } }
+</style>
+<style>
+/* Спільне для прев'ю контролів форм: Field, поле, оболонка, плаваюча поверхня, рядки списку.
+   Дзеркало controls.css / select-family.css / date-time.css із src/components/ui; лише токени. */
+.field { display: flex; min-width: 0; flex-direction: column; }
+.fhead { display: flex; min-height: 18px; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-1-5); }
+.lbl { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--foreground); }
+.req { margin-left: 2px; font-weight: 600; color: var(--destructive); }
+.opt { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.foot { display: flex; align-items: flex-start; gap: var(--space-3); }
+.msg { min-width: 0; flex: 1; }
+.error { display: flex; align-items: flex-start; gap: var(--space-1-5); padding-top: var(--space-1-5); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--destructive); }
+.error .g { width: 14px; height: 14px; margin-top: 1px; }
+.hint { padding-top: var(--space-1-5); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.counter { flex: none; padding-top: var(--space-1-5); font-size: 12px; line-height: 16px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.counter.near { color: var(--status-due-soon-foreground); }
+.counter.over { color: var(--destructive); }
+.gridf { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-5) var(--space-6); align-items: start; }
+
+/* Поле: межа input, заливка field; hover темнить межу, focus — межа ring + outline усередину */
+.ctl { position: relative; }
+.control, .trigger {
+  display: block; width: 100%; height: var(--size-control); padding: 0 var(--space-3);
+  border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); color: var(--foreground);
+  font-size: 14px; line-height: 20px; letter-spacing: -0.006em; caret-color: var(--primary);
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.control:hover:not(:disabled), .is-hover { border-color: var(--border-hover); }
+.control:focus-visible, .control.is-focus, .trigger:focus-visible, .trigger.is-focus { border-color: var(--ring); outline: var(--ring-width) solid var(--ring); outline-offset: -1px; }
+.control[aria-invalid="true"], .trigger[aria-invalid="true"], .shell[data-invalid] { border-color: var(--destructive); }
+.control[aria-invalid="true"].is-focus, .shell[data-invalid].is-focus { outline-color: var(--destructive); }
+.control:disabled, .trigger:disabled, .shell[data-disabled] { cursor: not-allowed; border-color: var(--border); background: var(--muted); color: var(--muted-foreground); }
+.control:disabled::placeholder { color: var(--control-disabled-fill); }
+.control[readonly] { background: color-mix(in oklab, var(--muted) 50%, transparent); }
+.control.lg { height: 2.75rem; }
+.pr1 { padding-right: 2.25rem; }
+.pr2 { padding-right: 3.75rem; }
+.pr3 { padding-right: 5.25rem; }
+.pl-lead { padding-left: 2.25rem; }
+textarea.control { height: auto; padding-top: var(--space-2); padding-bottom: var(--space-2); resize: none; }
+.slot { position: absolute; inset: 0 var(--space-1) 0 auto; display: flex; align-items: center; gap: 2px; }
+.lead { position: absolute; left: var(--space-3); top: 50%; translate: 0 -50%; display: grid; color: var(--muted-foreground); pointer-events: none; }
+.glyph { display: inline-grid; width: var(--size-hit); height: var(--size-hit); flex: none; place-items: center; }
+.g-alert { color: var(--destructive); }
+.iconbtn { display: inline-grid; width: var(--size-hit); height: var(--size-hit); flex: none; place-items: center; border-radius: var(--radius-xs); color: var(--muted-foreground); transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+.iconbtn:hover, .iconbtn.is-hover { background: var(--state-hover); color: var(--foreground); }
+.iconbtn[aria-expanded="true"] { background: var(--primary-tint); color: var(--primary); }
+.iconbtn:disabled { color: var(--control-disabled-fill); }
+
+/* Тригер Select: кнопка-комбобокс з шевроном */
+.trigger { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-right: var(--space-2); text-align: left; }
+.trigger .val { display: flex; min-width: 0; flex: 1; align-items: center; gap: var(--space-2); }
+.trigger .val > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trigger .ph { color: var(--muted-foreground); }
+.trigger .tail { display: flex; flex: none; align-items: center; gap: var(--space-1-5); }
+.chev { display: inline-grid; flex: none; place-items: center; color: var(--muted-foreground); transition: transform var(--spring-snappy-duration) var(--spring-snappy); }
+.chev.up, [aria-expanded="true"] .chev { transform: rotate(180deg); color: var(--foreground); }
+.dot { width: 8px; height: 8px; flex: none; border-radius: var(--radius-pill); background: var(--status-progress-mark); }
+
+/* Оболонка поля з вбудованим input (Combobox, MultiSelect) */
+.shell {
+  position: relative; display: flex; min-height: var(--size-control); min-width: 0; align-items: center; gap: var(--space-1-5);
+  padding: 0 var(--space-2) 0 var(--space-3); border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); color: var(--foreground);
+  font-size: 14px; line-height: 20px; letter-spacing: -0.006em;
+}
+.shell:hover:not([data-disabled]) { border-color: var(--border-hover); }
+.shell.is-open { border-color: var(--ring); }
+.shell.is-focus { border-color: var(--ring); outline: var(--ring-width) solid var(--ring); outline-offset: 0; }
+.shell .in { min-width: 0; flex: 1 1 auto; align-self: stretch; border: 0; background: none; padding: 0; color: inherit; }
+.shell .in:focus-visible { outline: none; }
+.shell .in::placeholder { color: var(--muted-foreground); }
+.shell .in:disabled { cursor: not-allowed; }
+.shell .avatar { width: 20px; height: 20px; font-size: 10px; }
+.multi { flex-wrap: wrap; align-content: center; gap: var(--space-1); padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1-5); }
+.multi .in { flex: 1 1 4rem; min-width: 4rem; height: var(--size-chip); align-self: auto; padding: 0 var(--space-1); }
+.multi > .chev { margin-left: auto; }
+.chip {
+  display: inline-flex; height: var(--size-chip); max-width: 100%; flex: none; align-items: center; gap: 2px; white-space: nowrap;
+  padding: 0 2px 0 var(--space-2); border-radius: var(--radius-pill); background: var(--secondary); color: var(--secondary-foreground);
+  box-shadow: inset 0 0 0 1px var(--border); font-size: 12px; line-height: 1; letter-spacing: 0.004em; font-weight: 500;
+}
+.chip.av { padding-left: 2px; }
+.chip .avatar { width: 18px; height: 18px; font-size: 9px; }
+.chip .av-name { padding-left: var(--space-1); }
+.chip .x { display: inline-grid; width: 18px; height: 18px; place-items: center; border-radius: var(--radius-pill); color: var(--muted-foreground); }
+.chip .x:hover { background: var(--state-pressed); color: var(--foreground); }
+.more { display: inline-flex; height: var(--size-chip); flex: none; align-items: center; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--control-off); color: var(--foreground); font-size: 12px; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums; }
+.shell[data-disabled] .chip { background: transparent; padding-right: var(--space-2); color: var(--muted-foreground); }
+
+/* Плаваюча скляна поверхня: .float (surface-float) */
+.float {
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(1.4); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-3); color: var(--popover-foreground);
+}
+.lb { padding: var(--space-1); }
+.lb-search { display: flex; align-items: center; gap: var(--space-2); margin: calc(var(--space-1) * -1) calc(var(--space-1) * -1) var(--space-1); padding: 0 var(--space-3); border-bottom: 1px solid var(--border); color: var(--muted-foreground); }
+.lb-search .in { height: 36px; min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; color: var(--foreground); font-size: 14px; line-height: 20px; letter-spacing: -0.006em; }
+.lb-search .in:focus-visible { outline: none; }
+.lb-search .in::placeholder { color: var(--muted-foreground); }
+.grp + .grp { margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px solid var(--border); }
+.grp-l { padding: var(--space-2) var(--space-2) var(--space-1); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500; color: var(--muted-foreground); }
+.o {
+  position: relative; display: flex; min-height: var(--size-option); align-items: center; gap: var(--space-2); padding: 0 var(--space-2);
+  border-radius: var(--radius-xs); font-size: 13px; line-height: 18px; font-weight: 500; color: var(--popover-foreground);
+}
+.o.rich { min-height: var(--size-option-rich); padding-top: var(--space-1); padding-bottom: var(--space-1); }
+.o[data-active] { background: var(--accent-float); }
+.o[aria-disabled="true"] { color: var(--muted-foreground); }
+.o .lead-n { display: inline-grid; flex: none; place-items: center; color: var(--muted-foreground); }
+.o .txt { display: grid; min-width: 0; flex: 1; }
+.o .txt > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o .desc { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 400; color: var(--muted-foreground); }
+.o[data-active] .desc { color: color-mix(in oklab, var(--foreground) 70%, transparent); }
+.o .tail { margin-left: auto; display: flex; flex: none; align-items: center; gap: var(--space-2); }
+.o .tick { color: var(--primary); opacity: 0; transform: scale(0.6); }
+.o[aria-selected="true"] .tick { opacity: 1; transform: none; }
+mark { border-radius: 2px; background: var(--match); padding: 0 1px; color: var(--foreground); }
+.o .avatar { width: 24px; height: 24px; font-size: 11px; }
+.empty-l { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-4); text-align: center; }
+.empty-l .g { width: 20px; height: 20px; color: var(--muted-foreground); margin-bottom: var(--space-1); }
+.empty-l b { font-size: 13px; line-height: 18px; font-weight: 500; }
+.role {
+  display: inline-flex; height: 20px; align-items: center; gap: var(--space-1); white-space: nowrap; border-radius: var(--radius-pill); padding: 0 var(--space-2) 0 var(--space-1-5);
+  font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500;
+}
+.role .g { width: 12px; height: 12px; }
+.role-admin { background: var(--status-progress); color: var(--status-progress-foreground); }
+.role-manager { background: var(--secondary); color: var(--secondary-foreground); }
+/* Контейнер, у якому «плаває» поверхня в статичному прев'ю */
+.anchor { position: relative; }
+.anchor > .float { margin-top: var(--space-1-5); }
+.box { display: grid; width: var(--size-check); height: var(--size-check); flex: none; place-items: center; border-radius: var(--radius-xs); color: var(--primary-foreground); box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.box svg { width: 12px; height: 12px; }
+.box path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+[role="option"][aria-selected="true"] .box { background: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+[role="option"][aria-selected="true"] .box path { stroke-dashoffset: 0; }
+[role="option"][data-active]:not([aria-selected="true"]) .box { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); align-items: start; }
+.pane { display: flex; flex-direction: column; gap: var(--space-4); }
+.dt-tz { display: inline-flex; height: 1.125rem; align-items: center; gap: 0.25rem; padding: 0 0.375rem 0 0.25rem; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--border); color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1; font-weight: 500; white-space: nowrap; }
+.dt-presets { display: flex; flex-wrap: wrap; gap: 0.375rem; padding-top: 0.5rem; }
+.dt-preset { display: inline-flex; height: 1.5rem; align-items: center; gap: 0.375rem; padding: 0 0.5rem; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--input); color: var(--foreground); font-size: 12px; line-height: 1; letter-spacing: 0.004em; font-weight: 500; white-space: nowrap; }
+.dt-preset__n { color: var(--muted-foreground); font-weight: 400; font-variant-numeric: tabular-nums; }
+.dt-preset[aria-pressed="true"] { background: var(--primary-tint); color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary-tint-strong); }
+.dt-preset[aria-pressed="true"] .dt-preset__n { color: inherit; }
+.dt-range-in { display: flex; width: 100%; height: var(--size-control); align-items: center; gap: 0.5rem; padding: 0 0.5rem 0 0.75rem; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); font-variant-numeric: tabular-nums; }
+.dt-range-in .in { min-width: 0; flex: 1 1 0; border: 0; background: transparent; padding: 0; color: inherit; font-size: 14px; }
+.dt-range-in .in:focus-visible { outline: none; }
+.dt-range-in > .g-arrow { color: var(--muted-foreground); }
+.pop { display: grid; gap: 0.75rem; width: var(--size-popover-cal); padding: 0.75rem; }
+.pop-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 -0.75rem -0.25rem; padding: 0.5rem 0.75rem 0; border-top: 1px solid var(--border); }
+.pop-foot .dt-tz { padding: 0; box-shadow: none; height: auto; }
+.ghost-sm { display: inline-flex; height: var(--size-control-sm); align-items: center; padding: 0 var(--space-2-5); border-radius: var(--radius-sm); font-size: 13px; line-height: 18px; font-weight: 500; color: var(--foreground); }
+.dt-cal { --_d: var(--size-day); position: relative; display: grid; width: max-content; max-width: 100%; user-select: none; }
+.dt-cal__month { display: grid; align-content: start; gap: 0.25rem; width: calc(var(--_d) * 7); }
+.dt-cal__title { display: grid; height: var(--size-control-sm); place-items: center; margin: 0; font-size: 13px; line-height: 18px; font-weight: 500; }
+.dt-cal__nav { position: absolute; top: 0; z-index: 2; width: var(--size-control-sm); height: var(--size-control-sm); }
+.dt-cal__nav[data-dir="prev"] { left: 0; }
+.dt-cal__nav[data-dir="next"] { right: 0; }
+.dt-cal__row { display: grid; grid-template-columns: repeat(7, var(--_d)); }
+.dt-cal__dow { display: grid; height: var(--size-hit); place-items: center; color: var(--muted-foreground); font-size: 12px; line-height: 1; font-weight: 500; letter-spacing: 0.02em; }
+.dt-day { position: relative; display: grid; width: var(--_d); height: var(--_d); place-items: center; }
+.dt-day::before { content: ""; position: absolute; inset: 0.125rem 0; z-index: 0; background: transparent; }
+.dt-day__n { position: relative; z-index: 1; display: grid; width: calc(var(--_d) - 0.25rem); height: calc(var(--_d) - 0.25rem); place-items: center; border-radius: var(--radius-sm); font-size: 13px; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.dt-day[data-outside] .dt-day__n { color: var(--muted-foreground); font-weight: 400; }
+.dt-day[data-today] .dt-day__n::after { content: ""; position: absolute; bottom: 0.25rem; width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
+.dt-day[aria-selected="true"] .dt-day__n { background: var(--primary); color: var(--primary-foreground); }
+.dt-day[aria-selected="true"][data-today] .dt-day__n::after { background: var(--primary-foreground); }
+.dt-day[aria-disabled="true"] .dt-day__n { color: var(--control-disabled-fill); text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: color-mix(in oklch, currentColor 45%, transparent); }
+.dt-day[data-range] { --_band: var(--primary-tint); }
+.dt-day[data-range="preview"] { --_band: color-mix(in oklch, var(--primary) 7%, transparent); }
+.dt-day[data-range="mid"]::before, .dt-day[data-range="preview"]::before { background: var(--_band); }
+.dt-day[data-range="start"]::before { background: var(--_band); left: 50%; }
+.dt-day[data-range="end"]::before { background: var(--_band); right: 50%; }
+.dt-day[data-col="0"][data-range="mid"]::before, .dt-day[data-col="0"][data-range="preview"]::before { left: 0.125rem; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.dt-day[data-col="6"][data-range="mid"]::before, .dt-day[data-col="6"][data-range="preview"]::before { right: 0.125rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.dt-day[data-range="mid"] .dt-day__n, .dt-day[data-range="preview"] .dt-day__n { color: var(--foreground); }
+.dt-day[data-hover]:not([aria-selected="true"]) .dt-day__n { box-shadow: inset 0 0 0 1px var(--primary); }
+.dt-iconbtn { display: inline-grid; width: 1.5rem; height: 1.5rem; flex: none; place-items: center; border-radius: var(--radius-xs); color: var(--muted-foreground); }
+.dt-iconbtn:hover { background: var(--state-hover); color: var(--foreground); }
+.dt-iconbtn[aria-expanded="true"] { background: var(--primary-tint); color: var(--primary); }
+.dt-iconbtn:disabled { color: var(--control-disabled-fill); }
+.dt-time { display: flex; height: var(--size-control); align-items: center; gap: 0.25rem; padding: 0 0.75rem; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); font-size: 14px; }
+.dt-time[data-invalid] { border-color: var(--destructive); }
+.dt-time[data-disabled] { border-color: var(--border); background: var(--muted); color: var(--muted-foreground); }
+.dt-time.is-open { border-color: var(--ring); }
+.dt-time__lead { display: inline-grid; flex: none; margin-right: 0.25rem; color: var(--muted-foreground); }
+.dt-time__colon { margin: 0 -0.125rem; color: var(--muted-foreground); }
+.dt-time__spacer { flex: 1; }
+.dt-seg { width: 1.625rem; height: 1.5rem; flex: none; padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; text-align: center; color: inherit; font-variant-numeric: tabular-nums; caret-color: transparent; }
+.dt-seg:focus-visible { outline: none; }
+.dt-seg.is-focus { background: var(--primary-tint); color: var(--primary); }
+.dt-seg::placeholder { color: var(--muted-foreground); letter-spacing: -0.1em; }
+.dt-timepop { display: flex; gap: 0.25rem; }
+.dt-timecol { display: grid; width: 3.75rem; max-height: 12rem; align-content: start; gap: 0.125rem; padding: 0 0.125rem; overflow: hidden; }
+.dt-timecol__head { padding: 0.25rem 0; background: color-mix(in oklab, var(--popover), transparent 8%); color: var(--muted-foreground); text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; }
+.dt-timeopt { display: grid; height: var(--size-control-sm); place-items: center; border-radius: var(--radius-xs); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dt-timeopt[data-active] { background: var(--accent-float); }
+.dt-timeopt[aria-selected="true"] { background: var(--primary); color: var(--primary-foreground); }
+.dt-num { position: relative; }
+.dt-num .control { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.dt-num__affix { position: absolute; top: 50%; left: 0.75rem; translate: 0 -50%; color: var(--foreground); font-variant-numeric: tabular-nums; pointer-events: none; }
+.dt-num[data-disabled] .dt-num__affix { color: var(--control-disabled-fill); }
+.dt-num__alert { position: absolute; top: 50%; translate: 0 -50%; pointer-events: none; }
+.dt-step { display: grid; width: 1.75rem; place-items: center; background: transparent; color: var(--muted-foreground); }
+.dt-step:hover { background: var(--state-hover); color: var(--foreground); }
+.dt-step[data-holding] { background: var(--state-pressed); color: var(--foreground); }
+.dt-step[data-holding] .g { transform: scale(0.82); }
+.dt-step[aria-disabled="true"] { color: var(--control-disabled-fill); }
+.dt-steps { position: absolute; inset: 1px 1px 1px auto; display: flex; overflow: hidden; border-left: 1px solid var(--input); border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
+.dt-step + .dt-step { border-left: 1px solid var(--input); }
+.dt-num[data-disabled] .dt-steps, .dt-num[data-disabled] .dt-step + .dt-step { border-color: var(--border); }
+.dt-num[data-layout="split"] .dt-step { position: absolute; top: 1px; bottom: 1px; width: 2rem; }
+.dt-num[data-layout="split"] .dt-step[data-side="start"] { left: 1px; border-right: 1px solid var(--input); border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px); }
+.dt-num[data-layout="split"] .dt-step[data-side="end"] { right: 1px; border-left: 1px solid var(--input); border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
+.dt-rate { position: absolute; right: 0.25rem; bottom: calc(100% + 0.5rem); z-index: 3; display: inline-flex; height: 1.125rem; align-items: center; padding: 0 0.375rem; border-radius: var(--radius-xs); background: var(--foreground); color: var(--background); font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gap-rate { padding-top: var(--space-6); }
+</style>
+</head>
+<body>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">DatePicker: text or calendar, Kyiv time tag, quick dates</p>
+    <div class="gridf">
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-1">Due date<span class="req" aria-hidden="true">*</span></label><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="ctl">
+          <input class="control pr1 tabular" id="dp-1" type="text" autocomplete="off" value="24 Oct 2026">
+          <span class="slot"><button class="dt-iconbtn" type="button" aria-label="Choose date" aria-haspopup="dialog" aria-expanded="false"><svg class="g g-calendar" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="2"/><path d="M2.5 6.75h11M5.5 2v2.5M10.5 2v2.5"/></svg></button></span>
+        </div>
+        <div class="dt-presets" role="group" aria-label="Quick dates">
+          <button class="dt-preset" type="button" aria-pressed="false">Today <span class="dt-preset__n">23 Oct</span></button>
+          <button class="dt-preset" type="button" aria-pressed="true">Tomorrow <span class="dt-preset__n">24 Oct</span></button>
+          <button class="dt-preset" type="button" aria-pressed="false">Next week <span class="dt-preset__n">30 Oct</span></button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-2">Due date<span class="req" aria-hidden="true">*</span></label><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="ctl">
+          <input class="control pr2 tabular" id="dp-2" type="text" autocomplete="off" value="20 Oct 2026" aria-invalid="true" aria-describedby="dp-2-e">
+          <span class="slot"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg><button class="dt-iconbtn" type="button" aria-label="Choose date" aria-haspopup="dialog" aria-expanded="false"><svg class="g g-calendar" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="2"/><path d="M2.5 6.75h11M5.5 2v2.5M10.5 2v2.5"/></svg></button></span>
+        </div>
+        <div class="foot"><p class="error" id="dp-2-e" role="alert"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg><span>Due date can’t be in the past.</span></p></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-3">Move-in window</label><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="dt-range-in" role="group" aria-label="Move-in window"><input class="in" id="dp-3" value="26 Oct 2026" aria-label="Start date"><span class="g-arrow"><svg class="g g-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span><input class="in" value="30 Oct 2026" aria-label="End date"><button class="dt-iconbtn" type="button" aria-label="Choose dates"><svg class="g g-calendar" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="2"/><path d="M2.5 6.75h11M5.5 2v2.5M10.5 2v2.5"/></svg></button></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-4">Due date</label></div>
+        <div class="ctl">
+          <input class="control pr1 tabular" id="dp-4" type="text" autocomplete="off" value="30 Oct 2026" disabled>
+          <span class="slot"><button class="dt-iconbtn" type="button" aria-label="Choose date" disabled><svg class="g g-calendar" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="2"/><path d="M2.5 6.75h11M5.5 2v2.5M10.5 2v2.5"/></svg></button></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">Calendar popover: today dot, selected day, range with hover preview, Today in the footer</p>
+    <div class="cols">
+      <div class="float pop" role="dialog" aria-label="Choose date">
+        <div class="dt-cal">
+          <button class="dt-iconbtn dt-cal__nav" data-dir="prev" type="button" aria-label="Previous month"><svg class="g g-chev-l" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 4-4 4 4 4"/></svg></button>
+          <button class="dt-iconbtn dt-cal__nav" data-dir="next" type="button" aria-label="Next month"><svg class="g g-chev-r" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 4 4 4-4 4"/></svg></button>
+          <div class="dt-cal__month">
+            <h3 class="dt-cal__title" id="cal-a">October 2026</h3>
+            <div role="grid" aria-labelledby="cal-a">
+              <div role="row" class="dt-cal__row"><div role="columnheader" class="dt-cal__dow" aria-label="Monday">Mo</div><div role="columnheader" class="dt-cal__dow" aria-label="Tuesday">Tu</div><div role="columnheader" class="dt-cal__dow" aria-label="Wednesday">We</div><div role="columnheader" class="dt-cal__dow" aria-label="Thursday">Th</div><div role="columnheader" class="dt-cal__dow" aria-label="Friday">Fr</div><div role="columnheader" class="dt-cal__dow" aria-label="Saturday">Sa</div><div role="columnheader" class="dt-cal__dow" aria-label="Sunday">Su</div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">1</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">4</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">8</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">9</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">10</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">11</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">12</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">13</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">14</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">15</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">16</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">17</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">18</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">19</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">20</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">21</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">22</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-today aria-current="date"><span class="dt-day__n">23</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="true"><span class="dt-day__n">24</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">25</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">26</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">27</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">31</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">1</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">4</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-outside><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-outside><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false" data-outside><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">8</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop-foot"><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Today</span></div>
+      </div>
+      <div class="float pop" role="dialog" aria-label="Choose dates">
+        <div class="dt-cal">
+          <button class="dt-iconbtn dt-cal__nav" data-dir="prev" type="button" aria-label="Previous month"><svg class="g g-chev-l" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 4-4 4 4 4"/></svg></button>
+          <button class="dt-iconbtn dt-cal__nav" data-dir="next" type="button" aria-label="Next month"><svg class="g g-chev-r" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 4 4 4-4 4"/></svg></button>
+          <div class="dt-cal__month">
+            <h3 class="dt-cal__title" id="cal-b">October 2026</h3>
+            <div role="grid" aria-labelledby="cal-b">
+              <div role="row" class="dt-cal__row"><div role="columnheader" class="dt-cal__dow" aria-label="Monday">Mo</div><div role="columnheader" class="dt-cal__dow" aria-label="Tuesday">Tu</div><div role="columnheader" class="dt-cal__dow" aria-label="Wednesday">We</div><div role="columnheader" class="dt-cal__dow" aria-label="Thursday">Th</div><div role="columnheader" class="dt-cal__dow" aria-label="Friday">Fr</div><div role="columnheader" class="dt-cal__dow" aria-label="Saturday">Sa</div><div role="columnheader" class="dt-cal__dow" aria-label="Sunday">Su</div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">1</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">4</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">8</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">9</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">10</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">11</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">12</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">13</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">14</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">15</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">16</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">17</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">18</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">19</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">20</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">21</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">22</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-today aria-current="date"><span class="dt-day__n">23</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">24</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">25</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="true" data-range="start"><span class="dt-day__n">26</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-range="preview"><span class="dt-day__n">27</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-range="preview"><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-range="preview"><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-range="end" data-hover><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">31</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">1</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">4</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-outside><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-outside><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false" data-outside><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">8</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop-foot"><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Today</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">TimeField: segments, 24-hour, hours and minutes columns</p>
+    <div class="cols">
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-h">Due time</label><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+          <div class="dt-time is-open" role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true"><svg class="g g-clock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg></span>
+            <input class="dt-seg" id="tm-h" role="spinbutton" type="text" value="09" aria-label="Hours" aria-valuemin="0" aria-valuemax="23" aria-valuenow="9">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg is-focus" role="spinbutton" type="text" value="30" aria-label="Minutes" aria-valuemin="0" aria-valuemax="59" aria-valuenow="30">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time" aria-haspopup="dialog" aria-expanded="true"><span class="chev up"><svg class="g g-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6L8 10.5 12.5 6"/></svg></span></button>
+          </div>
+          <div class="float pop" role="dialog" aria-label="Choose time" style="width: max-content; margin-top: var(--space-1-5)">
+            <div class="dt-timepop">
+              <div class="dt-timecol" role="listbox" aria-label="Hours"><div class="dt-timecol__head" aria-hidden="true">Hour</div><div class="dt-timeopt" role="option" aria-selected="false">06</div><div class="dt-timeopt" role="option" aria-selected="false">07</div><div class="dt-timeopt" role="option" aria-selected="false">08</div><div class="dt-timeopt" role="option" aria-selected="true">09</div><div class="dt-timeopt" role="option" aria-selected="false" data-active>10</div><div class="dt-timeopt" role="option" aria-selected="false">11</div><div class="dt-timeopt" role="option" aria-selected="false">12</div></div>
+              <div class="dt-timecol" role="listbox" aria-label="Minutes"><div class="dt-timecol__head" aria-hidden="true">Min</div><div class="dt-timeopt" role="option" aria-selected="false">00</div><div class="dt-timeopt" role="option" aria-selected="false">05</div><div class="dt-timeopt" role="option" aria-selected="false">10</div><div class="dt-timeopt" role="option" aria-selected="false">15</div><div class="dt-timeopt" role="option" aria-selected="false">20</div><div class="dt-timeopt" role="option" aria-selected="false">25</div><div class="dt-timeopt" role="option" aria-selected="true">30</div><div class="dt-timeopt" role="option" aria-selected="false">35</div></div>
+            </div>
+            <div class="pop-foot"><span class="dt-tz"><svg class="g g-clock xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg><span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Done</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-2">Due time</label><span class="opt">Optional</span></div>
+          <div class="dt-time" role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true"><svg class="g g-clock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg></span>
+            <input class="dt-seg" id="tm-2" role="spinbutton" type="text" placeholder="––" aria-label="Hours">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" placeholder="––" aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time"><svg class="g g-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6L8 10.5 12.5 6"/></svg></button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-3">Due time</label></div>
+          <div class="dt-time" data-invalid role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true"><svg class="g g-clock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg></span>
+            <input class="dt-seg" id="tm-3" role="spinbutton" type="text" value="23" aria-invalid="true" aria-label="Hours" aria-describedby="tm-3-e">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" value="45" aria-invalid="true" aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            <svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time"><svg class="g g-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6L8 10.5 12.5 6"/></svg></button>
+          </div>
+          <div class="foot"><p class="error" id="tm-3-e" role="alert"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg><span>Pick a time during office hours.</span></p></div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-4">Due time</label></div>
+          <div class="dt-time" data-disabled role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true"><svg class="g g-clock" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.2"/></svg></span>
+            <input class="dt-seg" id="tm-4" role="spinbutton" type="text" value="09" disabled aria-label="Hours">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" value="30" disabled aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time" disabled><svg class="g g-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6L8 10.5 12.5 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">NumberField and CurrencyField: split and end steppers, hold-to-repeat multiplier, EUR</p>
+    <div class="gridf">
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-1">Nights</label></div>
+        <div class="dt-num" data-layout="split" data-filled>
+          <input class="control tabular" id="nf-1" role="spinbutton" type="text" value="3" aria-valuemin="1" aria-valuemax="30" aria-valuenow="3" style="padding-left: 2.5rem; padding-right: 2.5rem; text-align: center">
+          <button class="dt-step" data-side="start" type="button" tabindex="-1" aria-hidden="true"><svg class="g g-minus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button>
+          <button class="dt-step" data-side="end" type="button" tabindex="-1" aria-hidden="true"><svg class="g g-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-2">Rooms</label></div>
+        <div class="dt-num" data-filled>
+          <input class="control tabular" id="nf-2" role="spinbutton" type="text" value="0" aria-valuemin="0" aria-valuenow="0" style="padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true"><svg class="g g-minus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true"><svg class="g g-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></span>
+        </div>
+      </div>
+      <div class="field gap-rate">
+        <div class="fhead"><label class="lbl" for="nf-3">Deposit</label></div>
+        <div class="dt-num" data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-3" role="spinbutton" type="text" value="1,250.00" aria-valuenow="1250" aria-valuetext="€1,250.00" style="padding-left: 1.35rem; padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true"><svg class="g g-minus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button><button class="dt-step" data-holding type="button" tabindex="-1" aria-hidden="true"><svg class="g g-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></span>
+          <span class="dt-rate" aria-hidden="true">×2</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-4">Deposit</label></div>
+        <div class="dt-num" data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-4" role="spinbutton" type="text" value="6,200.00" aria-invalid="true" aria-describedby="nf-4-e" style="padding-left: 1.35rem; padding-right: 5.5rem">
+          <span class="dt-num__alert" style="right: 4rem"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg></span>
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true"><svg class="g g-minus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true"><svg class="g g-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></span>
+        </div>
+        <div class="foot"><p class="error" id="nf-4-e" role="alert"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg><span>Enter an amount between €0.00 and €5,000.00.</span></p></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-5">Deposit</label></div>
+        <div class="dt-num" data-disabled data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-5" role="spinbutton" type="text" value="1,250.00" disabled style="padding-left: 1.35rem; padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true"><svg class="g g-minus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true"><svg class="g g-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

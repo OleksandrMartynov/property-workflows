@@ -1,0 +1,97 @@
+<!-- @dsCard group="Forms" height=684 subtitle="Input, Textarea, SearchInput, PasswordInput у Field" -->
+<style>
+/* @include forms */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); align-items: start; }
+.col { display: flex; flex-direction: column; gap: var(--space-4); }
+.caps-note { display: flex; align-items: center; gap: var(--space-1-5); padding-top: var(--space-1-5); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--status-due-soon-foreground); }
+.caps-note .g { width: 14px; height: 14px; }
+.warn { color: var(--status-due-soon-foreground); }
+</style>
+<div class="cols">
+  <div class="col">
+    <p class="cap">Text: counter, search, optional, hover, focus, invalid, read-only</p>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-case">Case name<span class="req" aria-hidden="true">*</span></label></div>
+      <div class="ctl">
+        <input class="control pr1" id="in-case" type="text" value="Apartment 12, move-in" aria-required="true">
+        <span class="slot"><button class="iconbtn" type="button" aria-label="Clear" title="Clear">{{g close sm}}</button></span>
+      </div>
+      <div class="foot"><div class="msg"></div><span class="counter" aria-hidden="true">21/100</span></div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-search">Search tasks</label></div>
+      <div class="ctl">
+        <span class="lead" aria-hidden="true">{{g search}}</span>
+        <input class="control pl-lead pr1" id="in-search" type="search" role="searchbox" value="keys" autocomplete="off">
+        <span class="slot"><button class="iconbtn" type="button" aria-label="Clear search" title="Clear search">{{g close sm}}</button></span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-opt">Tenant email</label><span class="opt">Optional</span></div>
+      <input class="control" id="in-opt" type="email" placeholder="tenant@example.test">
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-hover">Email</label></div>
+      <input class="control is-hover" id="in-hover" type="email" value="alex@example.test">
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-focus">Email</label></div>
+      <input class="control is-focus" id="in-focus" type="email" value="alex@example.test">
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-invalid">Email<span class="req" aria-hidden="true">*</span></label></div>
+      <div class="ctl">
+        <input class="control pr2" id="in-invalid" type="email" value="ana@" aria-invalid="true" aria-describedby="in-invalid-e">
+        <span class="slot"><span class="glyph">{{g alert}}</span><button class="iconbtn" type="button" aria-label="Clear" title="Clear">{{g close sm}}</button></span>
+      </div>
+      <div class="foot"><div class="msg"><p class="error" id="in-invalid-e" role="alert">{{g alert}}<span>Enter a valid email.</span></p></div></div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-ro">Unit</label></div>
+      <input class="control" id="in-ro" type="text" value="Apartment 12" readonly>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-dis">Manager</label></div>
+      <input class="control" id="in-dis" type="email" value="manager@example.test" disabled>
+    </div>
+  </div>
+
+  <div class="col">
+    <p class="cap">Textarea: grows with text, no resize grip; PasswordInput; size lg</p>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-notes">Notes</label><span class="opt">Optional</span></div>
+      <textarea class="control" id="in-notes" rows="3" style="height: 4.75rem">Collect keys from the manager.
+Check the meters.
+Photograph every room.</textarea>
+      <div class="foot"><div class="msg"></div><span class="counter" aria-hidden="true">77/120</span></div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-comment">Comment<span class="req" aria-hidden="true">*</span></label></div>
+      <textarea class="control" id="in-comment" rows="2" aria-invalid="true" aria-describedby="in-comment-e" placeholder="Why was it rejected?" style="height: 3.25rem"></textarea>
+      <div class="foot"><div class="msg"><p class="error" id="in-comment-e" role="alert">{{g alert}}<span>Add a short comment.</span></p></div><span class="counter" aria-hidden="true">0/120</span></div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-pw">Password</label></div>
+      <div class="ctl">
+        <input class="control pr1" id="in-pw" type="password" value="example-pass" autocomplete="current-password">
+        <span class="slot"><button class="iconbtn" type="button" aria-label="Show password" aria-pressed="false" title="Show password">{{g eye-off}}</button></span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-pw2">Password</label></div>
+      <div class="ctl">
+        <input class="control lg pr2" id="in-pw2" type="text" value="example-pass" autocomplete="current-password">
+        <span class="slot"><span class="glyph warn" title="Caps Lock is on">{{g caps}}</span><button class="iconbtn" type="button" aria-label="Hide password" aria-pressed="true" title="Hide password">{{g eye}}</button></span>
+      </div>
+      <p class="caps-note" role="status" aria-live="polite">Caps Lock is on.</p>
+    </div>
+    <div class="field">
+      <div class="fhead"><label class="lbl" for="in-pw3">Password</label></div>
+      <div class="ctl">
+        <input class="control lg pr3" id="in-pw3" type="password" aria-invalid="true" aria-describedby="in-pw3-e">
+        <span class="slot"><span class="glyph">{{g alert}}</span><button class="iconbtn" type="button" aria-label="Show password" aria-pressed="false" title="Show password">{{g eye-off}}</button></span>
+      </div>
+      <div class="foot"><div class="msg"><p class="error" id="in-pw3-e" role="alert">{{g alert}}<span>Enter your password.</span></p></div></div>
+    </div>
+  </div>
+</div>

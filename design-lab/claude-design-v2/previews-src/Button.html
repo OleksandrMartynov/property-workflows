@@ -1,0 +1,125 @@
+<!-- @dsCard group="Actions" height=470 subtitle="Шість варіантів, чотири розміри, стани, відгук на клік: press 0.97, пульс-кільце, смужка навігації" -->
+<style>
+.btn {
+  position: relative; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+  gap: var(--space-1-5); white-space: nowrap; user-select: none;
+  height: var(--size-control); padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: 0;
+  transition: transform var(--duration-fast) var(--spring-snappy), color var(--duration-instant) var(--ease-standard), background-color var(--duration-instant) var(--ease-standard), border-color var(--duration-instant) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), opacity var(--duration-instant) var(--ease-standard);
+}
+.btn:active:not(:disabled), .btn.is-active:not(:disabled) { transform: scale(var(--scale-press)); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.is-focus { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+
+.btn-default { background: var(--primary); color: var(--primary-foreground); box-shadow: var(--elevation-1); }
+.btn-default:hover:not(:disabled), .btn-default.is-hover { background: var(--primary-hover); }
+.btn-default:active:not(:disabled), .btn-default.is-active { background: var(--primary-active); }
+
+.btn-secondary { background: var(--secondary); color: var(--secondary-foreground); }
+.btn-secondary:hover:not(:disabled), .btn-secondary.is-hover { background: var(--accent); }
+.btn-secondary:active:not(:disabled), .btn-secondary.is-active { background: var(--state-pressed); }
+
+.btn-outline { border: 1px solid var(--border); background: var(--card); color: var(--foreground); }
+.btn-outline:hover:not(:disabled), .btn-outline.is-hover { background: var(--state-hover); }
+.btn-outline:active:not(:disabled), .btn-outline.is-active { background: var(--state-pressed); }
+
+.btn-ghost { color: var(--foreground); }
+.btn-ghost:hover:not(:disabled), .btn-ghost.is-hover { background: var(--state-hover); }
+.btn-ghost:active:not(:disabled), .btn-ghost.is-active { background: var(--state-pressed); }
+
+.btn-destructive { background: var(--destructive); color: var(--destructive-foreground); box-shadow: var(--elevation-1); }
+.btn-destructive:hover:not(:disabled), .btn-destructive.is-hover { background: var(--destructive-hover); }
+
+.btn-link {
+  height: auto; padding: 0; border-radius: var(--radius-xs); color: var(--primary);
+  text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--primary) 35%, transparent); text-underline-offset: 4px;
+}
+.btn-link:hover { text-decoration-color: var(--primary); }
+
+.btn-sm { height: var(--size-control-sm); padding: 0 var(--space-2-5); }
+.btn-lg { height: var(--size-control-lg); padding: 0 var(--space-4); font-size: 14px; line-height: 20px; }
+.btn-icon { width: var(--size-control); padding: 0; }
+.btn svg { width: 16px; height: 16px; }
+
+/* Відгук на клік (feedback.css): пульс-кільце [data-clicked] 520ms токеном ring; смужка навігації primary → ai */
+@keyframes ui-click-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in oklch, var(--ring) 60%, transparent); }
+  to { box-shadow: 0 0 0 7px color-mix(in oklch, var(--ring) 0%, transparent); }
+}
+.btn[data-clicked] { animation: ui-click-ring 520ms var(--ease-standard) both; }
+/* Статичний кадр пульсу на ~60% шляху: кільце ≈ 4px, прозорість ≈ 24% */
+.btn.is-pulse { box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 24%, transparent); }
+.fb { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-6); }
+.fb figure { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.fb figcaption { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.nav-demo { position: relative; width: 240px; height: 2px; border-radius: var(--radius-pill); background: var(--border); }
+.nav-demo i { position: absolute; inset: 0 auto 0 0; width: 88%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--primary), var(--ai-mark)); box-shadow: 0 0 8px color-mix(in oklch, var(--primary) 55%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .btn[data-clicked] { animation: none; outline: 2px solid var(--ring); outline-offset: 1px; }
+  .nav-demo i { width: 100%; }
+}
+.btn .spin { width: 14px; height: 14px; animation: ui-spin 700ms linear infinite; }
+</style>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">Variants</p>
+    <div class="row">
+      <button class="btn btn-default">Mark as done</button>
+      <button class="btn btn-secondary">Save draft</button>
+      <button class="btn btn-outline">Cancel</button>
+      <button class="btn btn-ghost">Skip</button>
+      <button class="btn btn-destructive">Delete template</button>
+      <button class="btn btn-link">View runs</button>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">Sizes: sm 28 · md 32 · lg 36 · icon 32</p>
+    <div class="row">
+      <button class="btn btn-default btn-sm">Launch run</button>
+      <button class="btn btn-default">Launch run</button>
+      <button class="btn btn-default btn-lg">Launch run</button>
+      <button class="btn btn-outline btn-icon" aria-label="Add task"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">States: hover · pressed · focus · loading · disabled</p>
+    <div class="row">
+      <button class="btn btn-default is-hover">Hover</button>
+      <button class="btn btn-default is-active">Pressed</button>
+      <button class="btn btn-default is-focus">Focus</button>
+      <button class="btn btn-default" aria-busy="true" disabled><svg class="spin" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/><path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Signing in…</button>
+      <button class="btn btn-default" disabled>Disabled</button>
+      <button class="btn btn-outline" disabled>Disabled</button>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">Click feedback: normal · pressed (scale 0.97, darker fill) · pulse ring 520ms (token ring) · live</p>
+    <div class="fb">
+      <figure><button class="btn btn-default">Launch run</button><figcaption>Normal</figcaption></figure>
+      <figure><button class="btn btn-default is-active">Launch run</button><figcaption>Pressed</figcaption></figure>
+      <figure><button class="btn btn-default is-pulse">Launch run</button><figcaption>Pulse ring, frame at ~60%</figcaption></figure>
+      <figure><button class="btn btn-outline" id="live" type="button">Click me</button><figcaption>Live: re-triggers the ring</figcaption></figure>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">Top navigation bar while an internal link loads: 2px, primary → ai, runs to ~88%, completes and fades on route change</p>
+    <div class="nav-demo" aria-hidden="true"><i></i></div>
+  </section>
+  <section class="sec">
+    <p class="cap">Pending: spinner + action word; reduced motion: static outline instead of the ring, static full bar</p>
+    <div class="row">
+      <button class="btn btn-default" aria-busy="true" disabled><svg class="spin" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/><path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Launching…</button>
+      <button class="btn btn-outline" aria-busy="true" disabled><svg class="spin" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/><path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Saving…</button>
+    </div>
+  </section>
+</div>
+<script>
+(function () {
+  var b = document.getElementById("live"), t;
+  b.addEventListener("pointerdown", function () {
+    b.removeAttribute("data-clicked"); void b.offsetWidth; b.setAttribute("data-clicked", "");
+    clearTimeout(t); t = setTimeout(function () { b.removeAttribute("data-clicked"); }, 560);
+  });
+})();
+</script>

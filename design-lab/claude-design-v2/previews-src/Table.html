@@ -1,0 +1,83 @@
+<!-- @dsCard group="Data" height=430 subtitle="Table, ProgressRing, ProgressBar, Avatar, AvatarStack" -->
+<style>
+.wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); box-shadow: var(--elevation-1); }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; line-height: 20px; letter-spacing: -0.006em; }
+thead { border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--muted) 50%, transparent); }
+th { height: 32px; padding: 0 var(--space-4); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500; white-space: nowrap; color: var(--muted-foreground); }
+td { height: 44px; padding: 0 var(--space-4); vertical-align: middle; }
+tbody tr { position: relative; border-bottom: 1px solid var(--border); transition: background-color var(--duration-fast) var(--ease-standard); }
+tbody tr:last-child { border-bottom: 0; }
+tbody tr:hover, tbody tr.is-hover { background: var(--state-hover); }
+.run { display: flex; flex-direction: column; }
+.row-link { font-weight: 500; color: var(--foreground); text-decoration: none; }
+.run .meta { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.prog { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.next { max-width: 224px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
+.status {
+  display: inline-flex; height: 20px; align-items: center; gap: var(--space-1-5); white-space: nowrap;
+  border-radius: var(--radius-pill); padding: 0 var(--space-2) 0 var(--space-1-5);
+  font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500;
+}
+.s-progress { background: var(--status-progress); color: var(--status-progress-foreground); }
+.s-done { background: var(--status-done); color: var(--status-done-foreground); }
+
+.parts { display: flex; flex-wrap: wrap; gap: var(--space-6) var(--space-8); align-items: flex-start; }
+.part { display: flex; flex-direction: column; gap: var(--space-2); }
+.part .item { display: flex; align-items: center; gap: var(--space-2); }
+.bar { width: 160px; height: 4px; overflow: hidden; border-radius: var(--radius-pill); background: var(--muted); }
+.bar > i { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--primary); }
+.bar > i.complete { background: var(--status-done-mark); }
+.heading { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+.bar-wrap { display: flex; flex-direction: column; gap: var(--space-1-5); }
+</style>
+<div class="stack">
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr><th scope="col">Run</th><th scope="col">Run manager</th><th scope="col">Progress</th><th scope="col">Next task</th><th scope="col">Assignees</th><th scope="col">Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="run"><a class="row-link" href="#">Apartment 12, move-in</a><span class="meta">Tenant move-in</span></div></td>
+          <td class="muted">ana@example.test</td>
+          <td><span class="prog">{{ring 2 5}}<span class="tabular">2 of 5 done</span></span></td>
+          <td><div class="next">Read the meters</div></td>
+          <td>{{stack ana@example.test,mia@example.test}}</td>
+          <td><span class="status s-progress">{{si progress}}in progress</span></td>
+        </tr>
+        <tr class="is-hover">
+          <td><div class="run"><a class="row-link" href="#">House 3, inspection</a><span class="meta">Property inspection</span></div></td>
+          <td class="muted">me</td>
+          <td><span class="prog">{{ring 0 4}}<span class="tabular">0 of 4 done</span></span></td>
+          <td><div class="next">Photograph the rooms</div></td>
+          <td>{{stack ana@example.test,nina@example.test,maria@example.test,leo@example.test,mia@example.test}}</td>
+          <td><span class="status s-progress">{{si progress}}in progress</span></td>
+        </tr>
+        <tr>
+          <td><div class="run"><a class="row-link" href="#">Studio 7, hand-over</a><span class="meta">Key hand-over</span></div></td>
+          <td class="muted">oleh@example.test</td>
+          <td><span class="prog">{{ring 3 3}}<span class="tabular">3 of 3 done</span></span></td>
+          <td><div class="next">—</div></td>
+          <td>{{stack leo@example.test}}</td>
+          <td><span class="status s-done">{{si done}}completed</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="parts">
+    <section class="part">
+      <p class="cap">ProgressRing: 16px in rows, 24px in a card</p>
+      <div class="item">{{ring 0 5}}{{ring 2 5}}{{ring 4 5}}{{ring 5 5}}{{ring 2 5 lg}}</div>
+    </section>
+    <section class="part">
+      <p class="cap">ProgressBar: primary, then done-mark when complete</p>
+      <div class="bar-wrap"><span class="heading tabular">2 of 5 done</span><div class="bar" aria-hidden="true"><i style="width: 40%"></i></div></div>
+      <div class="bar-wrap"><span class="heading tabular">5 of 5 done</span><div class="bar" aria-hidden="true"><i class="complete" style="width: 100%"></i></div></div>
+    </section>
+    <section class="part">
+      <p class="cap">Avatar and AvatarStack: initials, the name is always next to them</p>
+      <div class="item">{{avatar mia@example.test}}{{avatar ana@example.test}}{{avatar nina@example.test}}{{avatar maria@example.test}}{{avatar leo@example.test}}</div>
+      <div class="item">{{stack mia@example.test,ana@example.test,nina@example.test}}{{stack mia@example.test,ana@example.test,nina@example.test,maria@example.test,leo@example.test}}<span class="muted">—</span></div>
+    </section>
+  </div>
+</div>

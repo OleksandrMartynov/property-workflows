@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form controls · Property Workflows</title>
+<script>
+  /* Apply saved theme/motion before first paint */
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="forms.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M5.5 8.25l1.75 1.75 3.25-3.75"/></g></symbol>
+    <symbol id="i-alert" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 5v3.5M8 10.75v.01"/></g></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 7.25v3.5M8 5.25v.01"/></g></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-left" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 16 16"><path d="M3.5 6L8 10.5 12.5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-r" viewBox="0 0 16 16"><path d="M3.5 8h9M8.75 4.25L12.5 8l-3.75 3.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25L13.25 13.25"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.25h5.8l.6-8.25M6.75 7v3.5M9.25 7v3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.25c.5-2.4 2.4-3.75 5-3.75s4.5 1.35 5 3.75"/></g></symbol>
+    <symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="1.75"/><path d="M2.5 6.75h11M5.5 2v3M10.5 2v3"/></g></symbol>
+    <symbol id="i-clock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 5v3.25l2 1.25"/></g></symbol>
+    <symbol id="i-lock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.75"/><path d="M5.5 7V5.25a2.5 2.5 0 015 0V7"/></g></symbol>
+    <symbol id="i-eye" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.75 8S4 3.75 8 3.75 14.25 8 14.25 8 12 12.25 8 12.25 1.75 8 1.75 8z"/><circle cx="8" cy="8" r="2"/></g></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 3.9A6.6 6.6 0 018 3.75C12 3.75 14.25 8 14.25 8a10.4 10.4 0 01-1.9 2.45M9.4 9.4A2 2 0 016.6 6.6M4.1 5.35A10.3 10.3 0 001.75 8S4 12.25 8 12.25c.85 0 1.6-.18 2.3-.45M2.5 2.5l11 11"/></g></symbol>
+    <symbol id="i-caps" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5l4.5 5H10v3H6v-3H3.5z"/><path d="M6 13.25h4"/></g></symbol>
+    <symbol id="i-file" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.25l3.25 3.25V13a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"/><path d="M9 2.75V6h3.25"/></g></symbol>
+    <symbol id="i-upload" viewBox="0 0 16 16"><path d="M8 10.25V2.75M5 5.5l3-2.75 3 2.75M3 10.25v2a1 1 0 001 1h8a1 1 0 001-1v-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-list" viewBox="0 0 16 16"><path d="M5.75 4h7.5M5.75 8h7.5M5.75 12h7.5M2.75 4v.01M2.75 8v.01M2.75 12v.01" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-schema" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="2" width="5" height="3.5" rx="1"/><rect x="1.75" y="10.5" width="4.5" height="3.5" rx="1"/><rect x="9.75" y="10.5" width="4.5" height="3.5" rx="1"/><path d="M8 5.5v2.25M4 10.5V9a1 1 0 011-1h6a1 1 0 011 1v1.5"/></g></symbol>
+    <symbol id="i-canvas" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.75" y="2.75" width="4.5" height="3.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="3.5" rx="1"/><path d="M6.25 4.5h2.25a1 1 0 011 1v4.25"/></g></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.4 4.4 0 0 0 6.85 6.85z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.75" width="12" height="8.5" rx="1.5"/><path d="M5.75 14h4.5M8 11.25V14"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+      <div class="stack gap-0">
+        <span class="t-label t-strong" style="line-height:16px">Property Workflows</span>
+        <span class="t-meta t-muted" style="line-height:14px">Design system</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Form controls">
+      <span class="nav-label t-meta">Design system</span>
+      <a href="index.html">Foundations <span class="k">←</span></a>
+      <span class="nav-label t-meta">Form controls</span>
+      <a href="#overview">Overview <span class="k">01</span></a>
+      <a href="#text">Text &amp; textarea <span class="k">02</span></a>
+      <a href="#password">Password <span class="k">03</span></a>
+      <a href="#select">Select &amp; combobox <span class="k">04</span></a>
+      <a href="#multi">Multi-select <span class="k">05</span></a>
+      <a href="#datetime">Date &amp; time <span class="k">06</span></a>
+      <a href="#number">Number &amp; currency <span class="k">07</span></a>
+      <a href="#choice">Choice &amp; slider <span class="k">08</span></a>
+      <a href="#upload">File upload <span class="k">09</span></a>
+      <a href="#patterns">Patterns &amp; launch <span class="k">10</span></a>
+    </nav>
+    <div class="side-foot t-meta">tokens.css · base.css · forms.css<br>v0.1 · October 2026</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar">
+      <div class="crumbs"><span class="hide-sm">Design system</span><svg class="hide-sm" aria-hidden="true"><use href="#i-chev"/></svg><b>Form controls</b></div>
+      <div class="cluster gap-2">
+        <div class="pw-seg" data-pw="seg" data-size="sm" data-seg="motion" role="radiogroup" aria-label="Motion">
+          <span class="pw-seg__thumb" aria-hidden="true"></span>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="system" aria-checked="true"><span class="lbl">Motion: system</span></button>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="full" aria-checked="false"><span class="lbl">Full</span></button>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="reduce" aria-checked="false"><span class="lbl">Reduced</span></button>
+        </div>
+        <div class="pw-seg" data-pw="seg" data-size="sm" data-seg="theme" role="radiogroup" aria-label="Theme">
+          <span class="pw-seg__thumb" aria-hidden="true"></span>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="light" aria-checked="false"><svg class="pw-icon" aria-hidden="true"><use href="#i-sun"/></svg><span class="lbl">Light</span></button>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="dark" aria-checked="false"><svg class="pw-icon" aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">Dark</span></button>
+          <button type="button" class="pw-seg__btn" role="radio" data-value="system" aria-checked="true"><svg class="pw-icon" aria-hidden="true"><use href="#i-monitor"/></svg><span class="lbl">System</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- 01 Overview -->
+      <section class="sec" id="overview" aria-labelledby="h-overview">
+        <div class="hero-title">
+          <span class="sec-index">01 · Overview</span>
+          <h1 class="t-display" id="h-overview">Form controls</h1>
+          <p>Every field in Property Workflows, drawn from scratch: no native selects, date inputs, spinners or sliders anywhere. One 32 px shell, one focus ring, one slot for hint and error so validation never shifts the page. Everything on this page is live in both themes — use the mouse or only the keyboard.</p>
+          <div class="cluster facts">
+            <span class="fact"><b>32 px</b> shell · 28 / 36 variants</span>
+            <span class="fact"><b>Blur, then live</b> validation</span>
+            <span class="fact"><b>Kyiv time</b> labelled everywhere</span>
+            <span class="fact"><b>Glass</b> only on popovers</span>
+            <span class="fact"><b>APG</b> keyboard models</span>
+          </div>
+        </div>
+        <div class="sub"><h3 class="t-heading">Anatomy</h3><span class="t-meta">One field, four parts</span></div>
+        <div data-render="anatomy"></div>
+        <div class="notes">
+          <div class="note"><h4>Principles</h4><ul>
+            <li>The label is always above the control and always visible — a placeholder is an example, never the name.</li>
+            <li>Hint, error and note share one grid cell: swapping them is a cross-fade, and a field without a hint grows by a spring instead of jumping.</li>
+            <li>Errors name the problem and the fix. They also carry an icon, so meaning never rides on red alone.</li>
+            <li>Disabled is a muted fill with muted text — never <code>opacity: .5</code>.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--input</span><span class="tk">--input-background</span><span class="tk">--border-hover</span><span class="tk">--ring</span><span class="tk">--destructive</span><span class="tk">--size-control*</span><span class="tk">--radius-sm</span><span class="tk">--spring-smooth</span><span class="tk new">--size-check</span><span class="tk new">--size-hit</span><span class="tk new">--accent-float</span><span class="tk new">--primary-tint</span><span class="tk new">--control-disabled-fill</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 02 Text -->
+      <section class="sec" id="text" aria-labelledby="h-text">
+        <div class="sec-head">
+          <span class="sec-index">02 · Text &amp; textarea</span>
+          <h2 class="t-title" id="h-text">Text field and textarea</h2>
+          <p>Label, hint, counter, leading icon, clear button and error. The counter turns amber at 90% and red over the limit; Esc clears a search field. Textareas grow with their content up to six lines, then scroll.</p>
+        </div>
+        <div class="duo" data-render="text"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Native <code>&lt;input&gt;</code> inside a styled shell: label via <code>for</code>, hint / error / note through <code>aria-describedby</code>, <code>aria-invalid</code> and <code>aria-required</code>.</li>
+            <li>The clear button is a real button with <code>aria-label</code>; it stays hidden, and out of the tab order, until there is text.</li>
+            <li>Error and success text sit in <code>aria-live="polite"</code> regions, so a screen reader hears them when they appear.</li>
+            <li>Clicking anywhere in the shell focuses the input.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--input-background</span><span class="tk">--border-hover</span><span class="tk">--destructive</span><span class="tk">--required</span><span class="tk">--status-due-soon-foreground</span><span class="tk">--text-meta</span><span class="tk">--spring-smooth-duration</span><span class="tk new">--control-disabled-fill</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 03 Password -->
+      <section class="sec" id="password" aria-labelledby="h-password">
+        <div class="sec-head">
+          <span class="sec-index">03 · Password</span>
+          <h2 class="t-title" id="h-password">Password field</h2>
+          <p>A reveal toggle that keeps focus and selection, and a Caps Lock hint that appears the moment the key is on. The hint is a note, not an error — it never blocks submission.</p>
+        </div>
+        <div class="duo" data-render="password"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Reveal: <code>aria-pressed</code> button, <code>Space</code> / <code>Enter</code>; focus stays in the input and the caret does not move.</li>
+            <li>Caps Lock: <code>getModifierState("CapsLock")</code> on keydown and keyup; the note is <code>aria-live="polite"</code>.</li>
+            <li><code>autocomplete="current-password"</code> and <code>spellcheck="false"</code>; autofill keeps our colours (base.css).</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--status-due-soon</span><span class="tk">--muted-foreground</span><span class="tk">--ring</span><span class="tk">--destructive</span><span class="tk">--scale-press</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 04 Select & combobox -->
+      <section class="sec" id="select" aria-labelledby="h-select">
+        <div class="sec-head">
+          <span class="sec-index">04 · Select &amp; combobox</span>
+          <h2 class="t-title" id="h-select">Select and assignee picker</h2>
+          <p>The select is a button that opens a listbox on a glass popover; the combobox keeps focus in a text field and filters as you type, with highlighted matches, option descriptions, avatars, role tags and a calm “No matches”. The highlight is one element that glides between options.</p>
+        </div>
+        <div class="sub"><h3 class="t-heading">Select</h3><span class="t-meta">Listbox · type-ahead · Home / End</span></div>
+        <div class="duo" data-render="select"></div>
+        <div class="sub"><h3 class="t-heading">Combobox</h3><span class="t-meta">Assignee picker · async search · aria-activedescendant</span></div>
+        <div class="duo" data-render="combo"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Select: <code>role="combobox"</code> button, <code>aria-haspopup="listbox"</code>, <kbd>↓</kbd> <kbd>↑</kbd> <kbd>Enter</kbd> <kbd>Space</kbd> open; type-ahead jumps by prefix; <kbd>Home</kbd> <kbd>End</kbd>; <kbd>Esc</kbd> closes and returns focus; <kbd>Tab</kbd> commits.</li>
+            <li>Combobox: text input with <code>aria-autocomplete="list"</code>, <code>aria-controls</code> and <code>aria-activedescendant</code>; DOM focus never leaves the input.</li>
+            <li>Result counts, “Searching…” and “No matches” are announced through a polite live region.</li>
+            <li>Disabled options use <code>aria-disabled</code> and are skipped by the arrow keys.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--glass-bg</span><span class="tk">--glass-blur</span><span class="tk">--glass-border</span><span class="tk">--shadow-md</span><span class="tk">--spring-snappy</span><span class="tk">--size-row</span><span class="tk new">--accent-float</span><span class="tk new">--size-option-rich</span><span class="tk new">--size-listbox-max</span><span class="tk new">--match</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 05 Multi-select -->
+      <section class="sec" id="multi" aria-labelledby="h-multi">
+        <div class="sec-head">
+          <span class="sec-index">05 · Multi-select</span>
+          <h2 class="t-title" id="h-multi">Multi-select with chips</h2>
+          <p>Chips are removable by mouse or Backspace and re-flow with a FLIP, never a jump. The compact variant stays on one line and folds the rest into a “+N” chip that opens the list.</p>
+        </div>
+        <div class="duo" data-render="multi"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Same combobox contract as above with <code>aria-multiselectable="true"</code> on the listbox; <kbd>Enter</kbd> toggles and the list stays open.</li>
+            <li><kbd>Backspace</kbd> in an empty input removes the last chip; chip buttons carry “Remove …” labels and stay out of the tab order.</li>
+            <li>The “+N” chip names the hidden items in its <code>aria-label</code>.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--radius-pill</span><span class="tk">--status-done</span><span class="tk">--spring-smooth</span><span class="tk new">--size-chip</span><span class="tk new">--primary-tint</span><span class="tk new">--match</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 06 Date & time -->
+      <section class="sec" id="datetime" aria-labelledby="h-datetime">
+        <div class="sec-head">
+          <span class="sec-index">06 · Date &amp; time</span>
+          <h2 class="t-title" id="h-datetime">Date, range and time</h2>
+          <p>Fields accept typed text (“24 Oct”, “tomorrow”) and open an ARIA-grid calendar. Everything is labelled “Kyiv time”. “Today” is pinned to Friday 23 Oct 2026 so this page is deterministic. Months cross-slide; the range hover previews the span.</p>
+        </div>
+        <div class="duo" data-render="datetime"></div>
+        <div class="sub"><h3 class="t-heading">Calendar</h3><span class="t-meta">ARIA grid · roving tabindex</span></div>
+        <div class="duo" data-render="cal"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Popover is a non-modal <code>role="dialog"</code>; the grid has day headers and one roving <code>tabindex="0"</code> cell.</li>
+            <li><kbd>←</kbd> <kbd>→</kbd> day, <kbd>↑</kbd> <kbd>↓</kbd> week, <kbd>Home</kbd> <kbd>End</kbd> week edges, <kbd>PgUp</kbd> <kbd>PgDn</kbd> month, <kbd>Shift</kbd>+<kbd>PgUp</kbd>/<kbd>PgDn</kbd> year, <kbd>Enter</kbd> picks.</li>
+            <li>Time is two <code>role="spinbutton"</code> segments: <kbd>↑</kbd> <kbd>↓</kbd> ±1, <kbd>PgUp</kbd> <kbd>PgDn</kbd> ±10, digits type through, <kbd>:</kbd> jumps to minutes.</li>
+            <li>Past dates are <code>aria-disabled</code> (still reachable, with the reason in the field message).</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--primary</span><span class="tk">--accent</span><span class="tk">--popover</span><span class="tk">--glass-*</span><span class="tk">--spring-snappy</span><span class="tk new">--size-day</span><span class="tk new">--size-popover-cal</span><span class="tk new">--distance-slide</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 07 Number -->
+      <section class="sec" id="number" aria-labelledby="h-number">
+        <div class="sec-head">
+          <span class="sec-index">07 · Number &amp; currency</span>
+          <h2 class="t-title" id="h-number">Number and currency</h2>
+          <p>Euro amounts format as €1,250.00 when idle and become plain editable digits on focus. The stepper accelerates while held: ×2 after 1 s, ×5 after 2 s, ×10 after 3.2 s, with a live rate readout. Min and max disable the matching button.</p>
+        </div>
+        <div class="duo" data-render="number"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li><code>role="spinbutton"</code> on a text input (<code>inputmode="decimal"</code>), with <code>aria-valuemin / max / now / text</code> — “€1,250.00”.</li>
+            <li><kbd>↑</kbd> <kbd>↓</kbd> ±step, <kbd>Shift</kbd> or <kbd>PgUp</kbd> <kbd>PgDn</kbd> ±10 steps, <kbd>Home</kbd> <kbd>End</kbd> to the limits; non-numeric keys are ignored.</li>
+            <li>Steppers are pointer-only helpers (<code>aria-hidden</code>, <code>tabindex="-1"</code>); the keyboard path is the input itself.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--spring-snappy</span><span class="tk">--scale-press</span><span class="tk new">--stepper-delay</span><span class="tk new">--stepper-interval</span><span class="tk new">--stepper-interval-min</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 08 Choice & slider -->
+      <section class="sec" id="choice" aria-labelledby="h-choice">
+        <div class="sec-head">
+          <span class="sec-index">08 · Choice &amp; slider</span>
+          <h2 class="t-title" id="h-choice">Checkbox, radio, switch, segmented control and slider</h2>
+          <p>The checkbox tick is drawn by stroke-dashoffset, the switch thumb springs, the segmented control’s indicator slides, and slider thumbs grow under the pointer with a value bubble. Boxes are bordered with <code>--border-strong</code> so they pass 3:1.</p>
+        </div>
+        <div class="duo" data-render="choice"></div>
+        <div class="sub"><h3 class="t-heading">Segmented control and slider</h3><span class="t-meta">View switcher · single and range</span></div>
+        <div class="duo" data-render="seg"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Checkbox: real <code>&lt;input&gt;</code>, <kbd>Space</kbd>; section parents use the indeterminate state (<code>aria-checked="mixed"</code>).</li>
+            <li>Radio group and segmented control: roving <code>tabindex</code>, arrows move <em>and</em> select, <kbd>Home</kbd> <kbd>End</kbd>.</li>
+            <li>Switch: <code>role="switch"</code>, <kbd>Space</kbd> / <kbd>Enter</kbd>; an async switch shows <code>aria-busy</code> while saving and stays operable.</li>
+            <li>Slider: <code>role="slider"</code>, <kbd>←</kbd> <kbd>→</kbd> ±step, <kbd>PgUp</kbd> <kbd>PgDn</kbd> ±10 steps, <kbd>Home</kbd> <kbd>End</kbd>; <code>aria-valuetext</code> reads “80% confidence”.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--border-strong</span><span class="tk">--status-done</span><span class="tk">--primary</span><span class="tk">--ai</span><span class="tk">--spring-bouncy</span><span class="tk">--spring-snappy</span><span class="tk new">--size-check</span><span class="tk new">--size-switch-w</span><span class="tk new">--size-thumb</span><span class="tk new">--size-track</span><span class="tk new">--scale-thumb</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 09 Upload -->
+      <section class="sec" id="upload" aria-labelledby="h-upload">
+        <div class="sec-head">
+          <span class="sec-index">09 · File upload</span>
+          <h2 class="t-title" id="h-upload">File drop zone</h2>
+          <p>“Choose file” always exists; dropping is an extra. Rejected files stay in the list with the reason — “PDF up to 20 MB.” — instead of vanishing. Try the sample buttons, or drag a real PDF onto the first zone.</p>
+        </div>
+        <div class="duo" data-render="upload"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>The button is the control (<code>aria-describedby</code> points at the zone text); the file list is an <code>aria-live="polite"</code> region.</li>
+            <li>Progress is <code>role="progressbar"</code> with <code>aria-valuenow</code>; remove buttons say which file they act on.</li>
+            <li>Drag-over adds a state, never a different layout; the dashed border is drawn in SVG so it can animate.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--status-progress</span><span class="tk">--status-done</span><span class="tk">--destructive</span><span class="tk">--border-strong</span><span class="tk">--spring-smooth</span><span class="tk new">--primary-tint</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 10 Patterns & launch -->
+      <section class="sec" id="patterns" aria-labelledby="h-patterns">
+        <div class="sec-head">
+          <span class="sec-index">10 · Patterns &amp; launch</span>
+          <h2 class="t-title" id="h-patterns">Form patterns</h2>
+          <p>Field groups, validation timing and a real form: “Launch a template” — a case name and an assignee picker per task, with a primary button that keeps its width while it works.</p>
+        </div>
+        <div class="sub"><h3 class="t-heading">Field groups</h3><span class="t-meta">Fieldset + legend · two-column rows</span></div>
+        <div class="duo" data-render="groups"></div>
+        <div class="sub"><h3 class="t-heading">Validation timing</h3><span class="t-meta">Stay quiet → on blur → then live</span></div>
+        <div data-render="timing"></div>
+        <div class="sub"><h3 class="t-heading">Launch a template</h3><span class="t-meta">Case name · per-task assignees · loading button</span></div>
+        <div class="duo" data-render="launch"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Required fields get a red asterisk (<code>aria-hidden</code>) and <code>aria-required</code>; optional ones say “Optional”. Never both.</li>
+            <li>Validate when focus leaves a field; once it has been blurred (or is invalid) re-check on every keystroke so the error clears as soon as it is fixed.</li>
+            <li>On submit, focus moves to the first invalid field. The button sets <code>aria-busy</code> and keeps its width; the form is never disabled.</li>
+            <li>Each assignee picker has a visually hidden label naming its task.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--card</span><span class="tk">--radius-lg</span><span class="tk">--space-*</span><span class="tk">--primary</span><span class="tk">--status-done-bg</span><span class="tk">--size-cell</span><span class="tk new">--primary-tint</span><span class="tk new">--destructive-tint</span>
+          </div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="forms.js"></script>
+</body>
+</html>

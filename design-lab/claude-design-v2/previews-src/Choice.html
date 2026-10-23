@@ -1,0 +1,152 @@
+<!-- @dsCard group="Forms" height=876 subtitle="Checkbox, RadioGroup, Switch, Segmented, Slider" -->
+<style>
+/* @include ctl-msg */
+/* @include ctl-choice */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6) var(--space-8); align-items: start; }
+.col { display: flex; flex-direction: column; gap: var(--space-4); }
+.ctl-summary { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.scale { width: 100%; }
+</style>
+<div class="stack">
+  <div class="cols">
+    <div class="col" style="gap: var(--space-6)">
+<section class="col">
+      <p class="cap">Checkbox: unchecked · checked · mixed · disabled · invalid</p>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Unchecked</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Checked</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" data-mixed><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Mixed</span></span></label>
+      </div>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" disabled><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Disabled</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked disabled><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Disabled on</span></span></label>
+      </div>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check" data-invalid><input class="ctl-check__input" type="checkbox" aria-invalid="true"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Invalid</span></span></label>
+        <label class="ctl-check" data-tone="done"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Done tone</span></span></label>
+      </div>
+      <fieldset class="ctl-choices">
+        <legend class="ctl-choices__legend">Move-in checklist</legend>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" data-mixed><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">All tasks</span></span></label>
+        <div class="ctl-choices" style="padding-left: 1.5rem">
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Sign the lease agreement</span></span></label>
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Inspect the apartment</span></span></label>
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Hand over the keys</span></span></label>
+          <p class="ctl-summary tabular" aria-live="polite">2 of 3 done</p>
+        </div>
+      </fieldset>
+    </section>
+<section class="col">
+      <p class="cap">Segmented: sliding indicator, radiogroup, arrows move and select</p>
+      <div class="ctl-seg" role="radiogroup" aria-label="Template view">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>List</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Schema</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Canvas</span></button>
+      </div>
+      <div class="ctl-seg" data-size="sm" role="radiogroup" aria-label="Period">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Day</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>Week</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Month</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" aria-disabled="true" tabindex="-1"><span>Year</span></button>
+      </div>
+      <div class="ctl-seg" data-size="lg" data-block role="radiogroup" aria-label="Runs">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>My runs</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>All runs</span></button>
+      </div>
+    </section>
+<section class="col">
+      <p class="cap">Slider: single, range, bubble, disabled</p>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Confidence</span><output class="ctl-slider-field__value">80%</output></div>
+        <div class="ctl-slider" style="--p0: 0; --p1: 0.8">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Confidence" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80" aria-valuetext="80%" style="--p: 0.8"><span class="ctl-slider__bubble" aria-hidden="true">80%</span></div>
+        </div>
+        <div class="ctl-slider__scale" aria-hidden="true"><span>0%</span><span>100%</span></div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Monthly budget</span><output class="ctl-slider-field__value">€1200 – €2400</output></div>
+        <div class="ctl-slider" style="--p0: 0.24; --p1: 0.48">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Minimum" aria-valuemin="0" aria-valuemax="2400" aria-valuenow="1200" aria-valuetext="€1200" style="--p: 0.24"><span class="ctl-slider__bubble" aria-hidden="true">€1200</span></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Maximum" aria-valuemin="1200" aria-valuemax="5000" aria-valuenow="2400" aria-valuetext="€2400" style="--p: 0.48"><span class="ctl-slider__bubble" aria-hidden="true">€2400</span></div>
+        </div>
+        <div class="ctl-slider__scale" aria-hidden="true"><span>€0</span><span>€5000</span></div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider" data-bubble style="--p0: 0; --p1: 0.3">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Rooms" aria-valuemin="0" aria-valuemax="10" aria-valuenow="3" style="--p: 0.3"><span class="ctl-slider__bubble" aria-hidden="true">3</span></div>
+        </div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Disabled</span><output class="ctl-slider-field__value">40</output></div>
+        <div class="ctl-slider" data-disabled style="--p0: 0; --p1: 0.4">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" aria-disabled="true" aria-label="Disabled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" style="--p: 0.4"><span class="ctl-slider__bubble" aria-hidden="true">40</span></div>
+        </div>
+      </div>
+    </section>
+    </div>
+    <div class="col" style="gap: var(--space-6)">
+<section class="col">
+      <p class="cap">RadioGroup: column, row, disabled option, invalid</p>
+      <fieldset class="ctl-choices" role="radiogroup" data-dir="column">
+        <legend class="ctl-choices__legend">Handover method</legend>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1" checked><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">In person</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Key box</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1" disabled><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">By mail</span></span></label>
+      </fieldset>
+      <fieldset class="ctl-choices" role="radiogroup" data-dir="row" aria-label="Priority">
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Low</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2" checked><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Normal</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">High</span></span></label>
+      </fieldset>
+      <div>
+        <fieldset class="ctl-choices" role="radiogroup" data-dir="column" aria-invalid="true" aria-describedby="rg-3-e">
+          <legend class="ctl-choices__legend">Reason</legend>
+          <label class="ctl-radio" data-invalid><input class="ctl-radio__input" type="radio" name="rg-3"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Tenant request</span></span></label>
+          <label class="ctl-radio" data-invalid><input class="ctl-radio__input" type="radio" name="rg-3"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Owner request</span></span></label>
+        </fieldset>
+        <div class="ctl-foot"><div class="ctl-msg" data-open data-invalid><p class="ctl-error" id="rg-3-e" role="alert">{{g alert}}<span>Choose a reason.</span></p></div></div>
+      </div>
+
+      <p class="cap" style="margin-top: var(--space-2)">Switch: on · off · busy · disabled · label left</p>
+      <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" checked><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Email notifications</span></span></label>
+      <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch"><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Weekly digest</span></span></label>
+      <label class="ctl-switch" data-busy><input class="ctl-switch__input" type="checkbox" role="switch" aria-busy="true"><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Auto-assign tasks</span></span></label>
+      <label class="ctl-switch ctl-switch--lead"><input class="ctl-switch__input" type="checkbox" role="switch" checked><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Label on the left</span></span></label>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" disabled><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Disabled</span></span></label>
+        <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" checked disabled><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Disabled on</span></span></label>
+      </div>
+    </section>
+    </div>
+  </div>
+</div>
+<script>
+/* Лише демонстрація: «mixed» не задається атрибутом, а бігунок Segmented їде за вибором. Без скрипта вибраний пункт має власний фон. */
+document.querySelectorAll("[data-mixed]").forEach(function (i) { i.indeterminate = true; });
+function place(seg, animate) {
+  var on = seg.querySelector('[aria-checked="true"]'), thumb = seg.querySelector(".ctl-seg__thumb");
+  if (!on || !on.offsetWidth) return;
+  if (!animate) thumb.style.transition = "none";
+  thumb.style.width = on.offsetWidth + "px";
+  thumb.style.transform = "translateX(" + on.offsetLeft + "px)";
+  if (!animate) { void thumb.offsetWidth; thumb.style.transition = ""; }
+  seg.setAttribute("data-placed", "");
+}
+document.querySelectorAll(".ctl-seg").forEach(function (seg) {
+  place(seg, false);
+  if (document.fonts) document.fonts.ready.then(function () { place(seg, false); });
+  seg.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b || b.getAttribute("aria-disabled") === "true") return;
+    seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-checked", x === b ? "true" : "false"); x.tabIndex = x === b ? 0 : -1; });
+    place(seg, true);
+  });
+});
+</script>

@@ -1,0 +1,63 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Property Workflows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-optical-sizing: auto; overflow: hidden; }
+  .cover { position: relative; width: 960px; height: 288px; overflow: hidden; }
+  .art { position: absolute; inset: 0; }
+  .p { fill: var(--primary); }
+  .ink { fill: var(--foreground); }
+  .ai { fill: var(--ai-mark); }
+  .va { fill: var(--variable-mark); }
+  .tint { fill: var(--status-progress); }
+  .box { fill: none; stroke: var(--border-strong); stroke-width: 1.5px; }
+  .xl { rx: var(--radius-xl); }
+  .md { rx: var(--radius-md); }
+  .sm { rx: var(--radius-sm); }
+  .xs { rx: var(--radius-xs); }
+  .pill { rx: 16px; }
+  .words { position: absolute; left: var(--space-10); bottom: var(--space-8); max-width: 440px; }
+  .name { margin: 0; font-size: 80px; line-height: 0.95; font-weight: 600; letter-spacing: -0.03em; color: var(--foreground); }
+  .tag { margin: var(--space-4) 0 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+<div class="cover">
+  <svg class="art" width="960" height="288" viewBox="0 0 960 288" aria-hidden="true">
+    <!--
+      blocks: primary 232×152 (radius-xl) · foreground 232×72 (radius-md) · ai-mark 72×72 (radius-md) · variable-mark 152×32 and 112×32 (pill) · status-progress tint bars 32 tall (radius-sm) — about 36% of 960×288
+      arrangement: grid x 480–952, cell 32 = space-8, gap 8 = space-2, pitch 40; a slab with satellites on top, three checklist rows below
+      pattern: "geometric, modular, dense UI" — checklist rows (checkbox tile + merged bars), because a run is a checklist and the system is built on a dense 4px grid
+      steps & radii: space-8 32, space-2 8, space-10 40 (text inset); radius-xs 4 (checkbox), radius-sm 6, radius-md 8, radius-xl 12; pill rx 16 (half of 32)
+    -->
+    <rect class="p xl" x="480" y="8" width="232" height="152"/>
+    <rect class="ink md" x="720" y="8" width="232" height="72"/>
+    <rect class="ai md" x="720" y="88" width="72" height="72"/>
+    <rect class="va pill" x="800" y="88" width="152" height="32"/>
+    <rect class="tint sm" x="800" y="128" width="152" height="32"/>
+
+    <rect class="p xs" x="480" y="168" width="32" height="32"/>
+    <rect class="tint sm" x="520" y="168" width="312" height="32"/>
+    <rect class="va pill" x="840" y="168" width="112" height="32"/>
+
+    <rect class="p xs" x="480" y="208" width="32" height="32"/>
+    <rect class="tint sm" x="520" y="208" width="232" height="32"/>
+    <rect class="ai pill" x="760" y="208" width="72" height="32"/>
+
+    <rect class="box xs" x="480.75" y="248.75" width="30.5" height="30.5"/>
+    <rect class="tint sm" x="520" y="248" width="192" height="32"/>
+  </svg>
+  <div class="words">
+    <h1 class="name">Property<br>Workflows</h1>
+    <p class="tag">Calm, precise workflows for property teams.</p>
+  </div>
+</div>
+</body>
+</html>

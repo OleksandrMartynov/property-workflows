@@ -1,0 +1,484 @@
+<!-- @dsCard group="Forms" height=876 subtitle="Checkbox, RadioGroup, Switch, Segmented, Slider" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choice — preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=JetBrains+Mono:wght@100..800&display=swap">
+<style>
+:root, [data-theme] {
+  /* Похідні токени: color-mix у oklab, як у globals.css (у tokens.json їх немає) */
+  --state-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --state-pressed: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --state-selected: color-mix(in oklab, var(--primary) 10%, transparent);
+  --primary-hover: color-mix(in oklab, var(--primary), var(--foreground) 10%);
+  --primary-active: color-mix(in oklab, var(--primary), var(--foreground) 18%);
+  --destructive-hover: color-mix(in oklab, var(--destructive), var(--foreground) 10%);
+  /* Похідні токени контролів форм (globals.css, розділ «Контролі форм») */
+  --accent-float: color-mix(in oklab, var(--popover), var(--foreground) 7%);
+  --primary-tint: color-mix(in oklch, var(--primary) 12%, transparent);
+  --primary-tint-strong: color-mix(in oklch, var(--primary) 22%, transparent);
+  --match: color-mix(in oklch, var(--primary) 20%, transparent);
+  --destructive-tint: color-mix(in oklch, var(--destructive) 10%, transparent);
+  --done-tint: color-mix(in oklch, var(--status-done) 14%, transparent);
+  --control-off: color-mix(in oklab, var(--muted), var(--foreground) 6%);
+  --control-disabled-fill: color-mix(in oklab, var(--muted-foreground), var(--background) 62%);
+  --glass-bg: color-mix(in oklch, var(--popover) var(--glass-alpha), transparent);
+  /* Локальні для controls.css: межа поля на hover і пружина з легким перельотом (лише малі перемикачі) */
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
+  --spring-bouncy: linear(0, 0.015 2%, 0.07 4.5%, 0.169 7.5%, 0.594 18%, 0.731 22%, 0.841 26%, 0.923 30%, 0.986 34.5%, 1.026 39.5%, 1.045 46%, 1.035 57.5%, 1.002 79.5%, 1);
+  --spring-bouncy-duration: 360ms;
+  --weight-body: 400;
+}
+[data-theme="dark"] { --weight-body: 420; }
+*, *::before, *::after { box-sizing: border-box; border-color: var(--border); }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; padding: var(--space-4);
+  background: var(--background); color: var(--foreground);
+  font-family: var(--font-sans); font-size: 14px; line-height: 20px; letter-spacing: -0.006em;
+  font-weight: var(--weight-body); font-optical-sizing: auto; font-synthesis: none; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+button, input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; margin: 0; }
+button { cursor: default; background: none; border: 0; padding: 0; }
+button:disabled { cursor: not-allowed; }
+:focus { outline: none; }
+:focus-visible { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+::placeholder { color: var(--muted-foreground); opacity: 1; }
+
+/* Шкала тексту: display · title · heading · body · label · meta */
+.t-display { font-size: 28px; line-height: 32px; letter-spacing: -0.03em; font-weight: 600; }
+.t-title { font-size: 20px; line-height: 28px; letter-spacing: -0.016em; font-weight: 600; }
+.t-heading { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+.t-body { font-size: 14px; line-height: 20px; letter-spacing: -0.006em; }
+.t-label { font-size: 13px; line-height: 18px; font-weight: 500; }
+.t-meta { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; }
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.muted { color: var(--muted-foreground); }
+.cap { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); margin: 0 0 var(--space-2); }
+.sec { display: flex; flex-direction: column; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.stack { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Іконки статусів (14px; lg — 16px, як в Alert) */
+.si { width: 14px; height: 14px; flex-shrink: 0; }
+.si.lg { width: 16px; height: 16px; margin-top: 2px; }
+.si-todo { color: var(--status-todo-mark); }
+.si-progress { color: var(--status-progress-mark); }
+.si-done { color: var(--status-done-mark); }
+.si-overdue { color: var(--status-overdue-mark); }
+.si-due-soon { color: var(--status-due-soon-mark); }
+
+/* Аватар: ініціал + тон за хешем адреси */
+.avatar { display: inline-grid; width: 20px; height: 20px; flex-shrink: 0; place-items: center; border-radius: var(--radius-pill); font-size: 10px; line-height: 1; font-weight: 600; }
+.avatar.tone-0 { background: var(--status-progress); color: var(--status-progress-foreground); }
+.avatar.tone-1 { background: var(--status-done); color: var(--status-done-foreground); }
+.avatar.tone-2 { background: var(--status-due-soon); color: var(--status-due-soon-foreground); }
+.avatar.tone-3 { background: var(--ai); color: var(--ai-foreground); }
+.avatar.tone-4 { background: var(--variable); color: var(--variable-foreground); }
+
+.ring { width: 16px; height: 16px; flex-shrink: 0; }
+.ring.lg { width: 24px; height: 24px; }
+.avstack { display: inline-flex; align-items: center; }
+.avatar.stacked { box-shadow: 0 0 0 2px var(--card); }
+.avatar.overlap { margin-left: -6px; }
+.avstack .more { margin-left: var(--space-1); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500; color: var(--muted-foreground); }
+
+.g { width: 16px; height: 16px; flex: none; }
+.g.sm { width: 12px; height: 12px; }
+.g.xs { width: 10px; height: 10px; }
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+.g-spin { animation: ui-spin 800ms linear infinite; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 1600ms !important; transition-duration: 1ms !important; } }
+</style>
+<style>
+/* Згенеровано build-partials.mjs з src/components/ui/controls.css (@layer components). Не редагуй руками. */
+@keyframes ctl-pop { from { opacity: 0; transform: scale(0.5); } }
+@keyframes ctl-check-pop { from { transform: scale(0.98); } }
+@keyframes ctl-spin { to { transform: rotate(1turn); } }
+@keyframes ctl-march { to { stroke-dashoffset: -20; } }
+@keyframes ctl-enter { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+@keyframes ctl-exit { to { opacity: 0; transform: translateY(-2px) scale(0.98); } }
+
+/* ----------------------------------------------------------------------
+   Повідомлення поля: підказка й помилка в одній клітинці сітки — перемикання без стрибка макета.
+   Поле без підказки розкриває рядок помилки пружиною.
+   ---------------------------------------------------------------------- */
+.ctl-foot { display: flex; align-items: flex-start; gap: 12px; }
+.ctl-msg {
+  flex: 1; min-width: 0; display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows var(--spring-smooth-duration) var(--spring-smooth);
+}
+.ctl-msg[data-open] { grid-template-rows: 1fr; }
+.ctl-hint, .ctl-error {
+  grid-area: 1 / 1; min-height: 0; overflow: hidden; padding-top: 6px;
+  font-size: 12px; line-height: 16px;
+  transition: opacity var(--duration-base) var(--ease-standard), transform var(--spring-smooth-duration) var(--spring-smooth);
+}
+.ctl-hint { color: var(--muted-foreground); }
+.ctl-error {
+  color: var(--destructive); display: flex; align-items: flex-start; gap: 6px;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+}
+.ctl-error svg { width: 14px; height: 14px; margin-top: 1px; flex: none; }
+.ctl-msg[data-invalid] .ctl-error { opacity: 1; transform: none; pointer-events: auto; }
+.ctl-msg[data-invalid] .ctl-hint { opacity: 0; transform: translateY(4px); }
+.ctl-counter {
+  flex: none; padding-top: 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  transition: color var(--duration-base) var(--ease-standard);
+}
+.ctl-counter[data-state="near"] { color: var(--status-due-soon-foreground); }
+.ctl-counter[data-state="over"] { color: var(--destructive); }
+
+/* Невеликі значки в полі (помилка, «очистити», caps lock): з'являються пружиною, місця не займають, доки не потрібні */
+.ctl-pop { animation: ctl-pop var(--spring-snappy-duration) var(--spring-bouncy) both; }
+/* Згенеровано build-partials.mjs з src/components/ui/controls.css (@layer components). Не редагуй руками. */
+/* ----------------------------------------------------------------------
+   Checkbox · radio · switch: справжні <input>, наш вигляд
+   ---------------------------------------------------------------------- */
+.ctl-check, .ctl-radio, .ctl-switch {
+  --_tone: var(--primary); --_on: var(--primary-foreground);
+  position: relative; display: inline-flex; align-items: flex-start; gap: 8px; min-height: 24px;
+  padding: 2px 0; font-size: 14px; line-height: 20px; color: var(--foreground);
+  cursor: default; -webkit-user-select: none; user-select: none; max-width: 100%;
+}
+.ctl-check[data-tone="done"] { --_tone: var(--status-done-mark); --_on: var(--background); }
+.ctl-check__input, .ctl-radio__input, .ctl-switch__input {
+  position: absolute; left: 0; top: 2px; margin: 0; opacity: 0; cursor: inherit;
+  appearance: none; -webkit-appearance: none;
+}
+.ctl-check__input, .ctl-radio__input { width: var(--size-check); height: var(--size-check); margin-block: 2px; }
+.ctl-switch__input { width: var(--size-switch-w); height: var(--size-switch-h); margin-block: 2px; }
+.ctl-check__box, .ctl-radio__box {
+  position: relative; width: var(--size-check); height: var(--size-check); margin-block: 2px; flex: none;
+  display: grid; place-items: center; color: var(--_on); background: var(--field);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  transition: background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+}
+.ctl-check__box { border-radius: 4px; }
+.ctl-radio__box { border-radius: 50%; }
+.ctl-check__box svg { width: 12px; height: 12px; grid-area: 1 / 1; overflow: visible; }
+.ctl-check__box path {
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset var(--duration-base) var(--ease-standard) 30ms;
+}
+.ctl-check__text, .ctl-radio__text, .ctl-switch__text { display: grid; min-width: 0; }
+.ctl-switch__text { padding-top: 2px; }
+.ctl-check__label { display: block; }
+.ctl-check__desc { font-size: 12px; line-height: 16px; color: var(--muted-foreground); margin-top: 2px; }
+
+.ctl-check:hover .ctl-check__input:not(:checked, :indeterminate, :disabled) + .ctl-check__box,
+.ctl-radio:hover .ctl-radio__input:not(:checked, :disabled) + .ctl-radio__box { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+.ctl-check:hover .ctl-check__input:is(:checked, :indeterminate):not(:disabled) + .ctl-check__box {
+  background: color-mix(in oklab, var(--_tone), var(--foreground) 10%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--_tone), var(--foreground) 10%);
+}
+.ctl-radio:hover .ctl-radio__input:checked:not(:disabled) + .ctl-radio__box { background: var(--primary-hover); box-shadow: inset 0 0 0 1.5px var(--primary-hover); }
+.ctl-check__input:active:not(:disabled) + .ctl-check__box, .ctl-radio__input:active:not(:disabled) + .ctl-radio__box { transform: scale(var(--scale-press)); }
+.ctl-check__input:is(:checked, :indeterminate) + .ctl-check__box { background: var(--_tone); box-shadow: inset 0 0 0 1.5px var(--_tone); }
+.ctl-check__input:checked + .ctl-check__box .tick, .ctl-check__input:indeterminate + .ctl-check__box .dash { stroke-dashoffset: 0; }
+.ctl-check__input:indeterminate + .ctl-check__box .tick { stroke-dashoffset: 1; }
+.ctl-check__box[data-pop], .ctl-radio__box[data-pop] { animation: ctl-check-pop var(--spring-bouncy-duration) var(--spring-bouncy) both; }
+.ctl-check__input:focus-visible + .ctl-check__box, .ctl-radio__input:focus-visible + .ctl-radio__box { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+.ctl-radio__box::after {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--_on);
+  transform: scale(0); transition: transform var(--spring-bouncy-duration) var(--spring-bouncy);
+}
+.ctl-radio__input:checked + .ctl-radio__box { background: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+.ctl-radio__input:checked + .ctl-radio__box::after { transform: scale(1); }
+
+.ctl-check[data-invalid] .ctl-check__input:not(:checked, :indeterminate) + .ctl-check__box,
+.ctl-radio[data-invalid] .ctl-radio__input:not(:checked) + .ctl-radio__box { box-shadow: inset 0 0 0 1.5px var(--destructive); background: var(--destructive-tint); }
+.ctl-check[data-invalid] .ctl-check__input:focus-visible + .ctl-check__box, .ctl-radio[data-invalid] .ctl-radio__input:focus-visible + .ctl-radio__box { outline-color: var(--destructive); }
+
+.ctl-check:has(:disabled), .ctl-radio:has(:disabled), .ctl-switch:has(:disabled) { color: var(--muted-foreground); cursor: not-allowed; }
+.ctl-check:has(:disabled) .ctl-check__box, .ctl-radio:has(:disabled) .ctl-radio__box { background: var(--muted); box-shadow: inset 0 0 0 1.5px var(--border); --_on: var(--muted-foreground); }
+.ctl-check__input:disabled:is(:checked, :indeterminate) + .ctl-check__box,
+.ctl-radio__input:disabled:checked + .ctl-radio__box { background: var(--control-disabled-fill); box-shadow: none; --_on: var(--muted); }
+
+.ctl-choices { display: grid; gap: 4px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.ctl-choices[data-dir="row"] { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.ctl-choices__legend { font-size: 13px; line-height: 18px; font-weight: 500; padding: 0; margin-bottom: 8px; color: var(--foreground); }
+
+/* Switch ---------------------------------------------------------------- */
+.ctl-switch__track {
+  --_thumb: calc(var(--size-switch-h) - 6px);
+  position: relative; flex: none; width: var(--size-switch-w); height: var(--size-switch-h); margin-block: 2px; border-radius: 9999px;
+  background: var(--control-off); box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  transition: background-color var(--duration-base) var(--ease-in-out-soft), box-shadow var(--duration-base) var(--ease-in-out-soft);
+}
+.ctl-switch__thumb {
+  position: absolute; left: 3px; top: 3px; width: var(--_thumb); height: var(--_thumb); border-radius: 50%;
+  background: var(--border-strong); display: grid; place-items: center;
+  transform: translateX(var(--_x, 0)) scaleX(var(--_sx, 1)); transform-origin: var(--_ox, left center);
+  transition: transform var(--spring-bouncy-duration) var(--spring-bouncy), background-color var(--duration-base) var(--ease-in-out-soft);
+}
+.ctl-switch__input:checked + .ctl-switch__track { background: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+.ctl-switch__input:checked + .ctl-switch__track .ctl-switch__thumb { --_x: calc(var(--size-switch-w) - var(--size-switch-h)); --_ox: right center; background: var(--primary-foreground); }
+.ctl-switch:hover .ctl-switch__input:not(:checked, :disabled) + .ctl-switch__track { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+.ctl-switch:hover .ctl-switch__input:not(:checked, :disabled) + .ctl-switch__track .ctl-switch__thumb { background: var(--foreground); }
+.ctl-switch:hover .ctl-switch__input:checked:not(:disabled) + .ctl-switch__track { background: var(--primary-hover); box-shadow: inset 0 0 0 1.5px var(--primary-hover); }
+.ctl-switch__input:active:not(:disabled) + .ctl-switch__track .ctl-switch__thumb { --_sx: 1.18; }
+.ctl-switch__input:focus-visible + .ctl-switch__track { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+.ctl-switch__input:disabled + .ctl-switch__track { background: var(--muted); box-shadow: inset 0 0 0 1.5px var(--border); }
+.ctl-switch__input:disabled + .ctl-switch__track .ctl-switch__thumb { background: var(--control-disabled-fill); }
+.ctl-switch__input:disabled:checked + .ctl-switch__track { background: var(--control-disabled-fill); box-shadow: none; }
+.ctl-switch__input:disabled:checked + .ctl-switch__track .ctl-switch__thumb { background: var(--muted); }
+/* Зайнятий: на кульці крутиться дуга, доки зміну зберігають */
+.ctl-switch[data-busy] .ctl-switch__thumb::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid color-mix(in oklch, var(--control-off) 85%, transparent); border-top-color: transparent;
+  animation: ctl-spin 800ms linear infinite;
+}
+.ctl-switch[data-busy] .ctl-switch__input:checked + .ctl-switch__track .ctl-switch__thumb::after { border-color: color-mix(in oklch, var(--primary) 85%, transparent); border-top-color: transparent; }
+.ctl-switch[data-busy] { cursor: progress; }
+.ctl-switch--lead { flex-direction: row-reverse; justify-content: space-between; width: 100%; }
+
+/* ----------------------------------------------------------------------
+   Segmented control: бігунок, що ковзає (radiogroup, roving tabindex)
+   ---------------------------------------------------------------------- */
+.ctl-seg {
+  --_bh: 26px; position: relative; display: inline-flex; width: fit-content; padding: 2px; gap: 2px; max-width: 100%;
+  background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.ctl-seg[data-size="sm"] { --_bh: 22px; }
+.ctl-seg[data-size="lg"] { --_bh: 30px; }
+.ctl-seg[data-block] { display: flex; width: 100%; }
+.ctl-seg[data-block] > .ctl-seg__btn { flex: 1 1 0; justify-content: center; }
+.ctl-seg__thumb {
+  position: absolute; top: 2px; left: 0; height: var(--_bh); width: 0; border-radius: 4px; pointer-events: none;
+  background: var(--background); box-shadow: 0 0 0 1px var(--border), var(--elevation-1);
+  transition: transform var(--spring-snappy-duration) var(--spring-snappy), width var(--spring-snappy-duration) var(--spring-snappy);
+}
+/* До першого виміру (SSR) вибраний пункт сам має фон бігунка */
+.ctl-seg:not([data-placed]) .ctl-seg__btn[aria-checked="true"] { background: var(--background); box-shadow: 0 0 0 1px var(--border); }
+.ctl-seg__btn {
+  position: relative; z-index: 1; height: var(--_bh); padding: 0 12px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; cursor: default;
+  transition: color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+}
+.ctl-seg[data-size="sm"] .ctl-seg__btn { padding: 0 8px; font-size: 12px; line-height: 16px; }
+.ctl-seg__btn svg { width: 14px; height: 14px; flex: none; }
+.ctl-seg__btn:hover:not([aria-disabled="true"]), .ctl-seg__btn[aria-checked="true"] { color: var(--foreground); }
+.ctl-seg__btn:active:not([aria-disabled="true"]) { transform: scale(var(--scale-press)); }
+.ctl-seg__btn:focus-visible { outline-offset: 0; }
+.ctl-seg__btn[aria-disabled="true"] { color: var(--control-disabled-fill); cursor: not-allowed; }
+.ctl-seg[data-disabled] { background: transparent; }
+
+/* ----------------------------------------------------------------------
+   Slider: бігунок одинарний або діапазон, бульбашка зі значенням
+   ---------------------------------------------------------------------- */
+.ctl-slider {
+  position: relative; display: block; height: var(--size-hit); touch-action: none; cursor: default;
+  -webkit-user-select: none; user-select: none; margin-inline: calc(var(--size-thumb) / 2);
+}
+.ctl-slider[data-bubble] { margin-top: 24px; }
+.ctl-slider__rail {
+  position: absolute; left: 0; right: 0; top: 50%; height: var(--size-track); margin-top: calc(var(--size-track) / -2);
+  border-radius: 9999px; background: var(--control-off); box-shadow: inset 0 0 0 1px var(--border);
+}
+/* Поле натискання ширше за рейку на радіус бігунка з кожного боку */
+.ctl-slider::before { content: ""; position: absolute; left: calc(var(--size-thumb) / -2); right: calc(var(--size-thumb) / -2); top: 0; bottom: 0; }
+.ctl-slider__fill {
+  position: absolute; inset: 0; border-radius: inherit; background: var(--primary); transform-origin: left center;
+  transform: translateX(calc(var(--p0, 0) * 100%)) scaleX(calc(var(--p1, 0) - var(--p0, 0)));
+  transition: transform var(--spring-snappy-duration) var(--spring-snappy), background-color var(--duration-base) var(--ease-in-out-soft);
+}
+.ctl-slider[data-tone="ai"] .ctl-slider__fill { background: var(--ai-mark); }
+.ctl-slider__thumb {
+  --_ring: var(--primary);
+  position: absolute; left: calc(var(--p) * 100%); top: 50%; width: var(--size-thumb); height: var(--size-thumb);
+  margin: calc(var(--size-thumb) / -2) 0 0 calc(var(--size-thumb) / -2);
+  border-radius: 50%; background: var(--background);
+  box-shadow: inset 0 0 0 2px var(--_ring), 0 0 0 0 var(--primary-tint);
+  transform: scale(var(--_s, 1));
+  transition: left var(--spring-snappy-duration) var(--spring-snappy), transform var(--spring-snappy-duration) var(--spring-snappy), box-shadow var(--duration-fast) var(--ease-standard);
+  outline: none;
+}
+.ctl-slider[data-tone="ai"] .ctl-slider__thumb { --_ring: var(--ai-mark); }
+.ctl-slider__thumb:hover { box-shadow: inset 0 0 0 2px var(--_ring), 0 0 0 6px color-mix(in oklch, var(--_ring) 14%, transparent); }
+.ctl-slider__thumb:focus-visible { outline: var(--ring-width) solid var(--ring); outline-offset: var(--ring-offset); }
+.ctl-slider[data-dragging] .ctl-slider__thumb, .ctl-slider[data-dragging] .ctl-slider__fill { transition: none; }
+.ctl-slider[data-dragging] .ctl-slider__thumb[data-active] { --_s: var(--scale-thumb); box-shadow: inset 0 0 0 2px var(--_ring), var(--elevation-1); }
+.ctl-slider__bubble {
+  position: absolute; left: 50%; bottom: calc(100% + 8px); translate: -50% 0; pointer-events: none;
+  min-width: 28px; height: 20px; padding: 0 6px; border-radius: 4px; display: grid; place-items: center; white-space: nowrap;
+  background: var(--foreground); color: var(--background); font-size: 11px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums;
+  opacity: 0; transform: translateY(4px) scale(var(--scale-enter)); transform-origin: bottom center;
+  transition: opacity var(--duration-fast) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-snappy);
+}
+.ctl-slider__bubble::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; background: inherit; transform: translateX(-50%) rotate(45deg); border-radius: 1px; }
+.ctl-slider__thumb:is(:hover, :focus-visible) .ctl-slider__bubble,
+.ctl-slider[data-dragging] .ctl-slider__thumb[data-active] .ctl-slider__bubble,
+.ctl-slider[data-bubble] .ctl-slider__bubble { opacity: 1; transform: none; }
+.ctl-slider[data-disabled] { cursor: not-allowed; }
+.ctl-slider[data-disabled] .ctl-slider__fill { background: var(--control-disabled-fill); }
+.ctl-slider[data-disabled] .ctl-slider__thumb { background: var(--muted); box-shadow: inset 0 0 0 2px var(--control-disabled-fill); pointer-events: none; }
+.ctl-slider__scale {
+  display: flex; justify-content: space-between; margin-top: -4px; font-size: 12px; line-height: 16px;
+  color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+}
+.ctl-slider-field { display: grid; gap: 4px; min-width: 0; }
+.ctl-slider-field__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ctl-slider-field__value { font-size: 13px; line-height: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6) var(--space-8); align-items: start; }
+.col { display: flex; flex-direction: column; gap: var(--space-4); }
+.ctl-summary { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.scale { width: 100%; }
+</style>
+</head>
+<body>
+<div class="stack">
+  <div class="cols">
+    <div class="col" style="gap: var(--space-6)">
+<section class="col">
+      <p class="cap">Checkbox: unchecked · checked · mixed · disabled · invalid</p>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Unchecked</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Checked</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" data-mixed><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Mixed</span></span></label>
+      </div>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" disabled><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Disabled</span></span></label>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked disabled><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Disabled on</span></span></label>
+      </div>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-check" data-invalid><input class="ctl-check__input" type="checkbox" aria-invalid="true"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Invalid</span></span></label>
+        <label class="ctl-check" data-tone="done"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Done tone</span></span></label>
+      </div>
+      <fieldset class="ctl-choices">
+        <legend class="ctl-choices__legend">Move-in checklist</legend>
+        <label class="ctl-check"><input class="ctl-check__input" type="checkbox" data-mixed><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">All tasks</span></span></label>
+        <div class="ctl-choices" style="padding-left: 1.5rem">
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Sign the lease agreement</span></span></label>
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox" checked><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Inspect the apartment</span></span></label>
+          <label class="ctl-check"><input class="ctl-check__input" type="checkbox"><span class="ctl-check__box" aria-hidden="true"><svg viewBox="0 0 12 12"><path class="tick" d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/><path class="dash" d="M3 6h6" pathLength="1"/></svg></span><span class="ctl-check__text"><span class="ctl-check__label">Hand over the keys</span></span></label>
+          <p class="ctl-summary tabular" aria-live="polite">2 of 3 done</p>
+        </div>
+      </fieldset>
+    </section>
+<section class="col">
+      <p class="cap">Segmented: sliding indicator, radiogroup, arrows move and select</p>
+      <div class="ctl-seg" role="radiogroup" aria-label="Template view">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>List</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Schema</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Canvas</span></button>
+      </div>
+      <div class="ctl-seg" data-size="sm" role="radiogroup" aria-label="Period">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Day</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>Week</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>Month</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" aria-disabled="true" tabindex="-1"><span>Year</span></button>
+      </div>
+      <div class="ctl-seg" data-size="lg" data-block role="radiogroup" aria-label="Runs">
+        <span class="ctl-seg__thumb" aria-hidden="true"></span>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="true" tabindex="0"><span>My runs</span></button>
+        <button class="ctl-seg__btn" type="button" role="radio" aria-checked="false" tabindex="-1"><span>All runs</span></button>
+      </div>
+    </section>
+<section class="col">
+      <p class="cap">Slider: single, range, bubble, disabled</p>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Confidence</span><output class="ctl-slider-field__value">80%</output></div>
+        <div class="ctl-slider" style="--p0: 0; --p1: 0.8">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Confidence" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80" aria-valuetext="80%" style="--p: 0.8"><span class="ctl-slider__bubble" aria-hidden="true">80%</span></div>
+        </div>
+        <div class="ctl-slider__scale" aria-hidden="true"><span>0%</span><span>100%</span></div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Monthly budget</span><output class="ctl-slider-field__value">€1200 – €2400</output></div>
+        <div class="ctl-slider" style="--p0: 0.24; --p1: 0.48">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Minimum" aria-valuemin="0" aria-valuemax="2400" aria-valuenow="1200" aria-valuetext="€1200" style="--p: 0.24"><span class="ctl-slider__bubble" aria-hidden="true">€1200</span></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Maximum" aria-valuemin="1200" aria-valuemax="5000" aria-valuenow="2400" aria-valuetext="€2400" style="--p: 0.48"><span class="ctl-slider__bubble" aria-hidden="true">€2400</span></div>
+        </div>
+        <div class="ctl-slider__scale" aria-hidden="true"><span>€0</span><span>€5000</span></div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider" data-bubble style="--p0: 0; --p1: 0.3">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" tabindex="0" aria-label="Rooms" aria-valuemin="0" aria-valuemax="10" aria-valuenow="3" style="--p: 0.3"><span class="ctl-slider__bubble" aria-hidden="true">3</span></div>
+        </div>
+      </div>
+      <div class="ctl-slider-field">
+        <div class="ctl-slider-field__head"><span class="t-label">Disabled</span><output class="ctl-slider-field__value">40</output></div>
+        <div class="ctl-slider" data-disabled style="--p0: 0; --p1: 0.4">
+          <div class="ctl-slider__rail"><div class="ctl-slider__fill"></div></div>
+          <div class="ctl-slider__thumb" role="slider" aria-disabled="true" aria-label="Disabled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" style="--p: 0.4"><span class="ctl-slider__bubble" aria-hidden="true">40</span></div>
+        </div>
+      </div>
+    </section>
+    </div>
+    <div class="col" style="gap: var(--space-6)">
+<section class="col">
+      <p class="cap">RadioGroup: column, row, disabled option, invalid</p>
+      <fieldset class="ctl-choices" role="radiogroup" data-dir="column">
+        <legend class="ctl-choices__legend">Handover method</legend>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1" checked><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">In person</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Key box</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-1" disabled><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">By mail</span></span></label>
+      </fieldset>
+      <fieldset class="ctl-choices" role="radiogroup" data-dir="row" aria-label="Priority">
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Low</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2" checked><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Normal</span></span></label>
+        <label class="ctl-radio"><input class="ctl-radio__input" type="radio" name="rg-2"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">High</span></span></label>
+      </fieldset>
+      <div>
+        <fieldset class="ctl-choices" role="radiogroup" data-dir="column" aria-invalid="true" aria-describedby="rg-3-e">
+          <legend class="ctl-choices__legend">Reason</legend>
+          <label class="ctl-radio" data-invalid><input class="ctl-radio__input" type="radio" name="rg-3"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Tenant request</span></span></label>
+          <label class="ctl-radio" data-invalid><input class="ctl-radio__input" type="radio" name="rg-3"><span class="ctl-radio__box" aria-hidden="true"></span><span class="ctl-radio__text"><span class="ctl-check__label">Owner request</span></span></label>
+        </fieldset>
+        <div class="ctl-foot"><div class="ctl-msg" data-open data-invalid><p class="ctl-error" id="rg-3-e" role="alert"><svg class="g g-alert" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke-width="1.6"/><path d="M8 4.8v3.6" stroke-width="1.6"/><circle cx="8" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg><span>Choose a reason.</span></p></div></div>
+      </div>
+
+      <p class="cap" style="margin-top: var(--space-2)">Switch: on · off · busy · disabled · label left</p>
+      <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" checked><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Email notifications</span></span></label>
+      <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch"><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Weekly digest</span></span></label>
+      <label class="ctl-switch" data-busy><input class="ctl-switch__input" type="checkbox" role="switch" aria-busy="true"><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Auto-assign tasks</span></span></label>
+      <label class="ctl-switch ctl-switch--lead"><input class="ctl-switch__input" type="checkbox" role="switch" checked><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Label on the left</span></span></label>
+      <div class="row" style="gap: var(--space-2) var(--space-5)">
+        <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" disabled><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Disabled</span></span></label>
+        <label class="ctl-switch"><input class="ctl-switch__input" type="checkbox" role="switch" checked disabled><span class="ctl-switch__track" aria-hidden="true"><span class="ctl-switch__thumb"></span></span><span class="ctl-switch__text"><span class="ctl-check__label">Disabled on</span></span></label>
+      </div>
+    </section>
+    </div>
+  </div>
+</div>
+<script>
+/* Лише демонстрація: «mixed» не задається атрибутом, а бігунок Segmented їде за вибором. Без скрипта вибраний пункт має власний фон. */
+document.querySelectorAll("[data-mixed]").forEach(function (i) { i.indeterminate = true; });
+function place(seg, animate) {
+  var on = seg.querySelector('[aria-checked="true"]'), thumb = seg.querySelector(".ctl-seg__thumb");
+  if (!on || !on.offsetWidth) return;
+  if (!animate) thumb.style.transition = "none";
+  thumb.style.width = on.offsetWidth + "px";
+  thumb.style.transform = "translateX(" + on.offsetLeft + "px)";
+  if (!animate) { void thumb.offsetWidth; thumb.style.transition = ""; }
+  seg.setAttribute("data-placed", "");
+}
+document.querySelectorAll(".ctl-seg").forEach(function (seg) {
+  place(seg, false);
+  if (document.fonts) document.fonts.ready.then(function () { place(seg, false); });
+  seg.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b || b.getAttribute("aria-disabled") === "true") return;
+    seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-checked", x === b ? "true" : "false"); x.tabIndex = x === b ? 0 : -1; });
+    place(seg, true);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!-- @dsCard group="Forms" height=1228 subtitle="DatePicker, діапазон, TimeField, NumberField, CurrencyField" -->
+<style>
+/* @include forms */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); align-items: start; }
+.pane { display: flex; flex-direction: column; gap: var(--space-4); }
+.dt-tz { display: inline-flex; height: 1.125rem; align-items: center; gap: 0.25rem; padding: 0 0.375rem 0 0.25rem; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--border); color: var(--muted-foreground); font-size: 0.6875rem; line-height: 1; font-weight: 500; white-space: nowrap; }
+.dt-presets { display: flex; flex-wrap: wrap; gap: 0.375rem; padding-top: 0.5rem; }
+.dt-preset { display: inline-flex; height: 1.5rem; align-items: center; gap: 0.375rem; padding: 0 0.5rem; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--input); color: var(--foreground); font-size: 12px; line-height: 1; letter-spacing: 0.004em; font-weight: 500; white-space: nowrap; }
+.dt-preset__n { color: var(--muted-foreground); font-weight: 400; font-variant-numeric: tabular-nums; }
+.dt-preset[aria-pressed="true"] { background: var(--primary-tint); color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary-tint-strong); }
+.dt-preset[aria-pressed="true"] .dt-preset__n { color: inherit; }
+.dt-range-in { display: flex; width: 100%; height: var(--size-control); align-items: center; gap: 0.5rem; padding: 0 0.5rem 0 0.75rem; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); font-variant-numeric: tabular-nums; }
+.dt-range-in .in { min-width: 0; flex: 1 1 0; border: 0; background: transparent; padding: 0; color: inherit; font-size: 14px; }
+.dt-range-in .in:focus-visible { outline: none; }
+.dt-range-in > .g-arrow { color: var(--muted-foreground); }
+.pop { display: grid; gap: 0.75rem; width: var(--size-popover-cal); padding: 0.75rem; }
+.pop-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 -0.75rem -0.25rem; padding: 0.5rem 0.75rem 0; border-top: 1px solid var(--border); }
+.pop-foot .dt-tz { padding: 0; box-shadow: none; height: auto; }
+.ghost-sm { display: inline-flex; height: var(--size-control-sm); align-items: center; padding: 0 var(--space-2-5); border-radius: var(--radius-sm); font-size: 13px; line-height: 18px; font-weight: 500; color: var(--foreground); }
+.dt-cal { --_d: var(--size-day); position: relative; display: grid; width: max-content; max-width: 100%; user-select: none; }
+.dt-cal__month { display: grid; align-content: start; gap: 0.25rem; width: calc(var(--_d) * 7); }
+.dt-cal__title { display: grid; height: var(--size-control-sm); place-items: center; margin: 0; font-size: 13px; line-height: 18px; font-weight: 500; }
+.dt-cal__nav { position: absolute; top: 0; z-index: 2; width: var(--size-control-sm); height: var(--size-control-sm); }
+.dt-cal__nav[data-dir="prev"] { left: 0; }
+.dt-cal__nav[data-dir="next"] { right: 0; }
+.dt-cal__row { display: grid; grid-template-columns: repeat(7, var(--_d)); }
+.dt-cal__dow { display: grid; height: var(--size-hit); place-items: center; color: var(--muted-foreground); font-size: 12px; line-height: 1; font-weight: 500; letter-spacing: 0.02em; }
+.dt-day { position: relative; display: grid; width: var(--_d); height: var(--_d); place-items: center; }
+.dt-day::before { content: ""; position: absolute; inset: 0.125rem 0; z-index: 0; background: transparent; }
+.dt-day__n { position: relative; z-index: 1; display: grid; width: calc(var(--_d) - 0.25rem); height: calc(var(--_d) - 0.25rem); place-items: center; border-radius: var(--radius-sm); font-size: 13px; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.dt-day[data-outside] .dt-day__n { color: var(--muted-foreground); font-weight: 400; }
+.dt-day[data-today] .dt-day__n::after { content: ""; position: absolute; bottom: 0.25rem; width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
+.dt-day[aria-selected="true"] .dt-day__n { background: var(--primary); color: var(--primary-foreground); }
+.dt-day[aria-selected="true"][data-today] .dt-day__n::after { background: var(--primary-foreground); }
+.dt-day[aria-disabled="true"] .dt-day__n { color: var(--control-disabled-fill); text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: color-mix(in oklch, currentColor 45%, transparent); }
+.dt-day[data-range] { --_band: var(--primary-tint); }
+.dt-day[data-range="preview"] { --_band: color-mix(in oklch, var(--primary) 7%, transparent); }
+.dt-day[data-range="mid"]::before, .dt-day[data-range="preview"]::before { background: var(--_band); }
+.dt-day[data-range="start"]::before { background: var(--_band); left: 50%; }
+.dt-day[data-range="end"]::before { background: var(--_band); right: 50%; }
+.dt-day[data-col="0"][data-range="mid"]::before, .dt-day[data-col="0"][data-range="preview"]::before { left: 0.125rem; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.dt-day[data-col="6"][data-range="mid"]::before, .dt-day[data-col="6"][data-range="preview"]::before { right: 0.125rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.dt-day[data-range="mid"] .dt-day__n, .dt-day[data-range="preview"] .dt-day__n { color: var(--foreground); }
+.dt-day[data-hover]:not([aria-selected="true"]) .dt-day__n { box-shadow: inset 0 0 0 1px var(--primary); }
+.dt-iconbtn { display: inline-grid; width: 1.5rem; height: 1.5rem; flex: none; place-items: center; border-radius: var(--radius-xs); color: var(--muted-foreground); }
+.dt-iconbtn:hover { background: var(--state-hover); color: var(--foreground); }
+.dt-iconbtn[aria-expanded="true"] { background: var(--primary-tint); color: var(--primary); }
+.dt-iconbtn:disabled { color: var(--control-disabled-fill); }
+.dt-time { display: flex; height: var(--size-control); align-items: center; gap: 0.25rem; padding: 0 0.75rem; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--field); font-size: 14px; }
+.dt-time[data-invalid] { border-color: var(--destructive); }
+.dt-time[data-disabled] { border-color: var(--border); background: var(--muted); color: var(--muted-foreground); }
+.dt-time.is-open { border-color: var(--ring); }
+.dt-time__lead { display: inline-grid; flex: none; margin-right: 0.25rem; color: var(--muted-foreground); }
+.dt-time__colon { margin: 0 -0.125rem; color: var(--muted-foreground); }
+.dt-time__spacer { flex: 1; }
+.dt-seg { width: 1.625rem; height: 1.5rem; flex: none; padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; text-align: center; color: inherit; font-variant-numeric: tabular-nums; caret-color: transparent; }
+.dt-seg:focus-visible { outline: none; }
+.dt-seg.is-focus { background: var(--primary-tint); color: var(--primary); }
+.dt-seg::placeholder { color: var(--muted-foreground); letter-spacing: -0.1em; }
+.dt-timepop { display: flex; gap: 0.25rem; }
+.dt-timecol { display: grid; width: 3.75rem; max-height: 12rem; align-content: start; gap: 0.125rem; padding: 0 0.125rem; overflow: hidden; }
+.dt-timecol__head { padding: 0.25rem 0; background: color-mix(in oklab, var(--popover), transparent 8%); color: var(--muted-foreground); text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; }
+.dt-timeopt { display: grid; height: var(--size-control-sm); place-items: center; border-radius: var(--radius-xs); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dt-timeopt[data-active] { background: var(--accent-float); }
+.dt-timeopt[aria-selected="true"] { background: var(--primary); color: var(--primary-foreground); }
+.dt-num { position: relative; }
+.dt-num .control { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.dt-num__affix { position: absolute; top: 50%; left: 0.75rem; translate: 0 -50%; color: var(--foreground); font-variant-numeric: tabular-nums; pointer-events: none; }
+.dt-num[data-disabled] .dt-num__affix { color: var(--control-disabled-fill); }
+.dt-num__alert { position: absolute; top: 50%; translate: 0 -50%; pointer-events: none; }
+.dt-step { display: grid; width: 1.75rem; place-items: center; background: transparent; color: var(--muted-foreground); }
+.dt-step:hover { background: var(--state-hover); color: var(--foreground); }
+.dt-step[data-holding] { background: var(--state-pressed); color: var(--foreground); }
+.dt-step[data-holding] .g { transform: scale(0.82); }
+.dt-step[aria-disabled="true"] { color: var(--control-disabled-fill); }
+.dt-steps { position: absolute; inset: 1px 1px 1px auto; display: flex; overflow: hidden; border-left: 1px solid var(--input); border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
+.dt-step + .dt-step { border-left: 1px solid var(--input); }
+.dt-num[data-disabled] .dt-steps, .dt-num[data-disabled] .dt-step + .dt-step { border-color: var(--border); }
+.dt-num[data-layout="split"] .dt-step { position: absolute; top: 1px; bottom: 1px; width: 2rem; }
+.dt-num[data-layout="split"] .dt-step[data-side="start"] { left: 1px; border-right: 1px solid var(--input); border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px); }
+.dt-num[data-layout="split"] .dt-step[data-side="end"] { right: 1px; border-left: 1px solid var(--input); border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
+.dt-rate { position: absolute; right: 0.25rem; bottom: calc(100% + 0.5rem); z-index: 3; display: inline-flex; height: 1.125rem; align-items: center; padding: 0 0.375rem; border-radius: var(--radius-xs); background: var(--foreground); color: var(--background); font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gap-rate { padding-top: var(--space-6); }
+
+</style>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">DatePicker: text or calendar, Kyiv time tag, quick dates</p>
+    <div class="gridf">
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-1">Due date<span class="req" aria-hidden="true">*</span></label><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="ctl">
+          <input class="control pr1 tabular" id="dp-1" type="text" autocomplete="off" value="24 Oct 2026">
+          <span class="slot"><button class="dt-iconbtn" type="button" aria-label="Choose date" aria-haspopup="dialog" aria-expanded="false">{{g calendar}}</button></span>
+        </div>
+        <div class="dt-presets" role="group" aria-label="Quick dates">
+          <button class="dt-preset" type="button" aria-pressed="false">Today <span class="dt-preset__n">23 Oct</span></button>
+          <button class="dt-preset" type="button" aria-pressed="true">Tomorrow <span class="dt-preset__n">24 Oct</span></button>
+          <button class="dt-preset" type="button" aria-pressed="false">Next week <span class="dt-preset__n">30 Oct</span></button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-2">Due date<span class="req" aria-hidden="true">*</span></label><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="ctl">
+          <input class="control pr2 tabular" id="dp-2" type="text" autocomplete="off" value="20 Oct 2026" aria-invalid="true" aria-describedby="dp-2-e">
+          <span class="slot">{{g alert}}<button class="dt-iconbtn" type="button" aria-label="Choose date" aria-haspopup="dialog" aria-expanded="false">{{g calendar}}</button></span>
+        </div>
+        <div class="foot"><p class="error" id="dp-2-e" role="alert">{{g alert}}<span>Due date can’t be in the past.</span></p></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-3">Move-in window</label><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+        <div class="dt-range-in" role="group" aria-label="Move-in window"><input class="in" id="dp-3" value="26 Oct 2026" aria-label="Start date"><span class="g-arrow">{{g arrow}}</span><input class="in" value="30 Oct 2026" aria-label="End date"><button class="dt-iconbtn" type="button" aria-label="Choose dates">{{g calendar}}</button></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="dp-4">Due date</label></div>
+        <div class="ctl">
+          <input class="control pr1 tabular" id="dp-4" type="text" autocomplete="off" value="30 Oct 2026" disabled>
+          <span class="slot"><button class="dt-iconbtn" type="button" aria-label="Choose date" disabled>{{g calendar}}</button></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">Calendar popover: today dot, selected day, range with hover preview, Today in the footer</p>
+    <div class="cols">
+      <div class="float pop" role="dialog" aria-label="Choose date">
+        <div class="dt-cal">
+          <button class="dt-iconbtn dt-cal__nav" data-dir="prev" type="button" aria-label="Previous month">{{g chev-l}}</button>
+          <button class="dt-iconbtn dt-cal__nav" data-dir="next" type="button" aria-label="Next month">{{g chev-r}}</button>
+          <div class="dt-cal__month">
+            <h3 class="dt-cal__title" id="cal-a">October 2026</h3>
+            <div role="grid" aria-labelledby="cal-a">
+              <div role="row" class="dt-cal__row"><div role="columnheader" class="dt-cal__dow" aria-label="Monday">Mo</div><div role="columnheader" class="dt-cal__dow" aria-label="Tuesday">Tu</div><div role="columnheader" class="dt-cal__dow" aria-label="Wednesday">We</div><div role="columnheader" class="dt-cal__dow" aria-label="Thursday">Th</div><div role="columnheader" class="dt-cal__dow" aria-label="Friday">Fr</div><div role="columnheader" class="dt-cal__dow" aria-label="Saturday">Sa</div><div role="columnheader" class="dt-cal__dow" aria-label="Sunday">Su</div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">1</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">4</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">8</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">9</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">10</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">11</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">12</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">13</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">14</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">15</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">16</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">17</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">18</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">19</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">20</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">21</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">22</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-today aria-current="date"><span class="dt-day__n">23</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="true"><span class="dt-day__n">24</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">25</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">26</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">27</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">31</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">1</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">4</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-outside><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-outside><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false" data-outside><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">8</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop-foot"><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Today</span></div>
+      </div>
+      <div class="float pop" role="dialog" aria-label="Choose dates">
+        <div class="dt-cal">
+          <button class="dt-iconbtn dt-cal__nav" data-dir="prev" type="button" aria-label="Previous month">{{g chev-l}}</button>
+          <button class="dt-iconbtn dt-cal__nav" data-dir="next" type="button" aria-label="Next month">{{g chev-r}}</button>
+          <div class="dt-cal__month">
+            <h3 class="dt-cal__title" id="cal-b">October 2026</h3>
+            <div role="grid" aria-labelledby="cal-b">
+              <div role="row" class="dt-cal__row"><div role="columnheader" class="dt-cal__dow" aria-label="Monday">Mo</div><div role="columnheader" class="dt-cal__dow" aria-label="Tuesday">Tu</div><div role="columnheader" class="dt-cal__dow" aria-label="Wednesday">We</div><div role="columnheader" class="dt-cal__dow" aria-label="Thursday">Th</div><div role="columnheader" class="dt-cal__dow" aria-label="Friday">Fr</div><div role="columnheader" class="dt-cal__dow" aria-label="Saturday">Sa</div><div role="columnheader" class="dt-cal__dow" aria-label="Sunday">Su</div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">1</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">4</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">8</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">9</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">10</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">11</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">12</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">13</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">14</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">15</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false"><span class="dt-day__n">16</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">17</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">18</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false"><span class="dt-day__n">19</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false"><span class="dt-day__n">20</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false"><span class="dt-day__n">21</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false"><span class="dt-day__n">22</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-today aria-current="date"><span class="dt-day__n">23</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">24</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false"><span class="dt-day__n">25</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="true" data-range="start"><span class="dt-day__n">26</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-range="preview"><span class="dt-day__n">27</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-range="preview"><span class="dt-day__n">28</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-range="preview"><span class="dt-day__n">29</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-range="end" data-hover><span class="dt-day__n">30</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false"><span class="dt-day__n">31</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">1</span></div></div>
+              <div role="row" class="dt-cal__row"><div class="dt-day" role="gridcell" data-col="0" aria-selected="false" data-outside><span class="dt-day__n">2</span></div><div class="dt-day" role="gridcell" data-col="1" aria-selected="false" data-outside><span class="dt-day__n">3</span></div><div class="dt-day" role="gridcell" data-col="2" aria-selected="false" data-outside><span class="dt-day__n">4</span></div><div class="dt-day" role="gridcell" data-col="3" aria-selected="false" data-outside><span class="dt-day__n">5</span></div><div class="dt-day" role="gridcell" data-col="4" aria-selected="false" data-outside><span class="dt-day__n">6</span></div><div class="dt-day" role="gridcell" data-col="5" aria-selected="false" data-outside><span class="dt-day__n">7</span></div><div class="dt-day" role="gridcell" data-col="6" aria-selected="false" data-outside><span class="dt-day__n">8</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop-foot"><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Today</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">TimeField: segments, 24-hour, hours and minutes columns</p>
+    <div class="cols">
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-h">Due time</label><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span></div>
+          <div class="dt-time is-open" role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true">{{g clock}}</span>
+            <input class="dt-seg" id="tm-h" role="spinbutton" type="text" value="09" aria-label="Hours" aria-valuemin="0" aria-valuemax="23" aria-valuenow="9">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg is-focus" role="spinbutton" type="text" value="30" aria-label="Minutes" aria-valuemin="0" aria-valuemax="59" aria-valuenow="30">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time" aria-haspopup="dialog" aria-expanded="true"><span class="chev up">{{g chev}}</span></button>
+          </div>
+          <div class="float pop" role="dialog" aria-label="Choose time" style="width: max-content; margin-top: var(--space-1-5)">
+            <div class="dt-timepop">
+              <div class="dt-timecol" role="listbox" aria-label="Hours"><div class="dt-timecol__head" aria-hidden="true">Hour</div><div class="dt-timeopt" role="option" aria-selected="false">06</div><div class="dt-timeopt" role="option" aria-selected="false">07</div><div class="dt-timeopt" role="option" aria-selected="false">08</div><div class="dt-timeopt" role="option" aria-selected="true">09</div><div class="dt-timeopt" role="option" aria-selected="false" data-active>10</div><div class="dt-timeopt" role="option" aria-selected="false">11</div><div class="dt-timeopt" role="option" aria-selected="false">12</div></div>
+              <div class="dt-timecol" role="listbox" aria-label="Minutes"><div class="dt-timecol__head" aria-hidden="true">Min</div><div class="dt-timeopt" role="option" aria-selected="false">00</div><div class="dt-timeopt" role="option" aria-selected="false">05</div><div class="dt-timeopt" role="option" aria-selected="false">10</div><div class="dt-timeopt" role="option" aria-selected="false">15</div><div class="dt-timeopt" role="option" aria-selected="false">20</div><div class="dt-timeopt" role="option" aria-selected="false">25</div><div class="dt-timeopt" role="option" aria-selected="true">30</div><div class="dt-timeopt" role="option" aria-selected="false">35</div></div>
+            </div>
+            <div class="pop-foot"><span class="dt-tz">{{g clock xs}}<span>Kyiv time</span><span class="tabular">GMT+3</span></span><span class="ghost-sm">Done</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-2">Due time</label><span class="opt">Optional</span></div>
+          <div class="dt-time" role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true">{{g clock}}</span>
+            <input class="dt-seg" id="tm-2" role="spinbutton" type="text" placeholder="––" aria-label="Hours">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" placeholder="––" aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time">{{g chev}}</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-3">Due time</label></div>
+          <div class="dt-time" data-invalid role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true">{{g clock}}</span>
+            <input class="dt-seg" id="tm-3" role="spinbutton" type="text" value="23" aria-invalid="true" aria-label="Hours" aria-describedby="tm-3-e">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" value="45" aria-invalid="true" aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            {{g alert}}
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time">{{g chev}}</button>
+          </div>
+          <div class="foot"><p class="error" id="tm-3-e" role="alert">{{g alert}}<span>Pick a time during office hours.</span></p></div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="tm-4">Due time</label></div>
+          <div class="dt-time" data-disabled role="group" aria-label="Due time">
+            <span class="dt-time__lead" aria-hidden="true">{{g clock}}</span>
+            <input class="dt-seg" id="tm-4" role="spinbutton" type="text" value="09" disabled aria-label="Hours">
+            <span class="dt-time__colon" aria-hidden="true">:</span>
+            <input class="dt-seg" role="spinbutton" type="text" value="30" disabled aria-label="Minutes">
+            <span class="dt-time__spacer"></span>
+            <button class="dt-iconbtn" style="margin-right: -0.375rem" type="button" aria-label="Choose time" disabled>{{g chev}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">NumberField and CurrencyField: split and end steppers, hold-to-repeat multiplier, EUR</p>
+    <div class="gridf">
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-1">Nights</label></div>
+        <div class="dt-num" data-layout="split" data-filled>
+          <input class="control tabular" id="nf-1" role="spinbutton" type="text" value="3" aria-valuemin="1" aria-valuemax="30" aria-valuenow="3" style="padding-left: 2.5rem; padding-right: 2.5rem; text-align: center">
+          <button class="dt-step" data-side="start" type="button" tabindex="-1" aria-hidden="true">{{g minus}}</button>
+          <button class="dt-step" data-side="end" type="button" tabindex="-1" aria-hidden="true">{{g plus}}</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-2">Rooms</label></div>
+        <div class="dt-num" data-filled>
+          <input class="control tabular" id="nf-2" role="spinbutton" type="text" value="0" aria-valuemin="0" aria-valuenow="0" style="padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true">{{g minus}}</button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true">{{g plus}}</button></span>
+        </div>
+      </div>
+      <div class="field gap-rate">
+        <div class="fhead"><label class="lbl" for="nf-3">Deposit</label></div>
+        <div class="dt-num" data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-3" role="spinbutton" type="text" value="1,250.00" aria-valuenow="1250" aria-valuetext="€1,250.00" style="padding-left: 1.35rem; padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true">{{g minus}}</button><button class="dt-step" data-holding type="button" tabindex="-1" aria-hidden="true">{{g plus}}</button></span>
+          <span class="dt-rate" aria-hidden="true">×2</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-4">Deposit</label></div>
+        <div class="dt-num" data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-4" role="spinbutton" type="text" value="6,200.00" aria-invalid="true" aria-describedby="nf-4-e" style="padding-left: 1.35rem; padding-right: 5.5rem">
+          <span class="dt-num__alert" style="right: 4rem">{{g alert}}</span>
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true">{{g minus}}</button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true">{{g plus}}</button></span>
+        </div>
+        <div class="foot"><p class="error" id="nf-4-e" role="alert">{{g alert}}<span>Enter an amount between €0.00 and €5,000.00.</span></p></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="nf-5">Deposit</label></div>
+        <div class="dt-num" data-disabled data-filled>
+          <span class="dt-num__affix" aria-hidden="true">€</span>
+          <input class="control tabular" id="nf-5" role="spinbutton" type="text" value="1,250.00" disabled style="padding-left: 1.35rem; padding-right: 3.75rem">
+          <span class="dt-steps"><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true">{{g minus}}</button><button class="dt-step" type="button" tabindex="-1" aria-hidden="true" aria-disabled="true">{{g plus}}</button></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

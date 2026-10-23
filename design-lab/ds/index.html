@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foundations · Property Workflows</title>
+<script>
+  /* Apply saved theme/motion before first paint */
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<style>
+/* ===== Page-local styles (Foundations showcase only — not components) ===== */
+.shell { display: grid; grid-template-columns: var(--size-sidebar) minmax(0, 1fr); min-height: 100dvh; }
+
+/* Sidebar */
+.side {
+  position: sticky; top: 0; height: 100dvh; overflow-y: auto;
+  background: var(--sidebar); color: var(--sidebar-foreground);
+  border-right: var(--hairline) solid var(--sidebar-border);
+  padding: var(--space-3) var(--space-2);
+  display: flex; flex-direction: column; gap: var(--space-4);
+}
+.brand { display: flex; align-items: center; gap: var(--space-2); height: var(--size-control); padding: 0 var(--space-2); }
+.brand-mark { width: 20px; height: 20px; border-radius: var(--radius-xs); background: var(--primary); color: var(--primary-foreground); display: grid; place-items: center; flex: none; }
+.brand-mark svg { width: 14px; height: 14px; }
+.nav { display: flex; flex-direction: column; gap: 1px; }
+.nav-label { padding: 0 var(--space-2); margin-bottom: var(--space-1); color: var(--muted-foreground); }
+.nav a {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm);
+  color: var(--sidebar-foreground); text-decoration: none;
+  font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-medium);
+  transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard);
+}
+.nav a:hover { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
+.nav a[aria-current="true"] { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
+.nav a:focus-visible { outline-offset: var(--ring-offset-inset); }
+.nav a .k { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+.side-foot { margin-top: auto; padding: var(--space-2); color: var(--muted-foreground); }
+
+/* Top bar */
+.topbar {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  height: var(--size-header); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 0 var(--space-6); background: var(--background);
+  border-bottom: var(--hairline) solid transparent;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.topbar.scrolled { border-bottom-color: var(--border); }
+.crumbs { display: flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-size: var(--text-label); }
+.crumbs b { color: var(--foreground); font-weight: var(--weight-medium); }
+.crumbs svg { width: 12px; height: 12px; opacity: .6; }
+
+/* Segmented control (page-local reference) */
+.seg { position: relative; display: inline-flex; padding: 2px; gap: 2px; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-sm); }
+.seg-thumb {
+  position: absolute; top: 2px; left: 0; height: calc(100% - 4px); width: 0;
+  background: var(--background); border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 var(--hairline) var(--border), var(--shadow-highlight);
+  transition: transform var(--spring-snappy-duration) var(--spring-snappy), width var(--spring-snappy-duration) var(--spring-snappy);
+}
+.seg button {
+  position: relative; z-index: 1; height: 22px; padding: 0 var(--space-2); border-radius: var(--radius-xs);
+  display: inline-flex; align-items: center; gap: var(--space-1-5);
+  font-size: var(--text-meta); line-height: var(--leading-meta); font-weight: var(--weight-medium);
+  color: var(--muted-foreground);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.seg button:hover { color: var(--foreground); }
+.seg button[aria-checked="true"] { color: var(--foreground); }
+.seg button svg { width: 13px; height: 13px; }
+.seg button:focus-visible { outline-offset: 0; }
+
+/* Main */
+.main { min-width: 0; }
+.content { max-width: 1120px; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+.sec { padding-top: var(--space-16); scroll-margin-top: calc(var(--size-header) + var(--space-2)); }
+.sec:first-child { padding-top: var(--space-6); }
+.sec-head { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); max-width: 68ch; }
+.sec-head p { color: var(--muted-foreground); }
+.sec-index { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--muted-foreground); }
+.sub { margin: var(--space-8) 0 var(--space-3); }
+
+/* Generic panels */
+.panel { background: var(--card); color: var(--card-foreground); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); }
+.theme-panel { background: var(--background); color: var(--foreground); font-weight: var(--weight-body); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.scroll-x { overflow-x: auto; }
+
+/* Reference button (page-local) */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5);
+  height: var(--size-control); padding: 0 var(--space-3); border-radius: var(--radius-sm);
+  font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-medium);
+  white-space: nowrap; user-select: none;
+  transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard),
+              border-color var(--duration-instant) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+}
+.btn:active { transform: scale(var(--scale-press)); }
+.btn svg { width: var(--size-icon-sm); height: var(--size-icon-sm); flex: none; }
+.mo-card header > .btn, .mo-card header > .cluster { flex: none; }
+.btn-sm { height: var(--size-control-sm); padding: 0 var(--space-2); }
+.btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--secondary); color: var(--secondary-foreground); box-shadow: inset 0 0 0 var(--hairline) var(--border); }
+.btn-secondary:hover { background: var(--accent-active); }
+.btn-ghost { color: var(--muted-foreground); }
+.btn-ghost:hover { background: var(--accent); color: var(--accent-foreground); }
+.btn-destructive { background: var(--destructive); color: var(--destructive-foreground); }
+
+/* Reference field */
+.field {
+  height: var(--size-control); width: 100%; padding: 0 var(--space-3);
+  background: var(--input-background); border: var(--hairline) solid var(--input); border-radius: var(--radius-sm);
+  transition: border-color var(--duration-instant) var(--ease-standard);
+}
+.field:hover { border-color: var(--border-hover); }
+.field:focus-visible { outline-offset: 0; border-color: var(--ring); }
+.field[aria-invalid="true"] { border-color: var(--destructive); }
+
+/* Badges & chips */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px 0 7px; overflow: hidden; white-space: nowrap;
+  border-radius: var(--radius-pill); font-size: var(--text-meta); line-height: var(--leading-meta); font-weight: var(--weight-medium);
+  background: var(--b-bg); color: var(--b-fg);
+  transition: background-color var(--duration-base) var(--ease-in-out), color var(--duration-base) var(--ease-in-out);
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--b-dot); flex: none; transition: background-color var(--duration-base) var(--ease-in-out); }
+.badge .lbl { display: inline-block; }
+[data-status="todo"]      { --b-bg: var(--status-todo-bg);      --b-fg: var(--status-todo-foreground);      --b-dot: var(--status-todo); }
+[data-status="done"]      { --b-bg: var(--status-done-bg);      --b-fg: var(--status-done-foreground);      --b-dot: var(--status-done); }
+[data-status="progress"]  { --b-bg: var(--status-progress-bg);  --b-fg: var(--status-progress-foreground);  --b-dot: var(--status-progress); }
+[data-status="completed"] { --b-bg: var(--status-completed-bg); --b-fg: var(--status-completed-foreground); --b-dot: var(--status-completed); }
+[data-status="overdue"]   { --b-bg: var(--status-overdue-bg);   --b-fg: var(--status-overdue-foreground);   --b-dot: var(--status-overdue); }
+[data-status="due-soon"]  { --b-bg: var(--status-due-soon-bg);  --b-fg: var(--status-due-soon-foreground);  --b-dot: var(--status-due-soon); }
+[data-status="ai"]        { --b-bg: var(--ai-bg);               --b-fg: var(--ai-foreground);               --b-dot: var(--ai); }
+.chip-ai { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px 0 5px; border-radius: var(--radius-pill); background: var(--ai-bg); color: var(--ai-foreground); font-size: var(--text-meta); font-weight: var(--weight-medium); }
+.chip-ai svg { width: 12px; height: 12px; color: var(--ai); }
+.chip-var { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--variable-bg); color: var(--variable-foreground); font-family: var(--font-mono); font-size: 12px; box-shadow: inset 0 0 0 var(--hairline) color-mix(in oklch, var(--variable) 28%, transparent); }
+.req { color: var(--required); font-weight: var(--weight-strong); }
+.avatar { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--secondary); color: var(--secondary-foreground); font-size: 10px; font-weight: var(--weight-strong); box-shadow: inset 0 0 0 var(--hairline) var(--border); }
+
+/* Progress ring & bar */
+.ring { width: 18px; height: 18px; transform: rotate(-90deg); flex: none; }
+.ring circle { fill: none; stroke-width: 2.25; }
+.ring .track { stroke: var(--border); }
+.ring .fill { stroke: var(--status-progress); stroke-linecap: round; stroke-dasharray: 43.98; transition: stroke-dashoffset var(--spring-smooth-duration) var(--spring-smooth), stroke var(--duration-base) var(--ease-in-out); }
+.ring.is-done .fill { stroke: var(--status-done); }
+.bar { height: 4px; border-radius: var(--radius-pill); background: var(--muted); overflow: hidden; box-shadow: inset 0 0 0 var(--hairline) var(--border); }
+.bar > i { display: block; height: 100%; background: var(--status-progress); transform-origin: left; transform: scaleX(var(--p, 0)); border-radius: inherit; transition: transform var(--spring-smooth-duration) var(--spring-smooth), background-color var(--duration-base) var(--ease-in-out); }
+.bar.is-done > i { background: var(--status-done); }
+
+/* Ticker (rolling digits) */
+.ticker { display: inline-flex; height: 20px; line-height: 20px; overflow: hidden; font-variant-numeric: tabular-nums; vertical-align: top; }
+.ticker .digit { display: inline-block; height: 20px; overflow: hidden; }
+.ticker .reel { display: flex; flex-direction: column; transition: transform var(--spring-snappy-duration) var(--spring-snappy); }
+.ticker .reel span { height: 20px; }
+
+/* ---- Overview ---- */
+.hero-title { display: grid; gap: var(--space-3); max-width: 720px; }
+.hero-title p { color: var(--muted-foreground); font-size: 15px; line-height: 22px; }
+.facts { margin-top: var(--space-4); }
+.fact { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--radius-pill); border: var(--hairline) solid var(--border); color: var(--muted-foreground); font-size: var(--text-meta); }
+.fact b { color: var(--foreground); font-weight: var(--weight-medium); }
+.bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-8); }
+.tile { border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); background: var(--card); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.tile-wide { grid-column: span 4; padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.tile-wide > div { padding: var(--space-6); display: grid; gap: var(--space-3); align-content: start; }
+.tile-wide > div + div { border-left: var(--hairline) solid var(--border); }
+.tile .split-sw { display: grid; grid-template-columns: 1fr 1fr; height: 56px; border-radius: var(--radius-sm); overflow: hidden; box-shadow: inset 0 0 0 var(--hairline) var(--border); }
+.tile .split-sw > span { display: block; }
+.tile .val { font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: var(--muted-foreground); }
+.ctx-label { display: flex; align-items: center; justify-content: space-between; color: var(--muted-foreground); }
+
+/* Sample run row (tokens in context) */
+.runrow {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3);
+  min-height: 44px; padding: var(--space-2) var(--space-3);
+  background: var(--card); border: var(--hairline) solid var(--border); border-radius: var(--radius-md);
+}
+.runrow .meta { color: var(--muted-foreground); font-size: var(--text-meta); line-height: var(--leading-meta); }
+
+/* ---- Swatch table ---- */
+.sw-table { width: 100%; font-size: var(--text-label); }
+.sw-table th { text-align: left; font-weight: var(--weight-medium); color: var(--muted-foreground); font-size: var(--text-meta); height: var(--size-cell); padding: 0 var(--space-3); border-bottom: var(--hairline) solid var(--border); }
+.sw-table td { height: var(--size-cell); padding: 0 var(--space-3); border-bottom: var(--hairline) solid var(--border); vertical-align: middle; }
+.sw-table tr.grp td { height: 40px; padding-top: var(--space-3); color: var(--foreground); font-weight: var(--weight-strong); font-size: var(--text-label); border-bottom-color: var(--border); }
+.sw-table tbody tr:not(.grp):hover td { background: var(--accent); }
+.sw-name { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+.sw-cell { display: flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.sw-cell .v { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); }
+.chip-host { display: inline-block; border-radius: var(--radius-xs); background: transparent; }
+.chip { display: block; width: 20px; height: 20px; border-radius: var(--radius-xs); box-shadow: inset 0 0 0 var(--hairline) color-mix(in oklch, var(--foreground) 12%, transparent); }
+.chip-host[data-theme] { background: conic-gradient(var(--background) 0 0); }
+.sw-role { color: var(--muted-foreground); font-size: var(--text-meta); }
+
+/* ---- Contrast ---- */
+.ct-panel { padding: var(--space-4); min-width: 0; }
+.ct-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+.ct-group { margin-top: var(--space-4); margin-bottom: var(--space-1); color: var(--muted-foreground); }
+.ct-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 52px 44px 48px; align-items: center; gap: var(--space-2); height: var(--size-cell); border-bottom: var(--hairline) solid var(--border); }
+.ct-row:last-child { border-bottom: 0; }
+.ct-sample { height: 24px; border-radius: var(--radius-xs); display: grid; place-items: center; font-size: 12px; font-weight: var(--weight-strong); box-shadow: inset 0 0 0 var(--hairline) color-mix(in oklch, var(--foreground) 10%, transparent); }
+.ct-sample.ui i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; }
+.ct-pair { font-family: var(--font-mono); font-size: 11.5px; line-height: 14px; min-width: 0; }
+.ct-pair span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-pair span + span { color: var(--muted-foreground); }
+.ct-ratio { text-align: right; font-variant-numeric: tabular-nums; font-weight: var(--weight-medium); }
+.ct-need { text-align: right; color: var(--muted-foreground); font-size: var(--text-meta); font-variant-numeric: tabular-nums; }
+.ct-res { justify-self: end; }
+.pf { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: var(--radius-pill); font-size: 11px; font-weight: var(--weight-strong); }
+.pf.pass { background: var(--status-done-bg); color: var(--status-done-foreground); }
+.pf.fail { background: var(--status-overdue-bg); color: var(--status-overdue-foreground); }
+.pf.dec  { color: var(--muted-foreground); font-weight: var(--weight-medium); }
+.summary { font-size: var(--text-meta); color: var(--muted-foreground); }
+.summary b { color: var(--foreground); font-weight: var(--weight-medium); }
+
+/* ---- Status ---- */
+.st-panel { padding: var(--space-4); display: grid; gap: var(--space-1); }
+.st-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); height: var(--size-row); }
+.st-row .name { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.st-row .y { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+.st-text { font-size: var(--text-label); font-weight: var(--weight-medium); }
+
+/* ---- Surfaces ---- */
+.sf-panel { padding: 0; overflow: hidden; display: grid; grid-template-columns: 96px 1fr; min-height: 300px; position: relative; }
+.sf-side { background: var(--sidebar); border-right: var(--hairline) solid var(--sidebar-border); padding: var(--space-3) var(--space-2); display: grid; align-content: start; gap: 4px; }
+.sf-side i { display: block; height: 8px; border-radius: 4px; background: color-mix(in oklch, var(--sidebar-foreground) 16%, transparent); }
+.sf-side i.on { background: var(--sidebar-accent); height: 22px; border-radius: var(--radius-sm); }
+.sf-canvas { position: relative; padding: var(--space-4); display: grid; gap: var(--space-3); align-content: start; }
+.sf-card { background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); display: grid; gap: 6px; }
+.sf-card .ln { height: 6px; border-radius: 3px; background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+.sf-pop {
+  position: absolute; right: var(--space-4); top: 92px; width: 170px; padding: 4px;
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--hairline) solid var(--glass-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+}
+.sf-pop div { height: 26px; padding: 0 8px; display: flex; align-items: center; border-radius: var(--radius-xs); font-size: var(--text-label); }
+.sf-pop div.hl { background: var(--accent); }
+.sf-tag { position: absolute; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted-foreground); background: var(--background); padding: 0 4px; border-radius: 3px; box-shadow: 0 0 0 var(--hairline) var(--border); }
+.elev { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); padding: var(--space-6) var(--space-5) var(--space-10); overflow: hidden; }
+.elev > div { height: 92px; border-radius: var(--radius-md); display: grid; align-content: end; padding: var(--space-2) 10px; gap: 0; border: var(--hairline) solid var(--border); min-width: 0; }
+.elev .n { font-family: var(--font-mono); font-size: 11px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.elev .d { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 16px; }
+.elev .d { font-size: 11px; color: var(--muted-foreground); }
+
+/* ---- Type ---- */
+.type-row { display: grid; grid-template-columns: 132px minmax(0, 1fr) 240px; gap: var(--space-4); align-items: baseline; padding: var(--space-4) 0; border-bottom: var(--hairline) solid var(--border); }
+.type-row .tok { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.type-row .spec { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); text-align: right; }
+.nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-6); }
+.nums table { width: 100%; }
+.nums td { height: var(--size-cell); border-bottom: var(--hairline) solid var(--border); padding: 0 var(--space-3); }
+.nums td:last-child { text-align: right; }
+
+/* ---- Space & radius ---- */
+.space-row { display: grid; grid-template-columns: 96px 48px minmax(0, 1fr); align-items: center; gap: var(--space-3); height: 28px; }
+.space-row .tok { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.space-row .px { font-size: var(--text-meta); color: var(--muted-foreground); text-align: right; }
+.space-row i { display: block; height: 8px; border-radius: 2px; background: color-mix(in oklch, var(--primary) 70%, transparent); }
+.radius-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-3); }
+.radius-grid > div { display: grid; gap: var(--space-2); }
+.radius-grid .shape { height: 64px; background: var(--card); border: var(--hairline) solid var(--border-strong); }
+.radius-grid .tok { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); }
+.density { display: grid; gap: var(--space-3); }
+.dens-row { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: var(--space-3); }
+.dens-row .tok { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.dens-box { position: relative; border: var(--hairline) dashed color-mix(in oklch, var(--primary) 55%, transparent); border-radius: var(--radius-sm); background: color-mix(in oklch, var(--primary) 6%, transparent); display: flex; align-items: center; padding: 0 var(--space-3); font-size: var(--text-label); }
+
+/* ---- Motion ---- */
+.mo-tokens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.mo-card { border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); background: var(--card); display: flex; flex-direction: column; min-width: 0; }
+.mo-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-3) 0 var(--space-4); }
+.mo-card header .stack { --gap: 2px; min-width: 0; }
+.mo-card header p { color: var(--muted-foreground); font-size: var(--text-meta); line-height: var(--leading-meta); }
+.mo-stage { position: relative; margin: var(--space-3); margin-top: var(--space-3); border-radius: var(--radius-md); background: var(--background); box-shadow: inset 0 0 0 var(--hairline) var(--border); min-height: 200px; overflow: hidden; }
+.mo-foot { padding: 0 var(--space-4) var(--space-3); display: flex; flex-wrap: wrap; gap: 6px; }
+.tk { font-family: var(--font-mono); font-size: 11px; line-height: 18px; height: 18px; padding: 0 6px; border-radius: var(--radius-xs); background: var(--muted); color: var(--muted-foreground); }
+.mo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.mo-grid .span2 { grid-column: span 2; }
+.dur-row { display: grid; grid-template-columns: 150px 48px minmax(0, 1fr); gap: var(--space-2); align-items: center; height: 26px; }
+.dur-row .tok, .ease-row .tok { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dur-row .ms { text-align: right; font-size: var(--text-meta); }
+.dur-row i { display: block; height: 6px; border-radius: 3px; background: color-mix(in oklch, var(--primary) 65%, transparent); transform-origin: left; }
+
+/* easing lanes */
+.lanes { padding: var(--space-3) var(--space-4); display: grid; gap: 6px; }
+.lane { display: grid; grid-template-columns: 132px 52px minmax(0, 1fr); align-items: center; gap: var(--space-3); height: 30px; }
+.lane .tok { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); }
+.lane svg.curve { width: 52px; height: 30px; overflow: visible; }
+.lane svg.curve path { fill: none; stroke: var(--primary); stroke-width: 1.5; }
+.lane svg.curve .axis { stroke: var(--border); stroke-width: 1; }
+.track { position: relative; height: 2px; border-radius: 1px; background: var(--border); }
+.track b { position: absolute; left: 0; top: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px var(--background); }
+
+/* demo internals */
+.demo-center { position: absolute; inset: 0; display: grid; place-items: center; }
+.task-card { width: 260px; padding: var(--space-3); border-radius: var(--radius-md); background: var(--card); border: var(--hairline) solid var(--border); display: grid; gap: 6px; }
+.rows { padding: var(--space-2); display: grid; gap: 0; }
+.trow { display: flex; align-items: center; gap: var(--space-2); height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-body); }
+.trow .meta { margin-left: auto; color: var(--muted-foreground); font-size: var(--text-meta); }
+.circle { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--border-strong); flex: none; }
+
+/* menu (glass, grows from trigger) */
+.menu-wrap { position: absolute; left: var(--space-4); top: var(--space-4); }
+.menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: var(--z-dropdown);
+  min-width: 220px; padding: 4px; --origin: top left;
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--hairline) solid var(--glass-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+}
+.menu [role="menuitemradio"] { display: flex; align-items: center; gap: var(--space-2); width: 100%; height: var(--size-control-sm); padding: 0 var(--space-2); border-radius: var(--radius-xs); font-size: var(--text-label); text-align: left; transition: background-color var(--duration-instant) var(--ease-standard); }
+.menu [role="menuitemradio"]:hover, .menu [role="menuitemradio"]:focus-visible { background: var(--accent); outline: none; }
+.menu [role="menuitemradio"] .ck { margin-left: auto; width: 14px; height: 14px; color: var(--primary); opacity: 0; }
+.menu [role="menuitemradio"][aria-checked="true"] .ck { opacity: 1; }
+.backdrop-rows { position: absolute; inset: 56px var(--space-4) var(--space-4); display: grid; gap: 6px; align-content: start; }
+.backdrop-rows div { height: 28px; border-radius: var(--radius-sm); background: var(--muted); display: flex; align-items: center; padding: 0 var(--space-2); gap: var(--space-2); font-size: var(--text-meta); color: var(--muted-foreground); }
+
+/* dialog */
+.dlg {
+  margin: auto; width: min(420px, calc(100vw - 32px)); padding: 0; color: var(--foreground);
+  background: var(--surface-3); border: var(--hairline) solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+}
+.dlg::backdrop { background: var(--overlay, oklch(0.2 0.01 80 / 0.3)); backdrop-filter: blur(var(--overlay-blur, 4px)); -webkit-backdrop-filter: blur(var(--overlay-blur, 4px)); }
+.dlg[open] { animation: pw-enter var(--spring-smooth-duration) var(--spring-smooth) both; }
+.dlg[open]::backdrop { animation: pw-fade var(--duration-moderate) var(--ease-standard) both; }
+.dlg.closing { animation: pw-exit calc(var(--duration-moderate) * var(--exit-factor)) var(--ease-exit) both; }
+.dlg.closing::backdrop { animation: bd-out calc(var(--duration-moderate) * var(--exit-factor)) var(--ease-exit) both; }
+@keyframes bd-out { to { opacity: 0; } }
+.dlg-body { padding: var(--space-5); display: grid; gap: var(--space-2); }
+.dlg-body p { color: var(--muted-foreground); }
+.dlg-foot { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-3) var(--space-5); border-top: var(--hairline) solid var(--border); }
+
+/* toasts */
+.toasts { position: absolute; right: var(--space-3); bottom: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); width: 300px; max-width: calc(100% - 24px); }
+.toast {
+  display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--hairline) solid var(--glass-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+}
+.toast .ic { width: 16px; height: 16px; color: var(--status-done); flex: none; }
+.toast .tx { display: grid; min-width: 0; }
+.toast .tx b { font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-medium); }
+.toast .tx span { font-size: var(--text-meta); line-height: var(--leading-meta); color: var(--muted-foreground); }
+.toast .btn { margin-left: auto; }
+.toast.in { animation: toast-in var(--spring-smooth-duration) var(--spring-smooth) both; }
+.toast.out { animation: pw-exit calc(var(--duration-base) * var(--exit-factor)) var(--ease-exit) both; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(var(--distance-3)) scale(var(--scale-enter)); } }
+
+/* checklist demo */
+.run { padding: var(--space-3); display: grid; gap: var(--space-3); }
+.run-card { border: var(--hairline) solid var(--border); border-radius: var(--radius-md); background: var(--card); }
+.run-card.glow { animation: pw-glow var(--duration-celebrate) var(--ease-standard) both; }
+.run-head { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-2); border-bottom: var(--hairline) solid var(--border); }
+.run-head .split { --gap: var(--space-2); }
+.run-progress { display: flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); font-size: var(--text-label); }
+.run-progress .ticker { color: var(--foreground); font-weight: var(--weight-medium); }
+.cl { padding: 4px; }
+.cl-row { display: flex; align-items: center; gap: var(--space-2); height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm); transition: background-color var(--duration-instant) var(--ease-standard); }
+.cl-row:hover { background: var(--accent); }
+.cl-row .nm { transition: color var(--duration-base) var(--ease-in-out); }
+.cl-row.is-done .nm { color: var(--muted-foreground); }
+.cl-row .meta { margin-left: auto; font-size: var(--text-meta); color: var(--muted-foreground); }
+.cbx {
+  position: relative; width: 16px; height: 16px; flex: none; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  display: grid; place-items: center; color: var(--background);
+  transition: background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+}
+.cbx:hover { box-shadow: inset 0 0 0 1.5px var(--foreground); }
+.cbx:active { transform: scale(0.9); }
+.cbx svg { width: 12px; height: 12px; }
+.cbx path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--duration-base) var(--ease-standard) 30ms; }
+.cbx[aria-checked="true"] { background: var(--status-done); box-shadow: inset 0 0 0 1.5px var(--status-done); }
+.cbx[aria-checked="true"] path { stroke-dashoffset: 0; }
+.cbx.pop { animation: cbx-pop var(--spring-bouncy-duration) var(--spring-bouncy); }
+@keyframes cbx-pop { from { transform: scale(var(--scale-enter)); } }
+.cbx:focus-visible { outline-offset: 2px; }
+
+/* hover & press demo */
+.hp { display: grid; gap: var(--space-4); padding: var(--space-5); justify-items: start; }
+.hp-row { width: 100%; display: flex; align-items: center; gap: var(--space-2); height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm); transition: background-color var(--duration-instant) var(--ease-standard); }
+.hp-row:hover { background: var(--accent); }
+.hp-card { width: 100%; padding: var(--space-3); border-radius: var(--radius-md); background: var(--card); border: var(--hairline) solid var(--border); display: flex; align-items: center; gap: var(--space-3);
+  transition: transform var(--duration-fast) var(--spring-snappy), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+.hp-card:hover { transform: translateY(calc(var(--distance-1) * -0.5)); border-color: var(--border-hover); box-shadow: var(--shadow-sm); }
+.hp-card:active { transform: scale(var(--scale-press)); }
+
+/* view transition demo */
+.vt { padding: var(--space-3); }
+.vt-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); width: 100%; height: 44px; padding: 0 var(--space-2); border-radius: var(--radius-sm); text-align: left; transition: background-color var(--duration-instant) var(--ease-standard); }
+.vt-row:hover { background: var(--accent); }
+.vt-row .meta { color: var(--muted-foreground); font-size: var(--text-meta); }
+.vt-title { display: inline-block; font-weight: var(--weight-medium); }
+.vt-detail { display: grid; gap: var(--space-3); padding: var(--space-1); }
+.vt-detail h4.vt-title { font-size: var(--text-title); line-height: var(--leading-title); letter-spacing: var(--tracking-title); font-weight: var(--weight-title); }
+::view-transition-group(run-title) { animation-duration: var(--spring-smooth-duration); animation-timing-function: var(--spring-smooth); }
+::view-transition-old(run-title), ::view-transition-new(run-title) { height: 100%; width: auto; object-fit: none; object-position: left center; }
+
+/* ambient hero */
+.hero { position: relative; height: 320px; overflow: hidden; border-radius: var(--radius-md); background: var(--hero-3); isolation: isolate; }
+.hero .layer { position: absolute; inset: -20%; transform: translate(calc(var(--px, 0) * var(--ambient-parallax)), calc(var(--py, 0) * var(--ambient-parallax))); transition: transform 900ms var(--ease-standard); }
+.blob { position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; filter: blur(48px); opacity: .9; }
+.blob.b1 { left: 8%; top: 4%; background: radial-gradient(circle, var(--hero-1), transparent 66%); animation: drift1 var(--ambient-duration) var(--ease-in-out) infinite alternate; }
+.blob.b2 { right: 4%; top: 22%; background: radial-gradient(circle, var(--hero-2), transparent 66%); animation: drift2 calc(var(--ambient-duration) * 1.3) var(--ease-in-out) infinite alternate; }
+.blob.b3 { left: 30%; bottom: 0; background: radial-gradient(circle, color-mix(in oklch, var(--hero-1) 50%, var(--hero-3)), transparent 66%); animation: drift3 calc(var(--ambient-duration) * 0.8) var(--ease-in-out) infinite alternate; }
+@keyframes drift1 { to { transform: translate(14%, 10%) rotate(30deg); } }
+@keyframes drift2 { to { transform: translate(-12%, -8%) rotate(-24deg); } }
+@keyframes drift3 { to { transform: translate(-8%, -14%) rotate(18deg); } }
+.hero .grid { position: absolute; inset: 0; background-image: radial-gradient(color-mix(in oklch, var(--foreground) 14%, transparent) 1px, transparent 1px); background-size: 16px 16px; mask-image: radial-gradient(ellipse at 50% 50%, black, transparent 72%); -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black, transparent 72%); }
+.hero-card {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 280px; padding: var(--space-2);
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--hairline) solid var(--glass-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+.hero-card .hd { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 8px; }
+.hero-card .r { display: flex; align-items: center; gap: var(--space-2); height: 30px; padding: 0 8px; font-size: var(--text-label); border-radius: var(--radius-sm); }
+.hero-card .r:not(.show) { opacity: 0; }
+.hero-card .r.show { animation: pw-enter var(--spring-smooth-duration) var(--spring-smooth) both; }
+.hero-card .cbx { pointer-events: none; }
+
+/* focus demo */
+.focus-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.focus-grid > div { display: grid; gap: var(--space-2); align-content: start; }
+.focus-cap { color: var(--muted-foreground); font-size: var(--text-meta); }
+
+@media (max-width: 1100px) {
+  .duo, .mo-grid { grid-template-columns: 1fr; }
+  .mo-grid .span2 { grid-column: auto; }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile-wide { grid-column: span 2; grid-template-columns: 1fr; }
+  .tile-wide > div + div { border-left: 0; border-top: var(--hairline) solid var(--border); }
+  .focus-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mo-tokens { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .topbar { padding: 0 var(--space-4); }
+  .content { padding: var(--space-6) var(--space-4) var(--space-12); }
+  .type-row { grid-template-columns: 1fr; gap: var(--space-1); }
+  .type-row .spec { text-align: left; }
+  .radius-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .elev { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nums { grid-template-columns: 1fr; }
+  .crumbs .hide-sm { display: none; }
+  .dens-row { grid-template-columns: 1fr; gap: var(--space-1); }
+  .dens-box { white-space: nowrap; overflow: hidden; }
+}
+@media (max-width: 560px) {
+  .bento { grid-template-columns: 1fr; }
+  .tile-wide { grid-column: auto; }
+  .focus-grid { grid-template-columns: 1fr; }
+  .lane { grid-template-columns: 96px minmax(0, 1fr); }
+  .lane svg.curve { display: none; }
+  .seg button .lbl { display: none; }
+  [data-seg="motion"] { display: none; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.4 4.4 0 0 0 6.85 6.85z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.75" width="12" height="8.5" rx="1.5"/><path d="M5.75 14h4.5M8 11.25V14"/></g></symbol>
+    <symbol id="i-replay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.78"/><path d="M2.75 2.5v3h3"/></g></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 16 16"><path d="M8 2l1.35 3.65L13 7l-3.65 1.35L8 12l-1.35-3.65L3 7l3.65-1.35z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4v8M10 4v8"/></g></symbol>
+    <symbol id="i-play" viewBox="0 0 16 16"><path d="M5.5 3.75v8.5L12 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+      <div class="stack gap-0">
+        <span class="t-label t-strong" style="line-height:16px">Property Workflows</span>
+        <span class="t-meta t-muted" style="line-height:14px">Design system</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Foundations">
+      <span class="nav-label t-meta">Foundations</span>
+      <a href="#overview">Overview <span class="k">01</span></a>
+      <a href="#color">Color <span class="k">02</span></a>
+      <a href="#contrast">Contrast <span class="k">03</span></a>
+      <a href="#status">Status &amp; domain <span class="k">04</span></a>
+      <a href="#surfaces">Surfaces <span class="k">05</span></a>
+      <a href="#type">Type <span class="k">06</span></a>
+      <a href="#space">Space &amp; radius <span class="k">07</span></a>
+      <a href="#motion">Motion <span class="k">08</span></a>
+      <a href="#focus">Focus <span class="k">09</span></a>
+    </nav>
+    <div class="side-foot t-meta">tokens.css · base.css<br>v0.1 · October 2026</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar">
+      <div class="crumbs"><span class="hide-sm">Design system</span><svg class="hide-sm" aria-hidden="true"><use href="#i-chev"/></svg><b>Foundations</b></div>
+      <div class="cluster gap-2">
+        <div class="seg" role="radiogroup" aria-label="Motion" data-seg="motion">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><span class="lbl">Motion: system</span></button>
+          <button type="button" role="radio" data-value="full" aria-checked="false"><span class="lbl">Full</span></button>
+          <button type="button" role="radio" data-value="reduce" aria-checked="false"><span class="lbl">Reduced</span></button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Theme" data-seg="theme">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="light" aria-checked="false"><svg aria-hidden="true"><use href="#i-sun"/></svg><span class="lbl">Light</span></button>
+          <button type="button" role="radio" data-value="dark" aria-checked="false"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">Dark</span></button>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><svg aria-hidden="true"><use href="#i-monitor"/></svg><span class="lbl">System</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- 01 Overview -->
+      <section class="sec" id="overview" aria-labelledby="h-overview">
+        <div class="hero-title">
+          <span class="sec-index">01 · Overview</span>
+          <h1 class="t-display" id="h-overview">Foundations</h1>
+          <p>One quiet system for property managers who live in runs all day. Muted indigo for intent, magenta for anything the AI suggests, warm greys that feel like paper, and status colors of equal weight — so the work, not the interface, is what you notice.</p>
+          <div class="cluster facts">
+            <span class="fact"><b>OKLCH</b> everywhere</span>
+            <span class="fact"><b>1:1</b> shadcn/ui names</span>
+            <span class="fact"><b>14/20</b> Geist body</span>
+            <span class="fact"><b>4px</b> grid · 32px controls</span>
+            <span class="fact"><b>Light + dark</b> designed, not inverted</span>
+          </div>
+        </div>
+
+        <div class="bento">
+          <div class="tile tile-wide">
+            <div data-theme="light" class="theme-panel" style="border:0;border-radius:0">
+              <div class="ctx-label t-meta"><span>Tokens in context</span><span>Light</span></div>
+              <div data-ctx></div>
+            </div>
+            <div data-theme="dark" class="theme-panel" style="border:0;border-radius:0">
+              <div class="ctx-label t-meta"><span>Tokens in context</span><span>Dark</span></div>
+              <div data-ctx></div>
+            </div>
+          </div>
+          <div class="tile" data-key="primary"><span class="t-label">Primary</span><div class="split-sw"><span data-theme="light" style="background:var(--primary)"></span><span data-theme="dark" style="background:var(--primary)"></span></div><span class="t-meta t-muted">Muted indigo-slate. Actions, selection, focus.</span><span class="val" data-vals="primary"></span></div>
+          <div class="tile" data-key="ai"><span class="t-label">AI</span><div class="split-sw"><span data-theme="light" style="background:var(--ai)"></span><span data-theme="dark" style="background:var(--ai)"></span></div><span class="t-meta t-muted">Pink-violet, far from primary. Drafts, provenance, confidence.</span><span class="val" data-vals="ai"></span></div>
+          <div class="tile" data-key="neutral"><span class="t-label">Neutrals</span><div class="split-sw"><span data-theme="light" style="background:linear-gradient(90deg,var(--sidebar) 0 33%,var(--background) 0 66%,var(--card) 0)"></span><span data-theme="dark" style="background:linear-gradient(90deg,var(--sidebar) 0 33%,var(--background) 0 66%,var(--surface-2) 0)"></span></div><span class="t-meta t-muted">Warm grey, H 80–85, C ≤ 0.01. Sidebar one step dimmer.</span><span class="val" data-vals="background"></span></div>
+          <div class="tile" data-key="status"><span class="t-label">Status</span><div class="split-sw"><span data-theme="light" style="background:linear-gradient(90deg,var(--status-todo) 0 25%,var(--status-due-soon) 0 50%,var(--status-overdue) 0 75%,var(--status-done) 0)"></span><span data-theme="dark" style="background:linear-gradient(90deg,var(--status-todo) 0 25%,var(--status-due-soon) 0 50%,var(--status-overdue) 0 75%,var(--status-done) 0)"></span></div><span class="t-meta t-muted">One lightness per role, so badges never jump.</span><span class="val">dot L 0.62 / 0.74 · text L 0.47 / 0.82</span></div>
+        </div>
+      </section>
+
+      <!-- 02 Color -->
+      <section class="sec" id="color" aria-labelledby="h-color">
+        <div class="sec-head">
+          <span class="sec-index">02 · Color</span>
+          <h2 class="t-title" id="h-color">Color tokens</h2>
+          <p>Values are read live from <code class="t-mono">tokens.css</code>, so this table is always the truth. Use the semantic name, never the value. <span data-p3note></span></p>
+        </div>
+        <div class="panel scroll-x">
+          <table class="sw-table" id="swatches">
+            <thead><tr><th scope="col">Token</th><th scope="col">Light</th><th scope="col">Dark</th><th scope="col">Use for</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 03 Contrast -->
+      <section class="sec" id="contrast" aria-labelledby="h-contrast">
+        <div class="sec-head">
+          <span class="sec-index">03 · Contrast</span>
+          <h2 class="t-title" id="h-contrast">Measured contrast</h2>
+          <p>WCAG 2.2 ratios computed in the browser: OKLCH → OKLab → linear sRGB → relative luminance. Text needs 4.5:1, focus rings and control outlines 3:1. Hairlines are decorative and never carry meaning alone.</p>
+        </div>
+        <div class="duo">
+          <div class="theme-panel ct-panel" data-theme="light" data-contrast><div class="ct-head"><span class="t-heading">Light</span><span class="summary"></span></div><div class="ct-body"></div></div>
+          <div class="theme-panel ct-panel" data-theme="dark" data-contrast><div class="ct-head"><span class="t-heading">Dark</span><span class="summary"></span></div><div class="ct-body"></div></div>
+        </div>
+      </section>
+
+      <!-- 04 Status -->
+      <section class="sec" id="status" aria-labelledby="h-status">
+        <div class="sec-head">
+          <span class="sec-index">04 · Status &amp; domain</span>
+          <h2 class="t-title" id="h-status">Status, AI and variables</h2>
+          <p>Each status has three roles: a mark (<code class="t-mono">--status-x</code>) for dots and icons, text (<code class="t-mono">-foreground</code>), and a tint (<code class="t-mono">-bg</code>). Marks share one lightness — the Y column shows their relative luminance stays in a narrow band.</p>
+        </div>
+        <div class="duo">
+          <div class="theme-panel st-panel" data-theme="light" data-status-panel></div>
+          <div class="theme-panel st-panel" data-theme="dark" data-status-panel></div>
+        </div>
+      </section>
+
+      <!-- 05 Surfaces -->
+      <section class="sec" id="surfaces" aria-labelledby="h-surfaces">
+        <div class="sec-head">
+          <span class="sec-index">05 · Surfaces</span>
+          <h2 class="t-title" id="h-surfaces">Surfaces and elevation</h2>
+          <p>Inside the page, depth comes from hairlines and a one-step tone shift — no shadows. Shadows and glass belong only to layers that float: popovers, menus, the command palette, toasts and dialogs. In dark, higher means lighter.</p>
+        </div>
+        <div class="duo">
+          <div class="theme-panel sf-panel" data-theme="light" data-surface></div>
+          <div class="theme-panel sf-panel" data-theme="dark" data-surface></div>
+        </div>
+        <div class="duo" style="margin-top:var(--space-4)">
+          <div class="theme-panel elev" data-theme="light" data-elev></div>
+          <div class="theme-panel elev" data-theme="dark" data-elev></div>
+        </div>
+      </section>
+
+      <!-- 06 Type -->
+      <section class="sec" id="type" aria-labelledby="h-type">
+        <div class="sec-head">
+          <span class="sec-index">06 · Type</span>
+          <h2 class="t-title" id="h-type">Type scale</h2>
+          <p>Geist and Geist Mono, variable. Body is 14/20; dark theme raises body weight to 450 to offset light-on-dark thinning. Numbers that line up — progress, money, dates — use <code class="t-mono">.num</code> (tabular figures).</p>
+        </div>
+        <div id="type-rows"></div>
+        <div class="nums">
+          <div class="panel">
+            <table class="num" aria-label="Invoice lines, tabular figures">
+              <tbody>
+                <tr><td>Deep cleaning</td><td>€180.00</td></tr>
+                <tr><td>Lock replacement</td><td>€1,250.00</td></tr>
+                <tr><td>Meter reading</td><td>€41.10</td></tr>
+                <tr><td class="t-strong">Total</td><td class="t-strong">€1,471.10</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel" style="padding:var(--space-4)">
+            <div class="stack gap-2">
+              <span class="t-meta t-muted">Mono — IDs, variables, keys</span>
+              <span class="t-mono">INV-2026-0142</span>
+              <span class="t-mono">{{tenant_email}} → tenant@example.test</span>
+              <span class="cluster gap-1 t-meta t-muted">Search <kbd>⌘</kbd><kbd>K</kbd> · Close <kbd>Esc</kbd></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 07 Space & radius -->
+      <section class="sec" id="space" aria-labelledby="h-space">
+        <div class="sec-head">
+          <span class="sec-index">07 · Space &amp; radius</span>
+          <h2 class="t-title" id="h-space">Space, density and radius</h2>
+          <p>A strict 4px grid with a 2px half-step for optical fixes. Linear-like density: 32px rows and controls, 36px table cells, 28px small controls.</p>
+        </div>
+        <div class="duo">
+          <div class="panel" style="padding:var(--space-4)" id="space-rows"></div>
+          <div class="panel density" style="padding:var(--space-4)">
+            <div class="dens-row"><span class="tok">--size-control-sm</span><div class="dens-box" style="height:28px">28 · small control</div></div>
+            <div class="dens-row"><span class="tok">--size-control</span><div class="dens-box" style="height:32px">32 · control</div></div>
+            <div class="dens-row"><span class="tok">--size-row</span><div class="dens-box" style="height:32px">32 · list row</div></div>
+            <div class="dens-row"><span class="tok">--size-cell</span><div class="dens-box" style="height:36px">36 · table cell</div></div>
+            <div class="dens-row"><span class="tok">--size-control-lg</span><div class="dens-box" style="height:36px">36 · large control (auth)</div></div>
+            <div class="dens-row"><span class="tok">--size-header</span><div class="dens-box" style="height:44px">44 · top bar</div></div>
+          </div>
+        </div>
+        <h3 class="t-heading sub">Radius</h3>
+        <div class="radius-grid">
+          <div><div class="shape" style="border-radius:var(--radius-xs)"></div><span class="tok">--radius-xs · 4<br>kbd, checkbox</span></div>
+          <div><div class="shape" style="border-radius:var(--radius-sm)"></div><span class="tok">--radius-sm · 6<br>controls</span></div>
+          <div><div class="shape" style="border-radius:var(--radius-md)"></div><span class="tok">--radius-md · 8<br>cards, menus</span></div>
+          <div><div class="shape" style="border-radius:var(--radius-lg)"></div><span class="tok">--radius-lg · 10<br>bento, palette</span></div>
+          <div><div class="shape" style="border-radius:var(--radius-xl)"></div><span class="tok">--radius-xl · 12<br>dialogs</span></div>
+          <div><div class="shape" style="border-radius:var(--radius-pill);height:28px;margin-top:18px;margin-bottom:18px"></div><span class="tok">--radius-pill<br>badges, chips</span></div>
+        </div>
+      </section>
+
+      <!-- 08 Motion -->
+      <section class="sec" id="motion" aria-labelledby="h-motion">
+        <div class="sec-head">
+          <span class="sec-index">08 · Motion</span>
+          <h2 class="t-title" id="h-motion">Motion</h2>
+          <p>Refined and alive, never stiff. Everything eases on a spring-like curve, travels 2–6px, scales from 0.98, and settles in 120–240ms. Exits are 30% faster than entrances. With reduced motion, the same moments become short opacity fades. Use the switch in the top bar to compare.</p>
+        </div>
+
+        <div class="mo-tokens">
+          <div class="panel" style="padding:var(--space-4)"><div class="t-label" style="margin-bottom:var(--space-2)">Durations</div><div id="dur-rows"></div></div>
+          <div class="panel" style="padding:var(--space-4)"><div class="t-label" style="margin-bottom:var(--space-2)">Distance · scale · stagger</div>
+            <div class="stack gap-1 t-meta" id="dist-rows"></div>
+          </div>
+          <div class="panel" style="padding:var(--space-4)"><div class="t-label" style="margin-bottom:var(--space-2)">Rules of thumb</div>
+            <div class="stack gap-1 t-meta t-muted">
+              <span>Enter: fade + 4–6px rise + 0.98 → 1, spring.</span>
+              <span>Exit: × 0.7, accelerate, 2px.</span>
+              <span>Hover: tint or 1px lift. Never layout shift.</span>
+              <span>Press: scale 0.98 on a snappy spring.</span>
+              <span>Lists: 24ms stagger, first 8 only.</span>
+              <span>Never block input. Never linear, except loops.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mo-grid">
+          <!-- A: easing lanes -->
+          <article class="mo-card span2">
+            <header><div class="stack"><h3 class="t-label">Easing and springs</h3><p>Same distance, each curve at its own token duration. Springs are linear() approximations of real damped springs.</p></div><button class="btn btn-ghost btn-sm" data-replay="lanes"><svg aria-hidden="true"><use href="#i-replay"/></svg>Replay</button></header>
+            <div class="mo-stage" style="min-height:0"><div class="lanes" id="lanes"></div></div>
+          </article>
+
+          <!-- B: enter/exit -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Enter and exit</h3><p>Fade, 6px rise, 0.98 → 1 on spring-smooth. Exit is faster and smaller.</p></div>
+              <div class="cluster gap-1"><button class="btn btn-ghost btn-sm" data-act="exit">Exit</button><button class="btn btn-ghost btn-sm" data-act="enter"><svg aria-hidden="true"><use href="#i-replay"/></svg>Enter</button></div></header>
+            <div class="mo-stage"><div class="demo-center"><div class="task-card" id="ee-card">
+              <div class="split"><span class="t-label">Hand over the keys</span><span class="badge" data-status="due-soon"><i class="dot"></i><span class="lbl">Due soon</span></span></div>
+              <span class="t-meta t-muted">Apartment 12, move-in · alex@example.test</span>
+            </div></div></div>
+            <div class="mo-foot"><span class="tk">pw-enter</span><span class="tk">--spring-smooth</span><span class="tk">--exit-factor 0.7</span></div>
+          </article>
+
+          <!-- C: stagger -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Staggered list</h3><p>24ms per item for the first 8; the rest arrive with the 8th.</p></div><button class="btn btn-ghost btn-sm" data-replay="stagger"><svg aria-hidden="true"><use href="#i-replay"/></svg>Replay</button></header>
+            <div class="mo-stage"><div class="rows enter-stagger" id="stagger-list" role="list">
+              <div class="trow" role="listitem" style="--i:0"><span class="circle"></span>Inspect the apartment<span class="meta">Required</span></div>
+              <div class="trow" role="listitem" style="--i:1"><span class="circle"></span>Read the meters<span class="meta">Required</span></div>
+              <div class="trow" role="listitem" style="--i:2"><span class="circle"></span>Photograph the rooms</div>
+              <div class="trow" role="listitem" style="--i:3"><span class="circle"></span>Sign the handover form<span class="meta">Required</span></div>
+              <div class="trow" role="listitem" style="--i:4"><span class="circle"></span>Hand over the keys<span class="meta">Required</span></div>
+              <div class="trow" role="listitem" style="--i:5"><span class="circle"></span>Send the welcome email</div>
+            </div></div>
+            <div class="mo-foot"><span class="tk">.enter-stagger</span><span class="tk">--stagger 24ms</span><span class="tk">style="--i: n"</span></div>
+          </article>
+
+          <!-- D: popover -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Menu from its trigger</h3><p>Grows from the trigger corner (transform-origin), glass fade, snappy spring. Arrow keys, Esc.</p></div></header>
+            <div class="mo-stage">
+              <div class="backdrop-rows" aria-hidden="true">
+                <div><span class="circle"></span>Inspect the apartment</div><div><span class="circle"></span>Read the meters</div><div><span class="circle"></span>Photograph the rooms</div><div><span class="circle"></span>Sign the handover form</div>
+              </div>
+              <div class="menu-wrap">
+                <button class="btn btn-secondary btn-sm" id="menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="assignee-menu"><span class="avatar" style="width:16px;height:16px;font-size:9px">A</span><span id="menu-label">alex@example.test</span></button>
+                <div class="menu" id="assignee-menu" role="menu" aria-label="Assignee" hidden>
+                  <button role="menuitemradio" aria-checked="true" tabindex="-1"><span class="avatar" style="width:16px;height:16px;font-size:9px">A</span>alex@example.test<svg class="ck" aria-hidden="true"><use href="#i-check"/></svg></button>
+                  <button role="menuitemradio" aria-checked="false" tabindex="-1"><span class="avatar" style="width:16px;height:16px;font-size:9px">S</span>sam@example.test<svg class="ck" aria-hidden="true"><use href="#i-check"/></svg></button>
+                  <button role="menuitemradio" aria-checked="false" tabindex="-1"><span class="avatar" style="width:16px;height:16px;font-size:9px">M</span>manager@example.test<svg class="ck" aria-hidden="true"><use href="#i-check"/></svg></button>
+                  <button role="menuitemradio" aria-checked="false" tabindex="-1"><span class="circle" style="width:16px;height:16px;border-style:dashed"></span>Unassigned<svg class="ck" aria-hidden="true"><use href="#i-check"/></svg></button>
+                </div>
+              </div>
+            </div>
+            <div class="mo-foot"><span class="tk">.pop-in</span><span class="tk">--origin</span><span class="tk">--glass-bg</span><span class="tk">--shadow-md</span></div>
+          </article>
+
+          <!-- E: dialog -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Dialog</h3><p>Soft overlay with a 4px blur fades in; the panel rises on spring-smooth. Esc or Cancel exits faster.</p></div></header>
+            <div class="mo-stage"><div class="demo-center"><button class="btn btn-primary" id="dlg-open">Mark as done</button></div></div>
+            <div class="mo-foot"><span class="tk">--overlay</span><span class="tk">--overlay-blur</span><span class="tk">--surface-3</span><span class="tk">--shadow-lg</span></div>
+          </article>
+
+          <!-- F: toasts -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Toast stack</h3><p>New toasts rise in; the stack reflows with FLIP on a spring. Max three.</p></div><button class="btn btn-ghost btn-sm" id="toast-add">Show toast</button></header>
+            <div class="mo-stage"><div class="toasts" id="toasts" role="status" aria-live="polite"></div></div>
+            <div class="mo-foot"><span class="tk">FLIP</span><span class="tk">--spring-smooth</span><span class="tk">aria-live</span></div>
+          </article>
+
+          <!-- G: checklist -->
+          <article class="mo-card span2">
+            <header><div class="stack"><h3 class="t-label">Check, count, fill — and complete</h3><p>The check draws itself, digits roll, the ring and bar fill. Finishing the last required task cross-fades the run to Completed with one gentle glow (≤ 400ms).</p></div><button class="btn btn-ghost btn-sm" id="run-reset"><svg aria-hidden="true"><use href="#i-replay"/></svg>Reset</button></header>
+            <div class="mo-stage" style="min-height:0">
+              <div class="run">
+                <div class="run-card" id="run-card">
+                  <div class="run-head">
+                    <div class="split"><span class="t-heading">Apartment 12, move-in</span><span class="badge" id="run-badge" data-status="progress"><i class="dot"></i><span class="lbl">In progress</span></span></div>
+                    <div class="split">
+                      <div class="run-progress"><svg class="ring" id="run-ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="7"/><circle class="fill" cx="10" cy="10" r="7" style="stroke-dashoffset:43.98"/></svg><span><span class="ticker" id="run-ticker" aria-hidden="true"></span> of 5 done</span><span class="sr-only" id="run-sr" aria-live="polite"></span></div>
+                      <span class="t-meta t-muted">Tenant move-in</span>
+                    </div>
+                    <div class="bar" id="run-bar"><i></i></div>
+                  </div>
+                  <div class="cl" id="checklist" role="list"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mo-foot"><span class="tk">stroke-dashoffset</span><span class="tk">--spring-bouncy (checkbox only)</span><span class="tk">ticker: --spring-snappy</span><span class="tk">--glow-done</span><span class="tk">--duration-celebrate 400ms</span></div>
+          </article>
+
+          <!-- H: status crossfade -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Status change</h3><p>Colors cross-fade in OKLCH; the label blurs out and in while the width morphs.</p></div><button class="btn btn-ghost btn-sm" id="status-next">Next status</button></header>
+            <div class="mo-stage"><div class="demo-center"><span class="badge" id="status-badge" data-status="todo"><i class="dot"></i><span class="lbl">To do</span></span></div></div>
+            <div class="mo-foot"><span class="tk">--ease-in-out</span><span class="tk">--duration-base</span></div>
+          </article>
+
+          <!-- I: hover & press -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Hover and press</h3><p>Tint for rows, a 1px lift for cards, 0.98 press for anything clickable. No layout shift.</p></div></header>
+            <div class="mo-stage"><div class="hp">
+              <button class="btn btn-primary">Mark as done</button>
+              <div class="hp-row"><span class="circle"></span>Inspect the apartment<span class="t-meta t-muted" style="margin-left:auto">Today</span></div>
+              <button class="hp-card" type="button"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="7"/><circle class="fill" cx="10" cy="10" r="7" style="stroke-dashoffset:26.4"/></svg><span class="stack gap-0-5" style="text-align:left"><span class="t-label">Apartment 7, move-out</span><span class="t-meta t-muted num">2 of 5 done</span></span></button>
+            </div></div>
+            <div class="mo-foot"><span class="tk">--scale-press</span><span class="tk">--distance-1</span><span class="tk">--duration-instant</span></div>
+          </article>
+
+          <!-- J: skeleton -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">Loading</h3><p>Skeletons shimmer with a slow sheen, then content cross-fades in with a light stagger.</p></div><button class="btn btn-ghost btn-sm" data-replay="skeleton"><svg aria-hidden="true"><use href="#i-replay"/></svg>Reload</button></header>
+            <div class="mo-stage"><div class="rows" id="skel" aria-busy="false"></div></div>
+            <div class="mo-foot"><span class="tk">.skeleton</span><span class="tk">--shimmer-duration</span><span class="tk">aria-busy</span></div>
+          </article>
+
+          <!-- K: view transition -->
+          <article class="mo-card">
+            <header><div class="stack"><h3 class="t-label">View transition</h3><p>The row title morphs into the page header (shared element) with startViewTransition.</p></div></header>
+            <div class="mo-stage"><div class="vt" id="vt"></div></div>
+            <div class="mo-foot"><span class="tk">document.startViewTransition</span><span class="tk">view-transition-name</span></div>
+          </article>
+
+          <!-- L: ambient hero -->
+          <article class="mo-card span2">
+            <header><div class="stack"><h3 class="t-label">Ambient hero (sign-in)</h3><p>Slow mesh drift (48s), up to 6px pointer parallax, and a checklist that quietly assembles. Calm, never cinematic. Static under reduced motion.</p></div><button class="btn btn-ghost btn-sm" id="hero-pause" aria-pressed="false"><svg aria-hidden="true"><use href="#i-pause"/></svg><span>Pause</span></button></header>
+            <div class="mo-stage" style="min-height:0;margin:var(--space-3)">
+              <div class="hero" id="hero">
+                <div class="layer motion-safe"><span class="blob b1 motion-safe"></span><span class="blob b2 motion-safe"></span><span class="blob b3 motion-safe"></span></div>
+                <div class="grid"></div>
+                <div class="hero-card" aria-hidden="true">
+                  <div class="hd"><span class="t-label">Tenant move-in</span><span class="t-meta t-muted num" id="hero-count">0 of 4 done</span></div>
+                  <div class="r"><span class="cbx" aria-checked="false"><svg viewBox="0 0 16 16"><path pathLength="1" d="M4.5 8.25l2.25 2.25 4.75-5"/></svg></span>Inspect the apartment</div>
+                  <div class="r"><span class="cbx" aria-checked="false"><svg viewBox="0 0 16 16"><path pathLength="1" d="M4.5 8.25l2.25 2.25 4.75-5"/></svg></span>Read the meters</div>
+                  <div class="r"><span class="cbx" aria-checked="false"><svg viewBox="0 0 16 16"><path pathLength="1" d="M4.5 8.25l2.25 2.25 4.75-5"/></svg></span>Sign the handover form</div>
+                  <div class="r"><span class="cbx" aria-checked="false"><svg viewBox="0 0 16 16"><path pathLength="1" d="M4.5 8.25l2.25 2.25 4.75-5"/></svg></span>Hand over the keys</div>
+                </div>
+              </div>
+            </div>
+            <div class="mo-foot"><span class="tk">--hero-1/2/3</span><span class="tk">--ambient-duration</span><span class="tk">--ambient-parallax</span><span class="tk">.motion-safe</span></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 09 Focus -->
+      <section class="sec" id="focus" aria-labelledby="h-focus">
+        <div class="sec-head">
+          <span class="sec-index">09 · Focus</span>
+          <h2 class="t-title" id="h-focus">Focus ring</h2>
+          <p>Press Tab. A crisp 2px outline in <code class="t-mono">--ring</code> with a 2px offset — never a glow, never removed. Rows and cells use an inset offset so the ring is never clipped. Invalid fields keep the ring but switch it to destructive.</p>
+        </div>
+        <div class="panel focus-grid" style="padding:var(--space-6)">
+          <div><button class="btn btn-primary">Launch run</button><span class="focus-cap">Button · offset 2px</span></div>
+          <div><input class="field" aria-label="Case name" placeholder="Apartment 12, move-in"><span class="focus-cap">Field · ring replaces border</span></div>
+          <div><div class="hp-row" tabindex="0" style="outline-offset:var(--ring-offset-inset)"><span class="circle"></span>Inspect the apartment</div><span class="focus-cap">Row · inset −2px</span></div>
+          <div><input class="field" aria-label="Email" aria-invalid="true" value="tenant@example"><span class="focus-cap" style="color:var(--destructive)">Enter a valid email.</span></div>
+        </div>
+        <p class="t-meta t-muted" style="margin-top:var(--space-3)" id="ring-note"></p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<dialog class="dlg" id="dlg" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
+  <div class="dlg-body">
+    <h2 class="t-heading" id="dlg-title">Complete this run?</h2>
+    <p id="dlg-desc">“Hand over the keys” is the last required task. Marking it as done completes Apartment 12, move-in.</p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn btn-secondary" data-close>Cancel</button>
+    <button class="btn btn-primary" data-close>Mark as done</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  };
+  const reduceMQ = matchMedia("(prefers-reduced-motion: reduce)");
+  const motionOK = () => root.dataset.motion === "full" || (root.dataset.motion !== "reduce" && !reduceMQ.matches);
+  const tokenOf = (name, el = root) => getComputedStyle(el).getPropertyValue("--" + name).trim();
+  const ms = (v) => { v = String(v).trim(); return v.endsWith("ms") ? parseFloat(v) : v.endsWith("s") ? parseFloat(v) * 1000 : parseFloat(v) || 0; };
+  const restart = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+
+  /* ================= Color math: OKLCH → linear sRGB → luminance ================= */
+  function oklabToLinear(L, a, b) {
+    const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+    const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+    const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+    return [
+       4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+    ];
+  }
+  const toLin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const num = (t, pctScale = 1) => (t === "none" ? 0 : t.endsWith("%") ? (parseFloat(t) / 100) * pctScale : parseFloat(t));
+  function parseColor(str) {
+    str = str.trim();
+    let m;
+    if ((m = str.match(/^oklch\(\s*([^\s/]+)\s+([^\s/]+)\s+([^\s/)]+)\s*(?:\/\s*([^\s)]+))?\s*\)$/))) {
+      const L = num(m[1]), C = num(m[2], 0.4), H = (num(m[3]) * Math.PI) / 180;
+      return { lin: oklabToLinear(L, C * Math.cos(H), C * Math.sin(H)), alpha: m[4] ? num(m[4]) : 1, L, C, H: num(m[3]) };
+    }
+    if ((m = str.match(/^oklab\(\s*([^\s/]+)\s+([^\s/]+)\s+([^\s/)]+)\s*(?:\/\s*([^\s)]+))?\s*\)$/))) {
+      return { lin: oklabToLinear(num(m[1]), num(m[2], 0.4), num(m[3], 0.4)), alpha: m[4] ? num(m[4]) : 1 };
+    }
+    if ((m = str.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.%]+))?\s*\)$/))) {
+      return { lin: [m[1], m[2], m[3]].map((v) => toLin(v / 255)), alpha: m[4] ? num(m[4]) : 1 };
+    }
+    if ((m = str.match(/^color\(\s*(srgb|srgb-linear|display-p3)\s+([^\s/]+)\s+([^\s/]+)\s+([^\s/)]+)\s*(?:\/\s*([^\s)]+))?\s*\)$/))) {
+      let [r, g, b] = [num(m[2]), num(m[3]), num(m[4])];
+      let lin;
+      if (m[1] === "srgb") lin = [r, g, b].map(toLin);
+      else if (m[1] === "srgb-linear") lin = [r, g, b];
+      else {
+        const [pr, pg, pb] = [r, g, b].map(toLin);       // display-p3 → XYZ → linear sRGB
+        const X = 0.4865709 * pr + 0.2656677 * pg + 0.1982173 * pb;
+        const Y = 0.2289746 * pr + 0.6917385 * pg + 0.0792869 * pb;
+        const Z = 0.0000000 * pr + 0.0451134 * pg + 1.0439444 * pb;
+        lin = [3.2409699 * X - 1.5373832 * Y - 0.4986108 * Z, -0.9692436 * X + 1.8759675 * Y + 0.0415551 * Z, 0.0556301 * X - 0.2039770 * Y + 1.0569709 * Z];
+      }
+      return { lin, alpha: m[5] ? num(m[5]) : 1 };
+    }
+    return null;
+  }
+  const luminance = (lin) => { const [r, g, b] = lin.map((v) => Math.min(1, Math.max(0, v))); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  function composite(fg, bg) { if (fg.alpha >= 1) return fg; const a = fg.alpha; return { lin: fg.lin.map((v, i) => v * a + bg.lin[i] * (1 - a)), alpha: 1 }; }
+  function contrast(a, b) { const x = luminance(a.lin), y = luminance(b.lin); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+
+  /* Resolve a token inside a theme scope via a probe element */
+  const probes = {};
+  function probeIn(scope) {
+    const key = scope.dataset.theme || "root";
+    if (!probes[key]) { const p = document.createElement("i"); p.hidden = true; scope.appendChild(p); probes[key] = p; }
+    return probes[key];
+  }
+  function colorIn(scope, token) {
+    const p = probeIn(scope);
+    p.style.color = "var(--" + token + ")";
+    return getComputedStyle(p).color;
+  }
+  const short = (s) => {
+    const m = s.match(/^oklab\(\s*([\d.]+)\s+(-?[\d.e-]+)\s+(-?[\d.e-]+)\s*(\/\s*[\d.]+)?\)$/);
+    if (m) { // show mixed (oklab) tokens as L C H too
+      const a = +m[2], b = +m[3], C = Math.hypot(a, b), H = ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360;
+      return `${(+m[1]).toFixed(3)} ${C.toFixed(3)} ${H.toFixed(1)}${m[4] ? " " + m[4] : ""}`;
+    }
+    return s.replace(/^oklch\((.*)\)$/, "$1").replace(/(\d\.\d{3})\d+/g, "$1");
+  };
+
+  // hidden theme scopes used for reading values
+  const scopes = {};
+  ["light", "dark"].forEach((t) => { const d = document.createElement("div"); d.dataset.theme = t; d.hidden = true; document.body.appendChild(d); scopes[t] = d; });
+
+  /* ================= Swatch table ================= */
+  const GROUPS = [
+    ["Canvas & text", [["background", "App canvas"], ["foreground", "Primary text"], ["card", "In-page cards"], ["card-foreground", "Text on cards"], ["popover", "Floating layers (base for glass)"], ["popover-foreground", "Text on popovers"], ["muted", "Quiet fills, tracks"], ["muted-foreground", "Secondary text, meta, placeholders"]]],
+    ["Actions", [["primary", "Primary button, selection, links"], ["primary-foreground", "Text on primary"], ["primary-hover", "Derived: hover on primary"], ["secondary", "Secondary button"], ["secondary-foreground", "Text on secondary"], ["accent", "Hover / highlighted row"], ["accent-foreground", "Text on accent"], ["destructive", "Delete, invalid, errors"], ["destructive-foreground", "Text on destructive"]]],
+    ["Lines & fields", [["border", "Hairlines (decorative)"], ["border-strong", "Checkbox, radio, switch outlines (3:1)"], ["input", "Field border"], ["input-background", "Field fill"], ["ring", "Focus ring (3:1)"]]],
+    ["Sidebar", [["sidebar", "Sidebar canvas (one step dimmer)"], ["sidebar-foreground", "Nav text"], ["sidebar-primary", "Active marker / badge"], ["sidebar-primary-foreground", "Text on sidebar-primary"], ["sidebar-accent", "Hover / current nav item"], ["sidebar-accent-foreground", "Text on sidebar-accent"], ["sidebar-border", "Sidebar edge"], ["sidebar-ring", "Focus in sidebar"]]],
+    ["Surfaces", [["surface-1", "Panels, cards"], ["surface-2", "Popovers, menus, toasts"], ["surface-3", "Dialogs, command palette"], ["overlay", "Dialog scrim"], ["glass-bg", "Derived: glass fill"]]],
+    ["Status", [["status-todo", "Mark"], ["status-todo-foreground", "Text"], ["status-todo-bg", "Tint"], ["status-progress", "Run in progress"], ["status-progress-foreground", "Text"], ["status-progress-bg", "Tint"], ["status-done", "Task done"], ["status-done-foreground", "Text"], ["status-done-bg", "Tint"], ["status-completed", "Run completed (alias of done)"], ["status-overdue", "Overdue"], ["status-overdue-foreground", "Text"], ["status-overdue-bg", "Tint"], ["status-due-soon", "Due soon"], ["status-due-soon-foreground", "Text"], ["status-due-soon-bg", "Tint"]]],
+    ["AI, variables, required", [["ai", "AI mark, sparkle, confidence bar"], ["ai-foreground", "AI text"], ["ai-bg", "AI draft tint"], ["variable", "Variable chip mark"], ["variable-foreground", "Variable chip text"], ["variable-bg", "Variable chip fill"], ["required", "Required marker"]]],
+    ["Charts", [["chart-1", "Series 1"], ["chart-2", "Series 2"], ["chart-3", "Series 3"], ["chart-4", "Series 4"], ["chart-5", "Series 5 / other"]]]
+  ];
+  function renderSwatches() {
+    const tb = $("#swatches tbody");
+    const frag = document.createDocumentFragment();
+    for (const [group, items] of GROUPS) {
+      const gr = document.createElement("tr"); gr.className = "grp"; gr.innerHTML = `<td colspan="4">${group}</td>`; frag.appendChild(gr);
+      for (const [tok, role] of items) {
+        const tr = document.createElement("tr");
+        const cell = (t) => `<td><span class="sw-cell"><span class="chip-host" data-theme="${t}"><i class="chip" style="background:var(--${tok})"></i></span><span class="v">${short(colorIn(scopes[t], tok))}</span></span></td>`;
+        tr.innerHTML = `<td class="sw-name">--${tok}</td>${cell("light")}${cell("dark")}<td class="sw-role">${role}</td>`;
+        frag.appendChild(tr);
+      }
+    }
+    tb.replaceChildren(frag);
+    if (matchMedia("(color-gamut: p3)").matches) $("[data-p3note]").textContent = "This display is wide-gamut, so marks show their P3-boosted chroma.";
+  }
+
+  /* ================= Contrast ================= */
+  const PAIRS = [
+    ["Text", [["foreground", "background", "text"], ["foreground", "sidebar", "text"], ["card-foreground", "card", "text"], ["popover-foreground", "popover", "text"], ["muted-foreground", "background", "text"], ["muted-foreground", "sidebar", "text"], ["muted-foreground", "muted", "text"], ["muted-foreground", "surface-3", "text"], ["sidebar-foreground", "sidebar", "text"], ["sidebar-accent-foreground", "sidebar-accent", "text"]]],
+    ["Actions", [["primary-foreground", "primary", "text"], ["primary-foreground", "primary-hover", "text"], ["primary", "background", "text"], ["secondary-foreground", "secondary", "text"], ["accent-foreground", "accent", "text"], ["destructive-foreground", "destructive", "text"], ["destructive", "background", "text"], ["sidebar-primary-foreground", "sidebar-primary", "text"]]],
+    ["Focus & outlines", [["ring", "background", "ui"], ["ring", "sidebar", "ui"], ["ring", "surface-3", "ui"], ["border-strong", "background", "ui"], ["border-strong", "card", "ui"], ["input", "background", "decor"], ["border", "background", "decor"]]],
+    ["Status", ["todo", "progress", "done", "overdue", "due-soon"].flatMap((s) => [["status-" + s + "-foreground", "status-" + s + "-bg", "text"], ["status-" + s + "-foreground", "background", "text"], ["status-" + s, "background", "ui"]])],
+    ["AI, variables, required", [["ai-foreground", "ai-bg", "text"], ["ai-foreground", "background", "text"], ["ai", "background", "ui"], ["variable-foreground", "variable-bg", "text"], ["variable", "background", "ui"], ["required", "background", "text"]]]
+  ];
+  const results = { light: {}, dark: {} };
+  function renderContrast() {
+    for (const panel of $$("[data-contrast]")) {
+      const theme = panel.dataset.theme;
+      const body = $(".ct-body", panel);
+      const frag = document.createDocumentFragment();
+      let pass = 0, total = 0;
+      for (const [group, pairs] of PAIRS) {
+        const h = document.createElement("div"); h.className = "ct-group t-meta"; h.textContent = group; frag.appendChild(h);
+        for (const [fg, bg, kind] of pairs) {
+          const cb = parseColor(colorIn(panel, bg)); let cf = parseColor(colorIn(panel, fg));
+          if (!cb || !cf) continue;
+          cf = composite(cf, cb);
+          const r = contrast(cf, cb);
+          const need = kind === "text" ? 4.5 : kind === "ui" ? 3 : 0;
+          const ok = r >= need;
+          if (need) { total++; if (ok) pass++; }
+          results[theme][fg + "|" + bg] = r;
+          const row = document.createElement("div"); row.className = "ct-row";
+          row.innerHTML =
+            `<span class="ct-sample ${kind !== "text" ? "ui" : ""}" style="background:var(--${bg});color:var(--${fg})">${kind === "text" ? "Aa" : "<i></i>"}</span>` +
+            `<span class="ct-pair"><span>${fg}</span><span>on ${bg}</span></span>` +
+            `<span class="ct-ratio">${r.toFixed(2)}</span>` +
+            `<span class="ct-need">${need ? need.toFixed(1) : "—"}</span>` +
+            `<span class="ct-res">${need ? `<span class="pf ${ok ? "pass" : "fail"}">${ok ? (kind === "text" ? (r >= 7 ? "AAA" : "AA") : "Pass") : "Fail"}</span>` : `<span class="pf dec">Decor</span>`}</span>`;
+          frag.appendChild(row);
+        }
+      }
+      body.replaceChildren(frag);
+      $(".summary", panel).innerHTML = `<b>${pass} of ${total}</b> pass`;
+    }
+    const rl = results.light["ring|background"], rd = results.dark["ring|background"];
+    if (rl && rd) $("#ring-note").textContent = `Ring contrast against the canvas: ${rl.toFixed(2)}:1 light, ${rd.toFixed(2)}:1 dark (needs 3:1).`;
+  }
+
+  /* ================= Status panel ================= */
+  const STATUSES = [["todo", "To do"], ["progress", "In progress"], ["due-soon", "Due soon"], ["overdue", "Overdue"], ["done", "Done"], ["completed", "Completed"]];
+  function renderStatus() {
+    for (const panel of $$("[data-status-panel]")) {
+      const rows = STATUSES.map(([s, label]) => {
+        const Y = luminance(parseColor(colorIn(panel, "status-" + s)).lin);
+        return `<div class="st-row"><span class="name">${s}</span><span class="cluster gap-3"><span class="badge" data-status="${s}"><i class="dot"></i><span class="lbl">${label}</span></span><span class="st-text" style="color:var(--status-${s}-foreground)">${label}</span></span><span class="y">Y ${Y.toFixed(3)}</span></div>`;
+      }).join("");
+      const yai = luminance(parseColor(colorIn(panel, "ai")).lin);
+      panel.innerHTML = `<div class="split" style="margin-bottom:var(--space-2)"><span class="t-heading">${panel.dataset.theme === "dark" ? "Dark" : "Light"}</span><span class="t-meta t-muted">mark luminance</span></div>` + rows +
+        `<div class="st-row" style="margin-top:var(--space-2)"><span class="name">ai</span><span class="cluster gap-2"><span class="chip-ai"><svg aria-hidden="true"><use href="#i-spark"/></svg>AI draft · 92%</span><span class="t-meta t-muted">from lease.pdf, p. 3</span></span><span class="y">Y ${yai.toFixed(3)}</span></div>` +
+        `<div class="st-row"><span class="name">variable</span><span class="cluster gap-2"><span class="chip-var">{{tenant_name}}</span><span class="chip-var">{{unit}}</span></span><span></span></div>` +
+        `<div class="st-row"><span class="name">required</span><span class="cluster gap-1 st-text">Hand over the keys <span class="req" aria-label="Required">*</span></span><span></span></div>`;
+    }
+  }
+
+  /* ================= Overview context + key values ================= */
+  function renderOverview() {
+    const ctx = `<div class="stack gap-2">
+      <div class="runrow"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="7"/><circle class="fill" cx="10" cy="10" r="7" style="stroke-dashoffset:26.39"/></svg>
+        <span class="stack gap-0-5" style="min-width:0"><span class="t-label t-truncate">Apartment 12, move-in</span><span class="meta num">Tenant move-in · 2 of 5 done</span></span>
+        <span class="cluster gap-2"><span class="badge" data-status="due-soon"><i class="dot"></i><span class="lbl">Due soon</span></span><span class="avatar">A</span></span></div>
+      <div class="runrow"><svg class="ring is-done" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="7"/><circle class="fill" cx="10" cy="10" r="7" style="stroke-dashoffset:0"/></svg>
+        <span class="stack gap-0-5" style="min-width:0"><span class="t-label t-truncate">House 3, inspection</span><span class="meta num">Inspection · 4 of 4 done</span></span>
+        <span class="cluster gap-2"><span class="badge" data-status="completed"><i class="dot"></i><span class="lbl">Completed</span></span><span class="avatar">S</span></span></div>
+      <div class="runrow" style="grid-template-columns:minmax(0,1fr) auto"><span class="cluster gap-2" style="min-width:0"><span class="chip-ai"><svg aria-hidden="true"><use href="#i-spark"/></svg>AI draft · 92%</span><span class="t-meta t-muted t-truncate">Deposit <span class="chip-var">{{deposit}}</span> = <span class="num">€1,250.00</span></span></span>
+        <span class="cluster gap-1"><button class="btn btn-ghost btn-sm" type="button">Reject</button><button class="btn btn-primary btn-sm" type="button">Accept</button></span></div>
+    </div>`;
+    $$("[data-ctx]").forEach((el) => (el.innerHTML = ctx));
+    $$("[data-vals]").forEach((el) => { const t = el.dataset.vals; el.textContent = `L ${short(colorIn(scopes.light, t))}\nD ${short(colorIn(scopes.dark, t))}`; el.style.whiteSpace = "pre"; });
+  }
+
+  /* ================= Surfaces ================= */
+  function renderSurfaces() {
+    const lines = (ws) => ws.map((w) => `<span class="ln" style="width:${w}%"></span>`).join("");
+    $$("[data-surface]").forEach((el) => {
+      el.innerHTML = `<div class="sf-side"><i style="width:60%;margin:4px 6px 10px"></i><i class="on"></i><i style="width:70%;margin:7px 6px"></i><i style="width:55%;margin:7px 6px"></i><i style="width:64%;margin:7px 6px"></i></div>
+        <div class="sf-canvas">
+          <div class="split"><span class="t-label">Apartment 12, move-in</span><span class="badge" data-status="progress"><i class="dot"></i><span class="lbl">In progress</span></span></div>
+          <div class="sf-card"><span class="t-label">Inspect the apartment</span>${lines([90, 72, 80])}</div>
+          <div class="sf-card"><span class="t-label">Read the meters</span>${lines([66, 84])}</div>
+          <div class="sf-pop" role="presentation"><div class="hl">alex@example.test</div><div>sam@example.test</div><div>Unassigned</div></div>
+          <span class="sf-tag" style="left:var(--space-4);bottom:var(--space-3)">surface-1 · hairline</span>
+          <span class="sf-tag" style="right:var(--space-4);bottom:var(--space-3)">surface-2 · glass · shadow-md</span>
+        </div>
+        <span class="sf-tag" style="left:6px;bottom:var(--space-3)">sidebar</span>`;
+    });
+    $$("[data-elev]").forEach((el) => {
+      const t = el.dataset.theme;
+      const items = [["background", "", "canvas"], ["surface-1", "", "cards · hairline"], ["surface-2", "var(--shadow-md)", "popover · shadow-md"], ["surface-3", "var(--shadow-lg)", "dialog · shadow-lg"]];
+      el.innerHTML = items.map(([tok, sh, d]) => `<div style="background:var(--${tok});${sh ? "box-shadow:" + sh + ";" : ""}${tok === "surface-3" ? "border-radius:var(--radius-xl)" : ""}"><span class="n">--${tok}</span><span class="d">${short(colorIn(scopes[t], tok))}</span><span class="d">${d}</span></div>`).join("");
+    });
+  }
+
+  /* ================= Type, space ================= */
+  function renderType() {
+    const rows = [
+      ["t-display", "Tenant move-in", "display"], ["t-title", "Apartment 12, move-in", "title"], ["t-heading", "Inspect the apartment", "heading"],
+      ["t-body", "Check walls, floors and appliances. Add a photo for anything damaged.", "body"], ["t-label", "Assignee", "label"], ["t-meta", "Due 24 Oct · 2 of 5 done", "meta"], ["t-mono", "INV-2026-0142 · {{tenant_name}}", "mono"]
+    ];
+    $("#type-rows").innerHTML = rows.map(([cls, txt, k]) => {
+      const sz = tokenOf("text-" + k), lh = tokenOf("leading-" + k), tr = tokenOf("tracking-" + k) || "0";
+      const w = k === "label" ? "500" : ["display", "title", "heading"].includes(k) ? "600" : k === "mono" ? "400" : "400 / 450";
+      return `<div class="type-row"><span class="tok">.${cls}</span><span class="${cls} ${k === "meta" ? "num" : ""}">${txt}</span><span class="spec">${parseInt(sz)}/${parseInt(lh)} · ${w} · ${tr}</span></div>`;
+    }).join("");
+    const sp = [["space-0-5", 2], ["space-1", 4], ["space-1-5", 6], ["space-2", 8], ["space-3", 12], ["space-4", 16], ["space-5", 20], ["space-6", 24], ["space-8", 32], ["space-10", 40], ["space-12", 48], ["space-16", 64]];
+    $("#space-rows").innerHTML = sp.map(([t, px]) => `<div class="space-row"><span class="tok">--${t}</span><span class="px num">${px}px</span><i style="width:${px * 3}px;max-width:100%"></i></div>`).join("");
+  }
+
+  /* ================= Motion tokens ================= */
+  function renderMotionTokens() {
+    const durs = ["duration-instant", "duration-fast", "duration-base", "duration-moderate", "duration-slow", "duration-celebrate", "spring-snappy-duration", "spring-smooth-duration"];
+    $("#dur-rows").innerHTML = durs.map((d) => { const v = ms(tokenOf(d)); return `<div class="dur-row"><span class="tok">--${d}</span><span class="ms num">${v}ms</span><i style="width:${(v / 400) * 100}%"></i></div>`; }).join("");
+    const dist = [["distance-1", ""], ["distance-2", ""], ["distance-3", ""], ["scale-enter", ""], ["scale-press", ""], ["stagger", " × first 8"], ["exit-factor", " × enter"]];
+    $("#dist-rows").innerHTML = dist.map(([t, s]) => `<span class="split"><span class="t-mono" style="font-size:11.5px;color:var(--muted-foreground)">--${t}</span><span class="num">${tokenOf(t)}${s}</span></span>`).join("");
+  }
+
+  /* Easing lanes with curve plots */
+  const LANES = [["ease-standard", "duration-slow"], ["ease-emphasized", "duration-slow"], ["ease-in-out", "duration-slow"], ["spring-snappy", "spring-snappy-duration"], ["spring-smooth", "spring-smooth-duration"], ["spring-bouncy", "spring-bouncy-duration"]];
+  function curvePoints(easing) {
+    let m = easing.match(/cubic-bezier\(([^)]+)\)/);
+    if (m) {
+      const [x1, y1, x2, y2] = m[1].split(",").map(parseFloat); const pts = [];
+      for (let i = 0; i <= 40; i++) { const t = i / 40, u = 1 - t; pts.push([3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3, 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3]); }
+      return pts;
+    }
+    m = easing.match(/linear\((.+)\)/);
+    if (m) {
+      const parts = m[1].split(",").map((s) => s.trim().split(/\s+/));
+      return parts.map((p, i) => [p[1] ? parseFloat(p[1]) / 100 : i === 0 ? 0 : 1, parseFloat(p[0])]);
+    }
+    return [[0, 0], [1, 1]];
+  }
+  function renderLanes() {
+    $("#lanes").innerHTML = LANES.map(([e, d]) => {
+      const pts = curvePoints(tokenOf(e)).map(([x, y]) => `${(x * 52).toFixed(1)},${(26 - y * 22).toFixed(1)}`).join(" L");
+      return `<div class="lane" data-ease="${e}" data-dur="${d}"><span class="tok">--${e}</span><svg class="curve" viewBox="0 0 52 30" aria-hidden="true"><path class="axis" d="M0 26.5H52M0 4.5H52" stroke-dasharray="2 2"/><path d="M${pts}"/></svg><div class="track"><b></b></div></div>`;
+    }).join("");
+  }
+  function playLanes() {
+    for (const lane of $$(".lane")) {
+      const dot = $("b", lane), w = $(".track", lane).clientWidth - 12;
+      const easing = tokenOf(lane.dataset.ease), duration = ms(tokenOf(lane.dataset.dur));
+      dot.getAnimations().forEach((a) => a.cancel());
+      if (motionOK()) dot.animate([{ transform: "translateX(0)" }, { transform: `translateX(${w}px)` }], { duration, easing, fill: "forwards", delay: 120 });
+      else dot.animate([{ opacity: 0, transform: `translateX(${w}px)` }, { opacity: 1, transform: `translateX(${w}px)` }], { duration: ms(tokenOf("duration-fast")), fill: "forwards" });
+    }
+  }
+
+  /* ================= Demos ================= */
+  // B: enter/exit
+  const ee = $("#ee-card");
+  $('[data-act="enter"]').addEventListener("click", () => { ee.classList.remove("exit"); restart(ee, "enter"); });
+  $('[data-act="exit"]').addEventListener("click", () => { ee.classList.remove("enter"); restart(ee, "exit"); });
+
+  // C: stagger
+  const stag = $("#stagger-list");
+
+  // D: menu from trigger
+  const trig = $("#menu-trigger"), menu = $("#assignee-menu");
+  const items = () => $$('[role="menuitemradio"]', menu);
+  function openMenu(focusLast) {
+    if (!menu.hidden && !menu.classList.contains("exit")) return;
+    menu.hidden = false; menu.classList.remove("exit"); restart(menu, "pop-in");
+    trig.setAttribute("aria-expanded", "true");
+    const its = items(); const cur = its.find((i) => i.getAttribute("aria-checked") === "true") || its[0];
+    (focusLast ? its[its.length - 1] : cur).focus();
+  }
+  function closeMenu(returnFocus = true) {
+    if (menu.hidden) return;
+    trig.setAttribute("aria-expanded", "false");
+    menu.classList.remove("pop-in"); menu.classList.add("exit");
+    const done = () => { if (menu.classList.contains("exit")) { menu.hidden = true; menu.classList.remove("exit"); } };
+    menu.addEventListener("animationend", done, { once: true }); setTimeout(done, 400);
+    if (returnFocus) trig.focus();
+  }
+  trig.addEventListener("click", () => (menu.hidden || menu.classList.contains("exit") ? openMenu() : closeMenu()));
+  trig.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); openMenu(); } if (e.key === "ArrowUp") { e.preventDefault(); openMenu(true); } });
+  menu.addEventListener("keydown", (e) => {
+    const its = items(), i = its.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); its[(i + 1) % its.length].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); its[(i - 1 + its.length) % its.length].focus(); }
+    else if (e.key === "Home") { e.preventDefault(); its[0].focus(); }
+    else if (e.key === "End") { e.preventDefault(); its[its.length - 1].focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); closeMenu(); }
+    else if (e.key === "Tab") { closeMenu(false); }
+  });
+  menu.addEventListener("click", (e) => {
+    const it = e.target.closest('[role="menuitemradio"]'); if (!it) return;
+    items().forEach((x) => x.setAttribute("aria-checked", String(x === it)));
+    $("#menu-label").textContent = it.textContent.trim();
+    trig.querySelector(".avatar").textContent = it.querySelector(".avatar") ? it.querySelector(".avatar").textContent : "–";
+    closeMenu();
+  });
+  document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !menu.contains(e.target) && !trig.contains(e.target)) closeMenu(false); });
+
+  // E: dialog
+  const dlg = $("#dlg");
+  function closeDialog() {
+    if (!dlg.open || dlg.classList.contains("closing")) return;
+    dlg.classList.add("closing");
+    const done = () => { if (dlg.classList.contains("closing")) { dlg.classList.remove("closing"); dlg.close(); } };
+    dlg.addEventListener("animationend", done, { once: true }); setTimeout(done, 400);
+  }
+  $("#dlg-open").addEventListener("click", () => { dlg.showModal(); $(".btn-primary", dlg).focus(); });
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeDialog(); });
+  $$("[data-close]", dlg).forEach((b) => b.addEventListener("click", closeDialog));
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) closeDialog(); });
+
+  // FLIP helper
+  function flip(container, mutate) {
+    const kids = [...container.children]; const before = new Map(kids.map((k) => [k, k.getBoundingClientRect().top]));
+    mutate();
+    if (!motionOK()) return;
+    for (const k of container.children) {
+      if (!before.has(k) || k.classList.contains("out")) continue;
+      const dy = before.get(k) - k.getBoundingClientRect().top;
+      if (Math.abs(dy) > 0.5) k.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: ms(tokenOf("spring-smooth-duration")), easing: tokenOf("spring-smooth") });
+    }
+  }
+  // F: toasts
+  const toasts = $("#toasts"); const TOASTS = ["Inspect the apartment", "Read the meters", "Sign the handover form", "Hand over the keys", "Photograph the rooms"]; let tN = 0;
+  function dismissToast(t) {
+    if (t.classList.contains("out")) return;
+    t.classList.add("out"); t.classList.remove("in");
+    const rm = () => { if (t.isConnected) flip(toasts, () => t.remove()); };
+    t.addEventListener("animationend", rm, { once: true }); setTimeout(rm, 400);
+  }
+  function addToast(persist) {
+    const live = $$(".toast:not(.out)", toasts); if (live.length >= 3) dismissToast(live[0]);
+    const t = document.createElement("div"); t.className = "toast in";
+    t.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span class="tx"><b>Task marked as done</b><span>${TOASTS[tN++ % TOASTS.length]}</span></span><button class="btn btn-ghost btn-sm" type="button">Undo</button>`;
+    $("button", t).addEventListener("click", () => dismissToast(t));
+    flip(toasts, () => toasts.appendChild(t));
+    if (!persist) setTimeout(() => dismissToast(t), 4200);
+  }
+  $("#toast-add").addEventListener("click", () => addToast(false));
+
+  // Ticker
+  function setTicker(el, value) {
+    const s = String(value);
+    if (el.children.length !== s.length) el.innerHTML = [...s].map(() => `<span class="digit"><span class="reel">${"0123456789".split("").map((d) => `<span>${d}</span>`).join("")}</span></span>`).join("");
+    [...s].forEach((d, i) => { const reel = el.children[i].firstElementChild; reel.style.transition = motionOK() ? "" : "none"; reel.style.transform = `translateY(${-20 * Number(d)}px)`; });
+  }
+  // Badge cross-fade morph
+  function setBadge(badge, status, label) {
+    const lbl = $(".lbl", badge); if (badge.dataset.status === status) return;
+    const w0 = badge.getBoundingClientRect().width;
+    const swap = () => {
+      badge.dataset.status = status; lbl.textContent = label;
+      const w1 = badge.getBoundingClientRect().width;
+      if (motionOK()) badge.animate([{ width: w0 + "px" }, { width: w1 + "px" }], { duration: ms(tokenOf("spring-snappy-duration")), easing: tokenOf("spring-snappy") });
+      lbl.animate([{ opacity: 0, filter: "blur(2px)" }, { opacity: 1, filter: "blur(0)" }], { duration: ms(tokenOf("duration-fast")), easing: tokenOf("ease-standard") });
+    };
+    const out = lbl.animate([{ opacity: 1, filter: "blur(0)" }, { opacity: 0, filter: "blur(2px)" }], { duration: ms(tokenOf("duration-instant")), easing: tokenOf("ease-exit"), fill: "forwards" });
+    out.onfinish = () => { swap(); out.cancel(); };
+  }
+
+  // G: checklist run
+  const TASKS = [["Inspect the apartment", true], ["Read the meters", true], ["Photograph the rooms", false], ["Sign the handover form", true], ["Hand over the keys", true]];
+  let state;
+  const C = 43.98;
+  function renderRun(initial) {
+    const list = $("#checklist");
+    if (initial) {
+      list.innerHTML = TASKS.map(([n, req], i) => `<div class="cl-row" role="listitem"><button class="cbx" role="checkbox" aria-checked="false" aria-label="${n}" data-i="${i}"><svg viewBox="0 0 16 16" aria-hidden="true"><path pathLength="1" d="M4.5 8.25l2.25 2.25 4.75-5"/></svg></button><span class="nm">${n}${req ? ' <span class="req" aria-hidden="true">*</span>' : ""}</span><span class="meta">${req ? "Required" : "Optional"}</span></div>`).join("");
+    }
+    $$(".cbx", list).forEach((b, i) => { b.setAttribute("aria-checked", String(state[i])); b.closest(".cl-row").classList.toggle("is-done", state[i]); });
+    const done = state.filter(Boolean).length, p = done / TASKS.length;
+    const complete = TASKS.every(([, req], i) => !req || state[i]);
+    setTicker($("#run-ticker"), done);
+    $("#run-sr").textContent = `${done} of 5 done`;
+    $("#run-ring .fill").style.strokeDashoffset = (C * (1 - p)).toFixed(2);
+    $("#run-ring").classList.toggle("is-done", complete);
+    $("#run-bar").style.setProperty("--p", p); $("#run-bar").classList.toggle("is-done", complete);
+    setBadge($("#run-badge"), complete ? "completed" : "progress", complete ? "Completed" : "In progress");
+    return complete;
+  }
+  function resetRun() { state = [true, true, false, false, false]; renderRun(true); $("#run-card").classList.remove("glow"); }
+  $("#checklist").addEventListener("click", (e) => {
+    const b = e.target.closest(".cbx"); if (!b) return;
+    const i = Number(b.dataset.i); const was = TASKS.every(([, r], k) => !r || state[k]);
+    state[i] = !state[i];
+    if (state[i]) restart(b, "pop");
+    const now = renderRun(false);
+    if (now && !was) setTimeout(() => restart($("#run-card"), "glow"), ms(tokenOf("duration-fast")));
+  });
+  $("#run-reset").addEventListener("click", resetRun);
+
+  // H: status cycle
+  const CYCLE = [["todo", "To do"], ["due-soon", "Due soon"], ["overdue", "Overdue"], ["done", "Done"]]; let cI = 0;
+  $("#status-next").addEventListener("click", () => { cI = (cI + 1) % CYCLE.length; setBadge($("#status-badge"), ...CYCLE[cI]); });
+
+  // J: skeleton
+  const skel = $("#skel");
+  function playSkeleton() {
+    skel.setAttribute("aria-busy", "true");
+    skel.classList.remove("enter-stagger");
+    skel.innerHTML = [70, 52, 84, 60, 45].map((w) => `<div class="trow"><span class="skeleton" style="width:14px;height:14px;border-radius:50%"></span><span class="skeleton" style="width:${w}%;height:10px"></span></div>`).join("");
+    setTimeout(() => {
+      skel.innerHTML = ["Inspect the apartment", "Read the meters", "Photograph the rooms", "Sign the handover form", "Hand over the keys"].map((n, i) => `<div class="trow" style="--i:${i}"><span class="circle"></span>${n}</div>`).join("");
+      restart(skel, "enter-stagger"); skel.setAttribute("aria-busy", "false");
+    }, 1400);
+  }
+
+  // K: view transition
+  const RUNS = [["Apartment 12, move-in", "2 of 5 done", "due-soon", "Due soon"], ["Apartment 7, move-out", "4 of 6 done", "progress", "In progress"], ["House 3, inspection", "4 of 4 done", "completed", "Completed"]];
+  const vt = $("#vt");
+  const frac = (p) => { const m = p.match(/(\d+) of (\d+)/); return m ? m[1] / m[2] : 0; };
+  function vtList(focusIdx) {
+    vt.innerHTML = RUNS.map(([n, p, s, l], i) => `<button class="vt-row" data-i="${i}"><svg class="ring ${s === "completed" ? "is-done" : ""}" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="7"/><circle class="fill" cx="10" cy="10" r="7" style="stroke-dashoffset:${(C * (1 - frac(p))).toFixed(2)}"/></svg><span class="stack gap-0" style="min-width:0"><span class="vt-title t-label">${n}</span><span class="meta num">${p}</span></span><span class="badge" data-status="${s}"><i class="dot"></i><span class="lbl">${l}</span></span></button>`).join("");
+    if (focusIdx != null) $(`.vt-row[data-i="${focusIdx}"]`, vt).focus();
+  }
+  function vtDetail(i) {
+    const [n, p, s, l] = RUNS[i];
+    vt.innerHTML = `<div class="vt-detail"><div class="cluster gap-1"><button class="btn btn-ghost btn-sm" data-back="${i}"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-chev"/></svg>Runs</button></div><h4 class="vt-title" style="view-transition-name:run-title">${n}</h4><div class="cluster gap-2"><span class="badge" data-status="${s}"><i class="dot"></i><span class="lbl">${l}</span></span><span class="t-meta t-muted num">${p}</span></div><div class="stack gap-1"><span class="skeleton" style="height:8px;width:80%"></span><span class="skeleton" style="height:8px;width:62%"></span></div></div>`;
+    $("[data-back]", vt).focus();
+  }
+  function transition(prep, update) {
+    if (document.startViewTransition && motionOK()) { prep(); document.startViewTransition(update); }
+    else { update(); restart(vt.firstElementChild, "enter"); }
+  }
+  vt.addEventListener("click", (e) => {
+    const row = e.target.closest(".vt-row"), back = e.target.closest("[data-back]");
+    if (row) { const i = Number(row.dataset.i); transition(() => ($(".vt-title", row).style.viewTransitionName = "run-title"), () => vtDetail(i)); }
+    if (back) { const i = Number(back.dataset.back); transition(() => {}, () => { vtList(i); $(`.vt-row[data-i="${i}"] .vt-title`, vt).style.viewTransitionName = "run-title"; requestAnimationFrame(() => setTimeout(() => $$(".vt-title", vt).forEach((t) => (t.style.viewTransitionName = "")), 600)); }); }
+  });
+
+  // L: ambient hero
+  const hero = $("#hero"), heroRows = $$(".hero-card .r", hero); let heroTimer = [], heroPaused = false;
+  function heroCycle() {
+    heroTimer.forEach(clearTimeout); heroTimer = [];
+    const count = $("#hero-count");
+    if (!motionOK() || heroPaused) { heroRows.forEach((r, i) => { r.classList.remove("show"); r.style.opacity = 1; $(".cbx", r).setAttribute("aria-checked", String(i < 3)); }); count.textContent = "3 of 4 done"; return; }
+    heroRows.forEach((r) => { r.style.opacity = ""; r.classList.remove("show"); $(".cbx", r).setAttribute("aria-checked", "false"); });
+    count.textContent = "0 of 4 done";
+    const step = 120;
+    heroRows.forEach((r, i) => heroTimer.push(setTimeout(() => r.classList.add("show"), 300 + i * step)));
+    heroRows.forEach((r, i) => heroTimer.push(setTimeout(() => { $(".cbx", r).setAttribute("aria-checked", "true"); count.textContent = `${i + 1} of 4 done`; }, 1600 + i * 1100)));
+    heroTimer.push(setTimeout(() => { heroRows.forEach((r) => { r.classList.remove("show"); r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards", easing: "ease" }).onfinish = function () { this.cancel(); }; }); }, 1600 + 4 * 1100 + 2200));
+    heroTimer.push(setTimeout(heroCycle, 1600 + 4 * 1100 + 2800));
+  }
+  hero.addEventListener("pointermove", (e) => { const r = hero.getBoundingClientRect(); hero.style.setProperty("--px", ((e.clientX - r.left) / r.width - 0.5) * 2); hero.style.setProperty("--py", ((e.clientY - r.top) / r.height - 0.5) * 2); });
+  hero.addEventListener("pointerleave", () => { hero.style.setProperty("--px", 0); hero.style.setProperty("--py", 0); });
+  $("#hero-pause").addEventListener("click", (e) => {
+    heroPaused = !heroPaused; const b = e.currentTarget;
+    b.setAttribute("aria-pressed", String(heroPaused)); $("span", b).textContent = heroPaused ? "Play" : "Pause"; $("use", b).setAttribute("href", heroPaused ? "#i-play" : "#i-pause");
+    $$(".blob", hero).forEach((x) => (x.style.animationPlayState = heroPaused ? "paused" : ""));
+    heroCycle();
+  });
+
+  // Replay buttons
+  $$("[data-replay]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.replay;
+    if (k === "lanes") playLanes();
+    if (k === "stagger") restart(stag, "enter-stagger");
+    if (k === "skeleton") playSkeleton();
+  }));
+
+  /* ================= Segmented controls (radiogroup) ================= */
+  function placeThumb(seg, animate) {
+    const on = $('[aria-checked="true"]', seg), th = $(".seg-thumb", seg);
+    if (!animate) th.style.transition = "none";
+    th.style.width = on.offsetWidth + "px"; th.style.transform = `translateX(${on.offsetLeft}px)`;
+    if (!animate) { void th.offsetWidth; th.style.transition = ""; }
+  }
+  function setupSeg(seg, current, onChange) {
+    const btns = $$('[role="radio"]', seg);
+    const select = (b, focus) => { btns.forEach((x) => { x.setAttribute("aria-checked", String(x === b)); x.tabIndex = x === b ? 0 : -1; }); placeThumb(seg, true); if (focus) b.focus(); onChange(b.dataset.value); };
+    btns.forEach((b) => { const on = b.dataset.value === current; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; });
+    seg.addEventListener("click", (e) => { const b = e.target.closest('[role="radio"]'); if (b) select(b); });
+    seg.addEventListener("keydown", (e) => {
+      const i = btns.indexOf(document.activeElement); if (i < 0) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); select(btns[(i + 1) % btns.length], true); }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); select(btns[(i - 1 + btns.length) % btns.length], true); }
+    });
+    placeThumb(seg, false);
+  }
+  setupSeg($('[data-seg="theme"]'), root.dataset.theme || "system", (v) => {
+    const apply = () => { if (v === "system") delete root.dataset.theme; else root.dataset.theme = v; };
+    store.set("pw-theme", v === "system" ? null : v);
+    if (document.startViewTransition && motionOK()) document.startViewTransition(apply); else apply();
+  });
+  setupSeg($('[data-seg="motion"]'), root.dataset.motion || "system", (v) => {
+    if (v === "system") delete root.dataset.motion; else root.dataset.motion = v;
+    store.set("pw-motion", v === "system" ? null : v);
+    renderMotionTokens(); renderLanes(); playLanes(); heroCycle();
+  });
+  reduceMQ.addEventListener("change", () => { renderMotionTokens(); renderLanes(); heroCycle(); });
+
+  /* ================= Scroll spy, top bar ================= */
+  const links = $$(".nav a");
+  const spy = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + en.target.id)));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  $$(".sec").forEach((s) => spy.observe(s));
+  const topbar = $("#topbar");
+  addEventListener("scroll", () => topbar.classList.toggle("scrolled", scrollY > 4), { passive: true });
+
+  /* ================= Init ================= */
+  function renderAll() { renderSwatches(); renderContrast(); renderStatus(); renderOverview(); renderSurfaces(); }
+  renderAll(); renderType(); renderMotionTokens(); renderLanes(); resetRun(); vtList(); playSkeleton(); heroCycle(); addToast(true);
+  requestAnimationFrame(() => playLanes());
+  document.fonts && document.fonts.ready.then(() => $$(".seg").forEach((s) => placeThumb(s, false)));
+  addEventListener("resize", () => $$(".seg").forEach((s) => placeThumb(s, false)));
+  window.__pw = { parseColor, contrast, results };
+})();
+</script>
+</body>
+</html>

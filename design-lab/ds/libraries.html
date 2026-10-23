@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Component libraries · Property Workflows</title>
+<script>
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<style>
+  .pw-theme-toggle { display: inline-flex; gap: 2px; padding: 2px; background: var(--muted);
+    border: var(--hairline) solid var(--border); border-radius: var(--radius-sm); }
+  .pw-theme-toggle button { height: 22px; padding: 0 var(--space-2); border-radius: var(--radius-xs);
+    font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--muted-foreground);
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+  .pw-theme-toggle button:hover { color: var(--foreground); }
+  .pw-theme-toggle button[aria-checked="true"] { background: var(--background); color: var(--foreground);
+    box-shadow: 0 0 0 var(--hairline) var(--border), var(--shadow-highlight); }
+
+  /* ---- page shell ---- */
+  .pw-lib__top { position: sticky; top: 0; z-index: var(--z-sticky); display: flex; align-items: center; gap: var(--space-4);
+    min-height: var(--size-header); padding: 0 var(--space-4); background: color-mix(in oklab, var(--background) 88%, transparent);
+    backdrop-filter: blur(12px); border-bottom: var(--hairline) solid var(--border); }
+  .pw-lib__nav { display: flex; gap: var(--space-1); overflow-x: auto; flex: 1 1 auto; min-width: 0; scrollbar-width: none; }
+  .pw-lib__nav a { flex: none; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-meta);
+    color: var(--muted-foreground); text-decoration: none; font-weight: var(--weight-medium);
+    transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+  .pw-lib__nav a:hover { background: var(--accent); color: var(--foreground); }
+  main { max-width: 1280px; margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-16); }
+  @media (min-width: 900px) { .pw-lib__top { padding: 0 var(--space-6); } main { padding: var(--space-10) var(--space-6) var(--space-16); } }
+  section { margin-top: var(--space-12); scroll-margin-top: calc(var(--size-header) + var(--space-4)); }
+  section > h2 { margin-bottom: var(--space-1); }
+  .pw-lib__lede { color: var(--muted-foreground); max-width: 78ch; margin-bottom: var(--space-4); }
+  .pw-lib__eyebrow { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--ai-foreground); letter-spacing: .04em; text-transform: uppercase; }
+  code { font-family: var(--font-mono); font-size: 12px; padding: 1px 5px; background: var(--muted); border-radius: var(--radius-xs); border: var(--hairline) solid var(--border); overflow-wrap: anywhere; }
+  pre { margin: 0; padding: var(--space-3) var(--space-4); background: var(--surface-1); border: var(--hairline) solid var(--border);
+    border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: 12px; line-height: 18px; }
+  pre code { padding: 0; background: none; border: 0; font-size: inherit; overflow-wrap: normal; }
+  .pw-lib__src { margin-top: var(--space-1-5); display: flex; flex-wrap: wrap; gap: 0 var(--space-2); font-size: 11px; }
+  .pw-lib__src a { color: var(--primary); }
+
+  /* ---- hero / verdict ---- */
+  .pw-lib__hero { display: grid; gap: var(--space-6); padding: var(--space-6) 0 var(--space-2); }
+  @media (min-width: 1000px) { .pw-lib__hero { grid-template-columns: 1.15fr 1fr; align-items: start; } }
+  .pw-lib__hero h1 { margin-top: var(--space-2); }
+  .pw-lib__hero p { margin-top: var(--space-3); max-width: 62ch; color: var(--muted-foreground); }
+  .pw-lib__ten { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; background: var(--border);
+    border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .pw-lib__ten li { display: grid; grid-template-columns: 112px 1fr; gap: var(--space-3); padding: var(--space-2) var(--space-3); background: var(--surface-1); align-items: baseline; }
+  .pw-lib__ten b { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--muted-foreground); }
+  .pw-lib__ten span { font-size: var(--text-label); }
+  @media (max-width: 480px) { .pw-lib__ten li { grid-template-columns: 1fr; gap: 0; } }
+
+  .pw-lib__stacks { display: grid; gap: var(--space-4); margin-top: var(--space-5); }
+  @media (min-width: 1000px) { .pw-lib__stacks { grid-template-columns: 1.25fr 1fr 1fr; } }
+  .pw-lib__stack { padding: var(--space-4); background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: var(--space-2); }
+  .pw-lib__stack[data-rec] { border-color: var(--primary); box-shadow: 0 0 0 var(--hairline) var(--primary) inset; }
+  .pw-lib__stack ul { margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-1); font-size: var(--text-label); }
+  .pw-lib__stack .pw-lib__pc { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-1); }
+  .pw-lib__stack h4 + p { font-size: var(--text-meta); color: var(--muted-foreground); }
+  .pw-lib__pc h5 { font-size: 11px; font-weight: var(--weight-medium); letter-spacing: .04em; text-transform: uppercase; margin-bottom: var(--space-1); }
+  .pw-lib__pc h5[data-k="pro"] { color: var(--status-done-foreground); }
+  .pw-lib__pc h5[data-k="con"] { color: var(--status-overdue-foreground); }
+  .pw-lib__pc ul { padding-left: var(--space-3); font-size: var(--text-meta); }
+  @media (max-width: 560px) { .pw-lib__stack .pw-lib__pc { grid-template-columns: 1fr; } }
+
+  .pw-lib__tag { display: inline-flex; align-items: center; height: 18px; padding: 0 var(--space-2); border-radius: var(--radius-pill); font-size: 11px; font-weight: var(--weight-medium);
+    background: var(--primary); color: var(--primary-foreground); }
+  .pw-lib__stack > .pw-lib__tag { align-self: flex-start; }
+  .pw-lib__tag[data-k="alt"] { background: var(--muted); color: var(--muted-foreground); }
+  .pw-lib__tag[data-k="warn"] { background: var(--status-due-soon-bg); color: var(--status-due-soon-foreground); }
+  .pw-lib__tag[data-k="ai"] { background: var(--ai-bg); color: var(--ai-foreground); }
+
+  /* layer map */
+  .pw-lib__layers { display: grid; gap: var(--space-1); margin-top: var(--space-4); }
+  .pw-lib__layer { display: grid; grid-template-columns: 148px 1fr; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); background: var(--surface-1); align-items: center; }
+  .pw-lib__layer > b { font-size: var(--text-meta); font-weight: var(--weight-medium); }
+  .pw-lib__layer > span { font-size: var(--text-meta); color: var(--muted-foreground); }
+  .pw-lib__layer[data-k="a"] { border-left: 3px solid var(--status-progress); }
+  .pw-lib__layer[data-k="b"] { border-left: 3px solid var(--ai); }
+  .pw-lib__layer[data-k="c"] { border-left: 3px solid var(--variable); }
+  .pw-lib__layer[data-k="d"] { border-left: 3px solid var(--status-done); }
+  @media (max-width: 560px) { .pw-lib__layer { grid-template-columns: 1fr; gap: 2px; } }
+
+  /* ---- tables ---- */
+  .pw-lib__scroll { overflow-x: auto; border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); background: var(--surface-1); }
+  .pw-lib__table { width: 100%; font-size: var(--text-label); }
+  .pw-lib__table th, .pw-lib__table td { padding: var(--space-2) var(--space-3); text-align: left; vertical-align: top; border-bottom: var(--hairline) solid var(--border); font-weight: inherit; }
+  .pw-lib__table thead th { position: sticky; top: 0; font-size: 11px; font-weight: var(--weight-medium); letter-spacing: .03em; text-transform: uppercase; color: var(--muted-foreground); background: var(--muted); white-space: nowrap; }
+  .pw-lib__table tbody tr:last-child > * { border-bottom: 0; }
+  .pw-lib__table tbody tr { transition: background-color var(--duration-instant) var(--ease-standard); }
+  .pw-lib__table tbody tr:hover { background: var(--accent); }
+  .pw-lib__pick { font-weight: var(--weight-medium); }
+
+  .pw-lib__matrix { min-width: 860px; }
+  .pw-lib__matrix th, .pw-lib__matrix td { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .pw-lib__matrix thead th { text-align: center; white-space: normal; }
+  .pw-lib__matrix thead th:first-child, .pw-lib__matrix thead th:last-child { text-align: left; }
+  .pw-lib__name > div { display: flex; flex-direction: column; gap: 2px; }
+  .pw-lib__name { min-width: 190px; max-width: 230px; position: sticky; left: 0; background: var(--surface-1); z-index: 1; }
+  .pw-lib__grpbody:hover .pw-lib__name { background: var(--accent); }
+  .pw-lib__matrix td.pw-lib__sc { text-align: center; padding: var(--space-2) var(--space-1); width: 54px; }
+  .pw-lib__tot { text-align: center; white-space: nowrap; }
+  .pw-lib__whyrow td { padding-top: 0; color: var(--muted-foreground); white-space: normal; }
+  .pw-lib__matrixwrap { container-type: inline-size; }
+  .pw-lib__whyin { position: sticky; left: var(--space-2); width: calc(100cqw - var(--space-4)); }
+  .pw-lib__whyrow td { border-bottom: var(--hairline) solid var(--border); }
+  .pw-lib__matrix .pw-lib__whyrow > td { border-bottom: var(--hairline) solid var(--border) !important; }
+  .pw-lib__scrow > * { border-bottom: 0 !important; }
+  .pw-lib__grpbody:hover { background: var(--accent); }
+  .pw-lib__matrix tbody tr:hover { background: transparent; }
+  .pw-lib__matrix .pw-lib__grpbody:last-of-type .pw-lib__whyrow > td { border-bottom: 0 !important; }
+  .pw-lib__chip { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: var(--radius-sm); font-size: var(--text-meta); font-weight: var(--weight-strong); font-variant-numeric: tabular-nums; }
+  .pw-lib__chip[data-v="1"] { background: var(--status-overdue-bg); color: var(--status-overdue-foreground); }
+  .pw-lib__chip[data-v="2"] { background: var(--status-due-soon-bg); color: var(--status-due-soon-foreground); }
+  .pw-lib__chip[data-v="3"] { background: var(--status-todo-bg); color: var(--status-todo-foreground); }
+  .pw-lib__chip[data-v="4"] { background: var(--status-progress-bg); color: var(--status-progress-foreground); }
+  .pw-lib__chip[data-v="5"] { background: var(--status-done-bg); color: var(--status-done-foreground); }
+  .pw-lib__gatechip { display: inline-flex; align-items: center; height: 20px; padding: 0 var(--space-2); border-radius: var(--radius-pill); font-size: 11px; font-weight: var(--weight-medium); white-space: nowrap; }
+  .pw-lib__gatechip[data-g="ok"] { background: var(--status-done-bg); color: var(--status-done-foreground); }
+  .pw-lib__gatechip[data-g="part"] { background: var(--status-due-soon-bg); color: var(--status-due-soon-foreground); }
+  .pw-lib__gatechip[data-g="no"] { background: var(--status-overdue-bg); color: var(--status-overdue-foreground); }
+  .pw-lib__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); align-items: center; }
+  .pw-lib__legend > span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+
+  @media (min-width: 701px) { .pw-lib__wins { table-layout: fixed; } .pw-lib__wins th:nth-child(1) { width: 17%; } .pw-lib__wins th:nth-child(2) { width: 22%; } .pw-lib__wins th:nth-child(4) { width: 21%; } .pw-lib__wins th:nth-child(1), .pw-lib__wins td:nth-child(1) { white-space: normal; } }
+  .pw-lib__grp { margin: var(--space-6) 0 var(--space-2); }
+  .pw-lib__table--stack th[scope="row"] { white-space: nowrap; font-weight: var(--weight-medium); }
+  @media (max-width: 700px) {
+    .pw-lib__table--stack thead { display: none; }
+    .pw-lib__table--stack, .pw-lib__table--stack tbody, .pw-lib__table--stack tr, .pw-lib__table--stack th, .pw-lib__table--stack td { display: block; }
+    .pw-lib__table--stack tr { padding: var(--space-2) var(--space-3); border-bottom: var(--hairline) solid var(--border); }
+    .pw-lib__table--stack tbody tr:last-child { border-bottom: 0; }
+    .pw-lib__table--stack th, .pw-lib__table--stack td { border: 0; padding: 2px 0; white-space: normal; }
+    .pw-lib__table--stack td::before { content: attr(data-label); display: block; font-size: 11px; color: var(--muted-foreground); letter-spacing: .03em; text-transform: uppercase; }
+    .pw-lib__table--stack th[scope="row"] { font-size: var(--text-heading); padding-bottom: var(--space-1); }
+  }
+
+  /* ---- cards ---- */
+  .pw-lib__cards { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .pw-lib__card { padding: var(--space-4); background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: var(--space-2); }
+  .pw-lib__pickline { display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; font-size: var(--text-label); }
+  .pw-lib__card p.t-meta { color: var(--muted-foreground); }
+
+  /* ---- surprising ---- */
+  .pw-lib__surp { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-3); counter-reset: s; }
+  .pw-lib__surp li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); }
+  .pw-lib__surp li::before { content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-pill); background: var(--ai-bg); color: var(--ai-foreground); font-weight: var(--weight-strong); font-size: var(--text-label); }
+  .pw-lib__surp p { color: var(--muted-foreground); font-size: var(--text-label); margin-top: 2px; }
+
+  /* ---- bundle bars ---- */
+  .pw-lib__bars { list-style: none; padding: var(--space-3) var(--space-4); margin: 0; display: grid; gap: var(--space-1); background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); }
+  .pw-lib__bar { display: grid; grid-template-columns: minmax(150px, 330px) 64px 1fr; gap: var(--space-3); align-items: center; min-height: 22px; }
+  .pw-lib__barname { overflow-wrap: anywhere; }
+  .pw-lib__barval { text-align: right; color: var(--muted-foreground); }
+  .pw-lib__bartrack { height: 8px; border-radius: var(--radius-pill); background: var(--muted); overflow: hidden; }
+  .pw-lib__bartrack > span { display: block; height: 100%; width: var(--w); border-radius: inherit; background: var(--chart-5); transform-origin: left; animation: pw-lib-grow var(--duration-slow) var(--ease-standard) both; }
+  .pw-lib__bar[data-k="r"] .pw-lib__bartrack > span { background: var(--chart-1); }
+  .pw-lib__bar[data-k="b"] .pw-lib__bartrack > span { background: var(--chart-2); }
+  .pw-lib__bar[data-k="x"] .pw-lib__bartrack > span { background: var(--chart-3); }
+  @keyframes pw-lib-grow { from { transform: scaleX(0); } }
+  @media (max-width: 560px) { .pw-lib__bar { grid-template-columns: 1fr 56px; } .pw-lib__bartrack { grid-column: 1 / -1; } }
+  .pw-lib__lg { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-meta); color: var(--muted-foreground); }
+  .pw-lib__lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: var(--space-1-5); vertical-align: -1px; }
+
+  .pw-lib__callout { margin-top: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--status-due-soon-bg); color: var(--status-due-soon-foreground); font-size: var(--text-label); }
+  .pw-lib__callout code { background: transparent; border-color: color-mix(in oklab, currentColor 30%, transparent); }
+  .pw-lib__two { display: grid; gap: var(--space-4); }
+  @media (min-width: 1000px) { .pw-lib__two { grid-template-columns: 1fr 1fr; } }
+  ol.pw-lib__steps { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); font-size: var(--text-label); }
+  ol.pw-lib__steps li::marker { color: var(--muted-foreground); font-weight: var(--weight-medium); }
+
+  @media (prefers-reduced-motion: reduce) { :root:not([data-motion="full"]) .pw-lib__bartrack > span { animation: none; } }
+  :root[data-motion="reduce"] .pw-lib__bartrack > span { animation: none; }
+</style>
+</head>
+<body>
+<header class="pw-lib__top">
+  <span class="t-label" style="flex:none">Libraries</span>
+  <nav class="pw-lib__nav" aria-label="Розділи">
+    <a href="#verdict">Вердикт</a><a href="#matrix">Матриця</a><a href="#wins">Хто виграє</a><a href="#special">Спеціальні</a>
+    <a href="#landing">Як це потрапляє в src</a><a href="#bundle">Бандл</a><a href="#risks">Ризики</a><a href="#packages">Пакети</a><a href="#open">Питання</a>
+  </nav>
+  <div class="pw-theme-toggle" role="radiogroup" aria-label="Theme">
+    <button type="button" role="radio" data-value="light">Light</button>
+    <button type="button" role="radio" data-value="dark">Dark</button>
+    <button type="button" role="radio" data-value="system">System</button>
+  </div>
+</header>
+
+<main>
+<section id="verdict" style="margin-top:0">
+  <div class="pw-lib__hero">
+    <div>
+      <span class="pw-lib__eyebrow">Дослідження · 23.10.2026 · для product owner</span>
+      <h1 class="t-display">Яка бібліотека компонентів — і чому не лише shadcn</h1>
+      <p>Усі версії, дати, ліцензії й стан підтримки нижче звірені з npm registry, GitHub API та офіційними доками на 23 жовтня 2026. Розміри бандлів — наші власні вимірювання esbuild (minify + gzip). Що не вдалося перевірити — позначено явно.</p>
+      <p><strong style="color:var(--foreground)">Короткий висновок.</strong> Тримаємо правило курсу (код — у <code>src/components/ui</code>, тема — CSS-токени), але замість «усе на Base UI» беремо <strong style="color:var(--foreground)">React Aria Components як ядро</strong> (~85% контролів, включно з єдиними у класі DatePicker/TimeField з часовими поясами, NumberField з валютою, доступним DnD) і <strong style="color:var(--foreground)">Base UI лише для Toast</strong>. Доставка — shadcn CLI 4.2x (<code>--base aria</code>) плюс власні компоненти поверх RAC.</p>
+    </div>
+    <ul class="pw-lib__ten" aria-label="Рекомендований стек">
+      <li><b>Ядро</b><span>react-aria-components 1.22.1 + @internationalized/date 3.12.4</span></li>
+      <li><b>Toast</b><span>@base-ui/react 1.9.0 (лише Toast; запасний — Sonner)</span></li>
+      <li><b>Доставка</b><span>shadcn CLI <code>--base aria</code> → <code>src/components/ui</code></span></li>
+      <li><b>Date · TZ</b><span>RAC DatePicker/RangePicker/TimeField, <code>Europe/Kyiv</code></span></li>
+      <li><b>⌘K</b><span>RAC Autocomplete у Modal (запасний cmdk)</span></li>
+      <li><b>Canvas</b><span>@xyflow/react 12.12 + React Flow UI</span></li>
+      <li><b>DnD</b><span>RAC useDragAndDrop (дерево/список)</span></li>
+      <li><b>Rich text</b><span>Tiptap 3.31 (змінні-чипи); TokenField для коротких</span></li>
+      <li><b>Дані</b><span>TanStack Table 9 · Recharts 3.10 · Lucide 1.54</span></li>
+      <li><b>Рух</b><span>CSS <code>linear()</code>-пружини з токенів + <code>&lt;ViewTransition&gt;</code> + Motion (лише layout)</span></li>
+    </ul>
+  </div>
+
+  <div class="pw-lib__stacks">
+    <article class="pw-lib__stack" data-rec>
+      <span class="pw-lib__tag">Рекомендовано</span>
+      <h4 class="t-heading">A · «React Aria-first» гібрид</h4>
+      <p>RAC для форм, оверлеїв, даних, date/time, DnD. Base UI — лише Toast. Оболонка — shadcn aria-база.</p>
+      <div class="pw-lib__pc">
+        <div><h5 data-k="pro">Плюси</h5><ul><li>Єдині серед усіх: DatePicker, DateRangePicker, TimeField із ZonedDateTime</li><li>Фокус-менеджмент в одній системі (мінімум конфліктів)</li><li>DnD, Tree, Table, DropZone з клавіатурою та screen reader</li><li>Щомісячні релізи, MCP + agent skills</li></ul></div>
+        <div><h5 data-k="con">Мінуси</h5><ul><li>Бандл важчий за Base UI (Select 57 vs 44 kB gz)</li><li>shadcn aria-база молода (07.2026), без DatePicker/NumberField — пишемо самі</li><li>Toast/TokenField ще нестабільні в RAC</li></ul></div>
+      </div>
+    </article>
+    <article class="pw-lib__stack">
+      <span class="pw-lib__tag" data-k="alt">Альтернатива B</span>
+      <h4 class="t-heading">B · «Base UI + shadcn» (дефолт курсу)</h4>
+      <p><code>npx shadcn init</code> (base-nova), RAC лише «островами»: date/time, DnD, Tree, NumberField.</p>
+      <div class="pw-lib__pc">
+        <div><h5 data-k="pro">Плюси</h5><ul><li>Найзріліший реєстр і документація; менший бандл</li><li>Найкращі data-starting/ending-style для spring-анімацій</li></ul></div>
+        <div><h5 data-k="con">Мінуси</h5><ul><li>Дві системи фокусу в кожному діалозі з датою</li><li>Календар лише react-day-picker (без ZonedDateTime/TimeField)</li><li>Два набори атрибутів стану → більше glue-коду</li></ul></div>
+      </div>
+    </article>
+    <article class="pw-lib__stack">
+      <span class="pw-lib__tag" data-k="alt">Альтернатива C</span>
+      <h4 class="t-heading">C · «Тільки React Aria»</h4>
+      <p>Без Base UI взагалі: Toast — Sonner або RAC <code>UNSTABLE_Toast</code>.</p>
+      <div class="pw-lib__pc">
+        <div><h5 data-k="pro">Плюси</h5><ul><li>Одна бібліотека, один набір <code>data-*</code> станів</li><li>Простіше навчати команду й агентів</li></ul></div>
+        <div><h5 data-k="con">Мінуси</h5><ul><li>Toast: нестабільний API або сторонній Sonner (a11y гірше задокументована)</li><li>Немає запасного Drawer (RAC Sheet — 2 тижні від релізу)</li></ul></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="pw-lib__layers" aria-label="Шари">
+    <div class="pw-lib__layer" data-k="d"><b>Сторінки</b><span>Лише семантичні утиліти Tailwind з токенів (<code>bg-card</code>, <code>text-muted-foreground</code>); CI-скрипт банить hex і <code>zinc-500</code> поза <code>src/components/ui</code>.</span></div>
+    <div class="pw-lib__layer" data-k="c"><b>src/components/ui</b><span>Наш код: обгортки RAC/Base UI, одна фокус-обводка, спільні <code>@custom-variant</code> (selected · open · pressed · invalid · entering · exiting).</span></div>
+    <div class="pw-lib__layer" data-k="b"><b>Примітиви</b><span>RAC (форми, оверлеї, дані, date/time, DnD) · Base UI (Toast) · xyflow · Tiptap — без власних стилів.</span></div>
+    <div class="pw-lib__layer" data-k="a"><b>CSS-токени</b><span><code>tokens.css</code> → <code>@theme inline</code>: OKLCH, shadcn-імена, <code>--status-*</code>, <code>--ai</code>, <code>--spring-*</code>; темна тема лише через <code>prefers-color-scheme</code>.</span></div>
+  </div>
+</section>
+
+<section id="surprise">
+  <h2 class="t-title">П’ять найнесподіваніших знахідок</h2>
+  <p class="pw-lib__lede">Те, що змінило рекомендацію порівняно з «очевидним» вибором.</p>
+  <ol class="pw-lib__surp">
+    <li><div><strong>Найпопулярніший реєстр на Base UI — coss ui — під AGPL-3.0.</strong><p>Peer-залежності <code>next ^16.4 · react ^19.3 · tailwind ≥4.3</code> збігаються з нашим стеком, 56 компонентів — але <code>packages/ui</code> має ліцензію <code>AGPL-3.0-or-later</code>; MIT лише у <code>apps/ui</code> (сайт документації). Копіювати в закритий SaaS без юриста не можна. <span class="pw-lib__src"><a href="https://github.com/cosscom/ui/blob/main/LICENSING.md" target="_blank" rel="noopener">LICENSING.md</a> <a href="https://coss.com/ui" target="_blank" rel="noopener">coss.com/ui</a></span></p></div></li>
+    <li><div><strong>shadcn вже має третю базу — React Aria (<code>--base aria</code>, липень 2026).</strong><p>І це сам по собі гібрид: aria-drawer імпортує Base UI Drawer, toast — Sonner, а DatePicker/TimeField/NumberField/Toast у реєстрі немає взагалі. <span class="pw-lib__src"><a href="https://ui.shadcn.com/docs/changelog/2026-07-react-aria" target="_blank" rel="noopener">changelog</a> <a href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases/aria/ui" target="_blank" rel="noopener">реєстр aria</a></span></p></div></li>
+    <li><div><strong>Base UI 1.9 досі не має Calendar/DatePicker.</strong><p>У пакеті лише internal <code>temporal-adapter-date-fns/luxon</code> — тобто календар готується, але не публічний. Для вимоги «Europe/Kyiv date/time/range» це вирішальний аргумент на користь RAC. <span class="pw-lib__src"><a href="https://base-ui.com/llms.txt" target="_blank" rel="noopener">список компонентів</a></span></p></div></li>
+    <li><div><strong>RAC має TokenField (alpha), Sheet і NavigationTree — але Toast усе ще <code>UNSTABLE_</code>.</strong><p>TokenField (1.20, липень) — інлайн-чипи в текстовому полі: прямий кандидат для <code>{{змінних}}</code>. Sheet з’явився 09.10.2026. Toast від Adobe лишається нестабільним, тому Toast беремо з Base UI. <span class="pw-lib__src"><a href="https://react-aria.adobe.com/TokenField" target="_blank" rel="noopener">TokenField</a> <a href="https://react-aria.adobe.com/releases/v1-22-0" target="_blank" rel="noopener">v1.22</a></span></p></div></li>
+    <li><div><strong>«Стандартні» залежності тихо завмерли.</strong><p>cmdk — жодного релізу в 2026 (останній 14.03.2025); Vaul — «unmaintained» у README; Headless UI — один реліз за рік; Radix — на npm без релізів січень–травень і серпень–вересень; Tremor — заморожений на React 18. Водночас нові мажори летять швидко: TanStack Table 9 (08.2026), Pragmatic DnD v2→v4 за 3 місяці, Motion 13→14 за 2 місяці. <span class="pw-lib__src"><a href="https://github.com/emilkowalski/vaul" target="_blank" rel="noopener">Vaul README</a> <a href="https://www.npmjs.com/package/cmdk" target="_blank" rel="noopener">cmdk</a></span></p></div></li>
+  </ol>
+</section>
+
+<section id="matrix">
+  <h2 class="t-title">Матриця оцінок</h2>
+  <p class="pw-lib__lede">Оцінки 1–5 — наш висновок за перевіреними фактами (рядок «чому» і посилання в кожному). «Правило курсу» = можна вендорити в <code>src/components/ui</code> і тема живе в CSS-токенах. Сума — лише орієнтир, не вердикт: Base UI програє через відсутність date/time, хоча в усьому іншому не гірший.</p>
+  <div class="pw-lib__scroll pw-lib__matrixwrap">
+  <table class="pw-lib__table pw-lib__matrix">
+    <thead><tr><th scope="col">Кандидат</th><th scope="col">A11y</th><th scope="col">Стилізація</th><th scope="col">Date/time · TZ</th><th scope="col">Motion-хуки</th><th scope="col">RSC · Next 16</th><th scope="col">TW4 · токени</th><th scope="col">Підтримка 2026</th><th scope="col">Bundle</th><th scope="col">DX · агенти</th><th scope="col">Σ</th><th scope="col">Правило курсу</th></tr></thead>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">React Aria Components</span><span class="t-meta t-muted">1.22.1 · 09.10.2026 · Apache-2.0</span></div></th>
+  <td class="pw-lib__sc" data-v="5" data-label="A11y"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="DX · агенти"><span class="pw-lib__chip" data-v="4">4</span></td>
+  <td class="pw-lib__tot num"><strong>39</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">≈300 експортів: DatePicker/DateRangePicker/TimeField, NumberField (Intl), Autocomplete, Tree, Table, DnD, DropZone, Sheet (1.22). Щомісячні релізи. Select ≈57 kB gz. Toast усе ще UNSTABLE_, TokenField — alpha. MCP-сервер і agent skills. <span class="pw-lib__src" style="display:inline-flex"><a href="https://github.com/adobe/react-spectrum/releases" target="_blank" rel="noopener">релізи</a> · <a href="https://react-aria.adobe.com/llms.txt" target="_blank" rel="noopener">llms.txt</a> · <a href="https://react-aria.adobe.com/releases/v1-22-0" target="_blank" rel="noopener">v1.22</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Base UI (MUI)</span><span class="t-meta t-muted">1.9.0 · 09.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Стилізація"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="1" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="5" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Bundle"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="DX · агенти"><span class="pw-lib__chip" data-v="5">5</span></td>
+  <td class="pw-lib__tot num"><strong>38</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">≈36 компонентів, стабільний з 11.12.2025, реліз щомісяця. Немає Calendar/DatePicker/TimeField (у пакеті лише internal temporal-adapter date-fns/luxon). Найкращі data-starting/ending-style для CSS-анімацій; Toast і Drawer stable; документація лежить у npm-пакеті. <span class="pw-lib__src" style="display:inline-flex"><a href="https://base-ui.com/llms.txt" target="_blank" rel="noopener">llms.txt</a> · <a href="https://www.npmjs.com/package/@base-ui/react" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">shadcn/ui (реєстр, бази radix · base · aria)</span><span class="t-meta t-muted">CLI 4.21.4 · 07.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Стилізація"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="2" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="5" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Bundle"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="DX · агенти"><span class="pw-lib__chip" data-v="5">5</span></td>
+  <td class="pw-lib__tot num"><strong>38</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">126k★, три бази (aria — з липня 2026). Calendar на react-day-picker; немає DatePicker/TimeField/NumberField. Реєстри з GitHub (приватні теж), MCP, skills. Це спосіб доставки коду, a11y успадковується від бази. <span class="pw-lib__src" style="display:inline-flex"><a href="https://ui.shadcn.com/docs/changelog" target="_blank" rel="noopener">changelog</a> · <a href="https://ui.shadcn.com/docs/changelog/2026-07-react-aria" target="_blank" rel="noopener">React Aria base</a> · <a href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/bases/aria/ui" target="_blank" rel="noopener">aria registry</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Radix Primitives</span><span class="t-meta t-muted">radix-ui 1.8.1 · 12.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="1" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="Bundle"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="DX · агенти"><span class="pw-lib__chip" data-v="4">4</span></td>
+  <td class="pw-lib__tot num"><strong>32</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">На npm не було релізів січень–травень і серпень–вересень 2026 (сплески червень–липень, жовтень). Відкриті баги: DismissableLayer, Collapsible+Activity. Немає date/number/DnD. Найбільша екосистема, але shadcn більше не дефолт. <span class="pw-lib__src" style="display:inline-flex"><a href="https://github.com/radix-ui/primitives/issues/4143" target="_blank" rel="noopener">issue 4143</a> · <a href="https://github.com/radix-ui/primitives/issues/3778" target="_blank" rel="noopener">issue 3778</a> · <a href="https://www.npmjs.com/package/radix-ui" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Ark UI (Zag.js)</span><span class="t-meta t-muted">5.39.3 · 05.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Стилізація"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>34</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">≈50 компонентів: Date Picker, Date Input, Number Input, Tags Input, Tree View, Splitter, File Upload, Tour. Time Picker немає; підтримку time zone у Date Picker не перевіряв. Свого shadcn-реєстру не знайшов (є Park UI). <span class="pw-lib__src" style="display:inline-flex"><a href="https://ark-ui.com/llms.txt" target="_blank" rel="noopener">llms.txt</a> · <a href="https://www.npmjs.com/package/@ark-ui/react" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">coss ui (Cal.com, на Base UI)</span><span class="t-meta t-muted">реєстр @coss/ui · push 22.10.2026 · AGPL-3.0-or-later</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Bundle"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="DX · агенти"><span class="pw-lib__chip" data-v="4">4</span></td>
+  <td class="pw-lib__tot num"><strong>38</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="no">Порушує правило</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">56 компонентів + 529 «particles»: Calendar, Date Picker, Number Field, Command, Toast, Sheet; Time немає. Peer-залежності next ^16.4 · react ^19.3 · tailwind ≥4.3 — збігаються з нашим стеком. ⚠ packages/ui має ліцензію AGPL-3.0-or-later (MIT лише apps/ui — сайт документації). <span class="pw-lib__src" style="display:inline-flex"><a href="https://coss.com/ui" target="_blank" rel="noopener">coss.com/ui</a> · <a href="https://github.com/cosscom/ui/blob/main/LICENSING.md" target="_blank" rel="noopener">LICENSING.md</a> · <a href="https://coss.com/ui/docs/get-started.md" target="_blank" rel="noopener">get-started</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">HeroUI v3</span><span class="t-meta t-muted">3.2.6 · 17.09.2026 · Apache-2.0</span></div></th>
+  <td class="pw-lib__sc" data-v="5" data-label="A11y"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Стилізація"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="DX · агенти"><span class="pw-lib__chip" data-v="4">4</span></td>
+  <td class="pw-lib__tot num"><strong>34</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="no">Порушує правило</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">На React Aria + Tailwind 4, MCP/skills/llms. Але це npm-пакет (BEM-класи + CSS-змінні), а не код у src/components/ui — суперечить правилу курсу. Наявність DatePicker/TimeField не перевіряв. <span class="pw-lib__src" style="display:inline-flex"><a href="https://heroui.com/docs/react/getting-started" target="_blank" rel="noopener">docs</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Untitled UI React</span><span class="t-meta t-muted">MIT-частина · push 09.10.2026 · MIT (+ PRO окремо)</span></div></th>
+  <td class="pw-lib__sc" data-v="5" data-label="A11y"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>32</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="part">Потрібен ремап</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Copy-paste на React Aria + Tailwind 4.3. Свої імена токенів (не shadcn) — потрібен ремап; PRO-компоненти під окремою ліцензією. Склад безкоштовної частини (Calendar/Slider/Toast) не перевіряв. <span class="pw-lib__src" style="display:inline-flex"><a href="https://github.com/untitleduico/react" target="_blank" rel="noopener">repo</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Intent UI (justd)</span><span class="t-meta t-muted">push 22.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="5" data-label="A11y"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>32</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="part">Потрібен ремап</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">React Aria + Tailwind, shadcn-CLI-реєстр (≈83 компоненти за сторонніми довідниками), 2k★. Підтримку Tailwind 4 не підтверджено; свої токени. <span class="pw-lib__src" style="display:inline-flex"><a href="https://github.com/irsyadadl/justd" target="_blank" rel="noopener">repo</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">JollyUI</span><span class="t-meta t-muted">push 31.01.2025 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="5" data-label="A11y"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="4" data-label="Стилізація"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="2" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="1" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="2" data-label="DX · агенти"><span class="pw-lib__chip" data-v="2">2</span></td>
+  <td class="pw-lib__tot num"><strong>26</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="part">Потрібен ремап</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">RAC + Tailwind, «shadcn-сумісний», але останній коміт — січень 2025: фактично занедбаний, ідея ж цінна як шаблон. <span class="pw-lib__src" style="display:inline-flex"><a href="https://github.com/jolbol1/jolly-ui" target="_blank" rel="noopener">repo</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Ariakit</span><span class="t-meta t-muted">0.4.42 · 14.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Стилізація"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="1" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="4" data-label="Bundle"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="2" data-label="DX · агенти"><span class="pw-lib__chip" data-v="2">2</span></td>
+  <td class="pw-lib__tot num"><strong>31</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Щомісячні релізи, гарні Combobox/Select/Menu/Dialog (≈41 kB gz на 4). Немає календаря й числового поля; без реєстру й MCP. <span class="pw-lib__src" style="display:inline-flex"><a href="https://www.npmjs.com/package/@ariakit/react" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Headless UI</span><span class="t-meta t-muted">2.2.10 · 07.04.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="Стилізація"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="1" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="4" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="5" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="2" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>30</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="ok">Вписується</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Один реліз за весь 2026 (квітень), репо востаннє оновлювалось 13.04.2026. Покриття вузьке: без date/number/slider/tree. <span class="pw-lib__src" style="display:inline-flex"><a href="https://www.npmjs.com/package/@headlessui/react" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Mantine 9</span><span class="t-meta t-muted">9.7.3 · 17.10.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="2" data-label="Стилізація"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="1" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="5" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="5">5</span></td><td class="pw-lib__sc" data-v="2" data-label="Bundle"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="4" data-label="DX · агенти"><span class="pw-lib__chip" data-v="4">4</span></td>
+  <td class="pw-lib__tot num"><strong>27</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="no">Порушує правило</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Повна бібліотека: CSS-modules + тема в JS (createTheme) + --mantine-* змінні; @mantine/dates окремо; peer React ^19.2. Не вендориться у src/components/ui, тема не в CSS-токенах. <span class="pw-lib__src" style="display:inline-flex"><a href="https://www.npmjs.com/package/@mantine/core" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Chakra UI v3</span><span class="t-meta t-muted">3.37.0 · 28.08.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="2" data-label="Стилізація"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="2" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="2" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="1" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="4" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="2" data-label="Bundle"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>23</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="no">Порушує правило</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Emotion у runtime (peer @emotion/react) + JS-система рецептів: тертя з RSC і з правилом «тема — CSS-токени». <span class="pw-lib__src" style="display:inline-flex"><a href="https://www.npmjs.com/package/@chakra-ui/react" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+<tbody class="pw-lib__grpbody"><tr class="pw-lib__scrow">
+  <th scope="row" class="pw-lib__name"><div><span class="t-label">Radix Themes</span><span class="t-meta t-muted">3.3.0 · 31.01.2026 · MIT</span></div></th>
+  <td class="pw-lib__sc" data-v="4" data-label="A11y"><span class="pw-lib__chip" data-v="4">4</span></td><td class="pw-lib__sc" data-v="2" data-label="Стилізація"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="1" data-label="Date/time · TZ"><span class="pw-lib__chip" data-v="1">1</span></td><td class="pw-lib__sc" data-v="2" data-label="Motion-хуки"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="RSC · Next 16"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="2" data-label="TW4 · токени"><span class="pw-lib__chip" data-v="2">2</span></td><td class="pw-lib__sc" data-v="3" data-label="Підтримка 2026"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="Bundle"><span class="pw-lib__chip" data-v="3">3</span></td><td class="pw-lib__sc" data-v="3" data-label="DX · агенти"><span class="pw-lib__chip" data-v="3">3</span></td>
+  <td class="pw-lib__tot num"><strong>23</strong><span class="t-meta t-muted">/45</span></td>
+  <td class="pw-lib__gate"><span class="pw-lib__gatechip" data-g="no">Порушує правило</span></td>
+</tr><tr class="pw-lib__whyrow"><td colspan="12" class="pw-lib__why t-meta"><div class="pw-lib__whyin">Тема через компонент <Theme> і власний CSS, не наші токени; останній реліз — січень 2026. <span class="pw-lib__src" style="display:inline-flex"><a href="https://www.npmjs.com/package/@radix-ui/themes" target="_blank" rel="noopener">npm</a></span></div></td></tr></tbody>
+  </table>
+  </div>
+  <div class="pw-lib__legend t-meta t-muted">
+    <span><span class="pw-lib__chip" data-v="5">5</span> зразково</span><span><span class="pw-lib__chip" data-v="4">4</span> добре</span><span><span class="pw-lib__chip" data-v="3">3</span> прийнятно / не перевірено</span><span><span class="pw-lib__chip" data-v="2">2</span> слабко</span><span><span class="pw-lib__chip" data-v="1">1</span> немає / проблема</span>
+  </div>
+  <p class="t-meta t-muted" style="margin-top:var(--space-2)">Не розглядав детально (не верифіковано в цьому прогоні, лише як натхнення): Aceternity, React Bits, Cult UI, 21st.dev, Kibo UI (shadcn-блоки; MIT, останній push 04.05.2026), Park UI, Reui, Tailwind Plus Catalyst (платний, на Headless UI). Анімаційні реєстри — Magic UI (MIT, 22.8k★), Motion Primitives (MIT), animate-ui (ліцензія в GitHub не визначена) — лише для прикрас, не для ядра: керувати станом/фокусом вони не вміють.</p>
+</section>
+
+<section id="wins">
+  <h2 class="t-title">Хто виграє для кожного контролу</h2>
+  <p class="pw-lib__lede">«RAC» = react-aria-components. Усі контроли стилізуються нами в <code>src/components/ui</code>; жоден не рендерить дефолтний вигляд браузера (нативні <code>&lt;select&gt;</code>/<code>input[type=date]</code> лише приховані для форм).</p>
+  
+<h3 class="t-heading pw-lib__grp">Inputs</h3>
+<div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack pw-lib__wins">
+<thead><tr><th>Контрол</th><th>Вибір</th><th>Чому</th><th>Запасний</th></tr></thead>
+<tbody><tr><th scope="row" data-label="Контрол">Button · icon button</th><td data-label="Вибір" class="pw-lib__pick">RAC Button</td><td data-label="Чому" class="t-meta"><code>data-pressed</code>, <code>data-focus-visible</code>, <code>isPending</code> (утримує ширину); icon-only вимагає <code>aria-label</code>.</td><td data-label="Запасний" class="t-meta t-muted">shadcn aria/button</td></tr><tr><th scope="row" data-label="Контрол">Input · textarea</th><td data-label="Вибір" class="pw-lib__pick">RAC TextField</td><td data-label="Чому" class="t-meta">Валідація й <code>aria-describedby</code> з коробки; <code>&lt;Form validationErrors&gt;</code> приймає помилки Server Action.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Field + Input</td></tr><tr><th scope="row" data-label="Контрол">Password</th><td data-label="Вибір" class="pw-lib__pick">RAC TextField + наш ToggleButton</td><td data-label="Чому" class="t-meta">Перемикач <code>type</code> з <code>aria-pressed</code>; без нативного «ока» браузера.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Field</td></tr><tr><th scope="row" data-label="Контрол">Select</th><td data-label="Вибір" class="pw-lib__pick">RAC Select</td><td data-label="Чому" class="t-meta">Select-only combobox + listbox; нативний &lt;select&gt; лише прихований для автозаповнення. Не брати shadcn <code>native-select</code>.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Select</td></tr><tr><th scope="row" data-label="Контрол">Combobox з аватарами</th><td data-label="Вибір" class="pw-lib__pick">RAC ComboBox</td><td data-label="Чому" class="t-meta">Слоти в ListBoxItem для аватара; async-завантаження; «No matches» через <code>renderEmptyState</code>.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Combobox</td></tr><tr><th scope="row" data-label="Контрол">Multi-select чипи</th><td data-label="Вибір" class="pw-lib__pick">RAC ComboBox multiple + TagGroup</td><td data-label="Чому" class="t-meta"><code>selectionMode="multiple"</code> з 1.16 (берез. 2026); чипи — фокусований TagGroup із Delete/Backspace.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Combobox (chips)</td></tr><tr><th scope="row" data-label="Контрол">Date</th><td data-label="Вибір" class="pw-lib__pick">RAC DatePicker + Calendar</td><td data-label="Чому" class="t-meta">Значення — <code>ZonedDateTime</code> у <code>Europe/Kyiv</code>; сегменти ‑ spinbutton, не нативний date input.</td><td data-label="Запасний" class="t-meta t-muted">react-day-picker 10 + @date-fns/tz</td></tr><tr><th scope="row" data-label="Контрол">Time</th><td data-label="Вибір" class="pw-lib__pick">RAC TimeField</td><td data-label="Чому" class="t-meta"><code>granularity="minute"</code>, <code>hourCycle=24</code>; DST-безпечно через @internationalized/date.</td><td data-label="Запасний" class="t-meta t-muted">DatePicker granularity=minute</td></tr><tr><th scope="row" data-label="Контрол">Date range</th><td data-label="Вибір" class="pw-lib__pick">RAC DateRangePicker + RangeCalendar</td><td data-label="Чому" class="t-meta">Валідація «початок до кінця» та <code>isDateUnavailable</code>.</td><td data-label="Запасний" class="t-meta t-muted">react-day-picker range</td></tr><tr><th scope="row" data-label="Контрол">Currency · number stepper</th><td data-label="Вибір" class="pw-lib__pick">RAC NumberField</td><td data-label="Чому" class="t-meta"><code>formatOptions={{style:'currency',currency:'EUR'}}</code> + NumberParser — локалезалежний ввід.</td><td data-label="Запасний" class="t-meta t-muted">Base UI NumberField (Intl format)</td></tr><tr><th scope="row" data-label="Контрол">Checkbox (tri-state)</th><td data-label="Вибір" class="pw-lib__pick">RAC Checkbox</td><td data-label="Чому" class="t-meta"><code>isIndeterminate</code> для секцій; description/error з 1.18.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Checkbox</td></tr><tr><th scope="row" data-label="Контрол">Radio</th><td data-label="Вибір" class="pw-lib__pick">RAC RadioGroup</td><td data-label="Чому" class="t-meta">Roving tabindex, стрілки вибирають.</td><td data-label="Запасний" class="t-meta t-muted">Base UI RadioGroup</td></tr><tr><th scope="row" data-label="Контрол">Switch</th><td data-label="Вибір" class="pw-lib__pick">RAC Switch</td><td data-label="Чому" class="t-meta"><code>role=switch</code>; <code>data-selected</code> для spring-анімації треку.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Switch</td></tr><tr><th scope="row" data-label="Контрол">Segmented</th><td data-label="Вибір" class="pw-lib__pick">RAC ToggleButtonGroup</td><td data-label="Чому" class="t-meta">Один вибір, стрілки; для навігаційних видів — Tabs.</td><td data-label="Запасний" class="t-meta t-muted">Base UI ToggleGroup</td></tr><tr><th scope="row" data-label="Контрол">Slider</th><td data-label="Вибір" class="pw-lib__pick">RAC Slider + SliderFill</td><td data-label="Чому" class="t-meta"><code>aria-valuetext</code> («92% confidence»); SliderFill з 1.18.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Slider</td></tr><tr><th scope="row" data-label="Контрол">File drop</th><td data-label="Вибір" class="pw-lib__pick">RAC DropZone + FileTrigger</td><td data-label="Чому" class="t-meta">Кнопка «Choose file» + drop; прогрес — ProgressBar.</td><td data-label="Запасний" class="t-meta t-muted">власний &lt;button&gt; + input[type=file] hidden</td></tr></tbody>
+</table></div>
+
+<h3 class="t-heading pw-lib__grp">Overlays & feedback</h3>
+<div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack pw-lib__wins">
+<thead><tr><th>Контрол</th><th>Вибір</th><th>Чому</th><th>Запасний</th></tr></thead>
+<tbody><tr><th scope="row" data-label="Контрол">Tooltip</th><td data-label="Вибір" class="pw-lib__pick">RAC Tooltip</td><td data-label="Чому" class="t-meta">Hover + focus, <code>delay=500</code>, Esc ховає. Інтерактивні картки — PreviewTrigger (1.20).</td><td data-label="Запасний" class="t-meta t-muted">Base UI Tooltip</td></tr><tr><th scope="row" data-label="Контрол">Popover</th><td data-label="Вибір" class="pw-lib__pick">RAC Popover</td><td data-label="Чому" class="t-meta">Росте від тригера (<code>data-placement</code> → <code>--origin</code>).</td><td data-label="Запасний" class="t-meta t-muted">Base UI Popover</td></tr><tr><th scope="row" data-label="Контрол">Menu</th><td data-label="Вибір" class="pw-lib__pick">RAC Menu</td><td data-label="Чому" class="t-meta">Підменю, type-ahead, Autocomplete усередині меню.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Menu</td></tr><tr><th scope="row" data-label="Контрол">Context menu</th><td data-label="Вибір" class="pw-lib__pick">RAC MenuTrigger trigger=contextMenu</td><td data-label="Чому" class="t-meta">Додано в 1.20 (лип. 2026): миша, клавіатура, дотик.</td><td data-label="Запасний" class="t-meta t-muted">Base UI ContextMenu</td></tr><tr><th scope="row" data-label="Контрол">Dialog</th><td data-label="Вибір" class="pw-lib__pick">RAC Modal + Dialog</td><td data-label="Чому" class="t-meta">Фокус-пастка, <code>data-entering/exiting</code> для pw-enter/pw-exit.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Dialog (23 kB gz)</td></tr><tr><th scope="row" data-label="Контрол">Alert dialog</th><td data-label="Вибір" class="pw-lib__pick">RAC Dialog role=alertdialog</td><td data-label="Чому" class="t-meta">Фокус на «Cancel» за BRIEF §7.</td><td data-label="Запасний" class="t-meta t-muted">Base UI AlertDialog</td></tr><tr><th scope="row" data-label="Контрол">Sheet · drawer</th><td data-label="Вибір" class="pw-lib__pick">RAC Sheet</td><td data-label="Чому" class="t-meta">Нове у 1.22 (09.10.2026), свайп на нативному scroll; ризик молодості.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Drawer (stable з 1.3). Vaul — не брати (unmaintained).</td></tr><tr><th scope="row" data-label="Контрол">Toast з Undo</th><td data-label="Вибір" class="pw-lib__pick">Base UI Toast</td><td data-label="Чому" class="t-meta">Stable, <code>actionProps</code> для Undo, <code>limit</code>, <code>promise</code>, CSS-змінні <code>--toast-*</code> для стека; ізольований регіон — мінімум конфліктів із RAC.</td><td data-label="Запасний" class="t-meta t-muted">Sonner 2.0.8; RAC Toast (UNSTABLE_)</td></tr><tr><th scope="row" data-label="Контрол">⌘K palette</th><td data-label="Вибір" class="pw-lib__pick">RAC Modal + Autocomplete + Menu</td><td data-label="Чому" class="t-meta">Єдина фокус-система з рештою; шаблон <code>command.tsx</code> у shadcn aria-базі.</td><td data-label="Запасний" class="t-meta t-muted">cmdk 1.1.1 · Base UI Autocomplete</td></tr></tbody>
+</table></div>
+
+<h3 class="t-heading pw-lib__grp">Data & structure</h3>
+<div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack pw-lib__wins">
+<thead><tr><th>Контрол</th><th>Вибір</th><th>Чому</th><th>Запасний</th></tr></thead>
+<tbody><tr><th scope="row" data-label="Контрол">Table</th><td data-label="Вибір" class="pw-lib__pick">TanStack Table 9 + RAC Table</td><td data-label="Чому" class="t-meta">Headless-логіка (sort/filter/group) + доступна grid-розмітка, expandable rows (1.17).</td><td data-label="Запасний" class="t-meta t-muted">нативний &lt;table&gt; + TanStack Virtual</td></tr><tr><th scope="row" data-label="Контрол">Tabs</th><td data-label="Вибір" class="pw-lib__pick">RAC Tabs + Motion layoutId</td><td data-label="Чому" class="t-meta">Авто-активація; індикатор — shared layout.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Tabs</td></tr><tr><th scope="row" data-label="Контрол">Progress</th><td data-label="Вибір" class="pw-lib__pick">RAC ProgressBar · Meter</td><td data-label="Чому" class="t-meta">Кільце — власний SVG, <code>aria-hidden</code> + текст «2 of 5 done».</td><td data-label="Запасний" class="t-meta t-muted">Base UI Progress</td></tr><tr><th scope="row" data-label="Контрол">Avatar</th><td data-label="Вибір" class="pw-lib__pick">власний (20 рядків)</td><td data-label="Чому" class="t-meta"><code>&lt;img onError&gt;</code> + ініціали; логіки a11y немає.</td><td data-label="Запасний" class="t-meta t-muted">Base UI Avatar</td></tr><tr><th scope="row" data-label="Контрол">Sidebar · section tree</th><td data-label="Вибір" class="pw-lib__pick">RAC NavigationTree / Tree</td><td data-label="Чому" class="t-meta">NavigationTree — 1.21 (вер. 2026), нове; Tree має клавіатурну DnD.</td><td data-label="Запасний" class="t-meta t-muted">shadcn sidebar</td></tr><tr><th scope="row" data-label="Контрол">Builder canvas</th><td data-label="Вибір" class="pw-lib__pick">@xyflow/react 12.12</td><td data-label="Чому" class="t-meta">Pan/zoom, edges, a11y-повідомлення; тема через <code>--xy-*</code> змінні; React Flow UI — shadcn-реєстр.</td><td data-label="Запасний" class="t-meta t-muted">—</td></tr><tr><th scope="row" data-label="Контрол">DnD list (секції/поля)</th><td data-label="Вибір" class="pw-lib__pick">RAC useDragAndDrop</td><td data-label="Чому" class="t-meta">Миша, дотик, клавіатура та screen reader «з коробки».</td><td data-label="Запасний" class="t-meta t-muted">@dnd-kit/react 0.5 + Alt+↑/↓; Pragmatic DnD 4</td></tr><tr><th scope="row" data-label="Контрол">Rich text з {{chips}}</th><td data-label="Вибір" class="pw-lib__pick">Tiptap 3 (inline atom node)</td><td data-label="Чому" class="t-meta"><code>ReactNodeViewRenderer</code> + suggestion на <code>{{</code>; <code>immediatelyRender:false</code> для SSR.</td><td data-label="Запасний" class="t-meta t-muted">RAC TokenField (alpha) · Lexical 0.52</td></tr><tr><th scope="row" data-label="Контрол">Charts</th><td data-label="Вибір" class="pw-lib__pick">Recharts 3.10</td><td data-label="Чому" class="t-meta">shadcn-обгортка читає <code>--chart-1…5</code>.</td><td data-label="Запасний" class="t-meta t-muted">visx 4.0</td></tr></tbody>
+</table></div>
+</section>
+
+<section id="special">
+  <h2 class="t-title">Спеціалізовані частини: що порівнювали</h2>
+  <p class="pw-lib__lede">Для кожної ніші — вибір і причини відмови від альтернатив (з версіями й датами).</p>
+  <div class="pw-lib__cards"><article class="pw-lib__card">
+  <h4 class="t-label">⌘K: cmdk · RAC · Base UI</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>RAC Autocomplete у RAC Modal</strong></p>
+  <p class="t-meta">cmdk 1.1.1 не мав жодного релізу з 14.03.2025 (репо ще пушили жовтня 2025). Base UI Autocomplete у доках прямо описаний як «filterable command picker». RAC Autocomplete працює з Menu/ListBox/Table і дає єдину систему фокусу. kbar 1.0.0 (08.2026) — ще один запасний варіант.</p>
+  <div class="pw-lib__src t-meta"><a href="https://www.npmjs.com/package/cmdk" target="_blank" rel="noopener">cmdk npm</a> · <a href="https://react-aria.adobe.com/llms.txt" target="_blank" rel="noopener">RAC llms</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Toasts: Sonner · Base UI · RAC</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>Base UI Toast</strong></p>
+  <p class="t-meta">Sonner 2.0.8 (09.08.2026) живий і простий. Base UI Toast stable: undo через actionProps, стек через CSS-змінні (--toast-index, --toast-swipe-movement-*), limit. shadcn додав власний Toast на Base UI (07.2026). RAC експортує лише UNSTABLE_Toast*.</p>
+  <div class="pw-lib__src t-meta"><a href="https://ui.shadcn.com/docs/changelog/2026-07-toast" target="_blank" rel="noopener">shadcn toast</a> · <a href="https://www.npmjs.com/package/sonner" target="_blank" rel="noopener">sonner</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Drawer / Sheet: Vaul · Base UI · RAC</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>RAC Sheet; запасний — Base UI Drawer</strong></p>
+  <p class="t-meta">Vaul 1.1.2 (12.2024), у README: «This repo is unmaintained». Base UI Drawer: preview у 1.2.0 (12.02.2026), stable в 1.3.0, у 1.9 — багато правок iOS/клавіатури. RAC Sheet з’явився 09.10.2026 — гарний, але 2 тижні від релізу.</p>
+  <div class="pw-lib__src t-meta"><a href="https://github.com/emilkowalski/vaul" target="_blank" rel="noopener">vaul README</a> · <a href="https://react-aria.adobe.com/releases/v1-22-0" target="_blank" rel="noopener">RAC 1.22</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Дата/час із часовими поясами</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>RAC + @internationalized/date</strong></p>
+  <p class="t-meta">ZonedDateTime у Europe/Kyiv, DatePicker/DateRangePicker/TimeField, hourCycle, hideTimeZone. У БД — timestamptz (UTC), у UI — toZoned(…, 'Europe/Kyiv'). react-day-picker 10.0.2 (09.2026) — лише календар (потрібен @date-fns/tz); пакет перейменовано на @daypicker/react у v10. Base UI календаря не має.</p>
+  <div class="pw-lib__src t-meta"><a href="https://react-aria.adobe.com/DatePicker" target="_blank" rel="noopener">RAC DatePicker</a> · <a href="https://github.com/gpbl/react-day-picker/releases/tag/v10.0.0" target="_blank" rel="noopener">DayPicker v10</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Рух: Motion · ViewTransition · CSS linear() · AutoAnimate</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>CSS-пружини з tokens.css + ViewTransition + Motion лише для layout</strong></p>
+  <p class="t-meta">React 19.3 має <ViewTransition> (локальні доки Next 16.4: «React 19.3 includes the ViewTransition component»), анімації запускають Transition/Suspense/useDeferredValue. 90% руху — вже в токенах (--spring-* на linear()). Motion 14.x (m + LazyMotion ≈29 kB gz) — для layoutId/FLIP тостів і табів; Reorder у 14.6.0 отримав клавіатурне перевпорядкування. AutoAnimate 0.10 — для тривіальних списків.</p>
+  <div class="pw-lib__src t-meta"><a href="https://react.dev/reference/react/ViewTransition" target="_blank" rel="noopener">Next view-transitions (локально)</a> · <a href="https://github.com/motiondivision/motion/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Motion changelog</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">DnD: dnd-kit · Pragmatic · RAC</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>RAC DnD для списків/дерев</strong></p>
+  <p class="t-meta">Класичний @dnd-kit/core 6.3.1 не оновлювався з 12.2024; нова лінійка @dnd-kit/react 0.5.1 (15.10.2026) ще 0.x. Pragmatic DnD (Atlassian, Apache-2.0) швидкий (≈7 kB gz), але a11y треба будувати самому, і за 4 місяці вийшли мажори 2→3→4. RAC DnD має клавіатуру й screen reader з коробки.</p>
+  <div class="pw-lib__src t-meta"><a href="https://github.com/clauderic/dnd-kit/releases" target="_blank" rel="noopener">dnd-kit releases</a> · <a href="https://www.npmjs.com/package/@atlaskit/pragmatic-drag-and-drop" target="_blank" rel="noopener">pragmatic npm</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Canvas-конструктор</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>@xyflow/react 12.12.0</strong></p>
+  <p class="t-meta">MIT, 38k★, релізи щомісяця. Є shadcn-реєстр React Flow UI (npx shadcn add https://ui.reactflow.dev/zoom-slider). Ноди рендеряться нашими компонентами; кольори — через --xy-* змінні, зв’язані з токенами. Альтернатив рівня xyflow для n8n-подібного редактора не знайшов.</p>
+  <div class="pw-lib__src t-meta"><a href="https://reactflow.dev/ui/components/zoom-slider" target="_blank" rel="noopener">React Flow UI</a> · <a href="https://github.com/xyflow/xyflow" target="_blank" rel="noopener">xyflow</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Таблиці</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>TanStack Table 9 + Virtual 3.14</strong></p>
+  <p class="t-meta">v9 вийшов 04.08.2026 (breaking: useReactTable → useTable, явний features, ESM-only, tree-shaking від ≈5 kB). Лінійка v9 існує лише з серпня 2026; для коротких таблиць достатньо RAC Table без TanStack.</p>
+  <div class="pw-lib__src t-meta"><a href="https://tanstack.com/table/latest/docs/framework/react/guide/migrating" target="_blank" rel="noopener">migration v9</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Форми з Server Actions</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>RAC Form + useActionState + Zod</strong></p>
+  <p class="t-meta">RAC Form приймає validationErrors (мапінг помилок сервера) і працює з action. Для динамічних конструкторів — react-hook-form 7.89 (useFieldArray) або Conform 1.21 (Server-Actions-first, 2.6k★); TanStack Form 1.33 — запасний.</p>
+  <div class="pw-lib__src t-meta"><a href="https://github.com/edmundhung/conform" target="_blank" rel="noopener">conform</a> · <a href="https://www.npmjs.com/package/react-hook-form" target="_blank" rel="noopener">RHF</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Rich text зі змінними</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>Tiptap 3.31 · TokenField для коротких полів</strong></p>
+  <p class="t-meta">Tiptap: власний inline atom-вузол «variable», parse/serialize ↔ {{name}}, Mention-suggestion як меню. SSR: use client + immediatelyRender:false. RAC TokenField (alpha, 1.20) — токени-чипи в звичайному текстовому полі, без залежності від редактора. Lexical 0.52 ще pre-1.0; Plate — важчий і прив’язаний до Slate.</p>
+  <div class="pw-lib__src t-meta"><a href="https://react-aria.adobe.com/TokenField" target="_blank" rel="noopener">TokenField</a> · <a href="https://tiptap.dev/docs/editor/getting-started/install/nextjs" target="_blank" rel="noopener">Tiptap + Next</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Графіки</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>Recharts 3.10.1</strong></p>
+  <p class="t-meta">27.6k★, живий; shadcn chart-обгортка живиться --chart-1…5. visx 4.0.0 (06.2026, перший мажор за 19 місяців) — для нестандартних візуалізацій. Tremor 3.18.7 (01.2025) заморожений і має peer React ^18 — не брати.</p>
+  <div class="pw-lib__src t-meta"><a href="https://github.com/recharts/recharts" target="_blank" rel="noopener">recharts</a> · <a href="https://www.npmjs.com/package/@visx/visx" target="_blank" rel="noopener">visx</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Іконки</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>Lucide 1.54 (strokeWidth 1.5)</strong></p>
+  <p class="t-meta">ISC, v1 з щоденними релізами, дерево-тремінг (10 іконок = 2.5 kB gz). Tabler 3.49 — запасний (5k+ іконок). Phosphor 2.1.10 — останній реліз 22.05.2025. Central Icons — власницька ліцензія («SEE LICENSE»), платний.</p>
+  <div class="pw-lib__src t-meta"><a href="https://www.npmjs.com/package/lucide-react" target="_blank" rel="noopener">lucide</a> · <a href="https://www.npmjs.com/package/@tabler/icons-react" target="_blank" rel="noopener">tabler</a></div>
+</article>
+<article class="pw-lib__card">
+  <h4 class="t-label">Шрифти</h4>
+  <p class="pw-lib__pickline"><span class="pw-lib__tag">Вибір</span> <strong>Geist + Geist Mono (вже в токенах)</strong></p>
+  <p class="t-meta">geist 1.7.2/1.8.x під next/font, OFL. Inter Variable (@fontsource-variable/inter 5.3.0) — запас, якщо Geist не покриє кирилицю у вашому збиранні. Важливо для щільного UI: tabular-nums уже в .num; перевірте покриття кирилиці до фіналізації.</p>
+  <div class="pw-lib__src t-meta"><a href="https://www.npmjs.com/package/geist" target="_blank" rel="noopener">geist</a> · <a href="https://www.npmjs.com/package/@fontsource-variable/inter" target="_blank" rel="noopener">inter</a></div>
+</article></div>
+</section>
+
+<section id="landing">
+  <h2 class="t-title">Як усе потрапляє в <code>src/components/ui</code> і лишається одним виглядом</h2>
+  <div class="pw-lib__two">
+    <div>
+      <h3 class="t-heading" style="margin-bottom:var(--space-2)">Доставка коду</h3>
+      <ol class="pw-lib__steps">
+        <li><code>npx shadcn@latest init --base aria</code> — отримуємо aria-версії button, input, select, dialog, sheet, tabs, tooltip, popover, context-menu, command, combobox, slider, switch, table, sidebar тощо (≈55 файлів у реєстрі). Токени — ті самі shadcn-імена, що в <code>tokens.css</code>.</li>
+        <li>Заборонити <code>native-select</code> і <code>sonner</code> (aria-база) — лінтер/CI; <code>toast.tsx</code> беремо з Base UI-бази реєстру (<code>apps/v4/registry/bases/base/ui/toast.tsx</code>); чи CLI 4.21 дозволяє змішувати бази — перевірити в пілоті, інакше копіюємо файл вручну.</li>
+        <li>Власні файли за документацією RAC (Tailwind-приклади; ліцензію starter-kit звірити перед копіюванням): <code>date-picker.tsx</code>, <code>date-range-picker.tsx</code>, <code>time-field.tsx</code>, <code>number-field.tsx</code>, <code>tag-group.tsx</code>, <code>drop-zone.tsx</code>, <code>tree.tsx</code>.</li>
+        <li>Сторонні реєстри (React Flow UI) — через <code>npx shadcn add https://ui.reactflow.dev/…</code>; у <code>components.json</code> прописати <code>registries</code>. Приватний GitHub-реєстр теж підтримується (08.2026).</li>
+        <li>Піни точних версій; оновлення — через ADR (правило шаблону).</li>
+      </ol>
+    </div>
+    <div>
+      <h3 class="t-heading" style="margin-bottom:var(--space-2)">Один вигляд поверх двох шарів (Tailwind 4)</h3>
+<pre><code>/* globals.css — єдиний словник станів */
+@custom-variant selected (&amp;:is([data-selected],[aria-selected="true"],[data-checked],[aria-checked="true"]));
+@custom-variant open     (&amp;:is([data-open],[data-state="open"],[aria-expanded="true"],[data-popup-open]));
+@custom-variant pressed  (&amp;:is([data-pressed],[aria-pressed="true"]));
+@custom-variant invalid  (&amp;:is([data-invalid],[aria-invalid="true"]));
+@custom-variant entering (&amp;:is([data-entering],[data-starting-style]));
+@custom-variant exiting  (&amp;:is([data-exiting],[data-ending-style]));
+
+@utility focus-ring {          /* та сама обводка з base.css */
+  &amp;:is(:focus-visible,[data-focus-visible]) {
+    outline: var(--ring-width) solid var(--ring);
+    outline-offset: var(--ring-offset);
+  }
+}
+@utility pop-in  { animation: pw-pop  var(--spring-snappy-duration) var(--spring-snappy) both; }
+@utility pop-out { animation: pw-exit calc(var(--duration-base) * var(--exit-factor)) var(--ease-exit) both; }</code></pre>
+      <ul style="margin:var(--space-3) 0 0;padding-left:var(--space-4);display:grid;gap:var(--space-1);font-size:var(--text-label)">
+        <li>Приклад поповера: <code>entering:pop-in exiting:pop-out</code> — той самий клас для RAC і Base UI.</li>
+        <li><strong>Рух</strong>: пружини — це <code>linear()</code> у токенах; reduced-motion вже стискає відстані в <code>tokens.css</code>. Motion підключаємо лише через <code>LazyMotion</code>.</li>
+        <li><strong>Шари</strong>: усі <code>z-index</code> з <code>--z-*</code>; корінь застосунку <code>isolation:isolate</code>.</li>
+        <li><strong>Тема</strong>: жодного <code>.dark</code>; лише <code>prefers-color-scheme</code> у токенах — компоненти нічого про тему не знають.</li>
+        <li><strong>Правило CI</strong>: курс дозволяє hex лише в <code>src/components/ui</code> і <code>globals.css</code>; ми йдемо суворіше (BRIEF §2): і там лише <code>var(--token)</code> та <code>color-mix()</code> від токенів.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pw-lib__callout"><strong>Divergence від BRIEF §7:</strong> бриф вимагає <code>&lt;dialog&gt;</code> + <code>showModal()</code>; RAC Modal — <code>div role="dialog"</code> із власною фокус-пасткою (ARIA-поведінка еквівалентна, але top layer браузера не використовується). Потрібне рішення власника — див. «Питання».</div>
+</section>
+
+<section id="bundle">
+  <h2 class="t-title">Вимірювання бандлу</h2>
+  <p class="pw-lib__lede">Власне вимірювання: esbuild 0.25, minify, gzip, React зовнішній, дерево-тремінг, один набір імпортів = одна збірка. Спільний код між кроками <strong>не додається</strong> — це не підсумок, а порівняння «що важить функціонал». Реальний JS застосунку залежатиме від dynamic import.</p>
+  <ul class="pw-lib__bars"><li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">Pragmatic DnD (core+hitbox)</span><span class="pw-lib__barval num t-meta">6.8 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:5.4%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">sonner</span><span class="pw-lib__barval num t-meta">9.5 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:7.5%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC Toast</span><span class="pw-lib__barval num t-meta">12.1 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:9.5%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC Button</span><span class="pw-lib__barval num t-meta">12.8 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:10.1%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">cmdk</span><span class="pw-lib__barval num t-meta">17.5 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:13.8%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">react-day-picker 10</span><span class="pw-lib__barval num t-meta">20.2 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:15.9%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC NumberField</span><span class="pw-lib__barval num t-meta">21.4 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:16.8%"></span></span></li>
+<li class="pw-lib__bar" data-k="b"><span class="pw-lib__barname t-meta">Base UI Dialog</span><span class="pw-lib__barval num t-meta">23.4 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:18.4%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">TanStack Table 9 (stock)</span><span class="pw-lib__barval num t-meta">26.7 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:21.0%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">Motion m + domAnimation</span><span class="pw-lib__barval num t-meta">28.8 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:22.7%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">@dnd-kit/react</span><span class="pw-lib__barval num t-meta">38.2 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:30.1%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC Autocomplete + Menu</span><span class="pw-lib__barval num t-meta">41.8 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:32.9%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">Motion full component</span><span class="pw-lib__barval num t-meta">42.5 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:33.4%"></span></span></li>
+<li class="pw-lib__bar" data-k="x"><span class="pw-lib__barname t-meta">Radix: 5 сімейств</span><span class="pw-lib__barval num t-meta">42.5 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:33.4%"></span></span></li>
+<li class="pw-lib__bar" data-k="b"><span class="pw-lib__barname t-meta">Base UI Select</span><span class="pw-lib__barval num t-meta">44.5 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:35.0%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC Select</span><span class="pw-lib__barval num t-meta">57.1 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:44.9%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">@xyflow/react</span><span class="pw-lib__barval num t-meta">58.3 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:45.9%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC: Dialog+Select+ComboBox+Menu+Tooltip</span><span class="pw-lib__barval num t-meta">63.8 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:50.2%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC DatePicker + Range + TimeField</span><span class="pw-lib__barval num t-meta">76.3 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:60.0%"></span></span></li>
+<li class="pw-lib__bar" data-k="r"><span class="pw-lib__barname t-meta">RAC Table + Tree + GridList + DnD</span><span class="pw-lib__barval num t-meta">94.7 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:74.5%"></span></span></li>
+<li class="pw-lib__bar" data-k="b"><span class="pw-lib__barname t-meta">Base UI: Dialog+Select+Combobox+Menu+Tooltip+Toast</span><span class="pw-lib__barval num t-meta">98.1 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:77.2%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">Recharts (Bar/Line/Area)</span><span class="pw-lib__barval num t-meta">113.6 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:89.4%"></span></span></li>
+<li class="pw-lib__bar" data-k="c"><span class="pw-lib__barname t-meta">Tiptap StarterKit</span><span class="pw-lib__barval num t-meta">127.1 kB</span><span class="pw-lib__bartrack" aria-hidden="true"><span style="--w:100.0%"></span></span></li></ul>
+  <div class="pw-lib__lg"><span><i style="background:var(--chart-1)"></i>React Aria</span><span><i style="background:var(--chart-2)"></i>Base UI</span><span><i style="background:var(--chart-3)"></i>Radix</span><span><i style="background:var(--chart-5)"></i>інші</span></div>
+  <p class="t-meta t-muted" style="margin-top:var(--space-2)">RAC без <code>@react-aria/optimize-locales-plugin</code> тягне рядки всіх мов у клієнтський бандл; плагін 2.1.0 (08.10.2026) уміє Turbopack.</p>
+</section>
+
+<section id="risks">
+  <h2 class="t-title">Ризики й мітигації</h2>
+  <div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack">
+    <thead><tr><th>Ризик</th><th>Що знайдено</th><th>Мітигація</th></tr></thead>
+    <tbody><tr><th scope="row" data-label="Ризик">Молодість нового</th><td data-label="Що знайдено" class="t-meta">shadcn <code>--base aria</code> — з липня 2026; RAC Sheet — 09.10.2026; TanStack Table 9 — 04.08.2026; NavigationTree — 1.21; TokenField — alpha; RAC Toast — UNSTABLE_.</td><td data-label="Мітигація" class="t-meta">Піни точних версій, один «пілотний» екран на кожну нову річ; fallback зі списку «Хто виграє».<div class="pw-lib__src"><a href="https://ui.shadcn.com/docs/changelog/2026-07-react-aria" target="_blank" rel="noopener">shadcn React Aria</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">React 19.3 / Next 16.4</th><td data-label="Що знайдено" class="t-meta">Відкрито: usePreventScroll під React ≥19.3 у Next 16.3 (iOS, #10485); Table re-render (#10759); Turbopack + optimize-locales-plugin (#9213 ще відкрите, але 1.22 додав Turbopack-підтримку плагіна 2.1.0). Base UI: Drawer hydration (#4509), Autocomplete update-loop (#5994) — обидва закриті.</td><td data-label="Мітигація" class="t-meta">Desktop-first знижує вплив iOS-багів; підключити @react-aria/optimize-locales-plugin (локалі en/uk) — інакше всі мови потраплять у бандл.<div class="pw-lib__src"><a href="https://github.com/adobe/react-spectrum/issues/10485" target="_blank" rel="noopener">RS #10485</a> · <a href="https://github.com/adobe/react-spectrum/issues/9213" target="_blank" rel="noopener">RS #9213</a> · <a href="https://github.com/mui/base-ui/issues/4509" target="_blank" rel="noopener">BUI #4509</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">Ліцензія</th><td data-label="Що знайдено" class="t-meta">coss ui: packages/ui — AGPL-3.0-or-later (копіювання у закритий SaaS = ризик copyleft). Central Icons — власницька. Pragmatic DnD — Apache-2.0 (GitHub показує NOASSERTION). Untitled UI PRO — окрема ліцензія.</td><td data-label="Мітигація" class="t-meta">Не копіювати coss без письмової згоди/юридичної перевірки; тримати лише MIT/Apache/ISC/OFL у src/components/ui.<div class="pw-lib__src"><a href="https://github.com/cosscom/ui/blob/main/LICENSING.md" target="_blank" rel="noopener">coss LICENSING</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">Підтримка</th><td data-label="Що знайдено" class="t-meta">cmdk — нуль релізів у 2026; Vaul — «unmaintained»; Headless UI — 1 реліз у 2026; Radix — паузи на npm; dnd-kit/core заморожений; Tremor і JollyUI — застарілі.</td><td data-label="Мітигація" class="t-meta">У стек іде лише RAC (щомісяця) і Base UI (щомісяця); решта — запасні варіанти зі змінним ступенем ризику.<div class="pw-lib__src"><a href="https://github.com/emilkowalski/vaul" target="_blank" rel="noopener">Vaul</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">Дві headless-бібліотеки</th><td data-label="Що знайдено" class="t-meta">Дубль focus-менеджменту, порталів, aria-hidden. Відомий клас помилок: Radix #4115 — Toast viewport потрапляє в aria-hidden піддерево відкритого Dialog.</td><td data-label="Мітигація" class="t-meta">Base UI лише для Toast (власний регіон). Поки модалка відкрита — другий viewport усередині Modal; перевірка NVDA + VoiceOver. Жодних Base UI popup усередині RAC Modal.<div class="pw-lib__src"><a href="https://github.com/radix-ui/primitives/issues/4115" target="_blank" rel="noopener">Radix #4115</a> · <a href="https://github.com/mui/base-ui/issues/5659" target="_blank" rel="noopener">BUI #5659</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">Z-index та шари</th><td data-label="Що знайдено" class="t-meta">Обидві бібліотеки портують у body.</td><td data-label="Мітигація" class="t-meta">Всі шари беруть <code>--z-*</code> з tokens.css; <code>isolation:isolate</code> на корені застосунку; RAC UNSAFE_PortalProvider, якщо поповер має жити в діалозі.</td></tr>
+<tr><th scope="row" data-label="Ризик">Бандл</th><td data-label="Що знайдено" class="t-meta">RAC — найважчий (Select 57 kB gz проти 44 у Base UI). Tiptap 127 kB, Recharts 114 kB.</td><td data-label="Мітигація" class="t-meta">Динамічний import для Tiptap, Recharts і xyflow (сторінки конструктора/дашборда); locales-plugin; LazyMotion.</td></tr>
+<tr><th scope="row" data-label="Ризик">Churn мажорів</th><td data-label="Що знайдено" class="t-meta">Motion 13→14 за 2 місяці; Pragmatic DnD v2→v4 за 3 місяці; react-day-picker v10 перейменував пакет; shadcn <code>cn</code> став окремим пакетом.</td><td data-label="Мітигація" class="t-meta">Піни точних версій у package.json, оновлення — лише ADR.<div class="pw-lib__src"><a href="https://github.com/motiondivision/motion/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Motion changelog</a></div></td></tr>
+<tr><th scope="row" data-label="Ризик">Нативні контроли</th><td data-label="Що знайдено" class="t-meta">В реєстрі shadcn є <code>native-select</code>; RAC-пікери мають приховані нативні input/select для форм.</td><td data-label="Мітигація" class="t-meta">Заборонити native-select у лінтері; приховані елементи не мають візуалу (sr-only/hidden).</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="packages">
+  <h2 class="t-title">Пакети для рекомендованого стеку</h2>
+  <p class="pw-lib__lede"><span class="pw-lib__tag" data-k="warn">Потрібне ваше схвалення</span> — нові залежності у цьому репо без дозволу не додаю. Версії: найновіші, опубліковані щонайменше за 14 днів до 23.10.2026 (станом на дату в колонці; «latest» новіший у motion, shadcn, tiptap, lucide, tanstack).</p>
+  <div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack">
+    <thead><tr><th>Пакет</th><th>Версія</th><th>Дата</th><th>Навіщо</th></tr></thead>
+    <tbody><tr><th scope="row" data-label="Пакет"><code>react-aria-components</code></th><td data-label="Версія" class="num">1.22.1</td><td data-label="Дата" class="num t-muted">09.10</td><td data-label="Навіщо" class="t-meta">Основа: форми, оверлеї, date/time, DnD, Tree, Autocomplete</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@internationalized/date</code></th><td data-label="Версія" class="num">3.12.4</td><td data-label="Дата" class="num t-muted">01.09</td><td data-label="Навіщо" class="t-meta">ZonedDateTime, Europe/Kyiv</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@react-aria/optimize-locales-plugin</code></th><td data-label="Версія" class="num">2.1.0</td><td data-label="Дата" class="num t-muted">08.10</td><td data-label="Навіщо" class="t-meta">Лише локалі en/uk у бандлі (Turbopack)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@base-ui/react</code></th><td data-label="Версія" class="num">1.9.0</td><td data-label="Дата" class="num t-muted">09.10</td><td data-label="Навіщо" class="t-meta">Лише Toast (+ запасний Drawer)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>shadcn (CLI)</code></th><td data-label="Версія" class="num">4.21.4</td><td data-label="Дата" class="num t-muted">07.10</td><td data-label="Навіщо" class="t-meta">init --base aria, реєстри; devDependency / npx</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>cn</code></th><td data-label="Версія" class="num">0.4.0</td><td data-label="Дата" class="num t-muted">22.09</td><td data-label="Навіщо" class="t-meta">Хелпер класів (замінює clsx + tailwind-merge у shadcn)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>class-variance-authority</code></th><td data-label="Версія" class="num">0.7.1</td><td data-label="Дата" class="num t-muted">26.11.2024</td><td data-label="Навіщо" class="t-meta">Варіанти компонентів (стабільний, але давній)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>lucide-react</code></th><td data-label="Версія" class="num">1.54.0</td><td data-label="Дата" class="num t-muted">09.10</td><td data-label="Навіщо" class="t-meta">Іконки, strokeWidth 1.5</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>motion</code></th><td data-label="Версія" class="num">14.1.0</td><td data-label="Дата" class="num t-muted">09.10</td><td data-label="Навіщо" class="t-meta">LazyMotion + m: layoutId / FLIP</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@xyflow/react</code></th><td data-label="Версія" class="num">12.12.0</td><td data-label="Дата" class="num t-muted">24.09</td><td data-label="Навіщо" class="t-meta">Canvas-конструктор</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@tanstack/react-table</code></th><td data-label="Версія" class="num">9.2.8</td><td data-label="Дата" class="num t-muted">08.10</td><td data-label="Навіщо" class="t-meta">Логіка таблиць (v9: useTable)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@tanstack/react-virtual</code></th><td data-label="Версія" class="num">3.14.14</td><td data-label="Дата" class="num t-muted">09.10</td><td data-label="Навіщо" class="t-meta">Віртуалізація довгих списків</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@tiptap/react · @tiptap/pm · @tiptap/starter-kit · @tiptap/extension-mention</code></th><td data-label="Версія" class="num">3.31.4</td><td data-label="Дата" class="num t-muted">30.09</td><td data-label="Навіщо" class="t-meta">Rich text зі змінними {{…}}</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>recharts</code></th><td data-label="Версія" class="num">3.10.1</td><td data-label="Дата" class="num t-muted">25.07</td><td data-label="Навіщо" class="t-meta">Дашборд</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>zod</code></th><td data-label="Версія" class="num">4.6.5</td><td data-label="Дата" class="num t-muted">13.09</td><td data-label="Навіщо" class="t-meta">Схеми форм і Server Actions</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>geist</code></th><td data-label="Версія" class="num">1.7.2</td><td data-label="Дата" class="num t-muted">01.06</td><td data-label="Навіщо" class="t-meta">Шрифт під next/font (або next/font/google)</td></tr></tbody>
+  </table></div>
+  <h3 class="t-heading pw-lib__grp">Запасні (за потреби)</h3>
+  <div class="pw-lib__scroll"><table class="pw-lib__table pw-lib__table--stack">
+    <thead><tr><th>Пакет</th><th>Версія</th><th>Роль</th></tr></thead>
+    <tbody><tr><th scope="row" data-label="Пакет"><code>sonner</code></th><td data-label="Версія" class="num">2.0.8</td><td data-label="Роль" class="t-meta">запасний toast</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>cmdk</code></th><td data-label="Версія" class="num">1.1.1</td><td data-label="Роль" class="t-meta">запасний ⌘K</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>react-day-picker + @date-fns/tz + date-fns</code></th><td data-label="Версія" class="num">10.0.2 · 1.5.0 · 4.4.0</td><td data-label="Роль" class="t-meta">запасний календар</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@dnd-kit/react</code></th><td data-label="Версія" class="num">0.5.0</td><td data-label="Роль" class="t-meta">запасний DnD (pre-1.0)</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@conform-to/react · @conform-to/zod</code></th><td data-label="Версія" class="num">1.21.1</td><td data-label="Роль" class="t-meta">форми Server Actions</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>react-hook-form</code></th><td data-label="Версія" class="num">7.89.0</td><td data-label="Роль" class="t-meta">динамічні форми конструктора</td></tr>
+<tr><th scope="row" data-label="Пакет"><code>@formkit/auto-animate</code></th><td data-label="Версія" class="num">0.10.0</td><td data-label="Роль" class="t-meta">тривіальні анімації списків</td></tr></tbody>
+  </table></div>
+  <pre style="margin-top:var(--space-3)"><code>npm i --save-exact react-aria-components@1.22.1 @internationalized/date@3.12.4 @base-ui/react@1.9.0 \
+  lucide-react@1.54.0 motion@14.1.0 @xyflow/react@12.12.0 @tanstack/react-table@9.2.8 \
+  @tanstack/react-virtual@3.14.14 recharts@3.10.1 zod@4.6.5
+npm i -D --save-exact shadcn@4.21.4 @react-aria/optimize-locales-plugin@2.1.0</code></pre>
+</section>
+
+<section id="open">
+  <h2 class="t-title">Відкриті питання до власника</h2>
+  <ol class="pw-lib__steps">
+    <li>Згода на відхід від дефолту курсу (<code>base-nova</code> на Base UI) до <code>--base aria</code> + Base UI для Toast? Потрібен ADR, бо це змінює залежності.</li>
+    <li>Діалоги: чи критично використовувати нативний <code>&lt;dialog&gt;</code> (BRIEF §7), чи достатньо RAC Modal (еквівалентна ARIA-поведінка)?</li>
+    <li>RAC Sheet вийшов лише 09.10.2026 і TokenField — alpha: брати зараз чи чекати стабілізації й ставити Base UI Drawer?</li>
+    <li>coss ui: чи просити письмового дозволу/комерційної ліцензії в Cal.com (його компоненти — найкращий приклад Base UI + Tailwind 4)?</li>
+    <li>Підтвердити кирилицю Geist у вашому збиранні, інакше — Inter Variable.</li>
+    <li>Чи потрібна повна двомовність (en/uk) у даті/числі? Від цього залежить конфіг locales-plugin.</li>
+  </ol>
+  <p class="t-meta t-muted" style="margin-top:var(--space-3)">Обмеження дослідження: попередній запуск обірвався через ліміт API, тож Park UI, Aceternity, React Bits, Cult UI, 21st.dev, Kibo UI, Reui і Catalyst не аналізувались глибоко; повні a11y-аудити (NVDA/VoiceOver) не проводились — оцінки a11y спираються на документацію й історію issues.</p>
+</section>
+</main>
+
+<script>
+  (() => {
+    const root = document.documentElement, g = document.querySelector(".pw-theme-toggle");
+    const btns = [...g.querySelectorAll('[role="radio"]')];
+    const sync = () => { const v = root.dataset.theme || "system";
+      btns.forEach(b => { const on = b.dataset.value === v; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; }); };
+    const set = (v) => { const apply = () => { v === "system" ? delete root.dataset.theme : (root.dataset.theme = v); sync(); };
+      try { v === "system" ? localStorage.removeItem("pw-theme") : localStorage.setItem("pw-theme", v); } catch (e) {}
+      document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(apply) : apply(); };
+    g.addEventListener("click", e => { const b = e.target.closest('[role="radio"]'); if (b) set(b.dataset.value); });
+    g.addEventListener("keydown", e => { const i = btns.indexOf(document.activeElement); if (i < 0) return;
+      const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return;
+      e.preventDefault(); const n = btns[(i + d + btns.length) % btns.length]; set(n.dataset.value); n.focus(); });
+    sync();
+  })();
+</script>
+</body>
+</html>

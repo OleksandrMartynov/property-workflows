@@ -1,0 +1,531 @@
+/* ==========================================================================
+   Property Workflows — design tokens  ·  v0.1 (foundations)
+   --------------------------------------------------------------------------
+   - Every color is OKLCH. Names map 1:1 to shadcn/ui so this file can move
+     into Tailwind 4 `globals.css` (@theme inline { --color-x: var(--x) }).
+   - Theme resolution (artifact convention):
+       :root / [data-theme="light"]                        → light
+       @media (prefers-color-scheme: dark) :root:not([data-theme="light"])
+       :root[data-theme="dark"] / [data-theme="dark"]       → dark
+     [data-theme] also works on any subtree (side-by-side previews).
+   - Neutrals: warm-ish, hue 80–85, chroma 0.004–0.010. The warm bias sits
+     almost opposite the indigo primary (H 268, Δh ≈ 185°), so the primary
+     reads cleaner against the greys and paper-like surfaces suit leases,
+     invoices and inspection reports. Darks use chroma ≤ 0.005 so they never
+     turn brown.
+   - Status hues share one lightness per role (dot / text / tint) so badges
+     do not jump in weight when status changes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Theme-independent tokens: type, space, size, radius, z, motion
+   -------------------------------------------------------------------------- */
+:root {
+  /* Type families — Geist variable (Google Fonts) */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* Type scale — size / line-height / tracking / weight */
+  --text-display: 28px;  --leading-display: 32px;  --tracking-display: -0.024em; --weight-display: 600;
+  --text-title: 20px;    --leading-title: 28px;    --tracking-title: -0.016em;   --weight-title: 600;
+  --text-heading: 15px;  --leading-heading: 20px;  --tracking-heading: -0.008em; --weight-heading: 600;
+  --text-body: 14px;     --leading-body: 20px;     --tracking-body: -0.003em;
+  --text-label: 13px;    --leading-label: 18px;    --tracking-label: 0em;
+  --text-meta: 12px;     --leading-meta: 16px;     --tracking-meta: 0.002em;
+  --text-mono: 13px;     --leading-mono: 20px;
+  --weight-medium: 500;
+  --weight-strong: 600;
+
+  /* Space — strict 4px grid */
+  --space-px: 1px;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Density — Linear-like */
+  --size-control: 32px;
+  --size-control-sm: 28px;
+  --size-control-lg: 36px;
+  --size-row: 32px;
+  --size-cell: 36px;
+  --size-icon: 16px;
+  --size-icon-sm: 14px;
+  --size-header: 44px;
+  --size-sidebar: 240px;
+  --hairline: 1px;
+
+  /* Radius — 6 controls · 8 cards/menus · 12 dialogs/bento · pill */
+  --radius: 6px;               /* shadcn base */
+  --radius-xs: 4px;            /* kbd, tiny tags, checkbox */
+  --radius-sm: 6px;            /* controls */
+  --radius-md: 8px;            /* cards, menus, popovers */
+  --radius-lg: 10px;           /* bento tiles, command palette */
+  --radius-xl: 12px;           /* dialogs, sheets */
+  --radius-pill: 999px;
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-dropdown: 50;
+  --z-overlay: 60;
+  --z-dialog: 70;
+  --z-popover: 80;             /* popovers may open inside dialogs */
+  --z-toast: 90;
+  --z-tooltip: 100;
+
+  /* Focus ring — crisp 2px outline, never a glow */
+  --ring-width: 2px;
+  --ring-offset: 2px;          /* standalone controls */
+  --ring-offset-inset: -2px;   /* rows, cells, list items (no clipping) */
+
+  /* ---- Motion ----------------------------------------------------------
+     Refined, alive, never stiff. UI motion perceived 120–240ms; the
+     run-completed moment ≤ 400ms. No linear jumps, no instant pop-ins. */
+  --duration-instant: 90ms;    /* tint, color, opacity of tiny things */
+  --duration-fast: 140ms;      /* hover/press, tooltips, checkbox */
+  --duration-base: 200ms;      /* menus, popovers, list enter */
+  --duration-moderate: 240ms;  /* dialogs, sheets, view transitions */
+  --duration-slow: 320ms;      /* spring settle time, progress fill */
+  --duration-celebrate: 400ms; /* run completed: check + glow (max) */
+  --exit-factor: 0.7;          /* exits = enter × 0.7 */
+  --stagger: 24ms;             /* per item, first 8 items only */
+  --stagger-max-items: 8;
+
+  /* Easing — cubic-bezier */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);      /* default ease-out */
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);   /* large surfaces entering */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);         /* leaving, accelerate */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);        /* morphs, fills, cross-fades */
+
+  /* Springs — linear() approximations of damped springs (ζ shown).
+     Duration = settle time; perceived motion ≈ 55% of it. */
+  --spring-snappy: linear(0, 0.012 2%, 0.054 4.5%, 0.147 8%, 0.537 20%, 0.674 25%, 0.783 30%, 0.871 35.5%, 0.936 41.5%, 0.982 49%, 1.007 59%, 1.007 81.5%, 1);   /* ζ 0.82 · ~1% overshoot */
+  --spring-smooth: linear(0, 0.013 2%, 0.057 4.5%, 0.163 8.5%, 0.464 18.5%, 0.603 24%, 0.712 29.5%, 0.802 35.5%, 0.874 42.5%, 0.929 51%, 0.968 62.5%, 0.992 81.5%, 1);  /* ζ 1.0 · no overshoot */
+  --spring-bouncy: linear(0, 0.015 2%, 0.07 4.5%, 0.169 7.5%, 0.594 18%, 0.731 22%, 0.841 26%, 0.923 30%, 0.986 34.5%, 1.026 39.5%, 1.045 46%, 1.035 57.5%, 1.002 79.5%, 1);  /* ζ 0.70 · ~4.5% overshoot, small toggles only */
+  --spring-snappy-duration: 280ms;   /* perceived ≈ 150ms */
+  --spring-smooth-duration: 360ms;   /* perceived ≈ 200ms */
+  --spring-bouncy-duration: 360ms;   /* perceived ≈ 200ms */
+
+  /* Distance & scale — small and subtle */
+  --distance-1: 2px;           /* hover lift, toast reflow nudge */
+  --distance-2: 4px;           /* popover/menu enter */
+  --distance-3: 6px;           /* dialog, list item enter */
+  --scale-enter: 0.98;         /* popovers, dialogs grow from here */
+  --scale-press: 0.98;         /* :active on buttons, rows, chips */
+  --scale-rest: 1;
+
+  /* Continuous loops (the only place linear easing is allowed) */
+  --shimmer-duration: 1600ms;
+  --ambient-duration: 48s;     /* login hero mesh drift */
+  --ambient-parallax: 6px;     /* max pointer parallax on hero layers */
+
+  /* Glass (floating layers only) */
+  --glass-alpha: 84%;
+  --glass-blur: 20px;
+  --glass-saturate: 1.25;
+  --overlay-blur: 4px;
+}
+
+/* Spring fallback for engines without linear() */
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring-snappy: cubic-bezier(0.25, 1, 0.5, 1);
+    --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --spring-bouncy: cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Light theme (default)
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Canvas & text */
+  --background: oklch(0.991 0.004 85);
+  --foreground: oklch(0.21 0.008 80);
+  --card: oklch(0.998 0.002 85);
+  --card-foreground: oklch(0.21 0.008 80);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.008 80);
+
+  /* Actions */
+  --primary: oklch(0.50 0.13 268);
+  --primary-foreground: oklch(0.985 0.006 268);
+  --secondary: oklch(0.955 0.005 85);
+  --secondary-foreground: oklch(0.21 0.008 80);
+  --muted: oklch(0.962 0.005 85);
+  --muted-foreground: oklch(0.505 0.009 80);
+  --accent: oklch(0.952 0.006 85);          /* hover / highlighted row */
+  --accent-foreground: oklch(0.21 0.008 80);
+  --destructive: oklch(0.55 0.19 25);
+  --destructive-foreground: oklch(0.99 0.004 25);
+
+  /* Lines & fields */
+  --border: oklch(0.912 0.006 85);           /* hairlines, decorative */
+  --border-strong: oklch(0.62 0.01 80);      /* ≥ 3:1 — checkbox/radio/switch outlines */
+  --input: oklch(0.872 0.007 85);            /* field border */
+  --input-background: oklch(0.998 0.002 85);
+  --ring: oklch(0.55 0.15 268);
+
+  /* Sidebar — one step dimmer than the canvas */
+  --sidebar: oklch(0.968 0.005 85);
+  --sidebar-foreground: oklch(0.30 0.008 80);
+  --sidebar-primary: oklch(0.50 0.13 268);
+  --sidebar-primary-foreground: oklch(0.985 0.006 268);
+  --sidebar-accent: oklch(0.935 0.006 85);
+  --sidebar-accent-foreground: oklch(0.21 0.008 80);
+  --sidebar-border: oklch(0.905 0.006 85);
+  --sidebar-ring: oklch(0.55 0.15 268);
+
+  /* Surfaces & elevation (light: depth via shadow, not lightness) */
+  --surface-1: oklch(0.998 0.002 85);        /* in-page panels, cards */
+  --surface-2: oklch(1 0 0);                 /* popovers, menus, toasts */
+  --surface-3: oklch(1 0 0);                 /* dialogs, command palette */
+  --overlay: oklch(0.21 0.01 80 / 0.28);
+  --shadow-color: 80 0.01 0.2;               /* not used directly */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06), 0 2px 6px -1px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 2px 4px -1px oklch(0.2 0.01 80 / 0.06), 0 8px 24px -6px oklch(0.2 0.01 80 / 0.14);
+  --shadow-lg: 0 4px 8px -2px oklch(0.2 0.01 80 / 0.06), 0 24px 56px -12px oklch(0.2 0.01 80 / 0.22);
+  --shadow-highlight: inset 0 0 0 0 transparent;
+
+  /* Status — dot L 0.62 · text L 0.47 · tint L 0.955 */
+  --status-todo: oklch(0.62 0.01 80);
+  --status-todo-foreground: oklch(0.46 0.01 80);
+  --status-todo-bg: oklch(0.955 0.005 85);
+  --status-done: oklch(0.62 0.15 150);
+  --status-done-foreground: oklch(0.47 0.12 150);
+  --status-done-bg: oklch(0.955 0.04 150);
+  --status-progress: oklch(0.62 0.13 268);
+  --status-progress-foreground: oklch(0.47 0.13 268);
+  --status-progress-bg: oklch(0.955 0.02 268);
+  --status-overdue: oklch(0.62 0.19 25);
+  --status-overdue-foreground: oklch(0.47 0.16 25);
+  --status-overdue-bg: oklch(0.955 0.022 25);
+  --status-due-soon: oklch(0.62 0.13 75);
+  --status-due-soon-foreground: oklch(0.47 0.095 75);
+  --status-due-soon-bg: oklch(0.955 0.045 85);
+
+  /* AI — magenta / pink-violet, never the primary */
+  --ai: oklch(0.55 0.19 325);
+  --ai-foreground: oklch(0.47 0.17 325);
+  --ai-bg: oklch(0.958 0.03 325);
+
+  /* Run variables ({{tenant_name}} chips) — teal */
+  --variable: oklch(0.60 0.10 192);
+  --variable-foreground: oklch(0.45 0.075 192);
+  --variable-bg: oklch(0.955 0.03 192);
+
+  --required: oklch(0.55 0.17 25);
+
+  /* Charts (shadcn) — ordered for adjacency contrast */
+  --chart-1: oklch(0.55 0.13 268);
+  --chart-2: oklch(0.65 0.10 192);
+  --chart-3: oklch(0.72 0.13 75);
+  --chart-4: oklch(0.60 0.15 150);
+  --chart-5: oklch(0.58 0.06 80);
+
+  /* Weight compensation */
+  --weight-body: 400;
+
+  /* Hero ambient mesh */
+  --hero-1: oklch(0.80 0.08 268);
+  --hero-2: oklch(0.88 0.05 325);
+  --hero-3: oklch(0.93 0.03 85);
+}
+
+/* --------------------------------------------------------------------------
+   3. Dark theme — designed, not inverted
+   Elevation = lighter surface; solid fills are light with dark text.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: oklch(0.178 0.004 80);
+    --foreground: oklch(0.945 0.004 80);
+    --card: oklch(0.200 0.005 80);
+    --card-foreground: oklch(0.945 0.004 80);
+    --popover: oklch(0.228 0.005 80);
+    --popover-foreground: oklch(0.945 0.004 80);
+    --primary: oklch(0.74 0.12 268);
+    --primary-foreground: oklch(0.20 0.035 268);
+    --secondary: oklch(0.235 0.005 80);
+    --secondary-foreground: oklch(0.945 0.004 80);
+    --muted: oklch(0.235 0.005 80);
+    --muted-foreground: oklch(0.705 0.008 80);
+    --accent: oklch(0.240 0.005 80);
+    --accent-foreground: oklch(0.945 0.004 80);
+    --destructive: oklch(0.66 0.18 25);
+    --destructive-foreground: oklch(0.18 0.02 25);
+    --border: oklch(0.275 0.005 80);
+    --border-strong: oklch(0.52 0.008 80);
+    --input: oklch(0.31 0.006 80);
+    --input-background: oklch(0.198 0.005 80);
+    --ring: oklch(0.74 0.12 268);
+    --sidebar: oklch(0.158 0.004 80);
+    --sidebar-foreground: oklch(0.86 0.005 80);
+    --sidebar-primary: oklch(0.74 0.12 268);
+    --sidebar-primary-foreground: oklch(0.20 0.035 268);
+    --sidebar-accent: oklch(0.225 0.005 80);
+    --sidebar-accent-foreground: oklch(0.945 0.004 80);
+    --sidebar-border: oklch(0.245 0.005 80);
+    --sidebar-ring: oklch(0.74 0.12 268);
+    --surface-1: oklch(0.200 0.005 80);
+    --surface-2: oklch(0.228 0.005 80);
+    --surface-3: oklch(0.248 0.006 80);
+    --overlay: oklch(0.08 0.004 80 / 0.56);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3), 0 2px 6px -1px oklch(0 0 0 / 0.3);
+    --shadow-md: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 2px 4px -1px oklch(0 0 0 / 0.3), 0 12px 32px -8px oklch(0 0 0 / 0.55);
+    --shadow-lg: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 4px 8px -2px oklch(0 0 0 / 0.35), 0 28px 64px -12px oklch(0 0 0 / 0.65);
+    --shadow-highlight: inset 0 1px 0 oklch(1 0 0 / 0.05);
+    --status-todo: oklch(0.74 0.01 80);
+    --status-todo-foreground: oklch(0.82 0.008 80);
+    --status-todo-bg: oklch(0.26 0.005 80);
+    --status-done: oklch(0.74 0.15 150);
+    --status-done-foreground: oklch(0.82 0.12 150);
+    --status-done-bg: oklch(0.27 0.05 150);
+    --status-progress: oklch(0.74 0.12 268);
+    --status-progress-foreground: oklch(0.82 0.08 268);
+    --status-progress-bg: oklch(0.27 0.05 268);
+    --status-overdue: oklch(0.74 0.15 25);
+    --status-overdue-foreground: oklch(0.82 0.10 25);
+    --status-overdue-bg: oklch(0.27 0.06 25);
+    --status-due-soon: oklch(0.74 0.14 75);
+    --status-due-soon-foreground: oklch(0.82 0.12 75);
+    --status-due-soon-bg: oklch(0.27 0.05 75);
+    --ai: oklch(0.74 0.16 325);
+    --ai-foreground: oklch(0.82 0.12 325);
+    --ai-bg: oklch(0.27 0.07 325);
+    --variable: oklch(0.74 0.11 192);
+    --variable-foreground: oklch(0.82 0.09 192);
+    --variable-bg: oklch(0.27 0.04 192);
+    --required: oklch(0.74 0.15 25);
+    --chart-1: oklch(0.70 0.13 268);
+    --chart-2: oklch(0.74 0.10 192);
+    --chart-3: oklch(0.80 0.13 75);
+    --chart-4: oklch(0.72 0.15 150);
+    --chart-5: oklch(0.62 0.03 80);
+    --weight-body: 450;
+    --hero-1: oklch(0.36 0.10 268);
+    --hero-2: oklch(0.30 0.08 325);
+    --hero-3: oklch(0.22 0.01 80);
+  }
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: oklch(0.178 0.004 80);
+  --foreground: oklch(0.945 0.004 80);
+  --card: oklch(0.200 0.005 80);
+  --card-foreground: oklch(0.945 0.004 80);
+  --popover: oklch(0.228 0.005 80);
+  --popover-foreground: oklch(0.945 0.004 80);
+  --primary: oklch(0.74 0.12 268);
+  --primary-foreground: oklch(0.20 0.035 268);
+  --secondary: oklch(0.235 0.005 80);
+  --secondary-foreground: oklch(0.945 0.004 80);
+  --muted: oklch(0.235 0.005 80);
+  --muted-foreground: oklch(0.705 0.008 80);
+  --accent: oklch(0.240 0.005 80);
+  --accent-foreground: oklch(0.945 0.004 80);
+  --destructive: oklch(0.66 0.18 25);
+  --destructive-foreground: oklch(0.18 0.02 25);
+  --border: oklch(0.275 0.005 80);
+  --border-strong: oklch(0.52 0.008 80);
+  --input: oklch(0.31 0.006 80);
+  --input-background: oklch(0.198 0.005 80);
+  --ring: oklch(0.74 0.12 268);
+  --sidebar: oklch(0.158 0.004 80);
+  --sidebar-foreground: oklch(0.86 0.005 80);
+  --sidebar-primary: oklch(0.74 0.12 268);
+  --sidebar-primary-foreground: oklch(0.20 0.035 268);
+  --sidebar-accent: oklch(0.225 0.005 80);
+  --sidebar-accent-foreground: oklch(0.945 0.004 80);
+  --sidebar-border: oklch(0.245 0.005 80);
+  --sidebar-ring: oklch(0.74 0.12 268);
+  --surface-1: oklch(0.200 0.005 80);
+  --surface-2: oklch(0.228 0.005 80);
+  --surface-3: oklch(0.248 0.006 80);
+  --overlay: oklch(0.08 0.004 80 / 0.56);
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3), 0 2px 6px -1px oklch(0 0 0 / 0.3);
+  --shadow-md: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 2px 4px -1px oklch(0 0 0 / 0.3), 0 12px 32px -8px oklch(0 0 0 / 0.55);
+  --shadow-lg: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 4px 8px -2px oklch(0 0 0 / 0.35), 0 28px 64px -12px oklch(0 0 0 / 0.65);
+  --shadow-highlight: inset 0 1px 0 oklch(1 0 0 / 0.05);
+  --status-todo: oklch(0.74 0.01 80);
+  --status-todo-foreground: oklch(0.82 0.008 80);
+  --status-todo-bg: oklch(0.26 0.005 80);
+  --status-done: oklch(0.74 0.15 150);
+  --status-done-foreground: oklch(0.82 0.12 150);
+  --status-done-bg: oklch(0.27 0.05 150);
+  --status-progress: oklch(0.74 0.12 268);
+  --status-progress-foreground: oklch(0.82 0.08 268);
+  --status-progress-bg: oklch(0.27 0.05 268);
+  --status-overdue: oklch(0.74 0.15 25);
+  --status-overdue-foreground: oklch(0.82 0.10 25);
+  --status-overdue-bg: oklch(0.27 0.06 25);
+  --status-due-soon: oklch(0.74 0.14 75);
+  --status-due-soon-foreground: oklch(0.82 0.12 75);
+  --status-due-soon-bg: oklch(0.27 0.05 75);
+  --ai: oklch(0.74 0.16 325);
+  --ai-foreground: oklch(0.82 0.12 325);
+  --ai-bg: oklch(0.27 0.07 325);
+  --variable: oklch(0.74 0.11 192);
+  --variable-foreground: oklch(0.82 0.09 192);
+  --variable-bg: oklch(0.27 0.04 192);
+  --required: oklch(0.74 0.15 25);
+  --chart-1: oklch(0.70 0.13 268);
+  --chart-2: oklch(0.74 0.10 192);
+  --chart-3: oklch(0.80 0.13 75);
+  --chart-4: oklch(0.72 0.15 150);
+  --chart-5: oklch(0.62 0.03 80);
+  --weight-body: 450;
+  --hero-1: oklch(0.36 0.10 268);
+  --hero-2: oklch(0.30 0.08 325);
+  --hero-3: oklch(0.22 0.01 80);
+}
+
+/* --------------------------------------------------------------------------
+   4. Wide-gamut boost — marks only (dots, fills, rings, AI, variables).
+   Text tokens stay in sRGB so measured contrast stays true.
+   -------------------------------------------------------------------------- */
+@media (color-gamut: p3) {
+  :root,
+  [data-theme="light"] {
+    --primary: oklch(0.50 0.15 268);
+    --ring: oklch(0.55 0.17 268);
+    --status-done: oklch(0.62 0.19 150);
+    --status-overdue: oklch(0.62 0.22 25);
+    --status-due-soon: oklch(0.62 0.15 75);
+    --status-progress: oklch(0.62 0.15 268);
+    --ai: oklch(0.55 0.23 325);
+    --variable: oklch(0.60 0.12 192);
+  }
+}
+@media (color-gamut: p3) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: oklch(0.74 0.14 268);
+    --ring: oklch(0.74 0.14 268);
+    --status-done: oklch(0.74 0.19 150);
+    --status-overdue: oklch(0.74 0.17 25);
+    --status-due-soon: oklch(0.74 0.16 75);
+    --status-progress: oklch(0.74 0.14 268);
+    --ai: oklch(0.74 0.19 325);
+    --variable: oklch(0.74 0.13 192);
+  }
+}
+@media (color-gamut: p3) {
+  :root[data-theme="dark"],
+  [data-theme="dark"] {
+    --primary: oklch(0.74 0.14 268);
+    --ring: oklch(0.74 0.14 268);
+    --status-done: oklch(0.74 0.19 150);
+    --status-overdue: oklch(0.74 0.17 25);
+    --status-due-soon: oklch(0.74 0.16 75);
+    --status-progress: oklch(0.74 0.14 268);
+    --ai: oklch(0.74 0.19 325);
+    --variable: oklch(0.74 0.13 192);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Derived tokens — re-resolved per theme scope (declared on every
+   [data-theme] so nested previews compute against their own palette)
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme] {
+  /* Run status aliases */
+  --status-completed: var(--status-done);
+  --status-completed-foreground: var(--status-done-foreground);
+  --status-completed-bg: var(--status-done-bg);
+
+  /* Interaction states for solid fills (mix toward the text color) */
+  --primary-hover: color-mix(in oklab, var(--primary), var(--foreground) 10%);
+  --primary-active: color-mix(in oklab, var(--primary), var(--foreground) 18%);
+  --destructive-hover: color-mix(in oklab, var(--destructive), var(--foreground) 10%);
+  --accent-active: color-mix(in oklab, var(--accent), var(--foreground) 5%);
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
+
+  /* Glass (popover, menu, command palette, toast) */
+  --glass-bg: color-mix(in oklch, var(--popover) var(--glass-alpha), transparent);
+  --glass-border: color-mix(in oklab, var(--border), var(--foreground) 6%);
+
+  /* Selection, caret, scrollbars */
+  --selection: color-mix(in oklch, var(--primary) 24%, transparent);
+  --caret: var(--primary);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 16%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 28%, transparent);
+
+  /* Skeleton shimmer */
+  --skeleton: var(--muted);
+  --skeleton-sheen: color-mix(in oklab, var(--muted), var(--foreground) 6%);
+
+  /* Gentle completion glow (run completed) */
+  --glow-done: color-mix(in oklch, var(--status-done) 32%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   6. User preferences
+   -------------------------------------------------------------------------- */
+
+/* Reduced motion → opacity-only, short and soft. Transforms collapse. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --distance-1: 0px; --distance-2: 0px; --distance-3: 0px;
+    --scale-enter: 1; --scale-press: 1;
+    --stagger: 0ms;
+    --spring-snappy: var(--ease-standard);
+    --spring-smooth: var(--ease-standard);
+    --spring-bouncy: var(--ease-standard);
+    --spring-snappy-duration: var(--duration-fast);
+    --spring-smooth-duration: var(--duration-fast);
+    --spring-bouncy-duration: var(--duration-fast);
+    --duration-slow: var(--duration-fast);
+    --duration-celebrate: var(--duration-base);
+    --ambient-parallax: 0px;
+  }
+}
+/* Same, forced by the page (demo switch / user setting) */
+:root[data-motion="reduce"] {
+  --distance-1: 0px; --distance-2: 0px; --distance-3: 0px;
+  --scale-enter: 1; --scale-press: 1;
+  --stagger: 0ms;
+  --spring-snappy: var(--ease-standard);
+  --spring-smooth: var(--ease-standard);
+  --spring-bouncy: var(--ease-standard);
+  --spring-snappy-duration: var(--duration-fast);
+  --spring-smooth-duration: var(--duration-fast);
+  --spring-bouncy-duration: var(--duration-fast);
+  --duration-slow: var(--duration-fast);
+  --duration-celebrate: var(--duration-base);
+  --ambient-parallax: 0px;
+}
+
+/* Reduced transparency → opaque floating layers, no blur */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass-alpha: 100%; --glass-blur: 0px; --overlay-blur: 0px; }
+}
+
+/* Forced colors → system palette, no glass */
+@media (forced-colors: active) {
+  :root,
+  [data-theme] {
+    --glass-alpha: 100%;
+    --glass-blur: 0px;
+    --overlay-blur: 0px;
+    --glass-bg: Canvas;
+    --ring: Highlight;
+    --border: CanvasText;
+    --input: CanvasText;
+    --border-strong: CanvasText;
+  }
+}

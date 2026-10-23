@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Systems benchmark · Property Workflows</title>
+<script>
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<style>
+  html { scroll-padding-top: calc(var(--size-header) + var(--space-3)); }
+  .pw-theme-toggle { display: inline-flex; gap: 2px; padding: 2px; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-sm); }
+  .pw-theme-toggle button { height: 22px; padding: 0 var(--space-2); border-radius: var(--radius-xs); font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--muted-foreground);
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+  .pw-theme-toggle button:hover { color: var(--foreground); }
+  .pw-theme-toggle button[aria-checked="true"] { background: var(--background); color: var(--foreground); box-shadow: 0 0 0 var(--hairline) var(--border), var(--shadow-highlight); }
+
+  /* ---------- page frame ---------- */
+  .sy-top { position: sticky; top: 0; z-index: var(--z-sticky); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    height: var(--size-header); padding: 0 var(--space-6); background: color-mix(in oklch, var(--background) 88%, transparent);
+    backdrop-filter: blur(12px) saturate(1.2); border-bottom: var(--hairline) solid var(--border); }
+  .sy-top a { color: var(--foreground); text-decoration: none; }
+  .sy-top .sy-crumbs { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+  .sy-top .sy-crumbs span:first-child { color: var(--muted-foreground); }
+  .sy-wrap { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--space-10); max-width: 1320px; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+  .sy-toc { position: sticky; top: calc(var(--size-header) + var(--space-6)); align-self: start; display: flex; flex-direction: column; gap: 1px; font-size: var(--text-label); }
+  .sy-toc a { display: block; padding: 5px var(--space-2); border-radius: var(--radius-sm); color: var(--muted-foreground); text-decoration: none; transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+  .sy-toc a:hover { background: var(--accent); color: var(--foreground); }
+  .sy-toc a[aria-current="true"] { background: var(--sidebar-accent); color: var(--foreground); font-weight: var(--weight-medium); }
+  .sy-toc small { display: block; margin: var(--space-4) var(--space-2) var(--space-1); font-size: var(--text-meta); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; }
+  main { min-width: 0; }
+  section { margin-bottom: var(--space-16); }
+  section > header { margin-bottom: var(--space-6); max-width: 78ch; }
+  .sy-eyebrow { font-size: var(--text-meta); line-height: var(--leading-meta); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.08em; font-weight: var(--weight-medium); }
+  h1.t-display { margin: var(--space-2) 0 var(--space-3); }
+  h2.t-title { margin: var(--space-1) 0 var(--space-2); }
+  h3.t-heading { margin: var(--space-6) 0 var(--space-2); }
+  .sy-lead { color: var(--muted-foreground); font-size: 15px; line-height: 22px; max-width: 74ch; }
+  p + p { margin-top: var(--space-2); }
+  code, .code { font-family: var(--font-mono); font-size: 12px; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-xs); padding: 0 4px; white-space: nowrap; }
+  pre.sy-pre { font-family: var(--font-mono); font-size: 12px; line-height: 18px; background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); overflow-x: auto; }
+  .sy-tag { display: inline-flex; align-items: center; height: 18px; padding: 0 var(--space-2); border-radius: var(--radius-pill); font-size: 11px; font-weight: var(--weight-strong); letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
+  .sy-tag[data-t="must"] { background: var(--status-overdue-bg); color: var(--status-overdue-foreground); }
+  .sy-tag[data-t="should"] { background: var(--status-due-soon-bg); color: var(--status-due-soon-foreground); }
+  .sy-tag[data-t="could"] { background: var(--status-todo-bg); color: var(--status-todo-foreground); }
+  .sy-ev { display: inline-flex; align-items: center; height: 16px; padding: 0 5px; border-radius: var(--radius-xs); font-size: 10.5px; font-weight: var(--weight-medium); border: var(--hairline) solid var(--border); color: var(--muted-foreground); white-space: nowrap; }
+  .sy-ev[data-v="v"] { background: var(--status-done-bg); color: var(--status-done-foreground); border-color: transparent; }
+  .sy-ev[data-v="s"] { background: var(--status-progress-bg); color: var(--status-progress-foreground); border-color: transparent; }
+  .sy-card { background: var(--surface-1); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+  .sy-note { display: flex; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: var(--hairline) solid var(--border); border-left: 3px solid var(--primary); border-radius: var(--radius-md); background: var(--surface-1); font-size: var(--text-label); line-height: var(--leading-label); color: var(--foreground); }
+  .sy-note[data-k="warn"] { border-left-color: var(--status-overdue); }
+  .sy-note strong { font-weight: var(--weight-strong); }
+  .sy-grid { display: grid; gap: var(--space-3); }
+  .sy-g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sy-g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sy-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  a.sy-src { font-size: var(--text-meta); }
+
+  /* ---------- practices ---------- */
+  .sy-pr { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-3); }
+  .sy-pr > .n { font-family: var(--font-mono); font-size: 13px; color: var(--muted-foreground); padding-top: 2px; }
+  .sy-pr h3 { margin: 0 0 var(--space-1); font-size: var(--text-heading); line-height: var(--leading-heading); font-weight: var(--weight-heading); letter-spacing: var(--tracking-heading); }
+  .sy-pr dl { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 3px var(--space-3); margin-top: var(--space-2); font-size: var(--text-label); line-height: 19px; }
+  .sy-pr dt { color: var(--muted-foreground); }
+  .sy-pr dd { margin: 0; }
+
+  /* ---------- matrix ---------- */
+  .sy-matrix-wrap { border: var(--hairline) solid var(--border); border-radius: var(--radius-md); overflow: auto; max-height: 78vh; background: var(--surface-1); }
+  table.sy-matrix { width: 100%; min-width: 1500px; font-size: 12px; line-height: 17px; }
+  .sy-matrix th, .sy-matrix td { text-align: left; vertical-align: top; padding: var(--space-2) var(--space-3); border-bottom: var(--hairline) solid var(--border); border-right: var(--hairline) solid var(--border); min-width: 168px; }
+  .sy-matrix th:last-child, .sy-matrix td:last-child { border-right: 0; }
+  .sy-matrix thead th { position: sticky; top: 0; z-index: 3; background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); font-weight: var(--weight-medium); }
+  .sy-matrix tbody th { position: sticky; left: 0; z-index: 2; background: var(--surface-1); min-width: 132px; max-width: 132px; font-size: var(--text-label); font-weight: var(--weight-strong); color: var(--foreground); box-shadow: 1px 0 0 var(--border); }
+  .sy-matrix thead th:first-child { left: 0; z-index: 4; min-width: 132px; }
+  .sy-matrix tbody tr:hover td, .sy-matrix tbody tr:hover th { background: var(--accent); }
+  .sy-matrix td { color: var(--foreground); }
+  .sy-matrix td.nd { color: var(--muted-foreground); }
+  .sy-matrix tr.grp th { position: static; background: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); box-shadow: none; max-width: none; }
+
+  /* ---------- gap list ---------- */
+  .sy-filter { display: inline-flex; gap: 2px; padding: 2px; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-4); flex-wrap: wrap; }
+  .sy-filter button { height: 24px; padding: 0 var(--space-3); border-radius: var(--radius-xs); font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--muted-foreground); transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard); }
+  .sy-filter button:hover { color: var(--foreground); }
+  .sy-filter button[aria-pressed="true"] { background: var(--background); color: var(--foreground); box-shadow: 0 0 0 var(--hairline) var(--border); }
+  .sy-gap { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); background: var(--surface-1); }
+  .sy-gap + .sy-gap { margin-top: var(--space-2); }
+  .sy-gap[hidden] { display: none; }
+  .sy-gap .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); padding-top: 2px; }
+  .sy-gap h3 { margin: 0; font-size: var(--text-heading); line-height: var(--leading-heading); font-weight: var(--weight-heading); letter-spacing: var(--tracking-heading); }
+  .sy-gap .head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+  .sy-gap dl { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 4px var(--space-3); font-size: var(--text-label); line-height: 19px; }
+  .sy-gap dt { color: var(--muted-foreground); }
+  .sy-gap dd { margin: 0; }
+  .sy-gap ul { margin: 0; padding-left: 16px; }
+  .sy-gap li + li { margin-top: 2px; }
+
+  /* ---------- contrast table ---------- */
+  table.sy-t { width: 100%; font-size: 12.5px; line-height: 18px; }
+  .sy-t th, .sy-t td { text-align: left; padding: 6px var(--space-3); border-bottom: var(--hairline) solid var(--border); vertical-align: middle; }
+  .sy-t thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); font-weight: var(--weight-medium); }
+  .sy-t td.r, .sy-t th.r { text-align: right; }
+  .sy-ok { color: var(--status-done-foreground); font-weight: var(--weight-strong); }
+  .sy-bad { color: var(--status-overdue-foreground); font-weight: var(--weight-strong); }
+  .sy-scroll { overflow-x: auto; border: var(--hairline) solid var(--border); border-radius: var(--radius-md); background: var(--surface-1); }
+  .sy-scroll .sy-t { min-width: 760px; }
+  .sy-sw { display: inline-block; width: 28px; height: 14px; border-radius: var(--radius-xs); vertical-align: -2px; box-shadow: inset 0 0 0 var(--hairline) color-mix(in oklch, var(--foreground) 16%, transparent); background: var(--c); }
+
+  /* ---------- state-layer demo ---------- */
+  .sy-demo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+  .sy-demo .pane { padding: var(--space-3); border-radius: var(--radius-md); border: var(--hairline) solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+  .sy-demo .pane[data-s="bg"] { background: var(--background); }
+  .sy-demo .pane[data-s="sb"] { background: var(--sidebar); }
+  .sy-demo .pane[data-s="card"] { background: var(--surface-1); }
+  .sy-demo .pane > b { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); font-weight: var(--weight-medium); margin-bottom: var(--space-1); }
+  .sy-row { display: flex; align-items: center; gap: var(--space-2); height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-label); }
+  .sy-row .box { width: 14px; height: 14px; border-radius: var(--radius-xs); border: 1.5px solid var(--border-strong); flex: none; }
+  .sy-row[data-st="hover"] { background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+  .sy-row[data-st="press"] { background: color-mix(in oklch, var(--foreground) 8%, transparent); }
+  .sy-row[data-st="sel"] { background: color-mix(in oklch, var(--primary) 10%, transparent); }
+  .sy-row[data-st="sel"] .lbl { color: var(--foreground); }
+  .sy-row .m .dk { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sy-row .m .lt { display: none; } :root:not([data-theme="light"]) .sy-row .m .dk { display: inline; } }
+  :root[data-theme="dark"] .sy-row .m .lt { display: none; } :root[data-theme="dark"] .sy-row .m .dk { display: inline; }
+  .sy-row .m { margin-left: auto; color: var(--muted-foreground); font-size: var(--text-meta); }
+
+  /* ---------- login table ---------- */
+  .sy-chk { list-style: none; padding: 0; display: grid; gap: 6px; font-size: var(--text-label); line-height: 19px; }
+  .sy-chk li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: var(--space-2); }
+  .sy-chk li::before { content: ""; width: 14px; height: 14px; margin-top: 2px; border-radius: var(--radius-xs); border: 1.5px solid var(--border-strong); }
+  .sy-anti { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-bottom: var(--hairline) solid var(--border); font-size: var(--text-label); line-height: 19px; }
+  .sy-anti:first-of-type { border-top: var(--hairline) solid var(--border); }
+  .sy-anti .no { color: var(--status-overdue-foreground); font-weight: var(--weight-medium); }
+  .sy-anti .no::before { content: "Уникати · "; font-weight: var(--weight-strong); }
+  .sy-anti .yes::before { content: "Натомість · "; font-weight: var(--weight-strong); color: var(--status-done-foreground); }
+  ol.sy-outline { padding-left: 0; list-style: none; counter-reset: o; display: grid; gap: var(--space-2); }
+  ol.sy-outline > li { counter-increment: o; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); background: var(--surface-1); font-size: var(--text-label); line-height: 19px; }
+  ol.sy-outline > li::before { content: counter(o, decimal-leading-zero); font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); padding-top: 1px; }
+  ol.sy-outline b { font-weight: var(--weight-strong); }
+  .sy-src-list { columns: 2; column-gap: var(--space-8); font-size: var(--text-meta); line-height: 18px; padding-left: 18px; }
+  .sy-src-list li { break-inside: avoid; margin-bottom: 3px; overflow-wrap: anywhere; }
+  .sy-foot { margin-top: var(--space-12); padding-top: var(--space-4); border-top: var(--hairline) solid var(--border); font-size: var(--text-meta); color: var(--muted-foreground); }
+
+  @media (max-width: 1100px) { .sy-wrap { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .sy-toc { position: static; flex-direction: row; flex-wrap: wrap; gap: var(--space-1); } .sy-toc small { display: none; } .sy-toc a { border: var(--hairline) solid var(--border); } .sy-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) {
+    .sy-top { padding: 0 var(--space-4); } .sy-wrap { padding: var(--space-6) var(--space-4) var(--space-12); }
+    .sy-g2, .sy-g3, .sy-demo, .sy-anti { grid-template-columns: minmax(0, 1fr); }
+    .sy-pr { grid-template-columns: minmax(0, 1fr); } .sy-pr > .n { display: none; }
+    .sy-pr dl, .sy-gap dl { grid-template-columns: minmax(0, 1fr); gap: 0; } .sy-pr dt, .sy-gap dt { margin-top: var(--space-2); font-size: var(--text-meta); }
+    .sy-gap { grid-template-columns: minmax(0, 1fr); } .sy-gap .id { padding: 0; }
+    .sy-src-list { columns: 1; } .sy-top .sy-crumbs span:first-child { display: none; }
+    code, .code { white-space: normal; overflow-wrap: anywhere; } .sy-pre { max-width: 100%; } .sy-gap > div, .sy-gap dd, .sy-card, .sy-pr > div { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="sy-top">
+  <div class="sy-crumbs t-label"><span>Property Workflows</span><span aria-hidden="true">/</span><a href="index.html">Foundations</a><span aria-hidden="true">/</span><span style="color:var(--foreground)">Systems benchmark</span></div>
+  <div class="pw-theme-toggle" role="radiogroup" aria-label="Theme">
+    <button type="button" role="radio" data-value="light">Light</button>
+    <button type="button" role="radio" data-value="dark">Dark</button>
+    <button type="button" role="radio" data-value="system">System</button>
+  </div>
+</header>
+
+<div class="sy-wrap">
+  <nav class="sy-toc" aria-label="Sections">
+    <small>Розділи</small>
+    <a href="#top10">1 · Топ-10 практик</a>
+    <a href="#matrix">2 · Матриця систем</a>
+    <a href="#gaps">3 · Gap analysis</a>
+    <a href="#domain">4 · Доменні патерни</a>
+    <a href="#antipatterns">5 · Анти-патерни</a>
+    <a href="#designmd">6 · DESIGN.md</a>
+    <a href="#sources">Джерела</a>
+  </nav>
+
+  <main id="main">
+    <header style="margin-bottom: var(--space-10); max-width: 78ch">
+      <div class="sy-eyebrow">Benchmark · 23.10.2026 · foundation v0.1</div>
+      <h1 class="t-display">Що в провідних дизайн-системах 2026 ми ще не маємо</h1>
+      <p class="sy-lead">Перевірено офіційні сторінки й токен-файли 16 систем та інструментів, порівняно з нашими <code>tokens.css</code>, <code>base.css</code> і <code>BRIEF.md</code>. Контраст усіх запропонованих кольорів пораховано зі значень OKLCH (WCAG 2.x, sRGB-композит альфи, як у браузері). Де факт не вдалося відкрити на офіційній сторінці — це позначено.</p>
+      <div class="sy-meta-row" style="margin-top: var(--space-3)">
+        <span class="sy-ev" data-v="v">verified</span><span class="t-meta t-muted">сторінку/файл відкрито й прочитано 23.10.2026</span>
+        <span class="sy-ev" data-v="s">secondary</span><span class="t-meta t-muted">переказ третьої сторони або згадка</span>
+        <span class="sy-ev">unverified</span><span class="t-meta t-muted">моя професійна практика, не підтверджено джерелом</span>
+      </div>
+      <div class="sy-note" data-k="warn" style="margin-top: var(--space-4)"><div><strong>Чого немає в цьому проході.</strong> Notion, Plain і Height не мають публічної документації дизайн-системи, яку вдалося перевірити, — їх виключено, а не вгадано. Сторінки входу Stripe, Raycast, Clerk і WorkOS віддають контент лише після JS або автентифікації й не були зняті; їхні патерни тут не цитуються.</div></div>
+    </header>
+
+    <!-- ========================================================= 1 -->
+    <section id="top10">
+      <header>
+        <div class="sy-eyebrow">1 · Executive summary</div>
+        <h2 class="t-title">Десять практик, які варто перейняти</h2>
+        <p class="sy-lead">Відсортовано за віддачею для нашого продукту: перші п’ять закривають конкретні дефекти фундаменту, решта підвищують планку.</p>
+      </header>
+      <div class="sy-grid sy-g2" style="gap: var(--space-3)">
+
+        <article class="sy-card sy-pr"><span class="n">01</span><div>
+          <h3>State layers: hover, pressed, selected як альфа-шар, а не нове суцільне значення</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="must">must</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Radix дає кожному кроку шкали альфа-двійника <code>a1–a12</code>; Geist радить <code>gray-alpha</code> там, де фон має просвічувати; Atlassian робить <code>color.background.neutral</code> прозорим, щоб він темнів у light і світлів у dark. Наразі <b>у нас ~40 різних ad-hoc <code>color-mix</code></b> (foreground у 9/10/12/14/16 %, primary у 6/55/65/70 %).</dd>
+            <dt>Зміна</dt><dd>3 токени <code>--state-hover/pressed/selected</code> (5 / 8 / 10 %), див. G3. Виміряно: на сайдбарі selected 14 % уже дає 4.42:1 для muted-текста — ліміт 10 %.</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale">Radix scale</a> · <a class="sy-src" href="https://vercel.com/geist/colors">Geist colors</a> · <a class="sy-src" href="https://atlassian.design/foundations/elevation">Atlassian elevation</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">02</span><div>
+          <h3>Контрастні гарантії мають бути у структурі, а не в перевірці постфактум</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="must">must</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Stripe: кольори на рівномірних рівнях контрасту, «≥ 5 рівнів різниці = достатньо для малого тексту, ≥ 4 для іконок». Radix: кроки 11/12 гарантують Lc 60/90 на кроці 2. Linear: змінна <code>contrast</code> генерує high-contrast теми. Наш аудит знайшов 3 пари нижче 3:1 (поле вводу в обох темах, chart-3) і ще 4 на hover/selected-поверхнях (границі контролів).</dd>
+            <dt>Зміна</dt><dd>Виправити значення (G1, G2, G7), зафіксувати правило «ΔL» у DESIGN.md і додати <code>prefers-contrast: more</code> (G5).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://stripe.com/blog/accessible-color-systems">Stripe</a> · <a class="sy-src" href="https://linear.app/now/how-we-redesigned-the-linear-ui">Linear</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">03</span><div>
+          <h3>Два режими руху: productive і expressive; spatial і effects пружини</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="must">must</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Carbon розділяє productive (кнопки, таблиці, дропдауни: 70/110/150 мс) і expressive (значущі моменти: 240–700 мс). M3 розділяє spatial-пружини (ζ 0.9, перельот дозволено) і effects (ζ 1, «alpha не має відскакувати вище 100 %»). Atlassian: hover 50–150 мс, enter/exit 150–400, модал 250; вихід швидший за вхід.</dd>
+            <dt>Зміна</dt><dd>Наші 90/140/200/240/320/400 вже у межах; бракує <b>класифікації</b> і правила «opacity/колір ніколи на пружині з перельотом» (G4).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://carbondesignsystem.com/elements/motion/overview/">Carbon motion</a> · <a class="sy-src" href="https://raw.githubusercontent.com/material-components/material-components-android/master/docs/theming/Motion.md">M3 springs</a> · <a class="sy-src" href="https://atlassian.design/foundations/motion">Atlassian motion</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">04</span><div>
+          <h3>Шари поверхонь: sunken → default → raised → overlay, і вкладені шари крокують</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="should">should</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Atlassian має чотири рівні, де raised і overlay завжди парою «surface + shadow»; у dark «чим вище, тим світліша поверхня». Carbon має <code>layer-01/02/03</code>: картка в картці бере наступний шар автоматично. У нас є <code>surface-1/2/3</code>, але немає «sunken» (канва білдера, зона за картками) і правила вкладення.</dd>
+            <dt>Зміна</dt><dd><code>--surface-sunken</code> + правило вкладення (G8).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://atlassian.design/foundations/elevation">Atlassian</a> · <a class="sy-src" href="https://github.com/carbon-design-system/carbon">Carbon themes (token JSON)</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">05</span><div>
+          <h3>«Структуру відчувають, а не бачать»: менше роздільників, тихіший chrome</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="should">should</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Linear 2026: «Don’t compete for attention you haven’t earned», «Structure should be felt not seen», сайдбар приглушено, іконки менші, кольорові фони team-іконок прибрано, розділювачів менше, палітра теплішає, але «too warm = muddy». Geist: «draw each border once». Ми вже тепліші нейтралі й тьмяніший сайдбар — бракує <b>правила й лінта</b> проти подвійних меж.</dd>
+            <dt>Зміна</dt><dd>Правило border discipline в DESIGN.md (G11).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://linear.app/now/behind-the-latest-design-refresh">Linear refresh</a> · <a class="sy-src" href="https://vercel.com/geist/colors">Geist</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">06</span><div>
+          <h3>Токени, що читаються машиною: DTCG JSON з <code>$description</code>, одне джерело для тем</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="should">should</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Carbon публікує теми як DTCG JSON (<code>$schema …/2025.10/format.json</code>), 237 токенів на тему, у кожного — <code>$description</code> («End color for AI aura gradient…»). У нас dark-блок <b>продубльовано дослівно</b> (70 рядків ×2, перевірено) — ризик розбіжності. Polaris додає Stylelint-конфіг, що змушує брати токени.</dd>
+            <dt>Зміна</dt><dd><code>tokens.json</code> → build → CSS; мінімум — перевірка паритету тем і <code>light-dark()</code> (Baseline 2024) для кольорів (G9).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://github.com/carbon-design-system/carbon">Carbon</a> · <a class="sy-src" href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark">MDN light-dark()</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">07</span><div>
+          <h3>Glass лише в шарі навігації/керування, із суцільним fallback і контуром при increase contrast</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="must">must</span><span class="sy-ev" data-v="s">secondary</span><span class="sy-ev" data-v="v">verified (Linear)</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Apple: glass — шар навігації, не контенту (з форуму розробників WWDC25). Linear при відтворенні Liquid Glass <b>свідомо відмовився від refraction</b> («може знижувати читабельність у щільних інтерфейсах») і малює суцільні контури при Increase Contrast. Ми вже обмежили glass і маємо <code>prefers-reduced-transparency</code>; бракує <code>prefers-contrast</code> (G5).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://linear.app/now/linear-liquid-glass">Linear on Liquid Glass</a> · <a class="sy-src" href="https://developer.apple.com/forums/thread/791070">WWDC25 design lab summary</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">08</span><div>
+          <h3>Нативні примітиви платформи: popover, anchor positioning, @starting-style, light-dark()</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="should">should</span><span class="sy-ev" data-v="v">verified (MDN)</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Anchor positioning — Baseline 2026 (з січня 2026), Popover API — Baseline 2024, <code>light-dark()</code> — Baseline 2024, <code>contrast-color()</code> — Baseline 2026 (квітень), але повертає лише чорне/біле й «на середніх тонах не гарантує читабельність». Наші поповери позиціюють JS-ом/<code>--origin</code>.</dd>
+            <dt>Зміна</dt><dd><code>.pw-popover</code> на <code>[popover]</code> + <code>position-area</code> + <code>position-try-fallbacks</code>; enter/exit через <code>@starting-style</code> (G10).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://developer.mozilla.org/en-US/docs/Web/CSS/anchor-size">MDN anchor</a> · <a class="sy-src" href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color">MDN contrast-color</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">09</span><div>
+          <h3>AI позначено завжди, пояснюється за запитом, скасовується одним кліком</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="should">should</span><span class="sy-ev" data-v="v">verified</span></div>
+          <dl>
+            <dt>Чому</dt><dd>Carbon for AI: «AI label» — інтерактивний тригер explainability-поповера; ручна правка знімає AI-стиль, а «revert to AI» відновлює; AI-стиль «не прикраса, лише ідентифікація». Carbon не описує confidence/provenance — це наше розширення (G12).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://carbondesignsystem.com/guidelines/carbon-for-ai/">Carbon for AI</a></dd>
+          </dl></div></article>
+
+        <article class="sy-card sy-pr"><span class="n">10</span><div>
+          <h3>Правила доступності 2.2, яких наш base ще не виконує: Focus Not Obscured, Accessible Authentication</h3>
+          <div class="sy-meta-row"><span class="sy-tag" data-t="must">must</span><span class="sy-ev" data-v="v">verified (W3C)</span></div>
+          <dl>
+            <dt>Чому</dt><dd>3.3.8 (AA): автентифікація не може вимагати когнітивного тесту — дозволити paste і менеджери паролів, не розбивати код на окремі цифри без альтернативи; passkey — окремий шлях. 2.4.11 (AA): sticky-шапка не має повністю закривати елемент у фокусі — потрібен <code>scroll-padding</code>. У <code>base.css</code> його немає (є в <code>overlays.css</code> лише локально).</dd>
+            <dt>Зміна</dt><dd>G6 + чекліст логіну (розділ 4).</dd>
+            <dt>Джерела</dt><dd><a class="sy-src" href="https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum.html">WCAG 3.3.8</a> · <a class="sy-src" href="https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html">WCAG 2.4.11</a></dd>
+          </dl></div></article>
+      </div>
+    </section>
+
+    <!-- ========================================================= 2 -->
+    <section id="matrix">
+      <header>
+        <div class="sy-eyebrow">2 · Comparison matrix</div>
+        <h2 class="t-title">Системи × виміри</h2>
+        <p class="sy-lead">Лише перевірені факти; «—» означає, що на відкритих сторінках, які я прочитав, цього немає (не що системи цього не мають). Таблиця прокручується; перший стовпець і шапка закріплені.</p>
+      </header>
+      <div class="sy-matrix-wrap" tabindex="0" role="region" aria-label="Comparison matrix, scrollable">
+        <table class="sy-matrix">
+          <thead><tr><th>Система</th><th>Colour</th><th>Type</th><th>Density</th><th>Motion</th><th>Elevation</th><th>A11y</th><th>Tokens naming</th><th>Docs</th></tr></thead>
+          <tbody>
+            <tr class="grp"><th colspan="9">Продуктові системи</th></tr>
+            <tr><th>Linear</th>
+              <td>LCH-теми: 3 входи (base, accent, contrast) замість 98 змінних; refresh 2026: від холодного синього до теплішого менш насиченого сірого</td>
+              <td>Inter; Inter Display для заголовків</td>
+              <td>Сайдбар приглушено, іконки менші, компактні icon-only таби, менше розділювачів</td>
+              <td class="nd">—</td>
+              <td>Ранні експерименти: лише чорні/білі прозорості для ієрархії й висоти</td>
+              <td><code>contrast</code> → автоматично high-contrast теми (показано на 30 і 100)</td>
+              <td class="nd">—</td>
+              <td>Блог; dev-toolbar із feature flags, внутрішній колір-тул → JSON → Figma</td></tr>
+            <tr><th>Vercel Geist</th>
+              <td>10 шкал × 10 кроків (100–1000) + 2 backgrounds + <code>gray-alpha</code>; P3</td>
+              <td><code>heading-72…14</code>, <code>label-20…12</code>, <code>copy-24…13</code>, <code>button-16/14/12</code>; Subtle/Strong; mono-варіанти</td>
+              <td>label-13/12 для «busy views»; copy-13 де мало місця</td>
+              <td class="nd">—</td>
+              <td>8 матеріалів: радіуси base 6, small 6, medium 12, large 12, tooltip 6, menu 12, modal 12, fullscreen 16</td>
+              <td>900/1000 — для тексту й іконок; «draw each border once»</td>
+              <td><code>--ds-background-100/200</code>; крок = роль: 100 bg, 200 hover, 300 active, 400–600 border, 700–800 solid, 900–1000 text</td>
+              <td>Таблиці «крок → використання»</td></tr>
+            <tr><th>Stripe</th>
+              <td>CIELAB; рівні рівномірного контрасту; однакова крива контрасту для кожного відтінку (жовтий = синій)</td>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>≥ 5 рівнів = малий текст, ≥ 4 = іконки/великий текст; Apps UI свідомо обмежує кольори «через контраст»</td>
+              <td class="nd">—</td>
+              <td>Компоненти + patterns; agent skills; <code>stripe docs</code> у терміналі</td></tr>
+            <tr><th>Attio</th><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td>Дизайн-система на Radix UI, «з наголосом на доступності» <span class="sy-ev" data-v="s">secondary</span></td><td class="nd">—</td><td>Продуктовий дизайн = частина бренду <span class="sy-ev" data-v="s">secondary</span></td></tr>
+            <tr><th>Raycast</th><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td>ActionPanel: перші дві дії = ↵ і ⌘↵ (Form: ⌘↵ і ⌘⇧↵); секції; submenu для вибору з багатьох</td></tr>
+
+            <tr class="grp"><th colspan="9">Корпоративні системи</th></tr>
+            <tr><th>Atlassian</th>
+              <td>Токени за змістом: <code>color.text.subtle</code>; теми light / dark / high-contrast</td>
+              <td>Токени typography (family, size, weight, line-height)</td>
+              <td>Density — окрема «тема» (spacing)</td>
+              <td>Hover 50–150 мс; enter/exit 150–400; модал 250; 4 криві: ease-out bold <code>0,.4,0,1</code>, in-out bold <code>.4,0,0,1</code>, ease-in practical <code>.6,0,.8,.6</code>, ease-out practical <code>.4,1,.6,1</code></td>
+              <td>sunken / default / raised / overlay; raised і overlay — завжди пара surface+shadow; dark: вище = світліше</td>
+              <td>Reduced motion = миттєво; без миготіння і «sweeps»; UI має працювати без руху</td>
+              <td>Foundation · Property · Modifier; «обирайте за змістом, не за значенням»</td>
+              <td>Токен-довідник із фільтрами</td></tr>
+            <tr><th>GitHub Primer</th>
+              <td>Функціональні <code>fgColor / bgColor / borderColor</code>; <code>-emphasis</code> (суцільний) і <code>-muted</code> (тінт)</td>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>Тіні: resting xs–md, floating sm–xl, inset</td>
+              <td>Один токен фокуса <code>focus-outlineColor</code></td>
+              <td><code>--{group}-{role}-{variant}-{state}</code>, напр. <code>button-primary-bgColor-rest</code>; <code>data-{hue}-color-{emphasis|muted}</code> ~20 відтінків</td>
+              <td>Storybook із примітивами</td></tr>
+            <tr><th>IBM Carbon</th>
+              <td>4 теми (white, g10, g90, g100), 237 токенів кожна; <code>layer-01/02/03</code>; AI-токени (<code>ai-aura-*</code>, <code>ai-border-*</code>)</td>
+              <td>У джерелі типів: 14/18, 14/20, 12/16 (compact і normal)</td>
+              <td>Рядки таблиці 24 / 32 / 40 (default) / 48 / 64; висота toolbar = висота рядка</td>
+              <td>Productive vs expressive; 70/110/150/240/400/700 мс; 3 криві × 2 режими, напр. productive standard <code>.2,0,.38,.9</code></td>
+              <td>Шари замість тіней (за токенами); focus: blue.60 у g10, white у g100</td>
+              <td>Skeleton замість spinner; пусті стани: позитивні заголовки, одна дія</td>
+              <td>kebab: <code>layer-hover-01</code>, <code>border-subtle-01</code>; DTCG JSON з <code>$description</code></td>
+              <td>«Carbon for AI»; motion-пакет з <code>motion(standard, productive)</code></td></tr>
+            <tr><th>Shopify Polaris</th>
+              <td>v12: примітивні й семантичні токени; шрифт Inter</td>
+              <td>Inter</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td><code>--p-space-100</code> — примітив; семантичні — лише за призначенням</td>
+              <td>Web components (React 19 для керованих полів); codemods; Stylelint-конфіг для токенів</td></tr>
+            <tr><th>Material 3 Expressive</th>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>Пружини spatial × effects × fast/default/slow. Spatial ζ 0.9: stiffness 1400 / 700 / 300; effects ζ 1: 3800 / 1600 / 800. Legacy-тривалості short1 50 … extra-long4 1000 мс</td>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>46 досліджень, &gt; 18 000 учасників <span class="sy-ev" data-v="s">secondary</span> (пост було видалено)</td></tr>
+            <tr><th>Fluent 2</th>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>Тривалості 50 / 100 / 150 / 200 / 250 / 300 / 400 / 500 мс; криві accelerate / decelerate / easy-ease у min / mid / max, напр. decelerate-mid <code>0,0,0,1</code></td>
+              <td class="nd">—</td>
+              <td>«No motion» налаштування за WCAG; ARIA live для того, що передавала анімація</td>
+              <td>durationUltraFast … UltraSlow, curveDecelerateMid…</td>
+              <td>Принципи: functional, natural, consistent, appealing</td></tr>
+            <tr><th>Apple HIG / Liquid Glass</th>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>Glass — шар навігації й керування, не шар контенту; regular vs clear <span class="sy-ev" data-v="s">secondary</span></td>
+              <td>Адаптується до Reduce Transparency / Increase Contrast / Reduce Motion; для web офіційних правил немає</td>
+              <td class="nd">—</td><td class="nd">—</td></tr>
+            <tr><th>Radix Colors / Themes</th>
+              <td>12 кроків із ролями: 1 app bg, 3 елемент, 4 hover, 5 pressed/selected, 6 subtle border, 7 interactive border, 8 strong border / focus, 9 solid, 11–12 текст; кожен має альфа-двійника <code>a1–a12</code>; акцент автоматично парується з сірим</td>
+              <td class="nd">—</td><td class="nd">—</td><td class="nd">—</td>
+              <td>Themes: <code>panelBackground</code> translucent / solid</td>
+              <td>Кроки 11/12 гарантують Lc 60/90 на кроці 2; проп <code>highContrast</code></td>
+              <td><code>--accent-9</code>, <code>--accent-contrast</code>, <code>--color-surface</code>; alias <code>AppBg</code> на тему</td>
+              <td>Для кожного кроку — «для чого»</td></tr>
+
+            <tr class="grp"><th colspan="9">Процесні / workflow-інструменти (домен)</th></tr>
+            <tr><th>Process Street</th><td colspan="7">Умовна логіка: показати/сховати завдання, заголовки й поля; AND/OR; правила застосовуються згори донизу; випуск завдань із затримкою від старту запуску. Stop tasks. Динамічні дедлайни (від поля-дати, попереднього завдання, дедлайну чи створення чекліста). Поля форм лише в завданнях; видалення поля мовчки видаляє правила.</td><td>Help center</td></tr>
+            <tr><th>Tallyfy</th><td colspan="7">Kick-off form збирає дані до запуску й вливається в кроки; зовнішні особи можуть запускати процес і стежити за ним за унікальним лінком. Tracker view: active / complete / з проблемою; сигнал вузького місця — завдання «застрягли» або кілька процесів на одному кроці.</td><td>Docs, changelog</td></tr>
+            <tr><th>n8n</th><td colspan="7">Новий canvas — beta і за замовчуванням з 1.70; <code>⌘/Ctrl + Enter</code> запускає workflow; command bar має дії виконання (debug, copy, retry, stop, delete). Візуальні стани вузлів на офіційних сторінках не знайдено.</td><td>Docs, community</td></tr>
+            <tr><th>Notion · Plain · Height</th><td colspan="8" class="nd">Публічної документації дизайн-системи, яку можна перевірити, не знайдено — виключено з порівняння.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================= 3 -->
+    <section id="gaps">
+      <header>
+        <div class="sy-eyebrow">3 · Gap analysis</div>
+        <h2 class="t-title">Що змінити в <code>tokens.css</code>, <code>base.css</code>, <code>BRIEF.md</code></h2>
+        <p class="sy-lead">Нумерований перелік. «Зараз» — те, що я прочитав у файлах; «Зміна» — готові значення. Контраст порахований (розділ нижче). Фільтр показує лише потрібний пріоритет.</p>
+      </header>
+
+      <div class="sy-filter" role="group" aria-label="Priority filter">
+        <button type="button" aria-pressed="true" data-f="all">Усі · 20</button>
+        <button type="button" aria-pressed="false" data-f="must">must · 7</button>
+        <button type="button" aria-pressed="false" data-f="should">should · 9</button>
+        <button type="button" aria-pressed="false" data-f="could">could · 4</button>
+      </div>
+
+      <div id="gap-list">
+        <!-- MUST -->
+        <article class="sy-gap" data-t="must"><span class="id">G1</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>Межа контролів падає нижче 3:1 на hover / pressed / selected</h3><span class="sy-ev" data-v="v">WCAG 1.4.11</span></div>
+          <dl>
+            <dt>Зараз</dt><dd><code>--border-strong</code> light <code>0.62 0.01 80</code>, dark <code>0.52 0.008 80</code> — вимір на звичайних поверхнях проходить, але <b>чекбокс у виділеному рядку сайдбара: light 2.90, dark на selected 2.95, на hover-рядку 2.99, при pressed 2.86</b>.</dd>
+            <dt>Зміна</dt><dd><code>--border-strong</code>: light <code>oklch(0.60 0.01 80)</code>, dark <code>oklch(0.54 0.008 80)</code>. Мінімум на всіх виміряних поверхнях: light 3.14, dark 3.12.</dd>
+            <dt>Де</dt><dd><code>tokens.css</code> (2 місця + <code>index.html</code> таблиця контрасту)</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G2</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>Межа поля вводу 1.44:1 (light) і 1.38:1 (dark)</h3><span class="sy-ev" data-v="v">own bar §13</span></div>
+          <dl>
+            <dt>Зараз</dt><dd><code>--input</code> <code>0.872 0.007 85</code> проти <code>--input-background</code>; наш чекліст вимагає «межі контролів ≥ 3:1». Linear/Vercel використовують м’які межі, але ми заявили вищу планку.</dd>
+            <dt>Зміна</dt><dd>Новий токен <code>--field-border: var(--border-strong)</code> для text input / select / textarea / combobox у стані rest; <code>--input</code> лишається для контейнерів без самостійного сенсу (панелі фільтрів, поле всередині таблиці з видимою міткою). Компенсація «важкості»: 1px, тепла нейтраль, hover = <code>--border-hover</code>, focus = ring.</dd>
+            <dt>Компроміс</dt><dd>Рішення PM/дизайну: 1.4.11 вимагає 3:1 лише коли межа — єдина ознака поля. Якщо фон поля вже відрізняється 3:1 від сторінки — виняток. Наш фон поля майже збігається з фоном сторінки, тож виняток не діє.</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G3</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>State-layer токени (alpha) замість ad-hoc <code>color-mix</code></h3><span class="sy-ev" data-v="v">Radix a1–a12 · Geist · Atlassian</span></div>
+          <dl>
+            <dt>Зараз</dt><dd>Є <code>--accent</code> (суцільний) і 4 похідні. У <code>overlays/domain/index</code> знайдено ≈ 40 унікальних <code>color-mix</code> з різними відсотками (foreground 9, 10, 12, 14, 16 %; primary 6, 55, 65, 70 %).</dd>
+            <dt>Зміна</dt>
+            <dd><pre class="sy-pre">--state-hover:    color-mix(in oklch, var(--foreground)  5%, transparent);
+--state-pressed:  color-mix(in oklch, var(--foreground)  8%, transparent);
+--state-selected: color-mix(in oklch, var(--primary)    10%, transparent);
+--state-selected-hover: color-mix(in oklch, var(--primary) 14%, transparent); /* лише на --background / --card */</pre>
+            Ліміти (виміряно, light): <code>--muted-foreground</code> на selected-10 % = 4.98 (bg), 4.67 (sidebar) ✓; на selected-14 % у сайдбарі = <b>4.42 ✗</b> → 14 % лише поза сайдбаром. Pressed-8 % у сайдбарі 4.56 (на межі). У dark усе ≥ 5.45.</dd>
+            <dt>Правило</dt><dd>Суцільні <code>--accent*</code> лишаються для «таблетки» й чипів; стани рядків, пунктів меню, клітинок — лише state-layer. Живе демо нижче.</dd>
+          </dl>
+          <div class="sy-demo" style="margin-top: var(--space-3)" aria-label="State layer demo">
+            <div class="pane" data-s="bg"><b>on --background</b>
+              <div class="sy-row"><span class="box"></span><span class="lbl">Rest</span></div>
+              <div class="sy-row" data-st="hover"><span class="box"></span><span class="lbl">Hover · fg 5 %</span><span class="m num"><span class="lt">15.6 : 1</span><span class="dk">14.5 : 1</span></span></div>
+              <div class="sy-row" data-st="press"><span class="box"></span><span class="lbl">Pressed · fg 8 %</span><span class="m num"><span class="lt">14.7 : 1</span><span class="dk">13.4 : 1</span></span></div>
+              <div class="sy-row" data-st="sel"><span class="box"></span><span class="lbl">Selected · primary 10 %</span><span class="m num"><span class="lt">15.0 : 1</span><span class="dk">13.9 : 1</span></span></div></div>
+            <div class="pane" data-s="sb"><b>on --sidebar</b>
+              <div class="sy-row"><span class="box"></span><span class="lbl">Rest</span></div>
+              <div class="sy-row" data-st="hover"><span class="box"></span><span class="lbl">Hover · fg 5 %</span><span class="m num"><span class="lt">14.6 : 1</span><span class="dk">15.1 : 1</span></span></div>
+              <div class="sy-row" data-st="press"><span class="box"></span><span class="lbl">Pressed · fg 8 %</span><span class="m num"><span class="lt">13.8 : 1</span><span class="dk">14.1 : 1</span></span></div>
+              <div class="sy-row" data-st="sel"><span class="box"></span><span class="lbl">Selected · primary 10 %</span><span class="m num"><span class="lt">14.1 : 1</span><span class="dk">14.5 : 1</span></span></div></div>
+            <div class="pane" data-s="card"><b>on --surface-1</b>
+              <div class="sy-row"><span class="box"></span><span class="lbl">Rest</span></div>
+              <div class="sy-row" data-st="hover"><span class="box"></span><span class="lbl">Hover · fg 5 %</span><span class="m num"><span class="lt">15.9 : 1</span><span class="dk">13.8 : 1</span></span></div>
+              <div class="sy-row" data-st="press"><span class="box"></span><span class="lbl">Pressed · fg 8 %</span><span class="m num"><span class="lt">15.0 : 1</span><span class="dk">12.7 : 1</span></span></div>
+              <div class="sy-row" data-st="sel"><span class="box"></span><span class="lbl">Selected · primary 10 %</span><span class="m num"><span class="lt">15.3 : 1</span><span class="dk">13.1 : 1</span></span></div></div>
+          </div>
+          <p class="t-meta t-muted" style="margin-top: var(--space-2)">Числа в рядках — контраст <code>--foreground</code> на складеному фоні для поточної теми (числа перемикаються разом із темою).</p>
+          </div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G4</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>Рух: productive vs expressive і «effects не відскакують»</h3><span class="sy-ev" data-v="v">Carbon · M3 · Atlassian</span></div>
+          <dl>
+            <dt>Зараз</dt><dd>Є 6 тривалостей, 4 криві, 3 пружини. Немає класифікації за призначенням, а <code>.enter</code>/<code>.pop-in</code> анімують opacity і transform однією кривою; <code>--spring-snappy</code> має ~1 % перельоту — на opacity це дає відскок вище 100 % (M3: «alpha не має відскакувати вище 100 %»).</dd>
+            <dt>Зміна</dt>
+            <dd><pre class="sy-pre">/* productive — стани, таблиці, меню, hover: коротко й тихо */
+--motion-productive: var(--duration-fast) var(--ease-standard);        /* 140ms */
+--motion-productive-micro: var(--duration-instant) var(--ease-standard); /* 90ms  */
+/* expressive — поява сторінок/діалогів, run completed, перший показ: */
+--motion-expressive: var(--spring-smooth-duration) var(--spring-smooth); /* 360ms ζ1 */
+/* effects (opacity, color, blur) — НІКОЛИ на snappy/bouncy: */
+--motion-effects: var(--duration-base) var(--ease-standard);</pre>
+            У <code>.pop-in</code>/<code>.enter</code> розділити: <code>transform</code> на spring, <code>opacity</code> на <code>--motion-effects</code> (через <code>animation-composition</code> або два keyframes). Правило в BRIEF §8: «spring = transform і розмір; opacity/колір = ease».</dd>
+            <dt>Межі</dt><dd>Наші 90/140/200/240 вписуються: Carbon fast-01 70, fast-02 110, moderate-01 150, moderate-02 240; Atlassian modal 250. Окремий <code>--duration-micro: 50ms</code> (hover-тінт) — у G18 (could).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G5</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>Режим <code>prefers-contrast: more</code></h3><span class="sy-ev" data-v="v">Linear · Atlassian · Apple</span></div>
+          <dl>
+            <dt>Зараз</dt><dd>Є reduced-motion, reduced-transparency, forced-colors; <code>prefers-contrast</code> у <code>tokens.css</code>, <code>base.css</code>, <code>index.html</code> — 0 входжень.</dd>
+            <dt>Зміна</dt>
+            <dd><pre class="sy-pre">@media (prefers-contrast: more) {
+  :root:not([data-theme="dark"]), [data-theme="light"] {
+    --muted-foreground: oklch(0.42 0.01 80);   /* 8.25 на bg, 7.36 на hover */
+    --border: oklch(0.55 0.01 80);  --input: var(--border);   /* 4.73 / 4.22 */
+    --ring-width: 3px;  --glass-alpha: 100%; --glass-blur: 0px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --muted-foreground: oklch(0.80 0.006 80);  /* 10.1 / 8.81 */
+    --border: oklch(0.62 0.008 80); --input: var(--border);   /* 5.18 / 4.52 */
+    --ring-width: 3px;  --glass-alpha: 100%; --glass-blur: 0px; } }
+  [data-theme="dark"] { /* ті самі значення dark */ }
+}</pre>
+            Також: поверхні glass отримують суцільний контур <code>1px var(--border-strong)</code> (як Linear на iOS при Increase Contrast).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G6</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3>WCAG 2.2 AA у <code>base.css</code>: Focus Not Obscured і Accessible Authentication</h3><span class="sy-ev" data-v="v">W3C Understanding</span></div>
+          <dl>
+            <dt>Зараз</dt><dd><code>base.css</code> без <code>scroll-padding</code>; логін лише в брифі (§12).</dd>
+            <dt>Зміна</dt>
+            <dd><pre class="sy-pre">html { scroll-padding-block: calc(var(--size-header) + var(--space-2)) var(--space-4); }
+:target, [data-scroll-target] { scroll-margin-block: calc(var(--size-header) + var(--space-3)); }
+/* sticky thead у таблицях: --size-cell + header, див. DESIGN.md */</pre>
+            Логін: <code>autocomplete="username webauthn"</code> і <code>current-password</code>/<code>one-time-code</code>; paste дозволено; OTP — одне поле (або групове з paste-розкладкою), без перевірки по символах; passkey — окремий шлях; CAPTCHA без puzzle (WCAG 3.3.8 не приймає транскрипцію).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="must"><span class="id">G7</span><div>
+          <div class="head"><span class="sy-tag" data-t="must">must</span><h3><code>--chart-3</code> (light) 2.46:1, <code>--chart-2</code> 3.01:1</h3><span class="sy-ev" data-v="v">own bar §13</span></div>
+          <dl>
+            <dt>Зміна</dt><dd><code>--chart-3</code> light <code>oklch(0.66 0.12 75)</code> → 3.09 (було 2.46); <code>--chart-2</code> light <code>oklch(0.64 0.10 192)</code> → 3.13 (було 3.01, запас). Dark без змін (усе ≥ 3.0). Пари <span class="sy-sw" style="--c: oklch(0.72 0.13 75)"></span> → <span class="sy-sw" style="--c: oklch(0.66 0.12 75)"></span> і <span class="sy-sw" style="--c: oklch(0.65 0.10 192)"></span> → <span class="sy-sw" style="--c: oklch(0.64 0.10 192)"></span>. Додатково: серії графіків розрізняти й формою/маркером, не лише відтінком.</dd>
+          </dl></div></article>
+
+        <!-- SHOULD -->
+        <article class="sy-gap" data-t="should"><span class="id">G8</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Поверхня «sunken» і правило вкладених шарів</h3><span class="sy-ev" data-v="v">Atlassian · Carbon</span></div>
+          <dl>
+            <dt>Зміна</dt><dd><code>--surface-sunken</code>: light <code>oklch(0.975 0.005 85)</code>, dark <code>oklch(0.150 0.004 80)</code> — для канви білдера (Canvas), зони під картками, смуги заголовка таблиці. Виміряно: <code>--foreground</code> 16.5, <code>--muted-foreground</code> 5.47 (light) / 7.50 (dark) — текст безпечний. Правило: «елемент у картці — наступний крок: card → input-background; панель у діалозі → surface-2 (не surface-1)». Разом із парою surface+shadow (raised = surface-1 + shadow-sm, overlay = surface-2/3 + shadow-md/lg).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G9</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Одне джерело правди для тем</h3><span class="sy-ev" data-v="v">Carbon DTCG · MDN</span></div>
+          <dl>
+            <dt>Зараз</dt><dd>Блок dark у <code>tokens.css</code> повторено двічі (медіа-запит і <code>[data-theme="dark"]</code>) — 70 рядків, ідентичні (перевірено скриптом). 186 унікальних custom properties.</dd>
+            <dt>Зміна</dt><dd>1) мінімум: <code>scripts/check-theme-parity.mjs</code> у CI (порівняння двох dark-блоків). 2) краще: <code>tokens.json</code> у форматі DTCG 2025.10 із <code>$description</code> для кожного токена → генерація <code>tokens.css</code> і Tailwind <code>@theme</code>. 3) для пар кольорів <code>color: light-dark(a, b)</code> з <code>color-scheme: light dark</code> (Baseline 2024) — прибирає дублювання, але працює лише для кольорів (тіні, відстані лишаються в блоках).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G10</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Поповери на нативному Popover API + anchor positioning</h3><span class="sy-ev" data-v="v">MDN Baseline 2026</span></div>
+          <dl>
+            <dt>Зміна</dt>
+            <dd><pre class="sy-pre">.pw-popover { position: fixed; position-anchor: var(--anchor); position-area: block-end span-inline-end;
+  position-try-fallbacks: flip-block, flip-inline; margin: var(--space-1);
+  transition: opacity var(--duration-base) var(--ease-standard), transform var(--spring-snappy-duration) var(--spring-snappy),
+              overlay var(--duration-base) allow-discrete, display var(--duration-base) allow-discrete; }
+.pw-popover:popover-open { @starting-style { opacity: 0; transform: scale(var(--scale-enter)); } }</pre>
+            <code>transform-origin</code> береться з обраної позиції (<code>position-area</code>) — прибирає ручний <code>--origin</code>. Не залежати від <code>interpolate-size</code> (за вторинними джерелами лише Chrome). Fallback для старих движків — наш поточний <code>.pop-in</code>.</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G11</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Дисципліна меж і «тихий» chrome</h3><span class="sy-ev" data-v="v">Linear 2026 · Geist</span></div>
+          <dl>
+            <dt>Зміна</dt><dd>BRIEF §6: «між двома суміжними областями — одна межа (<code>border-block-start</code> лише у наступного елемента) або крок поверхні, не обидві»; «не додавай роздільник без причини — Linear прибрав накопичені»; кольорові фони під іконками — заборонено (Linear прибрав у team-іконок). Перевірка: рев’ю-чекліст + Stylelint-правило, що забороняє <code>border-bottom</code> і <code>border-top</code> на сусідніх <code>.pw-*</code>.</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G12</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>AI label, explainability, «revert to AI», 3-рівнева впевненість</h3><span class="sy-ev" data-v="v">Carbon for AI · наша екстраполяція</span></div>
+          <dl>
+            <dt>Зараз</dt><dd>Є <code>--ai*</code> (magenta) і правило «лише для AI».</dd>
+            <dt>Зміна</dt><dd>Компонент <code>pw-ai-label</code> — кнопка (не декор), відкриває поповер «звідки» (документ, сторінка, фрагмент, модель, час). Ручна правка знімає AI-стиль із поля й показує «Revert to AI value». Confidence — <b>не відтінком</b>: сегментний глиф 3/3, 2/3, 1/3 (заповнено <code>--ai</code>, решта контуром <code>--border-strong</code>) + слова High / Medium / Low; пороги задає специфікація продукту. Carbon про confidence/provenance не пише — це наша екстраполяція; позначити в DESIGN.md.</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G13</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Статуси: роль <code>-border</code></h3><span class="sy-ev" data-v="v">Primer emphasis/muted · Atlassian</span></div>
+          <dl>
+            <dt>Зміна</dt><dd>Для outlined-бейджів, банерів, рядка помилки: <code>--status-x-border: color-mix(in oklch, var(--status-x-foreground) 30%, transparent)</code> для done / progress / overdue / due-soon / todo / ai / variable. Тип «solid emphasis» не додаємо (BRIEF §2 забороняє суцільні статусні заливки з текстом). Виміряно: крапка на власному тінті ≥ 3.03 (light), ≥ 6.25 (dark).</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G14</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Порожні стани, таблиці й завантаження: правила Carbon</h3><span class="sy-ev" data-v="v">Carbon</span></div>
+          <dl>
+            <dt>Зміна</dt><dd>BRIEF §4 доповнити: «у порожній таблиці прибрати thead/tfoot, а не лишати порожню таблицю для читача екрана»; заголовки позитивні («Start by adding a template»); одна дія; для кількох порожніх віджетів — tertiary-кнопка; без жартів у помилках; skeleton замість spinner (вже є). Batch-панель дій має висоту рядка; поки вона активна, дії рядка вимкнені; сортування — стрілка лише на відсортованому стовпці, на hover — для решти.</dd>
+          </dl></div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G15</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>Логін: чекліст «найкращий у 2026»</h3><span class="sy-ev">см. розділ 4</span></div>
+          <dl><dt>Зміна</dt><dd>Перенести чекліст із розділу 4 у BRIEF §12 (Auth) як обов’язковий: 3.3.8, passkey, «last used», skip-link, помилки без витоку існування акаунта, <code>autocomplete</code>.</dd></dl>
+        </div></article>
+
+        <article class="sy-gap" data-t="should"><span class="id">G16</span><div>
+          <div class="head"><span class="sy-tag" data-t="should">should</span><h3>DESIGN.md у форматі, придатному для агента</h3><span class="sy-ev" data-v="v">Geist · Atlassian · Carbon · Stripe</span></div>
+          <dl><dt>Зміна</dt><dd>Структура з розділу 6: таблиці «токен → коли/коли ні», граматика імен, заборонний список, команда перевірки в кожному розділі, <code>.md</code>-дзеркала довідника.</dd></dl>
+        </div></article>
+
+        <!-- COULD -->
+        <article class="sy-gap" data-t="could"><span class="id">G17</span><div>
+          <div class="head"><span class="sy-tag" data-t="could">could</span><h3>Режими щільності <code>[data-density]</code></h3><span class="sy-ev" data-v="v">Carbon rows · Atlassian density theme</span></div>
+          <dl><dt>Зміна</dt><dd>Compact: control 28, row 28, cell 32 · Default: 32 / 32 / 36 (як зараз) · Comfortable: 36 / 40 / 44. Правило Carbon: висота toolbar і batch-бару = висота рядка. Наш default (32/36) лежить між Carbon sm (32) і md (40) — свідомий вибір Linear-щільності.</dd></dl>
+        </div></article>
+
+        <article class="sy-gap" data-t="could"><span class="id">G18</span><div>
+          <div class="head"><span class="sy-tag" data-t="could">could</span><h3><code>--duration-micro: 50ms</code></h3><span class="sy-ev" data-v="v">Atlassian 50 · M3 short1 50 · Fluent 50</span></div>
+          <dl><dt>Зміна</dt><dd>Hover-тінт рядка за 50 мс виглядає «живіше», ніж 90; решта за <code>--duration-instant</code>. Лише для <code>background-color</code> стану hover.</dd></dl>
+        </div></article>
+
+        <article class="sy-gap" data-t="could"><span class="id">G19</span><div>
+          <div class="head"><span class="sy-tag" data-t="could">could</span><h3><code>contrast-color()</code> — лише для кольорів, які задає користувач</h3><span class="sy-ev" data-v="v">MDN, Baseline 2026</span></div>
+          <dl><dt>Зміна</dt><dd>Для користувацьких чипів/міток (колір обирає менеджер) — <code>color: contrast-color(var(--chip))</code> з <code>@supports not</code>-fallback. Для брендових заливок <b>не</b> брати: повертає лише чорне/біле, а MDN прямо попереджає про середні тони (<code>#2277d3</code> → чорний нечитабельний). Наші ручні пари <code>--primary / --primary-foreground</code> залишаються.</dd></dl>
+        </div></article>
+
+        <article class="sy-gap" data-t="could"><span class="id">G20</span><div>
+          <div class="head"><span class="sy-tag" data-t="could">could</span><h3>Генератор теми «base + accent + contrast»</h3><span class="sy-ev" data-v="v">Linear</span></div>
+          <dl><dt>Зміна</dt><dd>Скрипт у <code>scripts/</code>, що з трьох входів (OKLCH) видає наші ~60 кольорових токенів і перевіряє пари. Дає white-label (колір порт­фоліо) і high-contrast безкоштовно. Лінійний підхід: 98 змінних → 3 входи.</dd></dl>
+        </div></article>
+      </div>
+
+      <h3 class="t-heading">Виміряний контраст: до і після</h3>
+      <p class="t-meta t-muted" style="margin-bottom: var(--space-2)">WCAG 2.x, OKLCH → sRGB (з обрізанням до гамута; усі значення в sRGB), прозорість складена в sRGB-просторі, як це робить браузер для <code>color-mix(…, transparent)</code>. Скрипт: <code>D:/tmp/sysw/chk.mjs</code>, <code>chk2.mjs</code>.</p>
+      <div class="sy-scroll"><table class="sy-t">
+        <thead><tr><th>Пара</th><th>Тема</th><th class="r">Було</th><th class="r">Стало</th><th>Ціль</th><th>Висновок</th></tr></thead>
+        <tbody>
+          <tr><td>border-strong → selected у сайдбарі</td><td>light</td><td class="r num sy-bad">2.90</td><td class="r num sy-ok">3.14</td><td>≥ 3</td><td>G1: 0.62 → 0.60</td></tr>
+          <tr><td>border-strong → hover-рядок (accent)</td><td>dark</td><td class="r num sy-bad">2.99</td><td class="r num sy-ok">3.25</td><td>≥ 3</td><td>G1: 0.52 → 0.54</td></tr>
+          <tr><td>border-strong → selected (primary 10 %)</td><td>dark</td><td class="r num sy-bad">2.95</td><td class="r num sy-ok">3.21</td><td>≥ 3</td><td>G1</td></tr>
+          <tr><td>border-strong → pressed (fg 8 %)</td><td>dark</td><td class="r num sy-bad">2.86</td><td class="r num sy-ok">3.12</td><td>≥ 3</td><td>G1</td></tr>
+          <tr><td>input border → input-background</td><td>light</td><td class="r num sy-bad">1.46</td><td class="r num sy-ok">3.85</td><td>≥ 3</td><td>G2 (через <code>--field-border</code>)</td></tr>
+          <tr><td>input border → input-background</td><td>dark</td><td class="r num sy-bad">1.38</td><td class="r num sy-ok">3.73</td><td>≥ 3</td><td>G2</td></tr>
+          <tr><td>chart-3 → background</td><td>light</td><td class="r num sy-bad">2.46</td><td class="r num sy-ok">3.09</td><td>≥ 3</td><td>G7: 0.72 0.13 75 → 0.66 0.12 75</td></tr>
+          <tr><td>chart-2 → background</td><td>light</td><td class="r num">3.01</td><td class="r num sy-ok">3.13</td><td>≥ 3</td><td>G7: запас</td></tr>
+          <tr><td>muted-foreground → selected-10 % (sidebar)</td><td>light</td><td class="r num">—</td><td class="r num sy-ok">4.67</td><td>≥ 4.5</td><td>G3 OK</td></tr>
+          <tr><td>muted-foreground → selected-14 % (sidebar)</td><td>light</td><td class="r num">—</td><td class="r num sy-bad">4.42</td><td>≥ 4.5</td><td>G3: 14 % лише поза сайдбаром</td></tr>
+          <tr><td>muted-foreground → pressed-8 % (sidebar)</td><td>light</td><td class="r num">—</td><td class="r num sy-ok">4.56</td><td>≥ 4.5</td><td>G3 на межі</td></tr>
+          <tr><td>muted-foreground → hover-5 % (bg / sidebar / card)</td><td>light</td><td class="r num">—</td><td class="r num sy-ok">5.18 / 4.85 / 5.29</td><td>≥ 4.5</td><td>G3 OK</td></tr>
+          <tr><td>muted-foreground → усі state-layer</td><td>dark</td><td class="r num">—</td><td class="r num sy-ok">≥ 5.45</td><td>≥ 4.5</td><td>G3 OK</td></tr>
+          <tr><td>primary (текст/посилання) → selected-10 %</td><td>light / dark</td><td class="r num">—</td><td class="r num sy-ok">5.21 / 6.97</td><td>≥ 4.5</td><td>G3 OK</td></tr>
+          <tr><td>ring → selected-10 %</td><td>light</td><td class="r num">—</td><td class="r num sy-ok">4.23</td><td>≥ 3</td><td>OK</td></tr>
+          <tr><td>muted-foreground (high contrast) → bg / hover</td><td>light</td><td class="r num">5.0x</td><td class="r num sy-ok">8.25 / 7.36</td><td>≥ 7</td><td>G5</td></tr>
+          <tr><td>muted-foreground (high contrast) → bg / hover</td><td>dark</td><td class="r num">—</td><td class="r num sy-ok">10.1 / 8.81</td><td>≥ 7</td><td>G5</td></tr>
+          <tr><td>border (high contrast) → bg / hover</td><td>light / dark</td><td class="r num sy-bad">1.27</td><td class="r num sy-ok">4.73 / 5.18</td><td>≥ 3</td><td>G5</td></tr>
+          <tr><td>muted-foreground → surface-sunken</td><td>light / dark</td><td class="r num">—</td><td class="r num sy-ok">5.47 / 7.50</td><td>≥ 4.5</td><td>G8 OK</td></tr>
+          <tr><td>status-dot → власний тінт (7 ролей)</td><td>light / dark</td><td class="r num">—</td><td class="r num sy-ok">3.03–4.71 / 6.25–6.81</td><td>≥ 3</td><td>Без змін, OK</td></tr>
+        </tbody>
+      </table></div>
+      <div class="sy-note" style="margin-top: var(--space-3)"><div><strong>Ще пройшло без змін:</strong> усі 36 пар з нашого <code>sys/audit.mjs</code> (текст ≥ 4.5, ring і мітки ≥ 3 у обох темах) — окрім перелічених вище трьох (<code>--input</code> ×2 теми, <code>--chart-3</code>). Весь кольоровий набір у sRGB-гамуті (P3-підсилення лише для міток).</div></div>
+    </section>
+
+    <!-- ========================================================= 4 -->
+    <section id="domain">
+      <header>
+        <div class="sy-eyebrow">4 · Domain patterns</div>
+        <h2 class="t-title">Що вкрасти для runs, білдерів, змінних, інвойсів і AI</h2>
+        <p class="sy-lead">Факти — з документації інструментів; рекомендації для нас позначено окремо.</p>
+      </header>
+
+      <div class="sy-grid sy-g2">
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Runs / checklists <span class="sy-ev" data-v="v">Process Street · Tallyfy</span></h3>
+          <ul class="sy-chk">
+            <li><span><b>Kick-off form</b> збирає дані <i>до</i> створення run і вливає їх у кроки (Tallyfy) — у нас це custom variables запуску: форма запуску обов’язкова, з валідацією до першого завдання.</span></li>
+            <li><span><b>Stop task</b> блокує просування, поки завдання не виконане (Process Street) — це наш «required task»: на 3-зонній сторінці — замок і причина («Needs approval from…»), не просто disabled.</span></li>
+            <li><span><b>Динамічні дедлайни</b> — від поля-дати, від завершення попереднього завдання, від дедлайну чи створення run. Показувати результат правила в UI («Due 14 Nov — 3 days after “Inspection”»).</span></li>
+            <li><span><b>Tracker</b> із трьома станами (active / complete / проблема) і сигналом вузького місця — «багато run застрягли на одному кроці»: корисно для аналітики менеджера. <span class="sy-ev">unverified</span> як окремий екран у нас</span></li>
+            <li><span><b>Прогрес</b> — текстом «2 of 5 done» плюс кільце; обов’язкові завдання відрізняти символом, не лише кольором (<code>--required</code>).</span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Білдери: List · Schema · Canvas <span class="sy-ev" data-v="s">n8n · Process Street</span></h3>
+          <ul class="sy-chk">
+            <li><span>n8n: <code>⌘/Ctrl + Enter</code> виконує workflow; command bar містить дії виконання (debug, copy, retry, stop, delete) — ⌘K у білдері має містити «Test run / Run from here / Pin sample data».</span></li>
+            <li><span>Умовна логіка в Process Street: AND/OR, порядок «згори донизу», показати/сховати завдання, заголовки й поля. <b>Антипатерн:</b> видалення поля мовчки видаляє правила — у нас показати залежності до видалення («Used by 3 conditions»).</span></li>
+            <li><span>List ↔ Canvas ↔ Schema — один стан документа, три проєкції; перемикання зберігає виділення й позицію (view transition із shared element). <span class="sy-ev">unverified</span></span></li>
+            <li><span>Canvas: стан вузла передавати не лише кольором — форма (кільце/галочка/хрест) + текст у тултипі. Візуальні стани n8n на офіційних сторінках не знайдено.</span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Змінні <span class="sy-ev" data-v="s">Process Street</span></h3>
+          <ul class="sy-chk">
+            <li><span>У Process Street змінні вставляються в текст/email-віджети й передають дані наступним крокам. У нас — chip <code>{{tenant_name}}</code> (<code>--variable</code>), що показує <b>значення</b> у run і <b>ім’я</b> у білдері; невизначена змінна — окремий стан «Missing value» (іконка + текст).</span></li>
+            <li><span>Автодоповнення за <code>{{</code> з групами «Run variables / Task answers / System» (patterns Raycast/Linear command menus: групи + type-ahead). <span class="sy-ev">unverified</span></span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Інвойси з цін завдань <span class="sy-ev">unverified · практика</span></h3>
+          <ul class="sy-chk">
+            <li><span>Рядок інвойсу = завдання: посилання на джерело («from task “Replace lock”») — провенанс кожної суми; редагування ціни фіксується.</span></li>
+            <li><span>Гроші: <code>Intl.NumberFormat</code>, tabular-nums, право-вирівняні й заголовок стовпця теж; мінус — U+2212; підсумок (subtotal, tax, total) у sticky-зоні внизу; <code>€1,250.00</code> за BRIEF §5.</span></li>
+            <li><span>Статуси draft / sent / paid / overdue — зі статусних токенів з текстом; перегляд PDF поряд, а не замість.</span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">AI-парсинг із provenance і 3 рівнями впевненості <span class="sy-ev" data-v="v">Carbon for AI</span></h3>
+          <ul class="sy-chk">
+            <li><span>AI label на кожному AI-полі; клік — поповер із джерелом (документ, сторінка, виділений фрагмент) і моделлю.</span></li>
+            <li><span>Правка людиною знімає AI-стиль; «Revert to AI value» повертає (Carbon).</span></li>
+            <li><span>Підсвітка фрагмента в документі при наведенні на поле (і навпаки). <span class="sy-ev">unverified</span></span></li>
+            <li><span>Три рівні впевненості: сегментний глиф + слово; низька → поле потрапляє в чергу «Needs review» і не потрапляє в інвойс без підтвердження.</span></li>
+            <li><span>AI-стиль — лише ідентифікація, не прикраса («don’t use AI styling as decoration»).</span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">⌘K <span class="sy-ev" data-v="v">Raycast API</span></h3>
+          <ul class="sy-chk">
+            <li><span>Дві дії за замовчуванням: ↵ — основна, ⌘↵ — вторинна; решта — у панелі дій із секціями («Copy», «Move», «Danger»). Прописати в BRIEF §7 для Command palette.</span></li>
+            <li><span>Вибір із багатьох (виконавець, мітка) — підменю замість вкладеного поповера: панель замінюється списком, Esc повертає.</span></li>
+            <li><span>Контекст: у run палітра пропонує «Complete task», «Add comment»; в білдері — «Add condition». <span class="sy-ev">unverified</span> (патерн, не цитата документації).</span></li>
+          </ul></div>
+      </div>
+
+      <h3 class="t-heading">Сторінки входу: що побачено</h3>
+      <div class="sy-scroll"><table class="sy-t">
+        <thead><tr><th>Продукт</th><th>Структура (прочитано на сторінці, 23.10.2026)</th><th>Примітки</th></tr></thead>
+        <tbody>
+          <tr><td><b>Linear</b> <span class="sy-ev" data-v="v">verified</span></td><td>«Log in to Linear» → Continue with Google · Continue with email · Continue with SAML SSO · Log in with passkey → «Don’t have an account? Sign up or learn more»</td><td>Чотири шляхи, жодних полів на старті; passkey першокласний. Мало тексту.</td></tr>
+          <tr><td><b>Vercel</b> <span class="sy-ev" data-v="v">verified</span></td><td>Skip-link · шапка (лого, Sign Up) · «Log in to Vercel» · Terms / Privacy над опціями · Email · Google · GitHub · ChatGPT · SAML SSO · Passkey · «Show other options» · «Don’t have an account? Sign Up»</td><td>Skip-link; виразний порядок; зайве ховається за «Show other options». Прим.: у знятому вигляді без підказки «last used».</td></tr>
+          <tr><td><b>Attio</b> <span class="sy-ev" data-v="v">verified</span></td><td>Sign in with Google · поле email + Continue · текст про згоду («By inserting your email you confirm you agree…») · © 2026 Attio Limited · Privacy Policy · Support</td><td>Мінімум полів; юридичний текст стислий; поведінка після email-кроку не перевірялась.</td></tr>
+          <tr><td>Stripe · Raycast · Clerk · WorkOS</td><td class="t-muted" colspan="2">Сторінки віддають контент лише після JS/без автентифікації — не зняті; їхні патерни тут не цитуються.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sy-grid sy-g2" style="margin-top: var(--space-4)">
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Що робить логін «найкращим» у 2026 <span class="sy-ev" data-v="v">за прочитаним</span></h3>
+          <ul class="sy-chk">
+            <li><span>Один заголовок, одна колонка, 3–5 шляхів без полів на старті; passkey — рівноправний (Linear, Vercel).</span></li>
+            <li><span>Skip-link і чесний порядок табуляції (Vercel).</span></li>
+            <li><span>Складні/рідкісні шляхи ховаються («Show other options»), але лишаються доступними.</span></li>
+            <li><span>Юридичне — стисло, не заважає (Attio).</span></li>
+            <li><span>Доступна автентифікація (WCAG 3.3.8): paste, менеджери паролів, без розкладання коду по цифрах, альтернативний шлях без когнітивного тесту.</span></li>
+          </ul></div>
+        <div class="sy-card"><h3 class="t-heading" style="margin-top:0">Що має мати наш логін</h3>
+          <ul class="sy-chk">
+            <li><span>Skip-link; <code>&lt;h1&gt;</code> «Sign in to Property Workflows»; єдина колонка ≤ 400 px; ambient hero лише ≥ 1024 px, з Pause (WCAG 2.2.2).</span></li>
+            <li><span>Passkey · Google · SSO (SAML) · email; identifier-first (спершу email, потім пароль/код/passkey).</span></li>
+            <li><span><code>autocomplete="username webauthn"</code>, <code>current-password</code>, <code>one-time-code</code>; <code>inputmode</code> для коду; paste дозволено.</span></li>
+            <li><span>Помилки: <code>aria-describedby</code>, <code>role="alert"</code>, фокус на перше поле з помилкою; не розкривати, чи існує акаунт.</span></li>
+            <li><span>Кнопка під час запиту тримає ширину, «Signing in…», <code>aria-busy</code>; Enter у полі відправляє форму.</span></li>
+            <li><span>«Last used» підказка біля попереднього методу — патерн ідентифікаторів-першими; <span class="sy-ev">unverified</span> (не знято).</span></li>
+            <li><span>Обидві теми й <code>prefers-contrast</code>; glass-картка отримує суцільний контур.</span></li>
+            <li><span>Лого на токенах, без градієнтного героя: ambient mesh — тінь, не центр уваги.</span></li>
+          </ul></div>
+      </div>
+    </section>
+
+    <!-- ========================================================= 5 -->
+    <section id="antipatterns">
+      <header>
+        <div class="sy-eyebrow">5 · Anti-patterns</div>
+        <h2 class="t-title">Що виглядає як «шаблон 2023» і чого уникати</h2>
+        <p class="sy-lead">Кожен пункт має обґрунтування з джерел або з нашого вимірювання.</p>
+      </header>
+      <div>
+        <div class="sy-anti"><div class="no">Фіолетово-синій градієнтний hero, розмиті «blob»-кулі, неон на чорному</div><div class="yes">Нейтральна тепла поверхня, індиго лише для дій; ambient mesh приглушений (<code>--hero-*</code> L ≤ 0.36 у dark).</div></div>
+        <div class="sy-anti"><div class="no">Однаковий <code>rounded-xl</code> + <code>shadow-md</code> на кожній картці (дефолтний shadcn-вигляд)</div><div class="yes">Радіуси за роллю (4/6/8/10/12/pill), усередині сторінки без тіней: hairline + крок тону (BRIEF §6). Geist теж ділить радіуси за матеріалом: 6 / 12 / 16.</div></div>
+        <div class="sy-anti"><div class="no">Glass на контенті й на glass, refraction у щільному UI</div><div class="yes">Glass лише в плаваючому шарі; Linear при відтворенні Liquid Glass відмовився від refraction «через читабельність», Apple тримає glass у шарі навігації.</div></div>
+        <div class="sy-anti"><div class="no">Межа з кожного боку кожного блока, подвійні лінії на стику</div><div class="yes">Одна межа на стик (Geist «draw each border once»); Linear 2026 прибрав накопичені роздільники.</div></div>
+        <div class="sy-anti"><div class="no">Кольорові плитки під іконками, іконки скрізь</div><div class="yes">Іконки менші й рідші; без кольорових підкладок (Linear refresh).</div></div>
+        <div class="sy-anti"><div class="no">Статус лише кольором; сірий текст ≈ 3:1 на сірому фоні</div><div class="yes">Мітка + слово; тексти ≥ 4.5; межі контролів ≥ 3 на <i>всіх</i> станах рядка (G1).</div></div>
+        <div class="sy-anti"><div class="no">AI-sparkle і magenta на кожній кнопці «розумної» дії</div><div class="yes">AI-стиль — лише ідентифікація AI-контенту, з поповером пояснення (Carbon for AI).</div></div>
+        <div class="sy-anti"><div class="no">Пружина з відскоком на кожному елементі, відскок opacity</div><div class="yes">Bouncy — лише малі перемикачі; opacity/колір ніколи на spatial-пружині (M3 effects ζ 1).</div></div>
+        <div class="sy-anti"><div class="no">Spinner на весь екран</div><div class="yes">Skeleton за формою контенту (Carbon); кнопка тримає ширину.</div></div>
+        <div class="sy-anti"><div class="no">Порожній стан з ілюстрацією-мемом і жартом; «You don’t have any…»</div><div class="yes">Позитивний заголовок, одна дія, без жартів (Carbon); у таблиці без даних — без thead.</div></div>
+        <div class="sy-anti"><div class="no">Пропуск paste у паролі, OTP по одній цифрі, puzzle-CAPTCHA</div><div class="yes">WCAG 3.3.8: paste і менеджери паролів, один код, альтернативний шлях.</div></div>
+        <div class="sy-anti"><div class="no">Мовчазне видалення залежних правил при видаленні поля (Process Street)</div><div class="yes">Показати залежності до підтвердження: «Used by 3 conditions and 1 invoice line».</div></div>
+        <div class="sy-anti"><div class="no">Modal для кожної дії; hover, що зсуває розмітку</div><div class="yes">Inline-редагування, поповери, sheets; hover = тінт (state-layer), без зміни розміру.</div></div>
+        <div class="sy-anti"><div class="no">Брати <code>contrast-color()</code> замість власних пар для брендових заливок</div><div class="yes">Тільки для користувацьких кольорів із fallback; середні тони MDN визнає проблемними.</div></div>
+      </div>
+    </section>
+
+    <!-- ========================================================= 6 -->
+    <section id="designmd">
+      <header>
+        <div class="sy-eyebrow">6 · DESIGN.md</div>
+        <h2 class="t-title">Як документувати, щоб ШІ-агент виконав правила</h2>
+        <p class="sy-lead">Що роблять провідні системи: Geist і Radix пишуть «крок → для чого» таблицями; Primer — граматику імен; Atlassian — «вибирай за змістом, не за значенням»; Carbon — <code>$description</code> у кожного токена; Polaris — Stylelint-конфіг, що змушує брати токени; Stripe свідомо обмежує кастомізацію й віддає агентам <code>skills</code> і <code>docs</code> у терміналі; Clerk публікує <code>llms.txt</code>.</p>
+      </header>
+      <div class="sy-note" style="margin-bottom: var(--space-3)"><div><strong>Принцип.</strong> Кожне правило має форму «Коли → використай X → не використовуй Y → перевірка Z». Без перевірки правило — побажання.</div></div>
+      <ol class="sy-outline">
+        <li><div><b>Overview і принципи</b> — 5–7 принципів у форматі «Не змагайся за увагу, якої не заслужив» (Linear); для кого, на що схоже, на що ні.</div></li>
+        <li><div><b>Кольори + контраст</b> — архітектура: шари (canvas → surface-1/2/3 → sunken), ролі (text / border / fill / mark), state-layer, статус-ролі (<code>-foreground / -bg / -border</code>), AI, variable. Таблиця «токен → light / dark → контраст до кожної поверхні» (генерується скриптом). Правило ΔL (Stripe): які пари дозволено поєднувати.</div></li>
+        <li><div><b>Типографіка</b> — шкала 28/20/15/14/13/12 + mono, де яка (Geist: label vs copy), правила tabular/slashed-zero, довжина рядка, <code>text-wrap</code>.</div></li>
+        <li><div><b>Простір, щільність, радіуси</b> — сітка 4, висоти 28/32/36, (опц.) режими щільності; радіуси за роллю (таблиця «матеріал → радіус»), поверхні й тіні парами.</div></li>
+        <li><div><b>Рух</b> — productive / expressive, spatial / effects, тривалості, хореографія, reduced motion, 400 мс стеля; «що анімувати, а що ні».</div></li>
+        <li><div><b>Компоненти + варіанти</b> — для кожного: призначення, анатомія, варіанти (<code>data-variant</code>, <code>data-size</code>), поведінка, клавіатура за APG, посилання на живий приклад.</div></li>
+        <li><div><b>Стани</b> — таблиця станів (default, hover, focus-visible, active, disabled, invalid, loading, selected, empty, error) із токенами для кожного.</div></li>
+        <li><div><b>Доступність</b> — WCAG 2.2 AA чекліст (1.4.3, 1.4.11, 2.4.11, 2.5.8, 3.3.8), <code>prefers-*</code> матриця (motion, transparency, contrast, forced-colors), клавіатурна модель.</div></li>
+        <li><div><b>Домен</b> — run, task, variable, invoice, AI provenance: терміни, візуальна мова, що значить колір.</div></li>
+        <li><div><b>Копірайт і дані</b> — тон, довжини, формати грошей/дат, синтетичні дані.</div></li>
+        <li><div><b>Do / Don’t</b> — з розділу 5, кожен приклад пов’язаний із перевіркою (лінт, скрипт, рев’ю).</div></li>
+        <li><div><b>Як додати токен</b> — граматика імен (<code>--{role}-{variant}-{state}</code> як Primer), обов’язкові поля (<code>$description</code>, light/dark, контраст-пара, де використовується), порядок змін: <code>tokens.json</code> → build → <code>tokens.css</code> → <code>index.html</code> → DESIGN.md.</div></li>
+        <li><div><b>Перевірки</b> — <code>npm run ds:contrast</code>, <code>ds:parity</code> (теми), <code>ds:lint</code> (Stylelint: без літеральних кольорів, без px поза токенами, без <code>transition: all</code>), скриншот-тести обох тем × 1440/400.</div></li>
+        <li><div><b>Для агента</b> — коротка «шпаргалка» (≤ 1 сторінка: топ-20 токенів і топ-10 заборон), посилання на <code>llms.txt</code>-подібний індекс і <code>.md</code>-версії сторінок довідника; «якщо сумніваєшся — спитай, не вигадуй токен».</div></li>
+        <li><div><b>Changelog і версії</b> — semver токенів, що ламає / що ні, міграційні нотатки (Polaris: codemods і migrator).</div></li>
+      </ol>
+    </section>
+
+    <!-- ========================================================= sources -->
+    <section id="sources">
+      <header><div class="sy-eyebrow">Джерела</div><h2 class="t-title">Прочитано 23.10.2026</h2></header>
+      <ol class="sy-src-list">
+        <li><a href="https://linear.app/now/how-we-redesigned-the-linear-ui">Linear — How we redesigned the Linear UI</a></li>
+        <li><a href="https://linear.app/now/behind-the-latest-design-refresh">Linear — Behind the latest design refresh</a></li>
+        <li><a href="https://linear.app/now/a-design-reset">Linear — A design reset</a></li>
+        <li><a href="https://linear.app/now/linear-liquid-glass">Linear — A Linear spin on Liquid Glass</a></li>
+        <li><a href="https://vercel.com/geist/colors">Vercel Geist — Colors</a></li>
+        <li><a href="https://vercel.com/geist/materials">Vercel Geist — Materials</a></li>
+        <li><a href="https://vercel.com/geist/typography">Vercel Geist — Typography</a></li>
+        <li><a href="https://stripe.com/blog/accessible-color-systems">Stripe — Designing accessible color systems</a></li>
+        <li><a href="https://docs.stripe.com/stripe-apps/design">Stripe Apps — Design</a></li>
+        <li><a href="https://atlassian.design/foundations/motion">Atlassian — Motion</a></li>
+        <li><a href="https://atlassian.design/foundations/elevation">Atlassian — Elevation</a></li>
+        <li><a href="https://atlassian.design/foundations/tokens/design-tokens">Atlassian — Design tokens</a></li>
+        <li><a href="https://primer.style/foundations/color">GitHub Primer — Color</a></li>
+        <li><a href="https://carbondesignsystem.com/elements/motion/overview/">IBM Carbon — Motion</a></li>
+        <li><a href="https://carbondesignsystem.com/components/data-table/usage/">IBM Carbon — Data table</a></li>
+        <li><a href="https://carbondesignsystem.com/patterns/empty-states-pattern/">IBM Carbon — Empty states</a></li>
+        <li><a href="https://carbondesignsystem.com/guidelines/carbon-for-ai/">IBM Carbon — Carbon for AI</a></li>
+        <li><a href="https://github.com/carbon-design-system/carbon">IBM Carbon — theme tokens (DTCG JSON), type and layout sources</a></li>
+        <li><a href="https://polaris.shopify.com/new-design-language">Shopify Polaris — v12 / web components</a></li>
+        <li><a href="https://raw.githubusercontent.com/material-components/material-components-android/master/docs/theming/Motion.md">Material Components Android — Motion (springs)</a></li>
+        <li><a href="https://fluent2.microsoft.design/motion">Fluent 2 — Motion</a></li>
+        <li><a href="https://raw.githubusercontent.com/microsoft/fluentui/master/packages/tokens/src/global/durations.ts">Fluent UI — duration tokens</a> · <a href="https://raw.githubusercontent.com/microsoft/fluentui/master/packages/tokens/src/global/curves.ts">curve tokens</a></li>
+        <li><a href="https://developer.apple.com/forums/thread/791070">Apple — WWDC25 group lab summary (design)</a> <span class="sy-ev" data-v="s">secondary</span></li>
+        <li><a href="https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale">Radix Colors — Understanding the scale</a></li>
+        <li><a href="https://www.radix-ui.com/themes/docs/theme/color">Radix Themes — Color</a></li>
+        <li><a href="https://developers.raycast.com/api-reference/user-interface/action-panel">Raycast — Action panel</a></li>
+        <li><a href="https://www.process.st/help/docs/conditional-logic/">Process Street — Conditional logic</a></li>
+        <li><a href="https://tallyfy.com/products/pro/launching/triggers/kick-off-forms/">Tallyfy — Kick-off forms</a> · <a href="https://tallyfy.com/products/pro/tracking-and-tasks/processes/process-lifecycle-management/">process lifecycle</a></li>
+        <li><a href="https://docs.n8n.io/build/keyboard-shortcuts">n8n — Keyboard shortcuts</a></li>
+        <li><a href="https://linear.app/login">Linear login</a> · <a href="https://vercel.com/login">Vercel login</a> · <a href="https://app.attio.com/welcome/sign-in">Attio sign-in</a></li>
+        <li><a href="https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum.html">WCAG 2.2 — 3.3.8 Accessible Authentication</a></li>
+        <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark">MDN — light-dark()</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/contrast-color">contrast-color()</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/anchor-size">anchor positioning</a></li>
+      </ol>
+      <p class="sy-foot">Не відкривалось або без висновків: Apple HIG Materials (порожня сторінка без JS), M3 «How it works» (порожня), Primer accessibility (порожня), Polaris color (редирект на shopify.dev), Stripe UI components (404), сторінки входу Stripe/Raycast/Clerk/WorkOS. Числа з цих місць не використано.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+  /* theme toggle */
+  (() => {
+    const root = document.documentElement, g = document.querySelector(".pw-theme-toggle");
+    const btns = [...g.querySelectorAll('[role="radio"]')];
+    const sync = () => { const v = root.dataset.theme || "system";
+      btns.forEach(b => { const on = b.dataset.value === v; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; }); };
+    const set = (v) => { const apply = () => { v === "system" ? delete root.dataset.theme : (root.dataset.theme = v); sync(); };
+      try { v === "system" ? localStorage.removeItem("pw-theme") : localStorage.setItem("pw-theme", v); } catch (e) {}
+      document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches ? document.startViewTransition(apply) : apply(); };
+    g.addEventListener("click", e => { const b = e.target.closest('[role="radio"]'); if (b) set(b.dataset.value); });
+    g.addEventListener("keydown", e => { const i = btns.indexOf(document.activeElement); if (i < 0) return;
+      const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return;
+      e.preventDefault(); const n = btns[(i + d + btns.length) % btns.length]; set(n.dataset.value); n.focus(); });
+    sync();
+  })();
+  /* priority filter */
+  (() => {
+    const bar = document.querySelector(".sy-filter"), items = [...document.querySelectorAll("#gap-list .sy-gap")];
+    bar.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+      bar.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      items.forEach(i => { i.hidden = b.dataset.f !== "all" && i.dataset.t !== b.dataset.f; }); });
+  })();
+  /* toc highlight */
+  (() => {
+    const links = [...document.querySelectorAll(".sy-toc a")], secs = links.map(a => document.querySelector(a.getAttribute("href")));
+    if (!("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) links.forEach((a, i) => a.setAttribute("aria-current", secs[i] === e.target)); }); }, { rootMargin: "-20% 0px -70% 0px" });
+    secs.forEach(s => s && io.observe(s));
+  })();
+</script>
+</body>
+</html>

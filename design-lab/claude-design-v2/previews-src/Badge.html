@@ -1,0 +1,46 @@
+<!-- @dsCard group="Status" height=150 subtitle="Badge і StatusBadge: статус завжди з іконкою й словом" -->
+<style>
+.badge {
+  display: inline-flex; height: 20px; align-items: center; gap: var(--space-1); white-space: nowrap;
+  border-radius: var(--radius-xs); padding: 0 var(--space-1-5);
+  font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500;
+}
+.b-neutral { background: var(--secondary); color: var(--secondary-foreground); }
+.b-outline { border: 1px solid var(--border); color: var(--muted-foreground); }
+.b-primary { background: var(--status-progress); color: var(--status-progress-foreground); }
+.b-ai { background: var(--ai); color: var(--ai-foreground); }
+.b-variable { background: var(--variable); color: var(--variable-foreground); }
+.status {
+  display: inline-flex; height: 20px; align-items: center; gap: var(--space-1-5); white-space: nowrap;
+  border-radius: var(--radius-pill); padding: 0 var(--space-2) 0 var(--space-1-5);
+  font-size: 12px; line-height: 16px; letter-spacing: 0.004em; font-weight: 500;
+}
+.s-todo { background: var(--status-todo); color: var(--status-todo-foreground); }
+.s-progress { background: var(--status-progress); color: var(--status-progress-foreground); }
+.s-done { background: var(--status-done); color: var(--status-done-foreground); }
+.s-overdue { background: var(--status-overdue); color: var(--status-overdue-foreground); }
+.s-due-soon { background: var(--status-due-soon); color: var(--status-due-soon-foreground); }
+</style>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">Badge: neutral · outline · primary · ai · variable</p>
+    <div class="row">
+      <span class="badge b-neutral">required</span>
+      <span class="badge b-outline">manager</span>
+      <span class="badge b-primary">Template</span>
+      <span class="badge b-ai">AI draft</span>
+      <span class="badge b-variable">&#123;&#123;tenant_name&#125;&#125;</span>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">StatusBadge: icon shape plus the glossary word</p>
+    <div class="row">
+      <span class="status s-todo">{{si todo}}to do</span>
+      <span class="status s-progress">{{si progress}}in progress</span>
+      <span class="status s-done">{{si done}}done</span>
+      <span class="status s-done">{{si done}}completed</span>
+      <span class="status s-overdue">{{si overdue}}overdue</span>
+      <span class="status s-due-soon">{{si due-soon}}due soon</span>
+    </div>
+  </section>
+</div>

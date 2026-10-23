@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo · Property Workflows</title>
+<link rel="icon" type="image/svg+xml" href="logo/favicon.svg">
+<script>
+  /* Apply saved theme/motion before first paint */
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<style>
+/* ===== Page-local styles (Logo showcase only — not components) ===== */
+.shell { display: grid; grid-template-columns: var(--size-sidebar) minmax(0, 1fr); min-height: 100dvh; }
+.side {
+  position: sticky; top: 0; height: 100dvh; overflow-y: auto;
+  background: var(--sidebar); color: var(--sidebar-foreground);
+  border-right: var(--hairline) solid var(--sidebar-border);
+  padding: var(--space-3) var(--space-2);
+  display: flex; flex-direction: column; gap: var(--space-4);
+}
+.brand { display: flex; align-items: center; gap: var(--space-2); height: var(--size-control); padding: 0 var(--space-2); }
+.brand svg { width: 22px; height: 22px; color: var(--primary); flex: none; }
+.nav { display: flex; flex-direction: column; gap: 1px; }
+.nav-label { padding: 0 var(--space-2); margin: var(--space-2) 0 var(--space-1); color: var(--muted-foreground); }
+.nav a {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  height: var(--size-row); padding: 0 var(--space-2); border-radius: var(--radius-sm);
+  color: var(--sidebar-foreground); text-decoration: none;
+  font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-medium);
+  transition: background-color var(--duration-instant) var(--ease-standard);
+}
+.nav a:hover, .nav a[aria-current="true"] { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
+.nav a:focus-visible { outline-offset: var(--ring-offset-inset); }
+.nav a .k { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+.side-foot { margin-top: auto; padding: var(--space-2); color: var(--muted-foreground); }
+
+.topbar {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  height: var(--size-header); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 0 var(--space-6); background: var(--background);
+  border-bottom: var(--hairline) solid transparent;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.topbar.scrolled { border-bottom-color: var(--border); }
+.crumbs { display: flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-size: var(--text-label); }
+.crumbs b { color: var(--foreground); font-weight: var(--weight-medium); }
+.crumbs svg { width: 12px; height: 12px; opacity: .6; }
+
+.seg { position: relative; display: inline-flex; padding: 2px; gap: 2px; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-sm); }
+.seg-thumb {
+  position: absolute; top: 2px; left: 0; height: calc(100% - 4px); width: 0;
+  background: var(--background); border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 var(--hairline) var(--border), var(--shadow-highlight);
+  transition: transform var(--spring-snappy-duration) var(--spring-snappy), width var(--spring-snappy-duration) var(--spring-snappy);
+}
+.seg button {
+  position: relative; z-index: 1; height: 22px; padding: 0 var(--space-2); border-radius: var(--radius-xs);
+  display: inline-flex; align-items: center; gap: var(--space-1-5);
+  font-size: var(--text-meta); line-height: var(--leading-meta); font-weight: var(--weight-medium);
+  color: var(--muted-foreground); transition: color var(--duration-fast) var(--ease-standard);
+}
+.seg button:hover, .seg button[aria-checked="true"] { color: var(--foreground); }
+.seg button svg { width: 13px; height: 13px; }
+.seg button:focus-visible { outline-offset: 0; }
+
+.main { min-width: 0; }
+.content { max-width: 1120px; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+.sec { padding-top: var(--space-16); scroll-margin-top: calc(var(--size-header) + var(--space-2)); }
+.sec:first-child { padding-top: var(--space-6); }
+.sec-head { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); max-width: 68ch; }
+.sec-head p { color: var(--muted-foreground); }
+.sec-index { font-family: var(--font-mono); font-size: var(--text-meta); color: var(--muted-foreground); }
+.sub { margin: var(--space-8) 0 var(--space-3); scroll-margin-top: calc(var(--size-header) + var(--space-2)); }
+.theme-panel { background: var(--background); color: var(--foreground); border: var(--hairline) solid var(--border); border-radius: var(--radius-lg); }
+.panel { background: var(--card); color: var(--card-foreground); border: var(--hairline) solid var(--border); border-radius: var(--radius-md); }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.hero-title { display: grid; gap: var(--space-3); max-width: 720px; }
+.hero-title p { color: var(--muted-foreground); font-size: 15px; line-height: 22px; }
+.fact { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--radius-pill); border: var(--hairline) solid var(--border); color: var(--muted-foreground); font-size: var(--text-meta); }
+.fact b { color: var(--foreground); font-weight: var(--weight-medium); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5);
+  height: var(--size-control-sm); padding: 0 var(--space-2); border-radius: var(--radius-sm);
+  font-size: var(--text-label); line-height: var(--leading-label); font-weight: var(--weight-medium); white-space: nowrap;
+  background: var(--secondary); color: var(--secondary-foreground); box-shadow: inset 0 0 0 var(--hairline) var(--border);
+  transition: background-color var(--duration-instant) var(--ease-standard), transform var(--duration-fast) var(--spring-snappy);
+}
+.btn:hover { background: var(--accent-active); }
+.btn:active { transform: scale(var(--scale-press)); }
+.btn svg { width: 14px; height: 14px; }
+.mono-note { font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: var(--muted-foreground); }
+
+/* ---- logo primitives ---- */
+.mk { display: block; flex: none; }
+.ink { color: var(--foreground); }
+.pri { color: var(--primary); }
+.lockup { --s: 22px; display: inline-flex; align-items: center; gap: calc(var(--s) * 0.42); color: var(--foreground); }
+.lockup .mk { width: calc(var(--s) * 1.2); height: calc(var(--s) * 1.2); margin-left: calc(var(--s) * -0.1); color: var(--primary); }
+.lockup .wm { font-size: var(--s); line-height: 1; font-weight: 600; letter-spacing: -0.03em; white-space: nowrap; padding-top: calc(var(--s) * 0.04); }
+.lockup.is-mono .mk { color: currentColor; }
+.tile-app { display: grid; place-items: center; background: var(--primary); color: var(--primary-foreground); flex: none; box-shadow: inset 0 0 0 1px color-mix(in oklch, white 10%, transparent); }
+.paper { background: oklch(0.991 0.004 85); color: oklch(0.21 0.008 80); }
+.ink-bg { background: oklch(0.178 0.004 80); color: oklch(0.945 0.004 80); }
+.pix { image-rendering: pixelated; image-rendering: crisp-edges; display: block; border-radius: 2px; box-shadow: 0 0 0 1px var(--border); }
+.cap { font-family: var(--font-mono); font-size: 10.5px; line-height: 14px; color: var(--muted-foreground); }
+
+/* ---- concept cards ---- */
+.concept { border: var(--hairline) solid var(--border); border-radius: var(--radius-xl); background: var(--card); overflow: hidden; margin-top: var(--space-6); }
+.concept.is-rec { border-color: color-mix(in oklch, var(--primary) 55%, var(--border)); box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent); }
+.c-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: var(--space-6); padding: var(--space-6); align-items: start; }
+.c-head h3 { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.c-head .diff { color: var(--muted-foreground); margin-top: var(--space-2); }
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--muted); color: var(--muted-foreground); font-size: var(--text-meta); font-weight: var(--weight-medium); }
+.pill.rec { background: color-mix(in oklch, var(--primary) 14%, var(--background)); color: var(--primary); }
+.c-body { display: grid; gap: var(--space-4); padding: 0 var(--space-6) var(--space-6); }
+.stage { padding: var(--space-5) var(--space-5) var(--space-4); display: grid; gap: var(--space-5); }
+.ladder { display: flex; align-items: flex-end; gap: var(--space-5); flex-wrap: wrap; }
+.ladder figure { display: grid; justify-items: center; gap: 6px; }
+.lock-row { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; min-height: 40px; }
+.c-extra { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: var(--space-4); }
+.c-extra > .panel { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.row-end { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; }
+
+.score { width: 100%; font-size: var(--text-label); }
+.score th { text-align: left; font-weight: var(--weight-medium); color: var(--muted-foreground); font-size: var(--text-meta); height: var(--size-cell); padding: 0 var(--space-3); border-bottom: var(--hairline) solid var(--border); }
+.score td { height: 40px; padding: 0 var(--space-3); border-bottom: var(--hairline) solid var(--border); vertical-align: middle; }
+.score tbody tr:hover td { background: var(--accent); }
+.score .nm { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-medium); white-space: nowrap; }
+.dots { display: inline-flex; gap: 3px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); opacity: .35; }
+.dots i.on { background: var(--primary); opacity: 1; }
+.score tr.win td { background: color-mix(in oklch, var(--primary) 6%, transparent); }
+.scroll-x { overflow-x: auto; }
+
+.rec-hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--space-4); }
+.rec-stage { position: relative; display: grid; place-items: center; min-height: 360px; border-radius: var(--radius-xl); overflow: hidden;
+  background: color-mix(in oklch, var(--primary) 7%, var(--background)); border: var(--hairline) solid var(--border); }
+.rec-stage .mk { width: 220px; height: 220px; color: var(--primary); }
+.rec-side { display: grid; gap: var(--space-4); align-content: start; }
+.why-list { display: grid; gap: var(--space-3); padding: var(--space-5); }
+.why-list li { display: grid; grid-template-columns: 24px 1fr; gap: var(--space-2); }
+.why-list b { font-weight: var(--weight-strong); }
+.why-list .n { font-family: var(--font-mono); font-size: 11px; color: var(--primary); padding-top: 2px; }
+.constr { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.constr svg.cg { width: 100%; height: auto; border-radius: var(--radius-lg); border: var(--hairline) solid var(--border); background: var(--card); }
+.specs { display: grid; gap: 0; }
+.specs > div { display: grid; grid-template-columns: 120px 1fr; gap: var(--space-3); padding: 9px 0; border-bottom: var(--hairline) solid var(--border); }
+.specs dt { color: var(--muted-foreground); font-size: var(--text-label); }
+.specs dd { margin: 0; font-size: var(--text-label); }
+.specs code { font-family: var(--font-mono); font-size: 12px; }
+.sizes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.size-card { padding: var(--space-4); display: grid; gap: var(--space-3); align-content: start; }
+.size-card .px { display: flex; gap: var(--space-4); align-items: flex-end; }
+.clear { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
+.clear > .theme-panel { padding: var(--space-6); display: grid; gap: var(--space-4); justify-items: center; align-content: start; }
+.cs-box { position: relative; outline: 1px dashed var(--ai); outline-offset: 0; }
+.cs-box .tag { position: absolute; font-family: var(--font-mono); font-size: 10px; color: var(--ai-foreground); }
+.minrow { display: flex; align-items: flex-end; gap: var(--space-8); flex-wrap: wrap; }
+.dd { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.dd figure { display: grid; gap: var(--space-2); align-content: start; }
+.dd .cell { position: relative; display: grid; place-items: center; height: 120px; border-radius: var(--radius-lg); border: var(--hairline) solid var(--border); background: var(--card); overflow: hidden; }
+.dd .badge-x, .dd .badge-ok { position: absolute; top: 8px; left: 8px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; line-height: 1; }
+.dd .badge-ok { background: var(--status-done-bg); color: var(--status-done-foreground); }
+.dd .badge-x { background: var(--status-overdue-bg); color: var(--status-overdue-foreground); }
+.dd .cell.ink-bg { background: oklch(0.178 0.004 80); color: oklch(0.945 0.004 80); }
+.dd figcaption { font-size: var(--text-meta); line-height: 16px; color: var(--muted-foreground); }
+.dd figcaption b { color: var(--foreground); font-weight: var(--weight-medium); }
+.ctx { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); }
+.ctx-card { padding: var(--space-4); display: grid; gap: var(--space-3); align-content: start; }
+.mock-side { display: grid; gap: 2px; padding: var(--space-2); background: var(--sidebar); border: var(--hairline) solid var(--sidebar-border); border-radius: var(--radius-md); width: 232px; color: var(--sidebar-foreground); }
+.mock-side .it { display: flex; align-items: center; gap: var(--space-2); height: 28px; padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--text-label); }
+.mock-side .it.on { background: var(--sidebar-accent); }
+.mock-side .it i { width: 14px; height: 14px; border-radius: 4px; background: var(--border-strong); opacity: .5; }
+.tabs { display: flex; gap: 2px; align-items: flex-end; padding: 8px 8px 0; background: var(--muted); border: var(--hairline) solid var(--border); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.tabs .tab { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px 8px 0 0; font-size: 12px; color: var(--muted-foreground); max-width: 200px; }
+.tabs .tab.on { background: var(--background); color: var(--foreground); }
+.tabs .tab svg { width: 16px; height: 16px; flex: none; }
+.tabs .tab span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.login { position: relative; display: grid; place-items: center; gap: var(--space-4); min-height: 300px; border-radius: var(--radius-lg); overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in oklch, var(--primary) 12%, var(--background)), var(--background) 70%); border: var(--hairline) solid var(--border); text-align: center; align-content: center; }
+.login .mk { width: 88px; height: 88px; color: var(--primary); }
+.files { width: 100%; font-size: var(--text-label); }
+.files th { text-align: left; font-weight: var(--weight-medium); color: var(--muted-foreground); font-size: var(--text-meta); height: var(--size-cell); padding: 0 var(--space-3); border-bottom: var(--hairline) solid var(--border); }
+.files td { padding: 10px var(--space-3); border-bottom: var(--hairline) solid var(--border); vertical-align: middle; }
+.files code { font-family: var(--font-mono); font-size: 12px; }
+.files .thumb { width: 140px; }
+.files img { width: 40px; height: 40px; border-radius: 8px; background: var(--muted); padding: 6px; border: 1px solid var(--border); }
+.files img.bare { padding: 0; }
+
+/* ---- Echo animation (login hero / loading) ---- */
+.echo .l { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.echo.play .l-out { animation: echo-draw 640ms var(--ease-in-out) 280ms both; }
+.echo.play .l-mid { animation: echo-draw 560ms var(--ease-in-out) 140ms both; }
+.echo.play .l-door { stroke-dasharray: none; transform-box: fill-box; transform-origin: 50% 100%; animation: echo-door 360ms var(--ease-standard) 0ms both; }
+@keyframes echo-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes echo-door { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+.echo.load .l-door { animation: echo-breathe 1600ms var(--ease-in-out) 0ms infinite; }
+.echo.load .l-mid { animation: echo-breathe 1600ms var(--ease-in-out) 160ms infinite; }
+.echo.load .l-out { animation: echo-breathe 1600ms var(--ease-in-out) 320ms infinite; }
+@keyframes echo-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .22; } }
+.fade-wm { animation: wm-in 360ms var(--ease-standard) 640ms both; }
+@keyframes wm-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .echo .l, :root:not([data-motion="full"]) .fade-wm { animation: none !important; }
+}
+:root[data-motion="reduce"] .echo .l, :root[data-motion="reduce"] .fade-wm { animation: none !important; }
+
+@media (max-width: 1100px) {
+  .c-extra { grid-template-columns: 1fr 1fr; }
+  .rec-hero, .constr { grid-template-columns: 1fr; }
+  .sizes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dd { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .topbar { padding: 0 var(--space-4); }
+  .content { padding: var(--space-6) var(--space-4) var(--space-12); }
+  .duo, .clear, .ctx, .c-head { grid-template-columns: 1fr; }
+  .crumbs .hide-sm { display: none; }
+}
+@media (max-width: 560px) {
+  .c-extra { grid-template-columns: 1fr; }
+  .seg button .lbl { display: none; }
+  [data-seg="motion"] { display: none; }
+  .specs > div { grid-template-columns: 1fr; gap: 2px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-sun" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.4 4.4 0 0 0 6.85 6.85z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.75" width="12" height="8.5" rx="1.5"/><path d="M5.5 13.5h5"/></g></symbol>
+    <symbol id="i-replay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.78"/><path d="M2.5 2.5v2.75h2.75"/></g></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="echo-24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V12L12 3L21 12V22"/><path d="M7 22V13.66L12 8.66L17 13.66V22"/></g><path d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/></symbol>
+    <symbol id="echo-16" viewBox="0 0 16 16"><path d="M2 15V8L8 2L14 8V15" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V9L8 6L11 9V15Z" fill="currentColor"/></symbol>
+    <symbol id="echo-20" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 19V10L10 2L18 10V19"/><path d="M6 19V11.66L10 7.66L14 11.66V19"/></g><path d="M9 19V12.9L10 11.9L11 12.9V19Z" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#echo-24"/></svg>
+      <div class="stack gap-0">
+        <span class="t-label t-strong" style="line-height:16px">Property Workflows</span>
+        <span class="t-meta t-muted" style="line-height:14px">Logo</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Logo sections">
+      <span class="nav-label t-meta">Exploration</span>
+      <a href="#overview">Overview <span class="k">01</span></a>
+      <a href="#concepts">Five concepts <span class="k">02</span></a>
+      <a href="#compare">Scorecard <span class="k">03</span></a>
+      <span class="nav-label t-meta">Recommended · Echo Roof</span>
+      <a href="#recommended">The mark <span class="k">04</span></a>
+      <a href="#construction">Construction <span class="k">05</span></a>
+      <a href="#sizes">Hinted sizes <span class="k">06</span></a>
+      <a href="#lockups">Lockups <span class="k">07</span></a>
+      <a href="#space">Clear space &amp; min size <span class="k">08</span></a>
+      <a href="#dodont">Do / Don't <span class="k">09</span></a>
+      <a href="#motion">Motion <span class="k">10</span></a>
+      <a href="#context">In context <span class="k">11</span></a>
+      <a href="#files">Files <span class="k">12</span></a>
+    </nav>
+    <div class="side-foot t-meta">tokens.css · base.css<br>v0.1 · October 2026</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar">
+      <div class="crumbs"><span class="hide-sm">Design system</span><svg class="hide-sm" aria-hidden="true"><use href="#i-chev"/></svg><b>Logo</b></div>
+      <div class="cluster gap-2">
+        <div class="seg" role="radiogroup" aria-label="Motion" data-seg="motion">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><span class="lbl">Motion: system</span></button>
+          <button type="button" role="radio" data-value="full" aria-checked="false"><span class="lbl">Full</span></button>
+          <button type="button" role="radio" data-value="reduce" aria-checked="false"><span class="lbl">Reduced</span></button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Theme" data-seg="theme">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="light" aria-checked="false"><svg aria-hidden="true"><use href="#i-sun"/></svg><span class="lbl">Light</span></button>
+          <button type="button" role="radio" data-value="dark" aria-checked="false"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">Dark</span></button>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><svg aria-hidden="true"><use href="#i-monitor"/></svg><span class="lbl">System</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="sec" id="overview" aria-labelledby="h-overview">
+        <div class="hero-title">
+          <span class="sec-index">01 · Overview</span>
+          <h1 class="t-display" id="h-overview">Logo</h1>
+          <p>The mark has to say three things at once — a home, a process that keeps going, and progress you can see — and still hold at 16&nbsp;px as a single ink. Five directions follow, each tested on the same ladder (16 · 20 · 32 · 64 · 160), in light, dark, on the primary tile and as one-colour ink. One is recommended and specified.</p>
+          <div class="cluster" style="margin-top:var(--space-4)">
+            <span class="fact"><b>5</b> concepts</span>
+            <span class="fact"><b>Geist 600</b> wordmark · −0.03em</span>
+            <span class="fact"><b>2 px</b> stroke · 45° roofs · miter joins</span>
+            <span class="fact"><b>16 / 20 / 24</b> hinted grids</span>
+            <span class="fact"><b>1 colour</b> · currentColor</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="concepts" aria-labelledby="h-concepts">
+        <div class="sec-head">
+          <span class="sec-index">02 · Concepts</span>
+          <h2 class="t-title" id="h-concepts">Five directions</h2>
+          <p>Each card: size ladder (hinted grid under 20&nbsp;px), lockups in Geist, app tile on primary, one-colour stamps and the real 16&nbsp;px pixels.</p>
+        </div>
+        <div id="concept-list"></div>
+      </section>
+
+      <section class="sec" id="compare" aria-labelledby="h-compare">
+        <div class="sec-head">
+          <span class="sec-index">03 · Scorecard</span>
+          <h2 class="t-title" id="h-compare">How they compare</h2>
+          <p>Scored 1–5 from the renders above. Echo Roof is the only direction without a weak column.</p>
+        </div>
+        <div class="panel scroll-x"><table class="score" id="score"></table></div>
+      </section>
+
+      <section class="sec" id="recommended" aria-labelledby="h-rec">
+        <div class="sec-head">
+          <span class="sec-index">04 · Recommended</span>
+          <h2 class="t-title" id="h-rec">Echo Roof</h2>
+          <p>Three nested gables with the same stroke and the same gap, ending on one baseline. The outer rings are the stages you have finished, the solid door is the step you are standing on — a roofline that keeps echoing as the run progresses.</p>
+        </div>
+        <div class="rec-hero">
+          <div class="rec-stage">
+            <svg class="mk echo" id="hero-echo" viewBox="0 0 24 24" role="img" aria-label="Property Workflows mark">
+              <g fill="none" stroke="currentColor" stroke-width="2">
+                <path class="l l-mid" pathLength="1" d="M7 22V13.66L12 8.66L17 13.66V22"/>
+                <path class="l l-out" pathLength="1" d="M3 22V12L12 3L21 12V22"/>
+              </g>
+              <path class="l l-door" d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/>
+            </svg>
+            <button type="button" class="btn" data-replay="hero" style="position:absolute;right:12px;bottom:12px"><svg aria-hidden="true"><use href="#i-replay"/></svg>Replay</button>
+          </div>
+          <div class="rec-side">
+            <div class="panel why-list">
+              <h3 class="t-heading">Why it wins</h3>
+              <ul role="list" class="stack gap-3">
+                <li><span class="n">01</span><span><b>Reads as home and as process.</b> A pitched roof is unmistakably property; the repeated, evenly spaced outline is a run advancing stage by stage.</span></li>
+                <li><span class="n">02</span><span><b>Strong at 16 px.</b> Outer ring, gap, solid door: three clean vertical bands in 14 px, every edge on a pixel.</span></li>
+                <li><span class="n">03</span><span><b>One idea, one rule.</b> Stroke = gap = 2, roofs at 45°, door = 4. No letterform, check, node graph or gradient.</span></li>
+                <li><span class="n">04</span><span><b>Built to move.</b> Door rises, rings draw outward: a 0.92 s assemble for the login hero and a calm inside-out pulse for loading.</span></li>
+              </ul>
+            </div>
+            <div class="panel" style="padding:var(--space-4);display:grid;gap:var(--space-2)">
+              <h3 class="t-heading">How it differs</h3>
+              <p class="t-muted" style="font-size:var(--text-label);line-height:18px">Process Street: a check in a rounded form. Linear: a ring of bars. Notion: cube + letter. Asana: three dots. Zapier: asterisk. n8n: connected nodes. Buildium / AppFolio: letterforms. Echo Roof has no letter, no check, no dot cluster — its nearest relatives are generic arch and wi-fi glyphs, which lack the 45° gable and the solid door.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="t-heading sub" id="construction">Construction</h3>
+        <div class="constr">
+          <svg class="cg" id="constr" viewBox="-2 -4 28 31" role="img" aria-label="Construction grid of the mark"></svg>
+          <dl class="specs">
+            <div><dt>Master grid</dt><dd><code>24 × 24</code>, mark in a <code>20 × 20</code> keyline (2 px margin); the apex tip overshoots the top line by 0.4</dd></div>
+            <div><dt>Rhythm</dt><dd><code>2·2·2·2·4·2·2·2·2</code> — stroke, gap, stroke, gap, door, gap, stroke, gap, stroke (px at 24)</dd></div>
+            <div><dt>Stroke</dt><dd><code>2</code>, butt caps flush with the baseline, <b>miter</b> joins (crisp apex, no rounding)</dd></div>
+            <div><dt>Roof pitch</dt><dd><code>45°</code> on all layers; layers are true offsets (<code>4</code> horizontal, <code>4√2 ≈ 5.66</code> vertical)</dd></div>
+            <div><dt>Door</dt><dd>Solid, <code>4</code> wide, 45° gable top; always the innermost layer</dd></div>
+            <div><dt>Hinted grids</dt><dd><code>16</code> (favicon, tabs, 14–18 px), <code>20</code> (sidebar), <code>24</code> master (≥ 24 px). Never scale the master below 20 px.</dd></div>
+            <div><dt>Colour</dt><dd>Ink = <code>currentColor</code>. Brand: <code>--primary</code> (light <code>#445dad</code>, dark <code>#8aa8f7</code>). On the tile: <code>--primary-foreground</code>.</dd></div>
+            <div><dt>Optical</dt><dd>Visual centre ≈ <code>y 11.8</code>: the apex is a point and the feet are flat, so the box is nudged 0.2 up.</dd></div>
+          </dl>
+        </div>
+
+        <h3 class="t-heading sub" id="sizes">Hinted sizes — pixels, not promises</h3>
+        <div class="sizes" id="sizes-grid"></div>
+
+        <h3 class="t-heading sub" id="lockups">Lockups</h3>
+        <div class="duo" id="lockup-grid"></div>
+
+        <h3 class="t-heading sub" id="space">Clear space &amp; minimum size</h3>
+        <div class="clear" id="space-grid"></div>
+
+        <h3 class="t-heading sub" id="dodont">Do / Don't</h3>
+        <div class="dd" id="dd-grid"></div>
+
+        <h3 class="t-heading sub" id="motion">Motion</h3>
+        <div class="duo">
+          <div class="theme-panel" style="padding:var(--space-5);display:grid;gap:var(--space-4);align-content:start">
+            <div class="cluster" style="justify-content:space-between"><span class="t-heading">Assemble · login hero, first load</span><button type="button" class="btn" data-replay="login"><svg aria-hidden="true"><use href="#i-replay"/></svg>Replay</button></div>
+            <div class="login" id="login-demo">
+              <svg class="mk echo" id="login-echo" viewBox="0 0 24 24" aria-hidden="true">
+                <g fill="none" stroke="currentColor" stroke-width="2">
+                  <path class="l l-mid" pathLength="1" d="M7 22V13.66L12 8.66L17 13.66V22"/>
+                  <path class="l l-out" pathLength="1" d="M3 22V12L12 3L21 12V22"/>
+                </g>
+                <path class="l l-door" d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/>
+              </svg>
+              <div class="stack gap-1" style="align-items:center">
+                <span class="t-title fade-wm" style="letter-spacing:-0.03em">Property Workflows</span>
+                <span class="t-meta t-muted fade-wm" style="animation-delay:760ms">Every move-in, move-out and inspection — one run.</span>
+              </div>
+            </div>
+            <p class="t-meta t-muted">Door rises <b>0–360 ms</b> (<code class="mono-note">--ease-standard</code>), inner ring draws <b>140–700</b>, outer ring <b>280–920</b> (<code class="mono-note">--ease-in-out</code>), wordmark fades in at 640. Total 0.92 s; played once, never looped.</p>
+          </div>
+          <div class="theme-panel" style="padding:var(--space-5);display:grid;gap:var(--space-4);align-content:start">
+            <div class="cluster" style="justify-content:space-between"><span class="t-heading">Echo · loading</span><span class="t-meta t-muted">infinite, 1.6 s</span></div>
+            <div class="login">
+              <svg class="mk echo load" viewBox="0 0 24 24" style="width:56px;height:56px" aria-hidden="true">
+                <g fill="none" stroke="currentColor" stroke-width="2">
+                  <path class="l l-mid" pathLength="1" d="M7 22V13.66L12 8.66L17 13.66V22"/>
+                  <path class="l l-out" pathLength="1" d="M3 22V12L12 3L21 12V22"/>
+                </g>
+                <path class="l l-door" d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/>
+              </svg>
+              <span class="t-meta t-muted">Parsing lease_apartment_12.pdf…</span>
+            </div>
+            <p class="t-meta t-muted">Door → inner ring → outer ring breathe 160 ms apart: the roof “echoes” outward, like progress. Opacity only — no movement, so it never competes with content.</p>
+          </div>
+        </div>
+        <div class="panel" style="padding:var(--space-4);margin-top:var(--space-4);display:grid;gap:var(--space-2)">
+          <h4 class="t-heading">Reduced motion</h4>
+          <p class="t-muted" style="font-size:var(--text-label);line-height:18px">Under <code class="mono-note">prefers-reduced-motion: reduce</code> (or the “Reduced” switch above) every animation is removed and the finished mark is shown. The keyframes only change <code class="mono-note">stroke-dashoffset</code>, <code class="mono-note">opacity</code> and a <code class="mono-note">scaleY</code> from the baseline, so the resting state is always the complete logo. Switch to “Reduced” and press Replay to check.</p>
+        </div>
+      </section>
+
+      <section class="sec" id="context" aria-labelledby="h-ctx">
+        <div class="sec-head">
+          <span class="sec-index">11 · In context</span>
+          <h2 class="t-title" id="h-ctx">Where it lives</h2>
+          <p>Sidebar header (20 grid), browser tab (16 grid) and the app icon, in both themes.</p>
+        </div>
+        <div class="ctx">
+          <div class="theme-panel ctx-card" data-theme="light" id="ctx-light"></div>
+          <div class="theme-panel ctx-card" data-theme="dark" id="ctx-dark"></div>
+        </div>
+      </section>
+
+      <section class="sec" id="files" aria-labelledby="h-files">
+        <div class="sec-head">
+          <span class="sec-index">12 · Files</span>
+          <h2 class="t-title" id="h-files">Assets — <code style="font-family:var(--font-mono);font-size:16px">logo/</code></h2>
+          <p>Hand-written SVG, no editor metadata. Favicon, app icon and lockup below are the real files; single-colour files inherit <code class="mono-note">currentColor</code> when inlined.</p>
+        </div>
+        <div class="panel scroll-x">
+          <table class="files">
+            <thead><tr><th></th><th>File</th><th>Use</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="thumb"><svg class="mk ink" width="40" height="40" viewBox="0 0 24 24"><use href="#echo-24"/></svg></td><td><code>mark.svg</code></td><td>Default mark, ≥ 24 px</td><td class="t-muted">24 grid · <code>currentColor</code> · 2 px padding built in</td></tr>
+              <tr><td class="thumb"><svg class="mk ink" width="40" height="40" viewBox="0 0 16 16"><use href="#echo-16"/></svg></td><td><code>mark-16.svg</code></td><td>14–18 px: tabs, inline, menus</td><td class="t-muted">16 grid · every edge pixel-aligned · <code>currentColor</code></td></tr>
+              <tr><td class="thumb"><svg class="mk ink" width="40" height="40" viewBox="0 0 20 20"><use href="#echo-20"/></svg></td><td><code>mark-20.svg</code></td><td>19–23 px: sidebar header</td><td class="t-muted">20 grid · <code>currentColor</code></td></tr>
+              <tr><td class="thumb"><img class="bare" src="logo/app-icon.svg" alt="" width="40" height="40"></td><td><code>app-icon.svg</code></td><td>PWA / home-screen / avatar</td><td class="t-muted">512 · primary tile · mark at 56 % · maskable-safe</td></tr>
+              <tr><td class="thumb"><img src="logo/favicon.svg" alt="" width="40" height="40"></td><td><code>favicon.svg</code></td><td><code>&lt;link rel="icon"&gt;</code></td><td class="t-muted">16 grid · light/dark colours via <code>prefers-color-scheme</code> inside the SVG</td></tr>
+              <tr><td class="thumb"><img src="logo/lockup.svg" alt="" style="width:120px;height:40px;object-fit:contain;padding:4px 6px;background:oklch(0.991 0.004 85)"></td><td><code>lockup.svg</code></td><td>Mark + “Property Workflows”</td><td class="t-muted"><code>currentColor</code> · Geist 600 <code>&lt;text&gt;</code>; in-app, use the HTML lockup</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const root = document.documentElement;
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
+  const reduceMQ = matchMedia("(prefers-reduced-motion: reduce)");
+  const motionOK = () => root.dataset.motion === "full" || (root.dataset.motion !== "reduce" && !reduceMQ.matches);
+
+  /* ================= geometry ================= */
+  const st = (w = 2, x = "") => `fill="none" stroke="currentColor" stroke-width="${w}" ${x}`;
+  const F = (s) => s.replace(/<(path|rect|circle)/g, '<$1 fill="currentColor"');
+  const CONCEPTS = [
+    { id: "echo", name: "Echo Roof", tag: "Nested gables = steps", rec: true,
+      why: "Three nested gables, one stroke, one gap. Each ring is a stage already passed; the solid door is the step you are on. Reads as home and as a run in progress.",
+      diff: "No letterform, check, node cluster or gradient — the clichés of this category. Only generic arch/wi-fi glyphs come close, and they have no 45° gable or solid door.",
+      s: [5, 4, 4, 5, 5, 5],
+      v24: `<path d="M3 22V12L12 3L21 12V22" ${st()}/><path d="M7 22V13.66L12 8.66L17 13.66V22" ${st()}/><path d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/>`,
+      v20: `<path d="M2 19V10L10 2L18 10V19" ${st()}/><path d="M6 19V11.66L10 7.66L14 11.66V19" ${st()}/><path d="M9 19V12.9L10 11.9L11 12.9V19Z" fill="currentColor"/>`,
+      v16: `<path d="M2 15V8L8 2L14 8V15" ${st()}/><path d="M5 15V9L8 6L11 9V15Z" fill="currentColor"/>` },
+    { id: "gable-p", name: "Gable P", tag: "Roofline = flow path",
+      why: "A “P” whose bowl is a house: the stem starts at a filled node, climbs, folds over the roofline and returns — a run that leaves through the door and comes home.",
+      diff: "Not Pinterest or Process Street: no circle, no check. Weakness: the node on a stem reads as a map pin or a flag at small sizes.",
+      s: [3, 3, 4, 4, 4, 3],
+      v24: `<path d="M6 21V9L12 3L18 9V15H6" ${st()}/><circle cx="6" cy="20" r="2.5" fill="currentColor"/>`,
+      v16: `<path d="M4 12V6L8 2L12 6V10H4" ${st()}/><circle cx="4" cy="12.5" r="2" fill="currentColor"/>` },
+    { id: "key", name: "Key Path", tag: "House-key with step teeth",
+      why: "The key handed over on move-in day: the bow is a house, the bit is a stepped path. The strongest story of the five, and the most literal.",
+      diff: "Keys are everywhere in real estate, but a house-shaped bow with checklist-step teeth is not. Weakness: teeth clot at 16 px and it reads “security”.",
+      s: [2, 4, 3, 4, 4, 2],
+      v24: `<path d="M7 10V7L12 2L17 7V10Z" ${st()}/><path d="M12 10V22M12 15H17M12 20H15" ${st()}/>`,
+      v16: `<path d="M4 7V5L8 1L12 5V7Z" ${st()}/><path d="M8 7V15M8 11H12M8 14H11" ${st()}/>` },
+    { id: "strata", name: "Strata", tag: "Checklist rows = house",
+      why: "A house sliced into foundation, walls and roof like three checklist rows. Bulletproof at 16 px, one solid shape, trivial to animate bottom-up.",
+      diff: "Sliced silhouettes are common, and at small size it drifts toward a generic “layers / upload” icon. Solid, but not ownable.",
+      s: [5, 2, 3, 3, 5, 3],
+      v24: F(`<path d="M12 2L21 11H3Z"/><rect x="4" y="13" width="16" height="4"/><rect x="4" y="19" width="16" height="3"/>`),
+      v16: F(`<path d="M8 1L15 8H1Z"/><rect x="2" y="10" width="12" height="3"/><rect x="2" y="14" width="12" height="1"/>`) },
+    { id: "door", name: "Open Door", tag: "Progress ring + doorway",
+      why: "A three-quarter progress ring around an arched door: a run that is 75% through, at the threshold. The clearest progress metaphor.",
+      diff: "Radial loaders are everywhere and the ring crowds the door under 24 px; it lands closer to “spinner” than “home”. Lovely large, soft small.",
+      s: [2, 3, 5, 3, 4, 4],
+      v24: `<path d="M12 2.75A9.25 9.25 0 1 1 2.75 12" ${st(2, 'stroke-linecap="round"')}/><path d="M9 17.5V12a3 3 0 0 1 6 0V17.5Z" fill="currentColor"/>`,
+      v16: `<path d="M8 2A6 6 0 1 1 2 8" ${st()}/><path d="M6 11V8a2 2 0 0 1 4 0V11Z" fill="currentColor"/>` },
+  ];
+  const grid = (px) => px <= 18 ? 16 : px <= 21 ? 20 : 24;
+  const mk = (c, px, cls = "", style = "") => {
+    const g = c["v" + grid(px)] ? grid(px) : 24;
+    return `<svg class="mk ${cls}" width="${px}" height="${px}" viewBox="0 0 ${g} ${g}" style="${style}" aria-hidden="true">${c["v" + g]}</svg>`;
+  };
+  const lockup = (c, s = 22, extra = "", name = "Property Workflows") => `<span class="lockup ${extra}" style="--s:${s}px">${mk(c, Math.round(s * 1.2))}<span class="wm">${name}</span></span>`;
+  const tile = (c, px) => `<span class="tile-app" style="width:${px}px;height:${px}px;border-radius:${Math.round(px * 0.225)}px">${mk(c, Math.round(px * 0.6))}</span>`;
+  const echo = CONCEPTS[0];
+
+  /* ================= 02 concept cards ================= */
+  const cardHTML = (c, i) => `
+  <article class="concept ${c.rec ? "is-rec" : ""}" id="c-${c.id}" aria-labelledby="h-c-${c.id}">
+    <div class="c-head">
+      <div>
+        <span class="sec-index">Concept ${String(i + 1).padStart(2, "0")}</span>
+        <h3 class="t-title" id="h-c-${c.id}" style="margin-top:2px">${c.name} ${c.rec ? '<span class="pill rec">Recommended</span>' : ""}</h3>
+        <span class="t-meta t-muted">${c.tag}</span>
+      </div>
+      <div><p class="t-body">${c.why}</p><p class="diff t-label">${c.diff}</p></div>
+    </div>
+    <div class="c-body">
+      <div class="duo">
+        ${["light", "dark"].map((th) => `
+        <div class="theme-panel stage" data-theme="${th}">
+          <div class="ladder">
+            ${[16, 20, 32, 64].map((p) => `<figure><span class="ink">${mk(c, p)}</span><figcaption class="cap">${p}</figcaption></figure>`).join("")}
+            <figure style="margin-left:auto"><span class="pri">${mk(c, 160)}</span><figcaption class="cap">160 · primary</figcaption></figure>
+          </div>
+          <div class="lock-row">${lockup(c, 22)}${lockup(c, 18, "", "Workflows")}</div>
+        </div>`).join("")}
+      </div>
+      <div class="c-extra">
+        <div class="panel">
+          <span class="cap">APP ICON · PRIMARY TILE</span>
+          <div class="row-end">${tile(c, 72)}${tile(c, 40)}${tile(c, 24)}${tile(c, 16)}</div>
+        </div>
+        <div class="panel">
+          <span class="cap">ONE-COLOUR STAMPS</span>
+          <div class="row-end">
+            <span class="paper" style="display:grid;place-items:center;width:72px;height:72px;border-radius:10px;box-shadow:0 0 0 1px var(--border)">${mk(c, 48)}</span>
+            <span class="ink-bg" style="display:grid;place-items:center;width:72px;height:72px;border-radius:10px">${mk(c, 48)}</span>
+            <span class="paper" style="display:grid;place-items:center;width:40px;height:40px;border-radius:8px;box-shadow:0 0 0 1px var(--border)">${mk(c, 24)}</span>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="cap">16 PX · REAL PIXELS ×8</span>
+          <div class="row-end"><canvas class="pix" data-c="${c.id}" data-th="light" width="16" height="16" style="width:96px;height:96px"></canvas><canvas class="pix" data-c="${c.id}" data-th="dark" width="16" height="16" style="width:96px;height:96px"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </article>`;
+  $("#concept-list").innerHTML = CONCEPTS.map(cardHTML).join("");
+
+  function drawCanvas(cv, svgInner, vb, size, color, bg) {
+    const src = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${vb} ${vb}" color="${color}">${svgInner}</svg>`;
+    const img = new Image();
+    img.onload = () => { const x = cv.getContext("2d"); x.fillStyle = bg; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height); };
+    img.src = "data:image/svg+xml," + encodeURIComponent(src);
+  }
+  const PAL = { light: ["#1a1814", "#fdfcf9"], dark: ["#eeecea", "#12110f"] };
+  $$("canvas.pix[data-c]").forEach((cv) => {
+    const c = CONCEPTS.find((x) => x.id === cv.dataset.c), [fg, bg] = PAL[cv.dataset.th];
+    drawCanvas(cv, c.v16, 16, 16, fg, bg);
+  });
+
+  /* ================= 03 scorecard ================= */
+  const COLS = ["16 px legibility", "Ownable", "Flow / progress", "Property cue", "Mono & dark", "Animates well"];
+  const dots = (n) => `<span class="dots" aria-label="${n} of 5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
+  $("#score").innerHTML = `<thead><tr><th>Concept</th>${COLS.map((c) => `<th>${c}</th>`).join("")}<th>Total</th></tr></thead><tbody>${CONCEPTS.map((c) =>
+    `<tr class="${c.rec ? "win" : ""}"><td><span class="nm ink">${mk(c, 20)}${c.name}</span></td>${c.s.map((n) => `<td>${dots(n)}</td>`).join("")}<td class="t-mono">${c.s.reduce((a, b) => a + b, 0)}/30</td></tr>`).join("")}</tbody>`;
+
+  /* ================= 05 construction diagram ================= */
+  (() => {
+    const L = [];
+    for (let i = 0; i <= 24; i++) {
+      const strong = i % 2 === 0;
+      L.push(`<path d="M${i} 0V24M0 ${i}H24" stroke="var(--border)" stroke-width="${strong ? 0.06 : 0.03}" fill="none"/>`);
+    }
+    const keyline = `<rect x="2" y="2" width="20" height="20" fill="none" stroke="var(--ai)" stroke-width=".09" stroke-dasharray=".5 .35"/>`;
+    const bands = [[2,4,"S"],[4,6,"g"],[6,8,"S"],[8,10,"g"],[10,14,"D"],[14,16,"g"],[16,18,"S"],[18,20,"g"],[20,22,"S"]];
+    const rul = bands.map(([a, b, k]) => `<rect x="${a}" y="-1.7" width="${b - a}" height=".8" fill="${k === "g" ? "none" : "var(--primary)"}" opacity="${k === "S" ? .55 : 1}" stroke="${k === "g" ? "var(--ai)" : "none"}" stroke-width=".06"/><text x="${(a + b) / 2}" y="-2.15" text-anchor="middle" font-family="var(--font-mono)" font-size=".62" fill="var(--muted-foreground)">${b - a}</text>`).join("");
+    const mark = `<g opacity=".16" style="color:var(--primary)">${echo.v24}</g>`;
+    const center = `<g fill="none" stroke="var(--primary)" stroke-width=".1"><path d="M3 22V12L12 3L21 12V22M7 22V13.66L12 8.66L17 13.66V22"/><path d="M10 22V14.9L12 12.9L14 14.9V22Z"/></g>`;
+    const guides = `<g stroke="var(--ai)" stroke-width=".08" stroke-dasharray=".4 .3" fill="none"><path d="M-1 16L12 3L25 16M-1 21.66L12 8.66L25 21.66"/><path d="M12 1V23"/></g>`;
+    const nodes = [[3,12],[12,3],[21,12],[7,13.66],[12,8.66],[17,13.66],[10,14.9],[12,12.9],[14,14.9]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".22" fill="var(--background)" stroke="var(--primary)" stroke-width=".08"/>`).join("");
+    const base = `<path d="M1 22H23" stroke="var(--foreground)" stroke-width=".07"/><text x="22.4" y="21.7" font-family="var(--font-mono)" font-size=".5" fill="var(--muted-foreground)">baseline</text><text x="2" y="24.7" font-family="var(--font-mono)" font-size=".58" fill="var(--muted-foreground)">keyline 20 × 20 · stroke 2 · gap 2 · door 4 · 45° · miter</text><text x="12.4" y="1.1" font-family="var(--font-mono)" font-size=".55" fill="var(--ai-foreground)">45°</text>`;
+    $("#constr").innerHTML = L.join("") + keyline + mark + guides + center + nodes + rul + base;
+  })();
+
+  /* ================= 06 hinted sizes ================= */
+  (() => {
+    const cases = [
+      { px: 16, title: "16 grid · favicon, tabs", g: 16, inner: echo.v16, note: "Every edge on a pixel: 2 px strokes, 2 px gaps, 6 px door." },
+      { px: 20, title: "20 grid · sidebar header", g: 20, inner: echo.v20, note: "Three layers survive; door is 2 px. All verticals on whole pixels." },
+      { px: 24, title: "24 master · ≥ 24 px", g: 24, inner: echo.v24, note: "Master. Verticals on even pixels; roofs anti-alias naturally." },
+    ];
+    const cards = cases.map((k) => `
+      <div class="theme-panel size-card">
+        <span class="cap">${k.title.toUpperCase()}</span>
+        <div class="px"><span class="ink"><svg class="mk" width="${k.px}" height="${k.px}" viewBox="0 0 ${k.g} ${k.g}">${k.inner}</svg></span><canvas class="pix" data-sz="${k.px}" width="${k.px}" height="${k.px}" style="width:${k.px * 5}px;height:${k.px * 5}px"></canvas></div>
+        <span class="t-meta t-muted">${k.note}</span>
+      </div>`).join("");
+    const bad = `
+      <div class="theme-panel size-card">
+        <span class="cap">NOT THIS · 24 MASTER AT 16 PX</span>
+        <div class="px"><span class="ink"><svg class="mk" width="16" height="16" viewBox="0 0 24 24">${echo.v24}</svg></span><canvas class="pix" data-bad="1" width="16" height="16" style="width:80px;height:80px"></canvas></div>
+        <span class="t-meta t-muted">Scaled ×0.67: strokes become 1.33 px and gaps smear to grey — why <code class="mono-note">mark-16.svg</code> exists.</span>
+      </div>`;
+    $("#sizes-grid").innerHTML = cards + bad;
+    $$("canvas[data-sz]").forEach((cv) => { const k = cases.find((x) => x.px === +cv.dataset.sz); drawCanvas(cv, k.inner, k.g, k.px, "#1a1814", "#fdfcf9"); });
+    drawCanvas($("canvas[data-bad]"), echo.v24, 24, 16, "#1a1814", "#fdfcf9");
+  })();
+
+  /* ================= 07 lockups ================= */
+  $("#lockup-grid").innerHTML = ["light", "dark"].map((th) => `
+    <div class="theme-panel" data-theme="${th}" style="padding:var(--space-6);display:grid;gap:var(--space-6);align-content:start">
+      <div class="stack gap-2"><span class="cap">PRIMARY · MARK PRIMARY + WORDMARK INK</span>${lockup(echo, 32)}</div>
+      <div class="stack gap-2"><span class="cap">COMPACT · “WORKFLOWS”</span>${lockup(echo, 24, "", "Workflows")}</div>
+      <div class="stack gap-2"><span class="cap">ONE-COLOUR · SINGLE INK</span>${lockup(echo, 20, "is-mono")}</div>
+      <div class="row-end"><div class="stack gap-2"><span class="cap">MARK ONLY</span><span class="pri">${mk(echo, 40)}</span></div><div class="stack gap-2"><span class="cap">SIDEBAR · 14 PX TEXT</span>${lockup(echo, 14)}</div></div>
+      <p class="t-meta t-muted">Wordmark: Geist <b>600</b>, tracking <b>−0.03em</b> (−0.02em under 16 px, −0.01em at 12–13 px). Mark visible height = 1 × font-size, optically centred on the cap-height; gap = 0.42 × font-size. “Property” is dropped only in the compact lockup.</p>
+    </div>`).join("");
+
+  /* ================= 08 clear space & min size ================= */
+  (() => {
+    const pad = 64, S = 160;
+    const box = `<div class="theme-panel"><div class="cs-box" style="padding:${pad}px;margin:var(--space-2) 0"><span class="pri" style="display:block">${mk(echo, S)}</span>
+      <span class="tag" style="left:${pad / 2 - 6}px;top:${pad / 2 - 6}px">2x</span><span class="tag" style="right:${pad / 2 - 6}px;bottom:${pad / 2 - 6}px">2x</span></div>
+      <span class="t-meta t-muted" style="text-align:center">x = door width (20 % of the mark's visible height). Clear space = <b>2x</b> on every side — free of text, edges and other marks.</span></div>`;
+    const min = `<div class="theme-panel" style="padding:var(--space-6);display:grid;gap:var(--space-5);align-content:start;justify-items:start">
+      <span class="cap">MINIMUM SIZES</span>
+      <div class="minrow">
+        <div class="stack gap-2"><span class="ink">${mk(echo, 16)}</span><span class="cap">mark · 16 px</span></div>
+        <div class="stack gap-2"><span class="ink">${mk(echo, 20)}</span><span class="cap">sidebar · 20</span></div>
+        <div class="stack gap-2">${lockup(echo, 14)}<span class="cap">lockup · 14 px text</span></div>
+        <div class="stack gap-2">${lockup(echo, 16, "", "Workflows")}<span class="cap">compact · 16 px text</span></div>
+      </div>
+      <ul role="list" class="stack gap-2 t-label t-muted"><li><b style="color:var(--foreground)">Mark</b> — never below <b>16 px</b>; <code class="mono-note">mark-16</code> up to 18 px, <code class="mono-note">mark-20</code> for 19–23 px, the master from 24 px.</li><li><b style="color:var(--foreground)">Full lockup</b> — never below <b>14 px</b> text (≈ 150 px wide). Narrower: compact, then mark alone.</li><li><b style="color:var(--foreground)">Favicon</b> — <code class="mono-note">favicon.svg</code> (16 grid) at 16 / 32 / 48 px.</li></ul>
+    </div>`;
+    $("#space-grid").innerHTML = box + min;
+  })();
+
+  /* ================= 09 do / don't ================= */
+  (() => {
+    const bx = (inner, ok, style = "") => `<div class="cell ${ok === "ink" ? "ink-bg" : ""}" style="${style}">${inner}<span class="${ok === true || ok === "ink" ? "badge-ok" : "badge-x"}">${ok === true || ok === "ink" ? "✓" : "✕"}</span></div>`;
+    const variant = (kind) => {
+      switch (kind) {
+        case "ok-bg": return bx(`<span class="pri">${mk(echo, 64)}</span>`, true, "background:var(--muted)");
+        case "ok-tile": return bx(tile(echo, 72), true);
+        case "ok-mono": return bx(mk(echo, 64), "ink");
+        case "ok-16": return bx(`<span class="ink">${mk(echo, 16)}</span>`, true);
+        case "x-ai": return bx(`<span style="color:var(--ai)">${mk(echo, 64)}</span>`, false);
+        case "x-grad": return bx(`<svg class="mk" viewBox="0 0 24 24" width="64" height="64"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#445dad"/><stop offset="1" stop-color="#c04bd0"/></linearGradient></defs><g fill="none" stroke="url(#gg)" stroke-width="2"><path d="M3 22V12L12 3L21 12V22"/><path d="M7 22V13.66L12 8.66L17 13.66V22"/></g><path d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="url(#gg)"/></svg>`, false);
+        case "x-stretch": return bx(`<span class="pri" style="display:block;transform:scaleX(1.5) rotate(-8deg)">${mk(echo, 52)}</span>`, false);
+        case "x-round": return bx(`<svg class="mk pri" viewBox="0 0 24 24" width="64" height="64"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 22V12L12 3L21 12V22"/><path d="M7.5 22V13.66L12 9.5L16.5 13.66V22"/></g><path d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="currentColor"/></svg>`, false);
+        case "x-shadow": return bx(`<span class="pri" style="filter:drop-shadow(0 4px 3px color-mix(in oklch, black 45%, transparent)) drop-shadow(0 0 6px var(--ai))">${mk(echo, 64)}</span>`, false);
+        case "x-contrast": return bx(`<span class="pri">${mk(echo, 64)}</span>`, false, "background:color-mix(in oklch, var(--primary) 78%, var(--background))");
+        case "x-master16": return bx(`<span class="ink"><svg class="mk" width="16" height="16" viewBox="0 0 24 24">${echo.v24}</svg></span>`, false);
+        case "x-cs": return bx(`<span class="pri" style="display:inline-flex;align-items:center;gap:1px">${mk(echo, 40)}<span class="ink" style="font-weight:600;font-size:15px;letter-spacing:-.03em">Property Workflows</span></span>`, false);
+        case "x-fill": return bx(`<svg class="mk pri" viewBox="0 0 24 24" width="64" height="64"><path d="M2 22V11.5L12 2L22 11.5V22Z" fill="currentColor"/></svg>`, false);
+      }
+      return "";
+    };
+    const code = (t) => `<code class="mono-note">${t}</code>`;
+    const items = [
+      ["ok-bg", "Do", `Brand colour (${code("--primary")}) on background, muted or card.`],
+      ["ok-tile", "Do", `Primary tile with ${code("--primary-foreground")} mark, mark at 56–60 %.`],
+      ["ok-mono", "Do", "Single ink on dark or light; keep it the theme's foreground."],
+      ["ok-16", "Do", "Swap to the hinted 16 / 20 grid under 24 px."],
+      ["x-ai", "Don't", "Recolour to AI magenta — that hue means “AI suggested” across the product."],
+      ["x-grad", "Don't", "Gradients, glows or tinted rings. The mark is flat, one colour."],
+      ["x-stretch", "Don't", "Stretch, skew or rotate. The 45° roof is the geometry."],
+      ["x-round", "Don't", "Round joins or thicken the stroke — gaps close, the miter apex is lost."],
+      ["x-shadow", "Don't", "Add shadows, outlines or neon. Elevation belongs to the surface."],
+      ["x-contrast", "Don't", "Put primary on a primary-ish fill — contrast under 3:1."],
+      ["x-master16", "Don't", "Scale the 24 master below 20 px; it blurs."],
+      ["x-fill", "Don't", "Fill the gaps into a silhouette — the echo (rings = steps) is the idea."],
+    ];
+    $("#dd-grid").innerHTML = items.map(([k, t, d]) => `<figure>${variant(k)}<figcaption><b>${t}.</b> ${d}</figcaption></figure>`).join("");
+  })();
+
+  /* ================= 11 context ================= */
+  (() => {
+    const side = `<div class="mock-side"><div class="it" style="height:36px">${mk(echo, 20, "pri")}<b style="font-weight:600;letter-spacing:-.02em;color:var(--foreground)">Property Workflows</b></div><div class="it on"><i></i>Runs</div><div class="it"><i></i>Templates</div><div class="it"><i></i>Invoices</div></div>`;
+    const tabs = `<div class="tabs"><div class="tab on"><svg viewBox="0 0 16 16" aria-hidden="true" class="pri"><path d="M2 15V8L8 2L14 8V15" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V9L8 6L11 9V15Z" fill="currentColor"/></svg><span>Apartment 12 · Move-in</span></div><div class="tab"><svg viewBox="0 0 16 16" aria-hidden="true" style="opacity:.5"><rect x="2" y="2" width="12" height="12" rx="3" fill="currentColor"/></svg><span>Docs</span></div></div>`;
+    const html = `<span class="cap">SIDEBAR · 20 GRID</span>${side}<span class="cap">BROWSER TAB · 16 GRID</span>${tabs}<span class="cap">APP ICON</span><div class="row-end">${tile(echo, 88)}${tile(echo, 56)}${tile(echo, 32)}</div>`;
+    $("#ctx-light").innerHTML = html; $("#ctx-dark").innerHTML = html;
+  })();
+
+  /* ================= motion ================= */
+  const restart = (svg) => { svg.classList.remove("play"); void svg.getBoundingClientRect(); svg.classList.add("play"); };
+  const login = $("#login-demo");
+  function playAll() {
+    restart($("#hero-echo")); restart($("#login-echo"));
+    $$(".fade-wm", login).forEach((e) => { e.style.animation = "none"; void e.offsetWidth; e.style.animation = ""; });
+  }
+  $$("[data-replay]").forEach((b) => b.addEventListener("click", playAll));
+  $("#hero-echo").classList.add("play"); $("#login-echo").classList.add("play");
+
+  /* ================= segmented controls ================= */
+  function placeThumb(seg, animate) {
+    const on = $('[aria-checked="true"]', seg), th = $(".seg-thumb", seg);
+    if (!animate) th.style.transition = "none";
+    th.style.width = on.offsetWidth + "px"; th.style.transform = `translateX(${on.offsetLeft}px)`;
+    if (!animate) { void th.offsetWidth; th.style.transition = ""; }
+  }
+  function setupSeg(seg, current, onChange) {
+    const btns = $$('[role="radio"]', seg);
+    const select = (b, focus) => { btns.forEach((x) => { x.setAttribute("aria-checked", String(x === b)); x.tabIndex = x === b ? 0 : -1; }); placeThumb(seg, true); if (focus) b.focus(); onChange(b.dataset.value); };
+    btns.forEach((b) => { const on = b.dataset.value === current; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; });
+    seg.addEventListener("click", (e) => { const b = e.target.closest('[role="radio"]'); if (b) select(b); });
+    seg.addEventListener("keydown", (e) => {
+      const i = btns.indexOf(document.activeElement); if (i < 0) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); select(btns[(i + 1) % btns.length], true); }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); select(btns[(i - 1 + btns.length) % btns.length], true); }
+    });
+    placeThumb(seg, false);
+  }
+  setupSeg($('[data-seg="theme"]'), root.dataset.theme || "system", (v) => {
+    const apply = () => { if (v === "system") delete root.dataset.theme; else root.dataset.theme = v; };
+    store.set("pw-theme", v === "system" ? null : v);
+    if (document.startViewTransition && motionOK()) document.startViewTransition(apply); else apply();
+  });
+  setupSeg($('[data-seg="motion"]'), root.dataset.motion || "system", (v) => {
+    if (v === "system") delete root.dataset.motion; else root.dataset.motion = v;
+    store.set("pw-motion", v === "system" ? null : v);
+    playAll();
+  });
+
+  /* ================= scroll spy ================= */
+  const links = $$(".nav a");
+  const spy = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + en.target.id)));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  $$(".sec, h3.sub[id]").forEach((s) => spy.observe(s));
+  const topbar = $("#topbar");
+  addEventListener("scroll", () => topbar.classList.toggle("scrolled", scrollY > 4), { passive: true });
+  document.fonts && document.fonts.ready.then(() => $$(".seg").forEach((s) => placeThumb(s, false)));
+  addEventListener("resize", () => $$(".seg").forEach((s) => placeThumb(s, false)));
+})();
+</script>
+</body>
+</html>

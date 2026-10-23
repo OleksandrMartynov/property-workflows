@@ -1,0 +1,22 @@
+<!-- @dsCard group="Data" height=254 subtitle="EmptyState: заголовок і одна дія" -->
+<style>
+/* @include button */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+  border: 1px dashed color-mix(in oklab, var(--border-strong) 50%, transparent); border-radius: var(--radius-md);
+  padding: var(--space-12) var(--space-6); text-align: center;
+}
+.empty > svg { width: 40px; height: 40px; color: color-mix(in oklab, var(--muted-foreground) 60%, transparent); }
+.copy { display: flex; flex-direction: column; gap: var(--space-1); }
+.e-title { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+</style>
+<div class="empty">
+  <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <path d="M6 40V22L24 6l18 16v18" stroke="currentColor" stroke-width="2"/>
+    <path d="M14 40V25.3l10-9.8 10 9.8V40" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/>
+  </svg>
+  <div class="copy">
+    <p class="e-title">No runs yet.</p>
+  </div>
+  <button class="btn btn-default" type="button">Launch a template</button>
+</div>

@@ -1,0 +1,198 @@
+<!-- @dsCard group="Forms" height=1156 subtitle="Select, Combobox, MultiSelect: тригер, скляний список, фішки" -->
+<style>
+/* @include forms */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); align-items: start; }
+.cols.two { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.pane { display: flex; flex-direction: column; gap: var(--space-2); }
+</style>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">Select: trigger states</p>
+    <div class="gridf">
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-def">Unit type<span class="req" aria-hidden="true">*</span></label></div>
+        <button class="trigger" id="sel-def" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false"><span class="val"><span class="ph">Select a unit type</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-fill">Unit type</label></div>
+        <button class="trigger is-hover" id="sel-fill" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false"><span class="val"><span>Apartment</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-status">Status</label></div>
+        <button class="trigger is-focus" id="sel-status" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false"><span class="val"><span class="dot" aria-hidden="true"></span><span>In progress</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-inv">Unit type<span class="req" aria-hidden="true">*</span></label></div>
+        <button class="trigger" id="sel-inv" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-invalid="true" aria-describedby="sel-inv-e"><span class="val"><span class="ph">Select a unit type</span></span><span class="tail">{{g alert}}<span class="chev">{{g chev}}</span></span></button>
+        <div class="foot"><p class="error" id="sel-inv-e" role="alert">{{g alert}}<span>Select a unit type.</span></p></div>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-dis">Unit type</label></div>
+        <button class="trigger" id="sel-dis" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" disabled><span class="val"><span>Apartment</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+      </div>
+      <div class="field">
+        <div class="fhead"><label class="lbl" for="sel-load">Template</label></div>
+        <button class="trigger" id="sel-load" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-busy="true"><span class="val"><span class="ph">Loading templates…</span></span><span class="tail">{{g spin}}</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">Select open: glass listbox, group labels, selected check, active row, search above 8 options, no matches</p>
+    <div class="cols two">
+      <div class="pane">
+        <div class="field anchor">
+          <div class="fhead"><label class="lbl" for="sel-open">Unit type</label></div>
+          <button class="trigger" id="sel-open" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="true" aria-controls="lb-1" style="border-color: var(--ring)"><span class="val"><span>Apartment</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+          <div class="float">
+            <div class="lb" id="lb-1" role="listbox" aria-label="Unit type">
+              <div class="grp" role="group" aria-label="Residential">
+                <div class="grp-l" aria-hidden="true">Residential</div>
+                <div class="o" role="option" aria-selected="true"><span class="txt"><span>Apartment</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+                <div class="o" role="option" aria-selected="false" data-active><span class="txt"><span>House</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+                <div class="o" role="option" aria-selected="false"><span class="txt"><span>Studio</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+              </div>
+              <div class="grp" role="group" aria-label="Commercial">
+                <div class="grp-l" aria-hidden="true">Commercial</div>
+                <div class="o" role="option" aria-selected="false"><span class="txt"><span>Office</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+                <div class="o" role="option" aria-selected="false" aria-disabled="true"><span class="txt"><span>Retail unit</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="field anchor">
+          <div class="fhead"><label class="lbl" for="sel-srch">Template</label></div>
+          <button class="trigger" id="sel-srch" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="true" aria-controls="lb-2" style="border-color: var(--ring)"><span class="val"><span>Tenant move-in</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+          <div class="float">
+            <div class="lb">
+              <div class="lb-search">{{g search}}<input class="in" role="combobox" aria-expanded="true" aria-controls="lb-2" aria-label="Search options" autocomplete="off" value="ins"></div>
+              <div id="lb-2" role="listbox" aria-label="Template">
+                <div class="o" role="option" aria-selected="false" data-active><span class="txt"><span>Property <mark>ins</mark>pection</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+                <div class="o" role="option" aria-selected="false"><span class="txt"><span>Annual <mark>ins</mark>urance check</span></span><span class="tail"><span class="tick">{{g check}}</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field anchor" style="margin-top: var(--space-4)">
+          <div class="fhead"><label class="lbl" for="sel-none">Template</label></div>
+          <button class="trigger" id="sel-none" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="true" aria-controls="lb-3" style="border-color: var(--ring)"><span class="val"><span>Tenant move-in</span></span><span class="tail"><span class="chev">{{g chev}}</span></span></button>
+          <div class="float">
+            <div class="lb">
+              <div class="lb-search">{{g search}}<input class="in" role="combobox" aria-expanded="true" aria-controls="lb-3" aria-label="Search options" autocomplete="off" value="zz"></div>
+              <div class="empty-l" role="status">{{g search}}<b>No matches</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">Combobox: avatar, clear, chevron; rows with name, email and role</p>
+    <div class="cols">
+      <div class="pane">
+        <div class="field anchor">
+          <div class="fhead"><label class="lbl" for="cb-1">Assignee</label></div>
+          <div class="shell is-open">
+            {{avatar ana@example.test}}
+            <input class="in" id="cb-1" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="lb-4" autocomplete="off" value="ana@example.test">
+            <button class="iconbtn" type="button" aria-label="Clear" tabindex="-1">{{g close sm}}</button>
+            <span class="chev">{{g chev}}</span>
+          </div>
+          <div class="float">
+            <div class="lb" id="lb-4" role="listbox" aria-label="Assignee">
+              <div class="o rich" role="option" aria-selected="true">{{avatar ana@example.test}}<span class="txt"><span>Ana</span><span class="desc">ana@example.test</span></span><span class="tail"><span class="role role-admin">{{g shield sm}}admin</span><span class="tick">{{g check}}</span></span></div>
+              <div class="o rich" role="option" aria-selected="false" data-active>{{avatar mia@example.test}}<span class="txt"><span>Mia</span><span class="desc">mia@example.test</span></span><span class="tail"><span class="role role-manager">{{g user sm}}manager</span><span class="tick">{{g check}}</span></span></div>
+              <div class="o rich" role="option" aria-selected="false">{{avatar oleh@example.test}}<span class="txt"><span>Oleh</span><span class="desc">oleh@example.test</span></span><span class="tail"><span class="role role-manager">{{g user sm}}manager</span><span class="tick">{{g check}}</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="cb-2">Assignee<span class="req" aria-hidden="true">*</span></label></div>
+          <div class="shell" data-invalid>
+            <input class="in" id="cb-2" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" aria-invalid="true" aria-describedby="cb-2-e" placeholder="Unassigned">
+            <span class="glyph">{{g alert}}</span>
+            <span class="chev">{{g chev}}</span>
+          </div>
+          <div class="foot"><p class="error" id="cb-2-e" role="alert">{{g alert}}<span>Pick an assignee to launch.</span></p></div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="cb-3">Assignee</label></div>
+          <div class="shell" data-disabled>
+            {{avatar admin@example.test}}
+            <input class="in" id="cb-3" role="combobox" aria-expanded="false" autocomplete="off" disabled value="admin@example.test">
+            <span class="chev">{{g chev}}</span>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="cb-4">Assignee</label></div>
+          <div class="shell">
+            <input class="in" id="cb-4" role="combobox" aria-expanded="false" aria-busy="true" autocomplete="off" placeholder="Loading workspace members…">
+            <span class="glyph">{{g spin}}</span>
+            <span class="chev">{{g chev}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="cap">MultiSelect: chips with remove, compact +N, checkbox rows</p>
+    <div class="cols">
+      <div class="pane">
+        <div class="field anchor">
+          <div class="fhead"><label class="lbl" for="ms-1">Tags</label></div>
+          <div class="shell multi is-open">
+            <span class="chip">Move-in<span class="x">{{g close xs}}</span></span>
+            <span class="chip">Move-out<span class="x">{{g close xs}}</span></span>
+            <span class="chip">Deposit<span class="x">{{g close xs}}</span></span>
+            <span class="more">+3</span>
+            <input class="in" id="ms-1" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="lb-5" autocomplete="off">
+            <span class="chev">{{g chev}}</span>
+          </div>
+          <div class="float">
+            <div class="lb" id="lb-5" role="listbox" aria-multiselectable="true" aria-label="Tags">
+              <div class="o" role="option" aria-selected="true"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/></svg></span><span class="txt"><span>Move-in</span></span></div>
+              <div class="o" role="option" aria-selected="true"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/></svg></span><span class="txt"><span>Move-out</span></span></div>
+              <div class="o" role="option" aria-selected="false" data-active><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/></svg></span><span class="txt"><span>Inspection</span></span></div>
+              <div class="o" role="option" aria-selected="false"><span class="box"><svg viewBox="0 0 12 12"><path d="M2.5 6.25l2.25 2.25L9.5 3.5" pathLength="1"/></svg></span><span class="txt"><span>Keys</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="ms-2">Watchers</label><span class="opt">Optional</span></div>
+          <div class="shell multi">
+            <span class="chip av">{{avatar mia@example.test}}<span class="av-name">mia</span><span class="x">{{g close xs}}</span></span>
+            <span class="chip av">{{avatar ana@example.test}}<span class="av-name">ana</span><span class="x">{{g close xs}}</span></span>
+            <input class="in" id="ms-2" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">
+            <span class="chev">{{g chev}}</span>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="ms-3">Tags<span class="req" aria-hidden="true">*</span></label></div>
+          <div class="shell multi" data-invalid>
+            <input class="in" id="ms-3" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" aria-invalid="true" aria-describedby="ms-3-e" placeholder="Add a tag">
+            <span class="glyph">{{g alert}}</span>
+            <span class="chev">{{g chev}}</span>
+          </div>
+          <div class="foot"><p class="error" id="ms-3-e" role="alert">{{g alert}}<span>Select at least one tag.</span></p></div>
+        </div>
+        <div class="field">
+          <div class="fhead"><label class="lbl" for="ms-4">Tags</label></div>
+          <div class="shell multi" data-disabled>
+            <span class="chip">Move-in</span>
+            <span class="chip">Keys</span>
+            <input class="in" id="ms-4" role="combobox" aria-expanded="false" autocomplete="off" disabled>
+            <span class="chev">{{g chev}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

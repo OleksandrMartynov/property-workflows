@@ -1,0 +1,41 @@
+<!-- @dsCard group="Surfaces" height=336 subtitle="ConfirmDialog: alertdialog, фокус на OK" -->
+<style>
+/* @include button */
+.stage {
+  position: relative; display: grid; min-height: 296px; place-items: center; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); padding: var(--space-8) var(--space-4);
+}
+.page { position: absolute; inset: 0; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6); }
+.page .t { font-size: 20px; line-height: 28px; letter-spacing: -0.016em; font-weight: 600; }
+.page .ln { height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); }
+.scrim { position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(4px); }
+.dialog {
+  position: relative; width: 100%; max-width: 448px; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--radius-xl);
+  background: var(--popover); color: var(--popover-foreground); box-shadow: var(--elevation-3);
+}
+.d-body { display: flex; flex-direction: column; gap: var(--space-1-5); padding: var(--space-5) var(--space-5) var(--space-4); }
+.d-title { font-size: 20px; line-height: 28px; letter-spacing: -0.016em; font-weight: 600; }
+.d-desc { color: var(--muted-foreground); }
+.d-foot {
+  display: flex; justify-content: flex-end; gap: var(--space-2);
+  border-top: 1px solid var(--border); background: color-mix(in oklab, var(--muted) 40%, transparent); padding: var(--space-3) var(--space-5);
+}
+</style>
+<div class="stage">
+  <div class="page" aria-hidden="true">
+    <div class="t">Apartment 12, move-in</div>
+    <div class="ln"></div><div class="ln"></div><div class="ln"></div>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
+    <div class="d-body">
+      <h2 class="d-title" id="dlg-title">Hand over the keys</h2>
+      <p class="d-desc" id="dlg-desc">This cannot be undone.</p>
+    </div>
+    <div class="d-foot">
+      <button class="btn btn-outline" type="button">Cancel</button>
+      <button class="btn btn-default is-focus" type="button">OK</button>
+    </div>
+  </div>
+</div>

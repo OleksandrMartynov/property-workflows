@@ -1,0 +1,76 @@
+<!-- @dsCard group="Surfaces" height=590 subtitle="Card, CardHeader, CardContent, CardFooter; панель «Details» (підпис над значенням)" -->
+<style>
+/* @include button */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); align-items: start; }
+.card { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); color: var(--card-foreground); box-shadow: var(--elevation-1); }
+.card-header { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-4) 0; }
+.card-title { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+.card-desc { font-size: 13px; line-height: 18px; font-weight: 400; color: var(--muted-foreground); }
+.card-content { display: flex; flex-direction: column; gap: var(--space-1-5); padding: var(--space-4); }
+.card-footer { display: flex; align-items: center; gap: var(--space-2); border-top: 1px solid var(--border); padding: var(--space-3); }
+.card-link { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4); transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+.card-link:hover, .card-link.is-hover { border-color: var(--border-strong); box-shadow: var(--elevation-2); }
+.num { font-size: 13px; line-height: 18px; font-weight: 500; }
+.bar { height: 4px; overflow: hidden; border-radius: var(--radius-pill); background: var(--muted); }
+.bar > i { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--primary); }
+.spacer { flex: 1; }
+/* Панель «Details» (run-detail.tsx): dt над dd, без двоколонкової сітки; пара від пари — 14px; email в один рядок, break-words лише як запасний варіант */
+.details { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); }
+.details h2 { font-size: 15px; line-height: 20px; letter-spacing: -0.008em; font-weight: 600; }
+.d-progress { display: flex; flex-direction: column; gap: 10px; }
+.d-progress .row { display: flex; align-items: center; gap: 10px; }
+.d-progress .row span { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.008em; }
+.dl { display: flex; flex-direction: column; margin: 0; font-size: 14px; line-height: 20px; }
+.dl dt { margin: 0 0 var(--space-1); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.dl dd { margin: 0 0 14px; min-width: 0; overflow-wrap: break-word; }
+.dl dd:last-child { margin-bottom: 0; }
+.dl .who { display: inline-flex; min-width: 0; align-items: center; gap: var(--space-1-5); }
+.dl .who span { min-width: 0; overflow-wrap: break-word; }
+</style>
+<div class="cards">
+  <article class="card">
+    <div class="card-header">
+      <h2 class="card-title">Apartment 12, move-in</h2>
+      <p class="card-desc">Tenant move-in</p>
+    </div>
+    <div class="card-content">
+      <span class="num tabular">2 of 5 done</span>
+      <div class="bar" aria-hidden="true"><i style="width: 40%"></i></div>
+    </div>
+    <div class="card-footer">
+      <span class="spacer"></span>
+      <button class="btn btn-outline" type="button">Details</button>
+      <button class="btn btn-default" type="button">Open run</button>
+    </div>
+  </article>
+  <article class="card card-link is-hover">
+    <h2 class="card-title">Tenant move-in</h2>
+    <p class="card-desc tabular">3 sections · 12 tasks, 8 required</p>
+  </article>
+  <article class="card">
+    <div class="card-content">
+      <span class="num">Run manager</span>
+      <span class="muted">ana@example.test</span>
+    </div>
+  </article>
+</div>
+<section class="sec" style="margin-top: var(--space-6)">
+  <p class="cap">Details: підпис (meta, muted) над значенням, проміжок між парами 14px, довгий email на одному рядку</p>
+  <article class="card details" style="max-width: 340px">
+    <h2>Details</h2>
+    <div class="d-progress">
+      <div class="row">{{ring 2 5 lg}}<span class="tabular">2 of 5 done</span></div>
+      <div class="bar" aria-hidden="true"><i style="width: 40%"></i></div>
+    </div>
+    <dl class="dl">
+      <dt>Template</dt>
+      <dd>Tenant move-in</dd>
+      <dt>Run manager</dt>
+      <dd><span class="who">{{avatar olena.kovalenko@example.test}}<span>olena.kovalenko@example.test</span></span></dd>
+      <dt>Status</dt>
+      <dd>In progress</dd>
+      <dt>Assignees</dt>
+      <dd>{{stack ana@example.test,olena.kovalenko@example.test,petro@example.test}}</dd>
+    </dl>
+  </article>
+</section>

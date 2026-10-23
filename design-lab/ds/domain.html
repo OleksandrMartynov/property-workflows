@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain components · Property Workflows</title>
+<script>
+  /* theme and motion mode before first paint — no flash */
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="domain.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 16 16"><path d="M3.5 6L8 10.5 12.5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-updown" viewBox="0 0 16 16"><path d="M5 6.25L8 3.25l3 3M5 9.75l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-more" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="3.5" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.5" cy="8" r="1.1"/></g></symbol>
+    <symbol id="i-user" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.25c.6-2.3 2.6-3.5 5-3.5s4.4 1.2 5 3.5"/></g></symbol>
+    <symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2"/><path d="M2.5 7h11M5.5 2v3M10.5 2v3"/></g></symbol>
+    <symbol id="i-clock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 4.75V8l2.1 1.4"/></g></symbol>
+    <symbol id="i-alert" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 4.9v3.6M8 10.9v.01"/></g></symbol>
+    <symbol id="i-spark" viewBox="0 0 16 16"><path d="M8 1.75l1.55 4.2 4.2 1.55-4.2 1.55L8 13.25l-1.55-4.2-4.2-1.55 4.2-1.55z" fill="currentColor"/></symbol>
+    <symbol id="i-file" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1.75h4.75l3.25 3.25v8.25a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V2.75a1 1 0 0 1 1-1z"/><path d="M9 2v3.25h3.25"/></g></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.25 3.25"/></g></symbol>
+    <symbol id="i-tasks" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 4.1l1.1 1.1 1.9-2.2M2.75 9.6l1.1 1.1 1.9-2.2M8.5 4.5h4.75M8.5 10h4.75"/></g></symbol>
+    <symbol id="i-runs" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M6.6 5.7v4.6l3.9-2.3z"/></g></symbol>
+    <symbol id="i-template" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M2.5 6.5h11M6.5 6.5v7"/></g></symbol>
+    <symbol id="i-database" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8" cy="4" rx="5" ry="2"/><path d="M3 4v8c0 1.1 2.24 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.24 2 5 2s5-.9 5-2"/></g></symbol>
+    <symbol id="i-receipt" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 2h9v12l-1.8-1.2L8.9 14l-1.8-1.2L5.3 14l-1.8-1.2z"/><path d="M6 5.5h4M6 8h4"/></g></symbol>
+    <symbol id="i-panel" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10"/></g></symbol>
+    <symbol id="i-cond" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v4a2 2 0 0 0 2 2h6M9.5 6l3 3-3 3"/></g></symbol>
+    <symbol id="i-braces" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5c-1.5 0-2 .8-2 2v1.4c0 1-.6 1.6-1.5 2.1.9.5 1.5 1.1 1.5 2.1v1.4c0 1.2.5 2 2 2M10 2.5c1.5 0 2 .8 2 2v1.4c0 1 .6 1.6 1.5 2.1-.9.5-1.5 1.1-1.5 2.1v1.4c0 1.2-.5 2-2 2"/></g></symbol>
+    <symbol id="i-replay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.78"/><path d="M2.75 2.5v3h3"/></g></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.4 4.4 0 0 0 6.85 6.85z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.75" width="12" height="8.5" rx="1.5"/><path d="M5.75 14h4.5M8 11.25V14"/></g></symbol>
+    <symbol id="i-return" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 3.5v4a1.5 1.5 0 0 1-1.5 1.5H3.5M6 6.25L3.25 9 6 11.75"/></g></symbol>
+    <symbol id="i-backspace" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7L2 8z"/><path d="M8.25 6.25l3 3M11.25 6.25l-3 3"/></g></symbol>
+    <symbol id="i-undo" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5h6a3 3 0 0 1 0 6H6M6 3.75L3.25 6.5 6 9.25"/></g></symbol>
+    <symbol id="i-pencil" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l.6-3L10.8 2.8a1.4 1.4 0 0 1 2 0l.4.4a1.4 1.4 0 0 1 0 2L6 12.4z"/></g></symbol>
+    <symbol id="i-lock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.75"/><path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7"/></g></symbol>
+    <symbol id="i-bell" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V7.25a4 4 0 0 1 8 0V11l1 1.5H3zM6.5 14h3"/></g></symbol>
+    <symbol id="i-logo" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="ds-shell">
+  <aside class="ds-side" aria-label="Sections">
+    <div class="ds-brand">
+      <span class="ds-brand__mark" aria-hidden="true"><svg><use href="#i-logo"/></svg></span>
+      <div class="stack gap-0">
+        <span class="t-label t-strong" style="line-height:16px">Property Workflows</span>
+        <span class="t-meta t-muted" style="line-height:14px">Design system</span>
+      </div>
+    </div>
+    <nav class="ds-nav" aria-label="Domain components">
+      <span class="ds-nav__label t-meta">Domain components</span>
+      <a href="#overview">Overview <span class="k">00</span></a>
+      <a href="#status">Status system <span class="k">01</span></a>
+      <a href="#progress">Progress <span class="k">02</span></a>
+      <a href="#checklist">Checklist <span class="k">03</span></a>
+      <a href="#runs">Runs table <span class="k">04</span></a>
+      <a href="#people">People <span class="k">05</span></a>
+      <a href="#variables">Variables <span class="k">06</span></a>
+      <a href="#ai">AI draft <span class="k">07</span></a>
+      <a href="#invoice">Invoice lines <span class="k">08</span></a>
+      <a href="#sidebar">Sidebar <span class="k">09</span></a>
+      <a href="#runpage">Run page <span class="k">10</span></a>
+    </nav>
+    <nav class="ds-nav" aria-label="Other pages">
+      <span class="ds-nav__label t-meta">Other</span>
+      <a href="index.html">Foundations <span class="k">↗</span></a>
+    </nav>
+    <div class="ds-side__foot t-meta">domain.css · v0.1<br>October 2026</div>
+  </aside>
+
+  <div class="ds-main">
+    <header class="ds-topbar" id="topbar">
+      <div class="ds-crumbs"><span class="ds-hide-sm">Design system</span><svg class="ds-hide-sm" aria-hidden="true"><use href="#i-chev"/></svg><b>Domain components</b></div>
+      <div class="cluster gap-2">
+        <div class="ds-seg" role="radiogroup" aria-label="Motion" data-seg="motion">
+          <span class="ds-seg__thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><span class="lbl">Motion: system</span></button>
+          <button type="button" role="radio" data-value="full" aria-checked="false"><span class="lbl">Full</span></button>
+          <button type="button" role="radio" data-value="reduce" aria-checked="false"><span class="lbl">Reduced</span></button>
+        </div>
+        <div class="ds-seg" role="radiogroup" aria-label="Theme" data-seg="theme">
+          <span class="ds-seg__thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="light" aria-checked="false"><svg aria-hidden="true"><use href="#i-sun"/></svg><span class="lbl">Light</span></button>
+          <button type="button" role="radio" data-value="dark" aria-checked="false"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">Dark</span></button>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><svg aria-hidden="true"><use href="#i-monitor"/></svg><span class="lbl">System</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="ds-content">
+
+      <!-- 00 Overview -->
+      <section class="ds-sec" id="overview" aria-labelledby="h-overview">
+        <div class="ds-hero">
+          <span class="ds-sec__index">00 · Overview</span>
+          <h1 class="t-display" id="h-overview">Domain components</h1>
+          <p>The pieces a property manager looks at all day: a task you tick, a run that fills, an AI draft you accept or reject, an invoice that adds itself up. Every status is an icon plus a word, every number is tabular, and nothing moves without a reason.</p>
+          <div class="cluster ds-facts" id="facts">
+            <span class="ds-fact"><b>10</b> component families</span>
+            <span class="ds-fact"><b>32px</b> checklist rows</span>
+            <span class="ds-fact"><b>36px</b> table rows</span>
+            <span class="ds-fact"><b>3</b> AI confidence levels</span>
+            <span class="ds-fact"><b>0</b> color-only statuses</span>
+          </div>
+        </div>
+        <div class="ds-overview" aria-label="Components at a glance">
+          <div class="ds-ov ds-ov--wide" data-theme="light">
+            <div class="ds-ov__label"><span>At a glance</span><span>Light</span></div>
+            <div data-mount="glance"></div>
+          </div>
+          <div class="ds-ov ds-ov--wide" data-theme="dark">
+            <div class="ds-ov__label"><span>At a glance</span><span>Dark</span></div>
+            <div data-mount="glance"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 01 Status -->
+      <section class="ds-sec" id="status" aria-labelledby="h-status">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">01 · Status system</span>
+          <h2 class="t-title" id="h-status">Status, never by color alone</h2>
+          <p>A task is a ring that becomes a drawn check. A run is a ring that fills by N of M. Pills carry a glyph and a word. Only the date turns red when overdue, and “required” stays neutral until someone tries to finish without it.</p>
+        </div>
+        <div class="ds-duo">
+          <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>states</span></div><div data-tpl="status"></div></div>
+          <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>states</span></div><div data-tpl="status"></div></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>Task control 16px (14px dense) with a 24px hit target. Run ring 14/16/20px. Pill 20px (18px small): glyph, label, tint. Due date: icon + tabular date; only the date and its icon are tinted.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p><code>role="checkbox"</code> with <code>aria-checked</code>; a locked task is <code>aria-disabled</code> and stays focusable. Run ring is <code>aria-hidden</code>; the text “2 of 5 done” beside it is the accessible value.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--status-*</span><span class="ds-tk">--required</span><span class="ds-tk">--progress-track</span><span class="ds-tk">--glow-done</span><span class="ds-tk">--size-ring*</span></div></div>
+        </div>
+      </section>
+
+      <!-- 02 Progress -->
+      <section class="ds-sec" id="progress" aria-labelledby="h-progress">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">02 · Progress</span>
+          <h2 class="t-title" id="h-progress">Rings, bar, and a number that rolls</h2>
+          <p>Tick tasks and everything follows: the ring fills on a smooth spring, the digits roll like a departure board, the bar slides, and finishing the last task flips the run to Completed with one soft glow (≤ 400ms).</p>
+        </div>
+        <div class="ds-card">
+          <div class="ds-card__head">
+            <div class="stack gap-1"><h3 class="t-label">Run progress</h3><p>Click a task, or press <span class="pw-kbd">Space</span> on a focused one.</p></div>
+            <div class="cluster gap-2">
+              <button type="button" class="ds-btn" data-variant="secondary" data-size="sm" id="pg-next">Complete next task</button>
+              <button type="button" class="ds-btn" data-variant="ghost" data-size="sm" id="pg-reset"><svg aria-hidden="true"><use href="#i-replay"/></svg>Reset</button>
+            </div>
+          </div>
+          <div class="ds-card__body ds-pgdemo">
+            <div class="ds-pgdemo__tasks" id="pg-tasks" role="group" aria-label="Move-in tasks"></div>
+            <div class="ds-pgdemo__sum" id="pg-sum"></div>
+          </div>
+        </div>
+        <div class="ds-duo" style="margin-top:var(--space-4)">
+          <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>ring · bar · ticker</span></div><div data-tpl="progress"></div></div>
+          <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>ring · bar · ticker</span></div><div data-tpl="progress"></div></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Motion</h4><p>Ring and bar fill on <code>--spring-smooth</code>; digits roll on <code>--spring-snappy</code>. Completed: fill turns green, a disc and check draw in, one <code>--glow-done</code> pulse. Reduced motion: short fades.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>Ring and bar are decorative (<code>aria-hidden</code>). The accessible value is the sentence “2 of 5 done”, announced politely when it changes.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--spring-smooth</span><span class="ds-tk">--spring-snappy</span><span class="ds-tk">--size-bar</span><span class="ds-tk">--duration-celebrate</span></div></div>
+        </div>
+      </section>
+
+      <!-- 03 Checklist -->
+      <section class="ds-sec" id="checklist" aria-labelledby="h-checklist">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">03 · Checklist</span>
+          <h2 class="t-title" id="h-checklist">A checklist you can drive from the keyboard</h2>
+          <p>32px rows, Linear-dense. A single selection bar glides between rows. Meta appears only when a task has it. A stop task draws a barrier: nothing beneath it can be ticked until it is done.</p>
+        </div>
+        <div class="ds-split-2">
+          <div class="ds-card" id="cl-card">
+            <div class="ds-card__head">
+              <div class="stack gap-1"><h3 class="t-label">Tenant move-in · interactive</h3><p>Focus the list, then <span class="pw-kbd">J</span> <span class="pw-kbd">K</span> move, <span class="pw-kbd">X</span> completes.</p></div>
+              <div class="cluster gap-2">
+                <button type="button" class="ds-btn" data-variant="secondary" data-size="sm" id="cl-try">Try to complete run</button>
+                <button type="button" class="ds-btn" data-variant="ghost" data-size="sm" id="cl-reset"><svg aria-hidden="true"><use href="#i-replay"/></svg>Reset</button>
+              </div>
+            </div>
+            <div class="ds-runhead" id="cl-head"></div>
+            <div id="cl-mount"></div>
+            <div class="ds-cl-foot">
+              <div class="ds-alert" id="cl-msg" role="status" aria-live="polite">&nbsp;</div>
+              <div class="ds-kbdline"><span><span class="pw-kbd">J</span><span class="pw-kbd">K</span> move</span><span><span class="pw-kbd">X</span> done</span><span><span class="pw-kbd">Home</span><span class="pw-kbd">End</span></span></div>
+            </div>
+          </div>
+          <div class="stack gap-4">
+            <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>row states</span></div><div data-tpl="rows"></div></div>
+            <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>row states</span></div><div data-tpl="rows"></div></div>
+          </div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>Check · index · title · meta (condition, due, assignee, lock) · hover actions. “Next” marks the first open required task. The cursor is one element that slides; rows never change size on hover.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p><code>role="grid"</code> with <code>aria-activedescendant</code> and one tab stop. <kbd>J</kbd>/<kbd>K</kbd> or arrows, <kbd>X</kbd> or <kbd>Space</kbd> toggles. A locked task answers with a message, not silence.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--size-row</span><span class="ds-tk">--row-selected</span><span class="ds-tk">--barrier</span><span class="ds-tk">--status-progress-bg</span><span class="ds-tk">--spring-snappy</span></div></div>
+        </div>
+      </section>
+
+      <!-- 04 Runs table -->
+      <section class="ds-sec" id="runs" aria-labelledby="h-runs">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">04 · Runs table</span>
+          <h2 class="t-title" id="h-runs">Dense 36px rows, overdue first</h2>
+          <p>Sort by any header — rows glide to their new place instead of jumping. Arrow keys move the row cursor, Enter opens. Try the filter, then the loading and empty views.</p>
+        </div>
+        <div class="ds-toolbar">
+          <label class="ds-search" for="rt-filter">
+            <svg aria-hidden="true"><use href="#i-search"/></svg>
+            <input id="rt-filter" type="search" placeholder="Filter runs" autocomplete="off" spellcheck="false" aria-controls="rt-body">
+          </label>
+          <div class="ds-seg" role="radiogroup" aria-label="Table state" data-seg="rt-view">
+            <span class="ds-seg__thumb" aria-hidden="true"></span>
+            <button type="button" role="radio" data-value="data" aria-checked="true"><span class="lbl-always">Data</span></button>
+            <button type="button" role="radio" data-value="loading" aria-checked="false"><span class="lbl-always">Loading</span></button>
+            <button type="button" role="radio" data-value="empty" aria-checked="false"><span class="lbl-always">Empty</span></button>
+          </div>
+        </div>
+        <div class="pw-table-wrap" id="rt-wrap">
+          <table class="pw-table" id="rt" role="grid" aria-label="Runs" aria-rowcount="9">
+            <thead>
+              <tr role="row">
+                <th role="columnheader" aria-sort="none" data-col="name"><button type="button" class="pw-table__sort">Run<svg aria-hidden="true"><use href="#i-arrow-down"/></svg></button></th>
+                <th role="columnheader">Template</th>
+                <th role="columnheader" aria-sort="none" data-col="progress"><button type="button" class="pw-table__sort">Progress<svg aria-hidden="true"><use href="#i-arrow-down"/></svg></button></th>
+                <th role="columnheader">Next task</th>
+                <th role="columnheader">Assignees</th>
+                <th role="columnheader" aria-sort="ascending" data-col="due"><button type="button" class="pw-table__sort">Due<svg aria-hidden="true"><use href="#i-arrow-down"/></svg></button></th>
+                <th role="columnheader" aria-sort="none" data-col="status"><button type="button" class="pw-table__sort">Status<svg aria-hidden="true"><use href="#i-arrow-down"/></svg></button></th>
+              </tr>
+            </thead>
+            <tbody id="rt-body"></tbody>
+          </table>
+        </div>
+        <div class="ds-cl-foot ds-cl-foot--flat">
+          <div class="ds-live" id="rt-msg" role="status" aria-live="polite">Sorted by due date, overdue first.</div>
+          <div class="ds-kbdline"><span><span class="pw-kbd">↑</span><span class="pw-kbd">↓</span> move</span><span><span class="pw-kbd">↵</span> open</span><span>click header to sort</span></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>Run name · template · ring + “N of M done” · next task · avatar stack (+N) · due · status pill. Selected row gets a 2px primary edge. Completed runs sort last and drop the due colour.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p><code>role="grid"</code>, roving <code>tabindex</code>, <code>aria-selected</code> on the row, <code>aria-sort</code> on headers. Sort changes are announced in the status line. Sticky header.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--size-cell</span><span class="ds-tk">--row-hover</span><span class="ds-tk">--row-selected</span><span class="ds-tk">.skeleton</span></div></div>
+        </div>
+      </section>
+
+      <!-- 05 People -->
+      <section class="ds-sec" id="people" aria-labelledby="h-people">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">05 · Avatars and roles</span>
+          <h2 class="t-title" id="h-people">Initials, not faces</h2>
+          <p>Avatars are initials from the email, tinted from the chart palette so five people stay distinguishable without a photo. Stacks cut each other out with a ring that matches the surface.</p>
+        </div>
+        <div class="ds-duo">
+          <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>avatars</span></div><div data-tpl="people"></div></div>
+          <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>avatars</span></div><div data-tpl="people"></div></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>16 / 20 / 24px. Initial in a tint of the tone, 1px inner edge. Empty assignee: dashed outline with a user glyph. Stack: −4px overlap, hover spreads 3px per item, “+3” pill.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>Each avatar has <code>role="img"</code> and the full email as its label; a stack is a <code>group</code> labelled with the assignees. Role tag is text (“manager”, “admin”), not colour.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--chart-1…5</span><span class="ds-tk">--avatar-ring</span><span class="ds-tk">--size-avatar*</span></div></div>
+        </div>
+      </section>
+
+      <!-- 06 Variables -->
+      <section class="ds-sec" id="variables" aria-labelledby="h-variables">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">06 · Variables</span>
+          <h2 class="t-title" id="h-variables">Type <span style="font-family:var(--font-mono)">{</span> and pick</h2>
+          <p>Variables are teal chips with a human label; the raw token lives in the tooltip. A run resolves them to values, and an unresolved one says so with a dashed edge instead of failing silently.</p>
+        </div>
+        <div class="ds-duo">
+          <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>chip states</span></div><div data-tpl="vars"></div></div>
+          <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>chip states</span></div><div data-tpl="vars"></div></div>
+        </div>
+        <div class="ds-card" style="margin-top:var(--space-4)">
+          <div class="ds-card__head">
+            <div class="stack gap-1"><h3 class="t-label">Welcome email · inline insertion</h3><p>Click into the text and type <span class="pw-kbd">{</span>. Keep typing to filter.</p></div>
+            <div class="ds-seg" role="radiogroup" aria-label="Editor mode" data-seg="ed-mode">
+              <span class="ds-seg__thumb" aria-hidden="true"></span>
+              <button type="button" role="radio" data-value="edit" aria-checked="true"><span class="lbl-always">Template</span></button>
+              <button type="button" role="radio" data-value="preview" aria-checked="false"><span class="lbl-always">Preview values</span></button>
+            </div>
+          </div>
+          <div class="ds-card__body ds-editor-body">
+            <div class="ds-field">
+              <span class="ds-field__label" id="ed-label">Message <span>· variables are filled when the run starts</span></span>
+              <div class="pw-editor-wrap" id="ed-wrap">
+                <div class="pw-editor" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="ed-label" aria-haspopup="listbox" aria-controls="vm" aria-expanded="false" data-placeholder="Write a message — type { to insert a variable"></div>
+                <div class="pw-varmenu pop-in" id="vm" role="listbox" aria-label="Insert variable" hidden>
+                  <div class="pw-varmenu__list" id="vm-list"></div>
+                  <div class="pw-varmenu__foot"><span><span class="pw-kbd">↑</span><span class="pw-kbd">↓</span> move</span><span><span class="pw-kbd">↵</span> insert</span><span><span class="pw-kbd">esc</span> close</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="ds-cl-foot ds-cl-foot--flat" style="padding:0">
+              <button type="button" class="ds-btn" data-variant="secondary" data-size="sm" id="ed-insert"><svg aria-hidden="true"><use href="#i-braces"/></svg>Insert variable<span class="pw-kbd">{</span></button>
+              <div class="ds-live" id="ed-msg" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Caret behaviour</h4><p>A chip is one atomic, non-editable unit: arrows hop over it, Backspace removes it whole, and after insertion the caret lands right behind it so typing carries on. Click selects a chip.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>Textbox with <code>aria-activedescendant</code> into a <code>listbox</code>; <kbd>↑</kbd>/<kbd>↓</kbd> move, <kbd>↵</kbd> or <kbd>Tab</kbd> insert, <kbd>Esc</kbd> closes and keeps what you typed. The menu grows from the caret.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--variable*</span><span class="ds-tk">--variable-border</span><span class="ds-tk">--glass-bg</span><span class="ds-tk">--spring-snappy</span></div></div>
+        </div>
+      </section>
+
+      <!-- 07 AI -->
+      <section class="ds-sec" id="ai" aria-labelledby="h-ai">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">07 · AI draft</span>
+          <h2 class="t-title" id="h-ai">Suggested, sourced, never silent</h2>
+          <p>Everything the AI proposes is magenta, marked ✦, tied to a page in the source, and rated High, Check or Low — no fake percentages. You accept or reject each field, or accept the lot; accepted values quietly become normal text.</p>
+        </div>
+        <div class="pw-ai" id="ai" aria-busy="false" aria-label="AI draft from lease.pdf">
+          <div class="pw-ai__head">
+            <span class="pw-ai__mark" aria-hidden="true"><svg class="pw-ai__spark"><use href="#i-spark"/></svg></span>
+            <div class="pw-ai__title">
+              <span class="t-label">AI draft · lease.pdf</span>
+              <span class="pw-ai__step"><span class="pw-ai__step-text" id="ai-step" aria-live="polite">Found 7 fields · review before they are used</span></span>
+            </div>
+            <div class="cluster gap-2">
+              <button type="button" class="ds-btn" data-variant="ghost" data-size="sm" id="ai-rerun"><svg aria-hidden="true"><use href="#i-replay"/></svg>Re-run</button>
+              <button type="button" class="ds-btn" data-variant="ai" data-size="sm" id="ai-all">Accept all<span class="pw-kbd">⇧↵</span></button>
+            </div>
+          </div>
+          <div class="pw-ai__list" id="ai-list" role="list" aria-label="Draft fields"></div>
+          <div class="pw-ai__foot">
+            <span class="ds-live" id="ai-count" role="status" aria-live="polite">0 of 7 reviewed</span>
+            <div class="ds-kbdline"><span><span class="pw-kbd">↑</span><span class="pw-kbd">↓</span> move</span><span><span class="pw-kbd">↵</span> accept</span><span><span class="pw-kbd">⌫</span> reject</span></div>
+          </div>
+        </div>
+        <div class="ds-duo" style="margin-top:var(--space-4)">
+          <div class="ds-pane" data-theme="light"><div class="ds-pane__label"><span>Light</span><span>field states</span></div><div data-tpl="ai"></div></div>
+          <div class="ds-pane" data-theme="dark"><div class="ds-pane__label"><span>Dark</span><span>field states</span></div><div data-tpl="ai"></div></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Honest confidence</h4><p>Three levels, shown as bars <em>and</em> a word: High, Check (look twice), Low (probably wrong). Low is never pre-accepted by “Accept all”.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>One tab stop; rows are <code>role="listitem"</code> groups with a full spoken summary. <kbd>↵</kbd> accepts, <kbd>⌫</kbd> rejects, <kbd>⇧↵</kbd> accepts all. Results are announced in the status line.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--ai*</span><span class="ds-tk">--ai-tint</span><span class="ds-tk">--ai-border</span><span class="ds-tk">--confidence-*</span><span class="ds-tk">--shimmer-duration</span></div></div>
+        </div>
+      </section>
+
+      <!-- 08 Invoice -->
+      <section class="ds-sec" id="invoice" aria-labelledby="h-invoice">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">08 · Invoice lines</span>
+          <h2 class="t-title" id="h-invoice">Lines from tasks, totals that add themselves</h2>
+          <p>Each line remembers the task it came from. An AI-suggested line is a draft and stays out of the total until accepted; change a quantity and the totals roll to the new figure.</p>
+        </div>
+        <div class="pw-invoice" id="inv">
+          <div class="pw-invoice__head">
+            <div class="stack gap-0-5" style="--gap:2px">
+              <div class="cluster gap-2"><h3 class="t-heading">Invoice</h3><span class="pw-invoice__no">INV-2026-0142</span></div>
+              <span class="t-meta t-muted">Apartment 12, move-in · tenant@example.test</span>
+            </div>
+            <span class="grow"></span>
+            <span id="inv-badge"></span>
+            <div class="ds-seg" role="radiogroup" aria-label="Invoice status" data-seg="inv-status">
+              <span class="ds-seg__thumb" aria-hidden="true"></span>
+              <button type="button" role="radio" data-value="draft" aria-checked="true"><span class="lbl-always">Draft</span></button>
+              <button type="button" role="radio" data-value="issued" aria-checked="false"><span class="lbl-always">Issued</span></button>
+              <button type="button" role="radio" data-value="paid" aria-checked="false"><span class="lbl-always">Paid</span></button>
+            </div>
+          </div>
+          <div class="pw-invoice__scroll">
+            <table aria-label="Invoice lines">
+              <thead><tr><th>Item</th><th>From task</th><th data-center>Qty</th><th data-num>Unit price</th><th data-num>Amount</th><th class="pw-invoice__rowact"><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody id="inv-body"></tbody>
+            </table>
+          </div>
+          <div class="pw-invoice__foot">
+            <p class="pw-invoice__note" id="inv-note"></p>
+            <dl class="pw-totals" id="inv-totals">
+              <div><dt>Subtotal</dt><dd><span class="pw-ticker" data-size="label" id="t-sub" aria-hidden="true"></span><span class="sr-only" id="t-sub-s"></span></dd></div>
+              <div><dt>VAT 21%</dt><dd><span class="pw-ticker" data-size="label" id="t-vat" aria-hidden="true"></span><span class="sr-only" id="t-vat-s"></span></dd></div>
+              <div class="pw-totals__total"><dt>Total</dt><dd><span class="pw-ticker" data-size="heading" id="t-tot" aria-hidden="true"></span><span class="sr-only" id="t-tot-s"></span></dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>Item · source task · qty (spinbutton) · unit price · amount, all right-aligned and tabular. Draft line: magenta edge, ✦, tint, inline Accept / Reject. Totals: subtotal, VAT, total (heading weight).</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>Quantity is an <code>aria-valuenow</code> spinbutton: <kbd>↑</kbd>/<kbd>↓</kbd> ±1, <kbd>PageUp</kbd>/<kbd>PageDown</kbd> ±10. Money is announced as text; the rolling digits are <code>aria-hidden</code>.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--ai-tint</span><span class="ds-tk">--size-cell</span><span class="ds-tk">--status-progress</span><span class="ds-tk">--status-done</span></div></div>
+        </div>
+      </section>
+
+      <!-- 09 Sidebar -->
+      <section class="ds-sec" id="sidebar" aria-labelledby="h-sidebar">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">09 · Sidebar</span>
+          <h2 class="t-title" id="h-sidebar">Navigation that gets out of the way</h2>
+          <p>240px with counts, collapsing to a 48px rail with tooltips. The collapse is a reveal, not a squash: icons stay put while the edge slides. Press <span class="pw-kbd">[</span> anywhere on the page.</p>
+        </div>
+        <div class="ds-sb-stage" id="sb-stage" data-collapsed="false">
+          <div data-mount="sidebar-live"></div>
+          <div class="ds-sb-canvas" aria-hidden="true">
+            <i style="width:34%;height:12px"></i><i style="width:62%"></i><i style="width:48%"></i><i style="width:55%"></i>
+            <div class="ds-sb-canvas__cards"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="ds-sub"><h3 class="t-label">Both themes, both widths</h3><p>Static frames</p></div>
+        <div class="ds-sb-frames" id="sb-frames">
+          <div class="ds-sb-frame" data-theme="light"></div>
+          <div class="ds-sb-frame" data-theme="light" data-collapsed></div>
+          <div class="ds-sb-frame" data-theme="dark"></div>
+          <div class="ds-sb-frame" data-theme="dark" data-collapsed></div>
+        </div>
+        <div class="ds-notes">
+          <div><h4>Anatomy</h4><p>Workspace switcher + collapse toggle, “Search… ⌘K” entry, nav items (icon, label, count), section headings, footer with user, role tag and menu. Overdue runs add a dot that survives the collapse.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p><code>nav</code> with <code>aria-current="page"</code>; toggle is <code>aria-expanded</code>; <kbd>[</kbd> toggles. In the rail, hover or focus shows a tooltip with the label and count.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--sidebar*</span><span class="ds-tk">--size-sidebar</span><span class="ds-tk">--size-sidebar-collapsed</span><span class="ds-tk">--spring-smooth</span></div></div>
+        </div>
+      </section>
+
+      <!-- 10 Run page -->
+      <section class="ds-sec" id="runpage" aria-labelledby="h-runpage">
+        <div class="ds-sec__head">
+          <span class="ds-sec__index">10 · Run page</span>
+          <h2 class="t-title" id="h-runpage">Three zones, one thread</h2>
+          <p>Checklist on the left, the selected task in the middle, run variables and documents on the right. Compact preview: select a task, complete it, and accept an AI-read value — the run header keeps up.</p>
+        </div>
+        <div class="pw-runpage" id="rp"></div>
+        <div class="ds-notes">
+          <div><h4>Composition</h4><p>300 / fluid / 272px. Zones separate with hairlines; the checklist sits one tone darker (<code>--sidebar</code>) like a rail. Under 1100px the right zone drops; under 860px zones stack.</p></div>
+          <div><h4>Keyboard and ARIA</h4><p>Zones are landmarks (<code>region</code>) with labels. Checklist behaves as in §03; the detail pane follows the selection and keeps focus where the user is.</p></div>
+          <div><h4>Tokens</h4><div class="ds-tks"><span class="ds-tk">--sidebar</span><span class="ds-tk">--surface-1</span><span class="ds-tk">--radius-lg</span><span class="ds-tk">--size-header</span></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="sr-only" id="live" role="status" aria-live="polite"></div>
+<script src="domain.js"></script>
+</body>
+</html>

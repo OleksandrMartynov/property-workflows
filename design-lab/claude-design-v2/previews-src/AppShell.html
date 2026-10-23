@@ -1,0 +1,218 @@
+<!-- @dsCard group="Layout" height=950 subtitle="Сайдбар 240px, що згортається в рейку 56px (кнопка, клавіша [, ⌘K), пошук ⌘K, кнопка акаунта з popover, «Sign out» як outline-кнопка, палітра команд" -->
+<style>
+.stack { gap: var(--space-6); }
+/* Смужка навігації (InteractionFeedback): 2px, primary → ai, до ~88% під час переходу; у застосунку position: fixed угорі вікна */
+.route { position: absolute; inset: 0 0 auto 0; z-index: 2; height: 2px; width: 88%; border-radius: 0 var(--radius-pill) var(--radius-pill) 0; background: linear-gradient(90deg, var(--primary), var(--ai-mark)); box-shadow: 0 0 8px color-mix(in oklch, var(--primary) 55%, transparent); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .route { width: 100%; border-radius: 0; } }
+.shells { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.shells figure { margin: 0; min-width: 0; }
+.shells figcaption { margin: 0 0 var(--space-2); font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+.shell {
+  position: relative; display: flex; height: 400px;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background);
+}
+.aside {
+  position: relative; z-index: 3;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  display: flex; width: var(--size-sidebar); flex-shrink: 0; flex-direction: column; gap: var(--space-3);
+  border-right: 1px solid var(--sidebar-border); background: var(--sidebar); color: var(--sidebar-foreground); padding: var(--space-2);
+}
+.head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.brand { display: flex; height: 36px; align-items: center; border-radius: var(--radius-sm); padding: 0 var(--space-2); }
+.logo { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--foreground); }
+.logo .mark { width: 20px; height: 20px; flex-shrink: 0; color: var(--primary); }
+.logo-name { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.025em; }
+
+/* Кнопка згортання: Button variant="ghost" size="icon" (32px), іконка PanelLeft 16px, muted-foreground; aria-expanded, aria-keyshortcuts="[" */
+.toggle {
+  display: inline-grid; width: 32px; height: 32px; flex-shrink: 0; place-items: center;
+  border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted-foreground); padding: 0;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.toggle:hover { background: var(--state-hover); }
+.toggle svg { width: 16px; height: 16px; }
+/* Рейка: --size-sidebar-rail (3.5rem = 56px); лишаються іконки, підписи — sr-only, підказки — data-tip */
+.aside.rail { width: var(--size-sidebar-rail); }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.rail .head { flex-direction: column; gap: var(--space-2); }
+.rail .brand { padding: 0; width: 100%; justify-content: center; }
+.rail .search, .rail .nav a, .rail .acct, .rail .signout { justify-content: center; padding-left: 0; padding-right: 0; }
+.rail .nav a[data-hover], .rail .nav a:hover { background: var(--state-hover); }
+.rail .acct { padding: var(--space-1-5) 0; }
+/* Власна підказка (shell.css .rail-tip): popover-поверхня, 12px, зліва від цілі + 10px; анімація ui-tip-in зникає за reduced motion */
+.rail-tip { position: relative; }
+.rail-tip[data-show]::after {
+  content: attr(data-tip); position: absolute; left: calc(100% + 10px); top: 50%; z-index: 60; transform: translate(0, -50%);
+  padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--popover); color: var(--popover-foreground);
+  box-shadow: var(--elevation-2); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; pointer-events: none;
+}
+.search {
+  display: flex; height: var(--size-control); align-items: center; gap: var(--space-2);
+  border: 1px solid var(--sidebar-border); border-radius: var(--radius-sm); background: var(--card); padding: 0 var(--space-2);
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--muted-foreground);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.search:hover { background: var(--state-hover); }
+.search svg { width: 16px; height: 16px; }
+.search span { flex: 1; text-align: left; }
+kbd {
+  border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--muted); padding: 0 var(--space-1);
+  font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 400; color: var(--muted-foreground);
+}
+.nav { display: flex; flex-direction: column; gap: var(--space-0-5); }
+.nav a {
+  display: flex; height: var(--size-control); align-items: center; gap: var(--space-2);
+  border-radius: var(--radius-sm); padding: 0 var(--space-2);
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--sidebar-foreground); text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.nav a svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted-foreground); }
+.nav a:hover { background: var(--state-hover); }
+.nav a[aria-current="page"] { background: var(--sidebar-accent); font-weight: 600; color: var(--sidebar-accent-foreground); }
+.user { margin-top: auto; display: flex; flex-direction: column; gap: var(--space-1); border-top: 1px solid var(--sidebar-border); padding-top: var(--space-3); }
+/* Кнопка акаунта (AccountMenu): Avatar + повний email + ChevronsUpDown; відкриває popover «Account» */
+.acct {
+  position: relative; display: flex; width: 100%; align-items: center; gap: var(--space-2);
+  border: 0; border-radius: var(--radius-sm); background: transparent; padding: var(--space-1-5); text-align: left;
+  font-size: 13px; line-height: 18px; font-weight: 500; color: inherit;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.acct:hover, .acct[aria-expanded="true"] { background: var(--state-hover); }
+.acct .email { min-width: 0; flex: 1; overflow-wrap: break-word; line-height: 16px; }
+.acct svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--muted-foreground); }
+/* Popover «Account»: email (повний), потім рядок «Role — Manager»; ролі бейджем не показуємо */
+.pop-wrap { position: relative; }
+.pop {
+  position: absolute; left: calc(100% + var(--space-2)); bottom: 0; z-index: 3; width: 256px; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--popover); color: var(--popover-foreground); box-shadow: var(--elevation-3);
+}
+.pop-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
+.pop-who { display: flex; align-items: flex-start; gap: calc(var(--space-2) + 2px); }
+.pop-who .avatar { width: 32px; height: 32px; font-size: 12px; }
+.pop-email { min-width: 0; flex: 1; overflow-wrap: break-word; font-size: 13px; line-height: 20px; font-weight: 500; }
+.pop-role { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0; border-top: 1px solid var(--border); padding-top: var(--space-3); font-size: 13px; line-height: 18px; }
+.pop-role dt { color: var(--muted-foreground); }
+.pop-role dd { margin: 0; font-weight: 500; }
+/* Sign out = Button variant="outline" з іконкою LogOut, на всю ширину панелі; текст foreground, іконка muted-foreground */
+.signout {
+  position: relative; display: flex; height: var(--size-control); width: 100%; align-items: center; justify-content: flex-start; gap: var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); padding: 0 var(--space-3);
+  font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: 0; color: var(--foreground);
+  transition: transform var(--duration-fast) var(--spring-snappy), background-color var(--duration-instant) var(--ease-standard);
+}
+.signout svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted-foreground); }
+.signout:hover { background: var(--state-hover); }
+.signout:active { transform: scale(var(--scale-press)); background: var(--state-pressed); }
+.main { overflow: hidden; border-radius: 0 var(--radius-md) var(--radius-md) 0; display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-6); padding: var(--space-8); }
+.main h1 { font-size: 20px; line-height: 28px; letter-spacing: -0.016em; font-weight: 600; }
+.ph { display: flex; flex-direction: column; gap: var(--space-2); }
+.ph i { display: block; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); }
+
+.stage { position: relative; display: flex; justify-content: center; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); padding: var(--space-8) var(--space-4); min-height: 320px; }
+.stage .page { position: absolute; inset: 0; padding: var(--space-6); }
+.stage .page i { display: block; height: 36px; margin-bottom: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); }
+.scrim { position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(4px); }
+.palette {
+  position: relative; width: 100%; max-width: 576px; align-self: flex-start; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--popover); color: var(--popover-foreground); box-shadow: var(--elevation-3);
+}
+.pal-head { display: flex; align-items: center; gap: var(--space-2); border-bottom: 1px solid var(--border); padding: 0 var(--space-4); }
+.pal-head svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted-foreground); }
+.pal-input { height: 48px; min-width: 0; flex: 1; border: 0; background: transparent; font-size: 14px; line-height: 20px; letter-spacing: -0.006em; outline: none; }
+.pal-list { margin: 0; max-height: 288px; list-style: none; overflow-y: auto; padding: var(--space-1-5); }
+.pal-list li { display: flex; height: 36px; align-items: center; justify-content: space-between; border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px; line-height: 20px; letter-spacing: -0.006em; }
+.pal-list li[aria-selected="true"] { background: var(--state-selected); }
+.pal-list li span + span { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+</style>
+<div class="stack">
+  <section class="sec">
+    <p class="cap">Shell у двох станах. Ліворуч — розгорнутий сайдбар 240px (<code>size-sidebar</code>): у шапці знак із назвою та кнопка згортання (PanelLeft, ghost icon, <code>aria-expanded</code>, <code>aria-keyshortcuts="["</code>); знизу кнопка акаунта з popover (email і рядок «Role · Manager») і «Sign out» — outline на всю ширину; угорі — смужка навігації. Праворуч — рейка 56px (<code>size-sidebar-rail</code>) після клавіші <kbd>[</kbd>, кнопки чи команди ⌘K: лишаються іконки, знак і кнопка розгортання стоять стовпчиком, підписи йдуть у <code>sr-only</code>, назву показує власна підказка <code>data-tip</code> (тут — на «Templates»; те саме на наведення й фокус)</p>
+    <div class="shells">
+      <figure>
+        <figcaption>Expanded · 240px</figcaption>
+        <div class="shell">
+          <div class="route" aria-hidden="true"></div>
+          <aside class="aside" data-collapsed="false">
+            <div class="head">
+              <a class="brand" href="#" aria-label="Property Workflows, home" style="text-decoration: none"><span class="logo">{{mark}}<span class="logo-name">Property Workflows</span></span></a>
+              <button class="toggle" type="button" aria-label="Collapse sidebar" aria-expanded="true" aria-keyshortcuts="["><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="2"/><path d="M6.2 3v10"/></svg></button>
+            </div>
+            <button class="search" type="button">{{search}}<span>Search…</span><kbd>⌘K</kbd></button>
+            <nav class="nav" aria-label="Main">
+              <a href="#">{{nav home}}Home</a>
+              <a href="#">{{nav templates}}Templates</a>
+              <a href="#" aria-current="page">{{nav runs}}Runs</a>
+            </nav>
+            <div class="user">
+              <div class="pop-wrap">
+                <button class="acct" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="acct-pop">{{avatar olena.k@example.test}}<span class="email">olena.k@example.test</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5 8 3.5l3 3M5 9.5l3 3 3-3"/></svg></button>
+                <div class="pop" id="acct-pop" role="dialog" aria-label="Account">
+                  <div class="pop-body">
+                    <div class="pop-who">{{avatar olena.k@example.test}}<span class="pop-email">olena.k@example.test</span></div>
+                    <dl class="pop-role"><dt>Role</dt><dd>Manager</dd></dl>
+                  </div>
+                </div>
+              </div>
+              <button class="signout" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3H4.2A1.7 1.7 0 0 0 2.5 4.7v6.6A1.7 1.7 0 0 0 4.2 13h2.3"/><path d="M9.5 5.2 12.3 8 9.5 10.8M12.3 8H6.2"/></svg>Sign out</button>
+            </div>
+          </aside>
+          <div class="main">
+            <header>
+              <h1>Runs</h1>
+            </header>
+            <div class="ph" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </figure>
+      <figure>
+        <figcaption>Collapsed rail · 56px</figcaption>
+        <div class="shell">
+          <aside class="aside rail" data-collapsed="true">
+            <div class="head">
+              <a class="brand" href="#" aria-label="Property Workflows, home" style="text-decoration: none"><span class="logo">{{mark}}</span></a>
+              <button class="toggle rail-tip" type="button" aria-label="Expand sidebar" aria-expanded="false" aria-keyshortcuts="[" data-tip="Expand sidebar  ["><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="2"/><path d="M6.2 3v10"/></svg></button>
+            </div>
+            <button class="search rail-tip" type="button" aria-label="Search" data-tip="Search  ⌘K">{{search}}</button>
+            <nav class="nav" aria-label="Main">
+              <a class="rail-tip" href="#" data-tip="Home">{{nav home}}<span class="sr-only">Home</span></a>
+              <a class="rail-tip" href="#" data-tip="Templates" data-show data-hover>{{nav templates}}<span class="sr-only">Templates</span></a>
+              <a class="rail-tip" href="#" data-tip="Runs" aria-current="page">{{nav runs}}<span class="sr-only">Runs</span></a>
+            </nav>
+            <div class="user">
+              <button class="acct rail-tip" type="button" aria-haspopup="dialog" aria-expanded="false" data-tip="Account">{{avatar olena.k@example.test}}<span class="sr-only">olena.k@example.test</span></button>
+              <button class="signout rail-tip" type="button" data-tip="Sign out"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3H4.2A1.7 1.7 0 0 0 2.5 4.7v6.6A1.7 1.7 0 0 0 4.2 13h2.3"/><path d="M9.5 5.2 12.3 8 9.5 10.8M12.3 8H6.2"/></svg><span class="sr-only">Sign out</span></button>
+            </div>
+          </aside>
+          <div class="main">
+            <header>
+              <h1>Runs</h1>
+            </header>
+            <div class="ph" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+  <section class="sec">
+    <p class="cap">Command palette, ⌘K / Ctrl K: combobox over a listbox, ↑ ↓ Enter Esc. Команда згортання перемикає підпис: «Collapse sidebar» ↔ «Expand sidebar», підказка — клавіша [</p>
+    <div class="stage">
+      <div class="page" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="scrim" aria-hidden="true"></div>
+      <div class="palette" role="dialog" aria-label="Command palette">
+        <div class="pal-head">
+          {{search}}
+          <input class="pal-input" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-label="Search commands" autocomplete="off" placeholder="Type a command or search…">
+          <kbd>Esc</kbd>
+        </div>
+        <ul class="pal-list" id="pal-list" role="listbox" aria-label="Commands">
+          <li role="option" aria-selected="true"><span>Go to Home</span><span>Navigate</span></li>
+          <li role="option" aria-selected="false"><span>Go to Templates</span><span>Navigate</span></li>
+          <li role="option" aria-selected="false"><span>Go to Runs</span><span>Navigate</span></li>
+          <li role="option" aria-selected="false"><span>Launch a template</span><span>Action</span></li>
+          <li role="option" aria-selected="false"><span>Collapse sidebar</span><span>[</span></li>
+          <li role="option" aria-selected="false"><span>Sign out</span><span>Account</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>

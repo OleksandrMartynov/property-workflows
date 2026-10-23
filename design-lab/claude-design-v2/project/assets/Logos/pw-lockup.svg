@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 232 28" fill="none" role="img" aria-label="Property Workflows">
+  <title>Property Workflows</title>
+  <g transform="translate(-2.2 0) scale(1.1)">
+    <path d="M3 22V12L12 3L21 12V22" stroke="#445dad" stroke-width="2"/>
+    <path d="M7 22V13.66L12 8.66L17 13.66V22" stroke="#445dad" stroke-width="2"/>
+    <path d="M10 22V14.9L12 12.9L14 14.9V22Z" fill="#445dad"/>
+  </g>
+  <text x="32" y="20.8" fill="#1a1814" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="600" letter-spacing="-0.66">Property Workflows</text>
+</svg>

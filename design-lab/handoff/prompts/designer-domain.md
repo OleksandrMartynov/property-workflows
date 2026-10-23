@@ -1,0 +1,20 @@
+You are a senior product designer-engineer building the DOMAIN COMPONENTS of the "Property Workflows" design system (style B, leading 2026 quality) — a more powerful Process Street replacement for a residential property-management agency. Folder: `D:/tmp/ws7-lab/ds/` served at http://127.0.0.1:4173/. Do not touch any git repo.
+
+FIRST read fully: `BRIEF.md`, `tokens.css`, `base.css`, and skim `index.html` to match its craft. Follow BRIEF.md strictly (skeleton, tokens only, `pw-*`, states, ARIA, motion: refined and alive, never stiff; reduced motion; synthetic data; English UI copy exactly as product: "Mark as done", "2 of 5 done", "required"/"optional", "to do"/"done", "in progress"/"completed", "Run not found").
+
+DO NOT edit tokens.css, base.css or index.html. CSS → `domain.css`, JS → `domain.js`; proposed tokens in a marked block + report.
+
+Build `domain.html` ("Domain components") with theme toggle, light+dark, interactive:
+1. Status system: task status icon (to do ring → done check with drawn animation), run status (progress ring that fills by N/M, completed check), badges/pills for in progress, completed, overdue (date-only red), due soon, required/optional markers (neutral; required turns red only on failed completion attempt), all status = icon/dot + text, never color alone.
+2. Progress: ring 14/16/20px and bar 4px with smooth fill + rolling number ticker "2 of 5 done" (tabular-nums).
+3. Checklist row (Linear-level, 32px): status control, index number, title, section grouping header ("Before move-in", "Move-in day"), meta only when present (assignee avatar, due date, condition marker "shown if Type = Move-out", lock for stop task), hover actions, selected/active row for the 3-zone run page, keyboard (J/K, X to complete). Include a "stop task" barrier divider with lock + explanation, and "next required" highlight.
+4. Run row / runs table: case name, template, progress ring + "2 of 5 done", next task, assignee avatar stack (+3), due date with overdue/due soon styling, status pill; sorting header, hover, selected; dense 36px rows; overdue sorted first.
+5. Avatars & avatar stack with initials (synthetic emails), role tag (manager/admin).
+6. Variable chips: `{x} Tenant name` chip, resolved value display ("Apt 12"), unresolved dashed state, inline insertion menu triggered by typing `{` in a text field (filterable list of variables grouped by Form fields / Run / Template), chip in text keeps caret behavior.
+7. AI draft field (Attio/Cursor-level): shimmer while parsing with step text "Reading lease.pdf… found 7 fields", draft value with magenta AI tint + ✦, provenance chip "lease.pdf · p. 2", confidence as 3 levels (High / Check / Low — no fake percentages), Accept (↵) / Reject (⌫) per field and "Accept all", accepted state animates to normal.
+8. Invoice line items preview: line items from tasks with prices, qty, totals right-aligned, AI-suggested line marked as draft, subtotal/VAT/total with number ticker, status pill draft/issued/paid.
+9. Sidebar navigation (Linear 2026): workspace switcher, nav items with icons + counts (My tasks, Runs, Templates, Data sets, Invoices), section headers, active state, collapsed 48px variant, footer with user + role; ⌘K entry.
+10. Run page 3-zone mini composition demonstrating how pieces fit (checklist · task detail with form fields · variables/documents panel) — compact preview only.
+Motion: check draw + subtle glow on the last required task (≤400ms), ring fill, ticker, row hover tint, selection slide, AI accept morph, stagger for lists.
+
+Verify with: `node "D:/tmp/ws7-lab/shoot.mjs" domain.html <light|dark> <outname> 1440 900 <scrollY|#selector> "<optional js>"` → PNG in D:/tmp/ds-shots/ (Read to view; prints console errors). Iterate until world-class in BOTH themes; check 390px once. Report in Ukrainian: built, decisions, proposed tokens, gaps.

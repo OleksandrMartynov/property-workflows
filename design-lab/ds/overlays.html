@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overlays &amp; feedback · Property Workflows</title>
+<script>
+  /* Apply saved theme/motion before first paint */
+  try {
+    var t = localStorage.getItem("pw-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var m = localStorage.getItem("pw-motion"); if (m === "full" || m === "reduce") document.documentElement.dataset.motion = m;
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="overlays.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.6 3.6l1.05 1.05M11.35 11.35l1.05 1.05M3.6 12.4l1.05-1.05M11.35 4.65l1.05-1.05"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 1 1 6.4 2.75a4.4 4.4 0 0 0 6.85 6.85z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.75" width="12" height="8.5" rx="1.5"/><path d="M5.75 14h4.5M8 11.25V14"/></g></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 16 16"><path d="M3.5 6L8 10.5 12.5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 16 16"><path d="M3.5 10L8 5.5 12.5 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25L13.25 13.25"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.25h5.8l.6-8.25M6.75 7v3.5M9.25 7v3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 16 16"><path d="M6.75 9.25a2.5 2.5 0 003.5 0l2-2a2.5 2.5 0 00-3.5-3.5l-.75.75M9.25 6.75a2.5 2.5 0 00-3.5 0l-2 2a2.5 2.5 0 003.5 3.5l.75-.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M3 13l.55-2.9L10.9 2.75a1.45 1.45 0 012.05 2.05L5.6 12.15 3 13zM9.5 4.15l2.35 2.35" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.25c.5-2.4 2.4-3.75 5-3.75s4.5 1.35 5 3.75"/></g></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="5.5" r="2.5"/><path d="M1.75 13.25c.5-2.4 2.2-3.75 4.75-3.75 1 0 1.85.2 2.55.6M12.5 8.5v4M10.5 10.5h4"/></g></symbol>
+    <symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="1.75"/><path d="M2.5 6.75h11M5.5 2v3M10.5 2v3"/></g></symbol>
+    <symbol id="i-more" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="3.5" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.5" cy="8" r="1.1"/></g></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 7.25v3.5M8 5.25v.01"/></g></symbol>
+    <symbol id="i-warn" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5l6 10.5H2z"/><path d="M8 6.5v3M8 11.25v.01"/></g></symbol>
+    <symbol id="i-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 5v3.5M8 10.75v.01"/></g></symbol>
+    <symbol id="i-ok" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M5.5 8.25l1.75 1.75 3.25-3.75"/></g></symbol>
+    <symbol id="i-play" viewBox="0 0 16 16"><path d="M5.5 3.75v8.5L12 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-template" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.25l3.25 3.25V13a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"/><path d="M9 2.75V6h3.25M6 8.75h4M6 11h2.5"/></g></symbol>
+    <symbol id="i-runs" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 4.25l1 1 1.75-2M2.75 8.75l1 1 1.75-2M7.75 4.5h5.5M7.75 9h5.5M7.75 12.5h3.5"/><circle cx="3.9" cy="12.25" r=".01"/></g></symbol>
+    <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M8.75 2L4 9h3.5l-.75 5L12 7H8.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-braces" viewBox="0 0 16 16"><path d="M6 2.75C4.5 2.75 4.5 3.75 4.5 4.75v1.5c0 .8-.5 1.75-1.75 1.75 1.25 0 1.75.95 1.75 1.75v1.5c0 1 0 2 1.5 2M10 2.75c1.5 0 1.5 1 1.5 2v1.5c0 .8.5 1.75 1.75 1.75-1.25 0-1.75.95-1.75 1.75v1.5c0 1 0 2-1.5 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-return" viewBox="0 0 16 16"><path d="M12.5 4v3.5a1 1 0 01-1 1H4M6.5 5.75L4 8.5l2.5 2.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 16 16"><path d="M3.5 6.5h5.75a3.25 3.25 0 010 6.5H6M5.75 4L3.25 6.5l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.75"/><path d="M5.5 7V5.25a2.5 2.5 0 015 0V7"/></g></symbol>
+    <symbol id="i-key" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="10.5" r="2.5"/><path d="M7.3 8.7L13 3M10.75 5.25l1.75 1.75"/></g></symbol>
+    <symbol id="i-flag" viewBox="0 0 16 16"><path d="M3.5 13.5V2.75M3.5 3.25h8l-1.5 2.75 1.5 2.75h-8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.75"/><path d="M10.5 5.5V4.25a1.75 1.75 0 00-1.75-1.75h-4.5A1.75 1.75 0 002.5 4.25v4.5a1.75 1.75 0 001.75 1.75H5.5"/></g></symbol>
+    <symbol id="i-archive" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3" width="11" height="3" rx="1"/><path d="M3.5 6v6.25a1 1 0 001 1h7a1 1 0 001-1V6M6.5 8.75h3"/></g></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.25" y="3" width="11.5" height="10" rx="1.75"/><path d="M6.25 3v10"/></g></symbol>
+    <symbol id="i-clock" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 5v3.25l2 1.25"/></g></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 16 16"><path d="M3.5 8h9M8.75 4.25L12.5 8l-3.75 3.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.78"/><path d="M2.75 2.5v3h3"/></g></symbol>
+    <symbol id="i-spark" viewBox="0 0 16 16"><path d="M8 2l1.35 3.65L13 7l-3.65 1.35L8 12l-1.35-3.65L3 7l3.65-1.35z" fill="currentColor"/></symbol>
+    <symbol id="i-wifi-off" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 2.25l11.5 11.5M1.75 6.25A9 9 0 016 4.25M10 4.25a9 9 0 014.25 2M4.25 8.5a5.5 5.5 0 013-1.5M10 7.25a5.5 5.5 0 011.75 1.25M8 11.75v.01"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+      <div class="stack gap-0">
+        <span class="t-label t-strong" style="line-height:16px">Property Workflows</span>
+        <span class="t-meta t-muted" style="line-height:14px">Design system</span>
+      </div>
+    </div>
+    <button type="button" class="side-search press" data-open-palette aria-label="Search, press Command K">
+      <svg aria-hidden="true"><use href="#i-search"/></svg><span>Search…</span><span class="pw-kbds"><kbd>⌘</kbd><kbd>K</kbd></span>
+    </button>
+    <nav class="nav" aria-label="Overlays and feedback">
+      <span class="nav-label t-meta">Design system</span>
+      <a href="index.html">Foundations <span class="k">←</span></a>
+      <span class="nav-label t-meta">Overlays &amp; feedback</span>
+      <a href="#overview">Overview <span class="k">01</span></a>
+      <a href="#buttons">Buttons <span class="k">02</span></a>
+      <a href="#dialog">Dialog <span class="k">03</span></a>
+      <a href="#popover">Popover &amp; tooltip <span class="k">04</span></a>
+      <a href="#menu">Menu <span class="k">05</span></a>
+      <a href="#palette">Command palette <span class="k">06</span></a>
+      <a href="#toast">Toasts <span class="k">07</span></a>
+      <a href="#alerts">Alerts &amp; banners <span class="k">08</span></a>
+      <a href="#loading">Loading <span class="k">09</span></a>
+      <a href="#empty">Empty states <span class="k">10</span></a>
+      <a href="#sheet">Sheet <span class="k">11</span></a>
+    </nav>
+    <div class="side-foot t-meta">tokens.css · base.css · overlays.css<br>v0.1 · October 2026</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar">
+      <div class="crumbs"><span class="hide-sm">Design system</span><svg class="hide-sm" aria-hidden="true"><use href="#i-chev"/></svg><b>Overlays &amp; feedback</b></div>
+      <div class="cluster gap-2">
+        <div class="seg" role="radiogroup" aria-label="Motion" data-seg="motion">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><span class="lbl">Motion: system</span><span class="lbl-sm" aria-hidden="true">System</span></button>
+          <button type="button" role="radio" data-value="full" aria-checked="false"><span class="lbl">Full</span></button>
+          <button type="button" role="radio" data-value="reduce" aria-checked="false"><span class="lbl">Reduced</span></button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Theme" data-seg="theme">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button type="button" role="radio" data-value="light" aria-checked="false"><svg aria-hidden="true"><use href="#i-sun"/></svg><span class="lbl">Light</span></button>
+          <button type="button" role="radio" data-value="dark" aria-checked="false"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">Dark</span></button>
+          <button type="button" role="radio" data-value="system" aria-checked="true"><svg aria-hidden="true"><use href="#i-monitor"/></svg><span class="lbl">System</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- 01 Overview -->
+      <section class="sec" id="overview" aria-labelledby="h-overview">
+        <div class="hero-title">
+          <span class="sec-index">01 · Overview</span>
+          <h1 class="t-display" id="h-overview">Overlays &amp; feedback</h1>
+          <p>Everything that floats above the page or answers an action: buttons that wait without jumping, dialogs that ask once, menus that grow from their trigger, a ⌘K palette, toasts that can be undone, and calm empty and error states. Quiet depth, no theatre.</p>
+          <div class="cluster facts">
+            <span class="fact"><b>Top layer</b> via dialog &amp; popover</span>
+            <span class="fact"><b>Origin-aware</b> growth</span>
+            <span class="fact"><b>Exit</b> 0.7× of enter</span>
+            <span class="fact"><b>Glass</b> only on floating layers</span>
+            <span class="fact"><b>APG</b> keyboard models</span>
+          </div>
+        </div>
+
+        <div class="g-grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);margin-top:var(--space-8)" data-collapse>
+          <div class="live">
+            <div class="live-head">
+              <div class="stack"><h3 class="t-label">Playground</h3><p>Everything below is live. These open the real thing in the current theme.</p></div>
+            </div>
+            <div class="live-body">
+              <div class="cluster gap-2" data-playground></div>
+              <p class="pw-hint" style="margin-top:var(--space-3)">Press <kbd>⌘</kbd> <kbd>K</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd> anywhere on this page. In menus: arrows, Home / End, type to jump, <kbd>Esc</kbd> to close.</p>
+            </div>
+          </div>
+          <div class="live">
+            <div class="live-head">
+              <div class="stack"><h3 class="t-label">Layers</h3><p>Dialogs and popovers use the browser top layer; z tokens decide the rest.</p></div>
+            </div>
+            <div class="live-body" data-layers></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 Buttons -->
+      <section class="sec" id="buttons" aria-labelledby="h-buttons">
+        <div class="sec-head">
+          <span class="sec-index">02 · Buttons</span>
+          <h2 class="t-title" id="h-buttons">Button system</h2>
+          <p>Six variants, three sizes, icon-only and a loading state that holds its width: the icon morphs into a spinner and the label into its progressive form. Press is a 0.98 scale on a snappy spring. Destructive red is reserved for destructive actions — the last-task confirmation is a primary action.</p>
+        </div>
+        <div data-duo="buttons"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li><code>Enter</code> / <code>Space</code> activate; icon-only buttons need <code>aria-label</code>.</li>
+            <li>Loading: <code>aria-busy="true"</code>, button stays focusable and the label becomes the progressive form (“Marking…”).</li>
+            <li>Disabled that must stay reachable uses <code>aria-disabled="true"</code> plus a tooltip that says why.</li>
+            <li>Targets 28 / 32 / 36 px — all ≥ 24 px (WCAG 2.5.8).</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--primary</span><span class="tk">--primary-hover</span><span class="tk">--primary-active</span><span class="tk">--destructive</span><span class="tk">--secondary</span><span class="tk">--accent</span><span class="tk">--input</span><span class="tk">--size-control*</span><span class="tk">--spring-snappy</span><span class="tk">--scale-press</span><span class="tk">--ring</span><span class="tk new">--size-spinner</span><span class="tk new">--spinner-duration</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 03 Dialog -->
+      <section class="sec" id="dialog" aria-labelledby="h-dialog">
+        <div class="sec-head">
+          <span class="sec-index">03 · Dialog</span>
+          <h2 class="t-title" id="h-dialog">Dialog and alert dialog</h2>
+          <p>A native <code class="t-mono">&lt;dialog&gt;</code> opened with <code class="t-mono">showModal()</code>: focus is trapped, the page behind is inert, <kbd>Esc</kbd> exits and focus returns to the trigger. The overlay fades in with a soft 4px blur; the opaque panel rises on a smooth spring and leaves faster.</p>
+        </div>
+        <div data-duo="dialog"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Confirmation: <code>role="dialog"</code>, focus lands on the first action (Cancel); <kbd>⌘</kbd><kbd>↵</kbd> confirms from anywhere inside.</li>
+            <li>Destructive: <code>role="alertdialog"</code>, focus on Cancel; the destructive button stays <code>aria-disabled</code> until the name is typed exactly.</li>
+            <li>Clicking the backdrop dismisses a dialog; an alert dialog only nudges, so a stray click never discards intent.</li>
+            <li>Title and description are wired with <code>aria-labelledby</code> / <code>aria-describedby</code>.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--surface-3</span><span class="tk">--overlay</span><span class="tk">--overlay-blur</span><span class="tk">--shadow-lg</span><span class="tk">--radius-xl</span><span class="tk">--spring-smooth</span><span class="tk">--exit-factor</span><span class="tk">--scale-enter</span><span class="tk new">--size-dialog-sm</span><span class="tk new">--size-dialog</span><span class="tk new">--destructive-tint</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 04 Popover & tooltip -->
+      <section class="sec" id="popover" aria-labelledby="h-popover">
+        <div class="sec-head">
+          <span class="sec-index">04 · Popover and tooltip</span>
+          <h2 class="t-title" id="h-popover">Popover and tooltip</h2>
+          <p>Popovers are glass, grow from the side of their trigger and carry an optional arrow. Tooltips are small and crisp: the first waits 500ms, then neighbouring triggers show theirs instantly for a moment — so sweeping across a toolbar feels continuous.</p>
+        </div>
+        <div data-duo="popover"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Popover: trigger has <code>aria-expanded</code> + <code>aria-controls</code>; panel is a non-modal <code>role="dialog"</code>; <kbd>Esc</kbd> closes and returns focus.</li>
+            <li>Tooltip: <code>role="tooltip"</code> linked by <code>aria-describedby</code>, on hover and focus, <kbd>Esc</kbd> hides, never holds essential information.</li>
+            <li>Placement flips at the viewport edge; <code>transform-origin</code> follows the trigger centre.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--glass-bg</span><span class="tk">--glass-blur</span><span class="tk">--glass-border</span><span class="tk">--shadow-md</span><span class="tk">--z-popover</span><span class="tk">--z-tooltip</span><span class="tk">--spring-snappy</span><span class="tk new">--tooltip</span><span class="tk new">--tooltip-delay</span><span class="tk new">--tooltip-skip</span><span class="tk new">--size-popover</span><span class="tk new">--size-arrow</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 05 Menu -->
+      <section class="sec" id="menu" aria-labelledby="h-menu">
+        <div class="sec-head">
+          <span class="sec-index">05 · Menu</span>
+          <h2 class="t-title" id="h-menu">Dropdown menu</h2>
+          <p>Sections, icons, shortcuts, checkable items, a submenu and one destructive item. The menu grows from the trigger, items arrive 12ms apart, and the highlight follows pointer and keyboard as one cursor.</p>
+        </div>
+        <div data-duo="menu"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Button: <code>aria-haspopup="menu"</code>; <kbd>↓</kbd> / <kbd>Enter</kbd> open on the first item, <kbd>↑</kbd> on the last.</li>
+            <li><kbd>↑</kbd><kbd>↓</kbd> move, <kbd>Home</kbd>/<kbd>End</kbd> jump, typing jumps to a label, <kbd>→</kbd> opens a submenu, <kbd>←</kbd> / <kbd>Esc</kbd> close it.</li>
+            <li><code>menuitemcheckbox</code> and <code>menuitemradio</code> carry <code>aria-checked</code>; checkboxes keep the menu open.</li>
+            <li>Pointer open hides the focus ring (<code>data-pointer</code>); any key brings it back.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--glass-bg</span><span class="tk">--radius-md</span><span class="tk">--size-control-sm</span><span class="tk">--stagger</span><span class="tk">--destructive</span><span class="tk new">--accent-float</span><span class="tk new">--size-menu</span><span class="tk new">--submenu-delay</span><span class="tk new">--destructive-tint</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 06 Command palette -->
+      <section class="sec" id="palette" aria-labelledby="h-palette">
+        <div class="sec-head">
+          <span class="sec-index">06 · Command palette</span>
+          <h2 class="t-title" id="h-palette">Command palette</h2>
+          <p>The one modal allowed to be glass. Search runs, templates and actions together; matches are underlined, the selected row shows its default key, and a second <kbd>⌘</kbd><kbd>K</kbd> opens actions for the selected item. Both panels below are fully interactive — and so is the real one on <kbd>⌘</kbd><kbd>K</kbd>.</p>
+        </div>
+        <div data-duo="palette"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li><kbd>⌘</kbd><kbd>K</kbd> / <kbd>Ctrl</kbd><kbd>K</kbd> opens; dialog + combobox + listbox, focus stays in the input (<code>aria-activedescendant</code>).</li>
+            <li><kbd>↑</kbd><kbd>↓</kbd> move, <kbd>↵</kbd> runs the default action, <kbd>⌘</kbd><kbd>K</kbd> again toggles the action panel, <kbd>Esc</kbd> closes it first, then the palette.</li>
+            <li>Groups are <code>role="group"</code> labelled by their heading; the status line announces “No results”.</li>
+            <li>Loading shows a hairline progress and skeleton rows with <code>aria-busy</code>.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--glass-*</span><span class="tk">--radius-lg</span><span class="tk">--shadow-lg</span><span class="tk">--overlay-blur</span><span class="tk">--spring-smooth</span><span class="tk">--shimmer-duration</span><span class="tk new">--size-palette</span><span class="tk new">--overlay-palette</span><span class="tk new">--accent-float</span><span class="tk new">--indeterminate-duration</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 07 Toasts -->
+      <section class="sec" id="toast" aria-labelledby="h-toast">
+        <div class="sec-head">
+          <span class="sec-index">07 · Toasts</span>
+          <h2 class="t-title" id="h-toast">Toasts</h2>
+          <p>Bottom-right, glass, never stealing focus. Up to three: older ones tuck behind the newest as a deck and fan out when you hover. The stack reflows on a smooth spring; hover or focus pauses the timer; drag sideways to dismiss. Fire them from the buttons — they appear in the corner of your window.</p>
+        </div>
+        <div data-duo="toast"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Container is <code>role="region"</code> “Notifications”; each toast is <code>role="status"</code> (polite), errors <code>role="alert"</code>.</li>
+            <li>Never moves focus. Undo and Dismiss are real buttons, reachable by <kbd>Tab</kbd>; focus inside the stack pauses timers like hover.</li>
+            <li>Undo toasts carry a 5s countdown line; success and info last 4.5s, errors 8s.</li>
+            <li>Reduced motion: stack positions apply as short fades, no sideways travel.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--glass-*</span><span class="tk">--shadow-md</span><span class="tk">--z-toast</span><span class="tk">--spring-smooth</span><span class="tk">--distance-3</span><span class="tk">--status-done</span><span class="tk new">--toast-duration</span><span class="tk new">--toast-peek</span><span class="tk new">--toast-peek-scale</span><span class="tk new">--swipe-threshold</span><span class="tk new">--size-toast</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 08 Alerts -->
+      <section class="sec" id="alerts" aria-labelledby="h-alerts">
+        <div class="sec-head">
+          <span class="sec-index">08 · Alerts and banners</span>
+          <h2 class="t-title" id="h-alerts">Inline alerts and banners</h2>
+          <p>Feedback that lives with the content. Tint from the status roles, an icon that doesn’t depend on color, and text on the tint at ≥ 4.5:1. Errors say what happened and what to do — no apologies, no “Oops”.</p>
+        </div>
+        <div data-duo="alerts"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Static information: <code>role="status"</code>. Errors that appear after an action: <code>role="alert"</code> and the field that failed gets focus.</li>
+            <li>Dismiss is an icon button with <code>aria-label</code>; dismissed alerts exit at 0.7× and the layout closes up.</li>
+            <li>“Run not found” does not reveal whether the run exists.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--status-progress-*</span><span class="tk">--status-due-soon-*</span><span class="tk">--status-overdue-*</span><span class="tk">--status-done-*</span><span class="tk">--radius-md</span><span class="tk">--muted</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 09 Loading -->
+      <section class="sec" id="loading" aria-labelledby="h-loading">
+        <div class="sec-head">
+          <span class="sec-index">09 · Loading</span>
+          <h2 class="t-title" id="h-loading">Skeletons, progress and optimistic updates</h2>
+          <p>Skeletons shimmer with a slow sheen, then the content arrives with a light stagger. Progress fills on a spring or breathes when indeterminate. Optimistic updates change the UI instantly and say so honestly if the server disagrees.</p>
+        </div>
+        <div data-duo="loading"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Skeleton containers: <code>aria-busy="true"</code> and a visually hidden “Loading…”; shimmer stops under reduced motion.</li>
+            <li>Progress bars use <code>role="progressbar"</code> with <code>aria-valuenow</code>, or omit the value when indeterminate.</li>
+            <li>Optimistic checkbox: <code>role="checkbox"</code>; a failed save reverts the state, flashes the row and raises an error toast with a way back.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--skeleton</span><span class="tk">--skeleton-sheen</span><span class="tk">--shimmer-duration</span><span class="tk">--stagger</span><span class="tk">--status-progress</span><span class="tk">--status-done</span><span class="tk new">--spinner-duration</span><span class="tk new">--indeterminate-duration</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 10 Empty states -->
+      <section class="sec" id="empty" aria-labelledby="h-empty">
+        <div class="sec-head">
+          <span class="sec-index">10 · Empty states</span>
+          <h2 class="t-title" id="h-empty">Empty states</h2>
+          <p>What will be here, in one sentence, and one action. Line illustrations are built from tokens, so they re-tint with the theme; the single accent stroke marks the thing to do.</p>
+        </div>
+        <div data-duo="empty"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Title is a real heading; the illustration is <code>aria-hidden</code>.</li>
+            <li>One primary action only; permission states offer a way out, never a dead end.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--border-strong</span><span class="tk">--surface-1</span><span class="tk">--muted</span><span class="tk">--primary</span><span class="tk">--radius-md</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- 11 Sheet -->
+      <section class="sec" id="sheet" aria-labelledby="h-sheet">
+        <div class="sec-head">
+          <span class="sec-index">11 · Sheet</span>
+          <h2 class="t-title" id="h-sheet">Sheet for task details</h2>
+          <p>On narrow widths the task details move from the third zone into a right-hand sheet. It is modal, so it behaves like a dialog: inert page, <kbd>Esc</kbd>, return focus. It travels only 24px — a hint of direction, not a slide-show.</p>
+        </div>
+        <div data-duo="sheet"></div>
+        <div class="notes">
+          <div class="note"><h4>Keyboard &amp; ARIA</h4><ul>
+            <li>Native <code>&lt;dialog&gt;</code> modal, <code>aria-labelledby</code> the task title; focus starts on Close.</li>
+            <li>Backdrop click and <kbd>Esc</kbd> close; the exit is 0.7× the enter.</li>
+            <li>At 390px the sheet fills the width minus a 24px peek of the page.</li>
+          </ul></div>
+          <div class="note"><h4>Tokens</h4><div class="tks">
+            <span class="tk">--surface-3</span><span class="tk">--radius-xl</span><span class="tk">--shadow-lg</span><span class="tk">--ease-emphasized</span><span class="tk new">--size-sheet</span><span class="tk new">--distance-sheet</span>
+          </div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="overlays.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+/* Згенеровано build-partials.mjs з src/components/ui/controls.css (@layer components). Не редагуй руками. */
+@keyframes ctl-pop { from { opacity: 0; transform: scale(0.5); } }
+@keyframes ctl-check-pop { from { transform: scale(0.98); } }
+@keyframes ctl-spin { to { transform: rotate(1turn); } }
+@keyframes ctl-march { to { stroke-dashoffset: -20; } }
+@keyframes ctl-enter { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+@keyframes ctl-exit { to { opacity: 0; transform: translateY(-2px) scale(0.98); } }
+
+/* ----------------------------------------------------------------------
+   Повідомлення поля: підказка й помилка в одній клітинці сітки — перемикання без стрибка макета.
+   Поле без підказки розкриває рядок помилки пружиною.
+   ---------------------------------------------------------------------- */
+.ctl-foot { display: flex; align-items: flex-start; gap: 12px; }
+.ctl-msg {
+  flex: 1; min-width: 0; display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows var(--spring-smooth-duration) var(--spring-smooth);
+}
+.ctl-msg[data-open] { grid-template-rows: 1fr; }
+.ctl-hint, .ctl-error {
+  grid-area: 1 / 1; min-height: 0; overflow: hidden; padding-top: 6px;
+  font-size: 12px; line-height: 16px;
+  transition: opacity var(--duration-base) var(--ease-standard), transform var(--spring-smooth-duration) var(--spring-smooth);
+}
+.ctl-hint { color: var(--muted-foreground); }
+.ctl-error {
+  color: var(--destructive); display: flex; align-items: flex-start; gap: 6px;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+}
+.ctl-error svg { width: 14px; height: 14px; margin-top: 1px; flex: none; }
+.ctl-msg[data-invalid] .ctl-error { opacity: 1; transform: none; pointer-events: auto; }
+.ctl-msg[data-invalid] .ctl-hint { opacity: 0; transform: translateY(4px); }
+.ctl-counter {
+  flex: none; padding-top: 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  transition: color var(--duration-base) var(--ease-standard);
+}
+.ctl-counter[data-state="near"] { color: var(--status-due-soon-foreground); }
+.ctl-counter[data-state="over"] { color: var(--destructive); }
+
+/* Невеликі значки в полі (помилка, «очистити», caps lock): з'являються пружиною, місця не займають, доки не потрібні */
+.ctl-pop { animation: ctl-pop var(--spring-snappy-duration) var(--spring-bouncy) both; }

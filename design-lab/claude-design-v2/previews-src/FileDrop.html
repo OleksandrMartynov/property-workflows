@@ -1,0 +1,92 @@
+<!-- @dsCard group="Forms" height=730 subtitle="FileDrop: зона, перетягування, прогрес, помилка, список файлів" -->
+<style>
+/* @include button */
+/* @include ctl-msg */
+/* @include ctl-drop */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); align-items: start; }
+.fd { display: flex; min-width: 0; flex-direction: column; }
+.fd-head { display: flex; min-height: 18px; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-1-5); }
+.fd-label { font-size: 13px; line-height: 18px; font-weight: 500; }
+.fd-req { margin-left: 2px; font-weight: 600; color: var(--destructive); }
+.fd-opt { font-size: 12px; line-height: 16px; letter-spacing: 0.004em; color: var(--muted-foreground); }
+</style>
+<div class="stack">
+  <div class="cols">
+    <section class="sec">
+      <p class="cap">Idle, with accepted files: uploading, done</p>
+      <div class="fd" role="group" aria-labelledby="fd1-l">
+        <div class="fd-head"><span class="fd-label" id="fd1-l">Lease agreement<span class="fd-req" aria-hidden="true">*</span></span></div>
+        <div class="ctl-drop">
+          <svg class="ctl-drop__border" aria-hidden="true"><rect/></svg>
+          <span class="ctl-drop__icon" aria-hidden="true">{{g upload}}</span>
+          <p class="ctl-drop__title">Drag PDF files here</p>
+          <p class="ctl-drop__hint">PDF up to 20 MB.</p>
+          <button class="btn btn-secondary btn-sm" type="button">Choose file</button>
+        </div>
+        <ul class="ctl-files" aria-live="polite" aria-label="Selected files">
+          <li class="ctl-file" data-state="uploading">
+            <span class="ctl-file__icon" aria-hidden="true"><svg class="g" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.25l3.25 3.25V13a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"/><path d="M9 2.75V6h3.25"/></svg></span>
+            <div class="ctl-file__main"><span class="ctl-file__name">Lease-agreement.pdf</span><span class="ctl-file__meta"><span>2.4 MB</span><span>· 64%</span></span></div>
+            <button class="ctl-iconbtn" type="button" aria-label="Cancel upload of Lease-agreement.pdf">{{g close}}</button>
+            <div class="ctl-file__prog"><div><div class="ctl-progress" role="progressbar" aria-label="Uploading Lease-agreement.pdf" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64"><i style="--p: 0.64"></i></div></div></div>
+          </li>
+          <li class="ctl-file" data-state="done">
+            <span class="ctl-file__icon" aria-hidden="true"><svg class="g" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.25l3.25 3.25V13a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"/><path d="M9 2.75V6h3.25"/></svg><svg class="g" data-state="done" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg></span>
+            <div class="ctl-file__main"><span class="ctl-file__name">Inventory-list.pdf</span><span class="ctl-file__meta"><span>840 KB</span><span>· Uploaded</span></span></div>
+            <button class="ctl-iconbtn" type="button" aria-label="Remove Inventory-list.pdf">{{g trash}}</button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="cap">Drag over: dashed border marches, icon lifts</p>
+      <div class="fd" role="group" aria-labelledby="fd2-l">
+        <div class="fd-head"><span class="fd-label" id="fd2-l">Lease agreement</span><span class="fd-opt">Optional</span></div>
+        <div class="ctl-drop" data-state="dragover">
+          <svg class="ctl-drop__border" aria-hidden="true"><rect/></svg>
+          <span class="ctl-drop__icon" aria-hidden="true">{{g upload}}</span>
+          <p class="ctl-drop__title">Drop to upload</p>
+          <p class="ctl-drop__hint">PDF up to 20 MB.</p>
+          <button class="btn btn-secondary btn-sm" type="button">Choose file</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="cap">Rejected file and form error</p>
+      <div class="fd" role="group" aria-labelledby="fd3-l">
+        <div class="fd-head"><span class="fd-label" id="fd3-l">Lease agreement<span class="fd-req" aria-hidden="true">*</span></span></div>
+        <div class="ctl-drop" data-invalid>
+          <svg class="ctl-drop__border" aria-hidden="true"><rect/></svg>
+          <span class="ctl-drop__icon" aria-hidden="true">{{g upload}}</span>
+          <p class="ctl-drop__title">Drag PDF files here</p>
+          <p class="ctl-drop__hint">PDF up to 20 MB.</p>
+          <button class="btn btn-secondary btn-sm" type="button">Choose file</button>
+        </div>
+        <ul class="ctl-files" aria-live="polite" aria-label="Selected files">
+          <li class="ctl-file" data-state="error">
+            <span class="ctl-file__icon" aria-hidden="true"><svg class="g" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.25l3.25 3.25V13a.5.5 0 01-.5.5H4a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"/><path d="M9 2.75V6h3.25"/></svg><svg class="g" data-state="error" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 5v3.5M8 10.75v.01"/></svg></span>
+            <div class="ctl-file__main"><span class="ctl-file__name">Scan-2026-10.pdf</span><span class="ctl-file__meta">{{g error sm}}<span>File is too large (24.0 MB). PDF up to 20 MB.</span></span></div>
+            <button class="ctl-iconbtn" type="button" aria-label="Remove Scan-2026-10.pdf">{{g trash}}</button>
+          </li>
+        </ul>
+        <div class="ctl-foot"><div class="ctl-msg" data-open data-invalid><p class="ctl-error" id="fd3-e" role="alert">{{g alert}}<span>Attach the lease agreement</span></p></div></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="cap">Disabled</p>
+      <div class="fd" role="group" aria-labelledby="fd4-l">
+        <div class="fd-head"><span class="fd-label" id="fd4-l">Lease agreement</span></div>
+        <div class="ctl-drop" aria-disabled="true">
+          <svg class="ctl-drop__border" aria-hidden="true"><rect/></svg>
+          <span class="ctl-drop__icon" aria-hidden="true">{{g upload}}</span>
+          <p class="ctl-drop__title">Drag PDF files here</p>
+          <p class="ctl-drop__hint">PDF up to 20 MB.</p>
+          <button class="btn btn-secondary btn-sm" type="button" disabled>Choose file</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
