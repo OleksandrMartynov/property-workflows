@@ -29,6 +29,9 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 - `npm run dev` · `npm run build` (має показати `ƒ Proxy (Middleware)`) · `npm run lint` (0 warnings)
 - `npm run typecheck` (`next typegen && tsc --noEmit`) · `npm test` (Vitest)
 - `npm run spec:validate` · `npm run spec:check` · `npm run ac:coverage` · `npm run check:design` · `npm run check:contrast` · `npm run check:copy`
+- `npm run check:actions` — кожна Server Action у `src/app` викликає `getClaims()` (прямо чи через `requireViewer()` /
+  `requireAdmin()`), без `getSession()` і `middleware.ts`; `npm run check:boundary` — `SUPABASE_SECRET_KEY` лише в
+  `src/lib/supabase/admin.ts` (обидва — `.github/workflows/architecture.yml`, ADR 0006)
 - `node scripts/check-migration-order.mjs` — нова міграція новіша за `origin/main`, застосовані не змінено (у CI — `db-check`)
 - `npx supabase migration new <назва>` → SQL → PR. Застосовує міграції у вашу базу ЛИШЕ CI (`db-deploy` після merge у `main`)
 - Типи БД: готовий `database.types.ts` — у Summary прогону job `db-check` (Docker не потрібен); або `npm run db:types`
