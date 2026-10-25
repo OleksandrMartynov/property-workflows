@@ -13,17 +13,18 @@ export function useControllable<T>(value: T | undefined, defaultValue: T, onChan
   const controlled = value !== undefined;
   const current = controlled ? value : inner;
   const ref = useRef(current);
+  // Актуальні onChange і controlled — через ref: `set` стабільний, тож довгоживучі замикання (утримання «+» у
+  // NumberInput, слухач колеса) не кличуть застарілий onChange зі старим станом батька (рев'ю CodeRabbit у PR #18).
+  const latest = useRef({ onChange, controlled });
   useEffect(() => {
     ref.current = current;
+    latest.current = { onChange, controlled };
   });
-  const set = useCallback(
-    (next: T) => {
-      ref.current = next;
-      if (!controlled) setInner(next);
-      onChange?.(next);
-    },
-    [controlled, onChange],
-  );
+  const set = useCallback((next: T) => {
+    ref.current = next;
+    if (!latest.current.controlled) setInner(next);
+    latest.current.onChange?.(next);
+  }, []);
   return [current, set, ref] as const;
 }
 
