@@ -126,3 +126,9 @@ export async function launch(
   ]);
   return row.id;
 }
+
+/** Збереження незбережених змін шаблону як нової версії — так, як це робить адміністратор у редакторі (ADR 0006). */
+export async function publish(t: TestDb, adminId: string, templateId: string): Promise<number> {
+  const [row] = await t.asUser<{ n: number }>(adminId, "select public.save_template_version($1) as n", [templateId]);
+  return row.n;
+}
