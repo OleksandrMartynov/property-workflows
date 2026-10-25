@@ -9,7 +9,7 @@ import { CompletionGlow } from "@/components/ui/completion-glow";
 import { TaskCheck } from "@/components/ui/task-check";
 import { canCompleteTask } from "@/lib/runs/access";
 import { isLastRequiredTask } from "@/lib/runs/confirmation";
-import { requiredLabel, runStatusLabel, taskStatusLabel } from "@/lib/runs/labels";
+import { requiredLabel, runStatusLabel, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
@@ -19,6 +19,7 @@ export interface RunInfo {
   id: string;
   case_name: string;
   template_name: string;
+  template_version: number | null;
   status: string;
   run_manager_id: string;
 }
@@ -125,6 +126,9 @@ export function RunDetail({
         <dl className="flex flex-col text-body [&>dd]:mb-3.5 [&>dd:last-child]:mb-0">
           <dt className="mb-1 text-meta text-muted-foreground">Template</dt>
           <dd className="min-w-0 break-words">{run.template_name}</dd>
+          {/* AC-EDITOR-06: версія шаблону, з якої запущено, — «Template version N». */}
+          <dt className="mb-1 text-meta text-muted-foreground">Version</dt>
+          <dd data-testid="run-template-version">{templateVersionLabel(run.template_version)}</dd>
           <dt className="mb-1 text-meta text-muted-foreground">Run manager</dt>
           <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
             {managerEmail ? <Avatar email={managerEmail} /> : null}

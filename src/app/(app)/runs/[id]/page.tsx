@@ -17,7 +17,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
 
   const { data: run } = await supabase
     .from("runs")
-    .select("id, case_name, template_name, status, run_manager_id, created_at")
+    .select("id, case_name, template_name, template_version, status, run_manager_id, created_at")
     .eq("id", id)
     .maybeSingle();
   if (!run) notFound();

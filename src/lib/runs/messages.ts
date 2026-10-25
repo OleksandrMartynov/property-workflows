@@ -13,6 +13,8 @@ export const MESSAGES = {
   INVALID_ASSIGNEE: "An assignee must be a manager or an administrator",
   TEMPLATE_NOT_FOUND: "Template not found",
   TEMPLATE_EMPTY: "The template has no tasks",
+  // Робоче припущення (solomchaak/property-workflows-spec#21): шаблон без збереженої версії не запускає ніхто.
+  TEMPLATE_NOT_PUBLISHED: "Save the template as a version to launch it",
   TASK_NOT_FOUND: "Task not found",
   // AC-TASK-10
   RUN_NOT_FOUND: "Run not found",
