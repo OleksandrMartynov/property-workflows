@@ -236,6 +236,74 @@ describe("База: додавання секції й задачі та пер�
   });
 });
 
+describe("База: видалення й перейменування секції чи задачі (функції редактора)", () => {
+  const sectionsOf = (id: string) =>
+    t.asService<{ name: string }>("select name from public.template_sections where template_id = $1 order by position", [id]);
+  const taskOf = (id: string) =>
+    t.asService<{ name: string; required: boolean }>("select name, required from public.template_tasks where id = $1", [id]);
+
+  it("AC-EDITOR-01: адміністратор перейменовує секцію, змінює задачу й видаляє задачу та секцію — «Unpublished changes», версія 1 без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (remove)");
+    await t.asUser(ADMIN, "select public.rename_template_section($1, $2, '  Handover ')", [tpl.id, tpl.sections[1]]);
+    await t.asUser(ADMIN, "select public.update_template_task($1, $2, ' Clean the apartment ', true)", [tpl.id, tpl.tasks[2]]);
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Before move-in", "Handover"]);
+    expect(await taskOf(tpl.tasks[2])).toEqual([{ name: "Clean the apartment", required: true }]);
+
+    await t.asUser(ADMIN, "select public.remove_template_task($1, $2)", [tpl.id, tpl.tasks[0]]);
+    expect(await taskOf(tpl.tasks[0])).toEqual([]);
+    // Секцію видалено разом із її задачами (каскад).
+    await t.asUser(ADMIN, "select public.remove_template_section($1, $2)", [tpl.id, tpl.sections[1]]);
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Before move-in"]);
+    expect(await state(tpl.id)).toMatchObject({ current_version: 1, has_unpublished_changes: true, versions: 1, draft_tasks: 2 });
+    expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
+  });
+
+  it("AC-EDITOR-01: секція чи задача іншого шаблону й порожня назва — помилка без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (remove guard)");
+    const other = await tenantMoveInV1("Tenant move-in (remove other)");
+    for (const [sql, params, code] of [
+      ["select public.remove_template_section($1, $2)", [tpl.id, other.sections[0]], "DB_ERROR"],
+      ["select public.remove_template_task($1, $2)", [tpl.id, other.tasks[0]], "DB_ERROR"],
+      ["select public.rename_template_section($1, $2, 'x')", [tpl.id, other.sections[0]], "DB_ERROR"],
+      ["select public.update_template_task($1, $2, 'x', false)", [tpl.id, other.tasks[0]], "DB_ERROR"],
+      ["select public.rename_template_section($1, $2, '   ')", [tpl.id, tpl.sections[0]], "NAME_REQUIRED"],
+      ["select public.update_template_task($1, $2, '', true)", [tpl.id, tpl.tasks[0]], "NAME_REQUIRED"],
+    ] as const) {
+      expect(await errorOf(t.asUser(ADMIN, sql, [...params])), sql).toContain(code);
+    }
+    expect(await state(tpl.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+    expect(await state(other.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+  });
+
+  it("AC-EDITOR-08: менеджер напряму видаляє чи перейменовує секцію або задачу — NOT_ALLOWED, шаблон без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (remove by manager)");
+    for (const [sql, params] of [
+      ["select public.remove_template_section($1, $2)", [tpl.id, tpl.sections[0]]],
+      ["select public.remove_template_task($1, $2)", [tpl.id, tpl.tasks[0]]],
+      ["select public.rename_template_section($1, $2, 'x')", [tpl.id, tpl.sections[0]]],
+      ["select public.update_template_task($1, $2, 'x', false)", [tpl.id, tpl.tasks[0]]],
+    ] as const) {
+      expect(await errorOf(t.asUser(MANAGER_A, sql, [...params])), sql).toContain("NOT_ALLOWED");
+    }
+    expect(await state(tpl.id)).toEqual({ current_version: 1, has_unpublished_changes: false, versions: 1, draft_tasks: 5 });
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Before move-in", "Move-in day"]);
+    expect(await taskOf(tpl.tasks[0])).toEqual([{ name: "Sign the lease agreement", required: true }]);
+  });
+
+  it("AC-EDITOR-09: відвідувач без входу не викликає функцій видалення й перейменування", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (remove by anon)");
+    for (const sql of [
+      "select public.remove_template_section($1, $2)",
+      "select public.remove_template_task($1, $2)",
+      "select public.rename_template_section($1, $2, 'x')",
+      "select public.update_template_task($1, $2, 'x', false)",
+    ]) {
+      await expect(t.asAnon(sql, [tpl.id, tpl.sections[0]]), sql).rejects.toThrow("permission denied");
+    }
+    expect(await state(tpl.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+  });
+});
+
 describe("База: менеджер бачить лише поточну версію", () => {
   it("AC-EDITOR-02: незбережену назву шаблону менеджер не читає — лише опубліковану назву поточної версії", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (published name)");
