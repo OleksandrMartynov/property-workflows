@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-20T16:11:36Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-25T13:21:10Z
 
 # Requirement: Launch a template for a case
 
@@ -40,11 +40,12 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - Deleting and cancelling a run.
 - Vendors as assignees and guest access (slice WS8): the assignee can only be a manager or an administrator.
 - Task deadlines and reminders.
-- Creating and changing templates in the interface: an administrator may prepare templates outside the application, for example as initial data; whether there is a screen for it is up to the developer.
+- Creating and changing templates: specified in "Requirement: Edit a template with version control", not in this requirement.
 
 ### Припущення
 
-- Templates already exist: they are prepared by the administrator, and every task of a template has a "required" or "optional" flag. Every template has at least one required task.
+- Templates are created and saved as versions by the administrator in the editor (see "Requirement: Edit a template with version control"). Every task of a template has a "required" or "optional" flag, and every template has at least one required task.
+- A change to a template means saving a new version of it (see "Requirement: Edit a template with version control"); it never affects a run that was already launched.
 - Users with the roles `manager` and `admin` are created by the administrator.
 - An administrator who launched a template acts as the run manager and assigns assignees. An administrator can be the assignee of a task.
 - The case name is free text of 1 to 100 characters. Leading and trailing spaces are removed before the name is checked and saved; a name consisting only of spaces counts as empty.
@@ -66,3 +67,4 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - 2026-10-19 — AC-RUN-01, AC-RUN-02, AC-RUN-03, AC-RUN-05 reworded; AC-RUN-06 to AC-RUN-09 added; an administrator can be an assignee; case name limited to 100 characters; Q1 and Q2 resolved and moved to "Припущення" and "Поза межами" — own PM decision
 - 2026-10-20 — AC-RUN-10 (emails in the assignee picker), AC-RUN-11 (spaces around the case name), AC-RUN-12 (sections kept at launch) added; the line "Section order in a template is not required and not checked" removed; assumptions added on the moment of launch, a second run for the same case, flags fixed at launch and the interface language — https://github.com/solomchaak/property-workflows-spec/issues/5, https://github.com/solomchaak/property-workflows-spec/issues/6, https://github.com/solomchaak/property-workflows-spec/issues/7, https://github.com/solomchaak/property-workflows-spec/issues/8, https://github.com/solomchaak/property-workflows-spec/issues/9, https://github.com/solomchaak/property-workflows-spec/issues/13, https://github.com/solomchaak/property-workflows-spec/issues/16
 - 2026-10-20 — AC-RUN-12 made concrete (the number of tasks in each section) — own PM decision (self-check against the checklist)
+- 2026-10-25 — assumption about templates updated (templates are created and saved as versions in the editor); assumption added that a change to a template means saving a new version and never affects a run already launched; out-of-scope item about creating templates replaced by a reference — own PM decision, after the new requirement https://github.com/solomchaak/property-workflows-spec/issues/20
