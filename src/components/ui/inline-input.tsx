@@ -81,6 +81,7 @@ export function InlineInput({
         defaultValue={defaultValue}
         autoComplete="off"
         aria-busy={pending || undefined}
+        data-inline-commit={commit}
         className={cn(
           "w-full min-w-0 rounded-sm border border-transparent bg-transparent px-2 text-foreground caret-primary transition-ui hover:border-input hover:bg-field focus-visible:border-ring focus-visible:bg-field focus-visible:-outline-offset-1",
           sizes[size],

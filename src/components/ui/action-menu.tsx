@@ -7,6 +7,8 @@ import { MoreIcon } from "./icons";
 import { Popover } from "./popover";
 
 export interface ActionMenuItem {
+  /** Стабільний ключ пункту (назви можуть повторюватись: дві секції з однаковою назвою). */
+  id: string;
   label: string;
   icon?: ReactNode;
   onSelect: () => void;
@@ -19,7 +21,8 @@ export interface ActionMenuItem {
 
 /**
  * Меню дій рядка («⋯»): кнопка-іконка з підписом для читача екрана, список `role="menu"` у плаваючій поверхні.
- * ↑ ↓ Home End — між пунктами, Enter / Space — вибрати, Esc і Tab — закрити (фокус повертається на кнопку).
+ * ↑ ↓ Home End — між пунктами, Enter / Space — вибрати, Esc — закрити (фокус повертається на кнопку), Tab — закрити й
+ * перейти далі від кнопки, як без меню.
  * Вибір закриває меню, і лише потім викликає дію — щоб діалог підтвердження отримав фокус.
  */
 export function ActionMenu({ label, items, className }: { label: string; items: ActionMenuItem[]; className?: string }) {
@@ -33,8 +36,11 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
     [],
   );
 
+  // Перший пункт — у фокус, коли поверхня вже видима: Popover робить її видимою наступним рендером після позиціювання.
   useEffect(() => {
-    if (open) requestAnimationFrame(() => enabled()[0]?.focus());
+    if (!open) return;
+    const timer = window.setTimeout(() => enabled()[0]?.focus(), 0);
+    return () => window.clearTimeout(timer);
   }, [open, enabled]);
 
   const close = (refocus = true) => {
@@ -51,8 +57,11 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
     else if (event.key === "Home") go(0);
     else if (event.key === "End") go(all.length - 1);
     else if (event.key === "Escape") close();
-    else if (event.key === "Tab") close(false);
-    else return;
+    else if (event.key === "Tab") {
+      // Фокус — на кнопку, а перехід за Tab робить браузер: далі від кнопки, а не з пункту, що зникає.
+      close();
+      return;
+    } else return;
     event.preventDefault();
   };
 
@@ -68,10 +77,11 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
         className={buttonVariants({ variant: "ghost", size: "icon", className: cn("size-7 text-muted-foreground hover:text-foreground aria-expanded:bg-state-pressed aria-expanded:text-foreground", className) })}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown" && !open) {
+          if (event.key === "ArrowDown") {
             event.preventDefault();
-            setOpen(true);
-          }
+            if (open) enabled()[0]?.focus();
+            else setOpen(true);
+          } else if (event.key === "Tab" && open) setOpen(false);
         }}
       >
         <MoreIcon />
@@ -79,7 +89,7 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
       <Popover open={open} onDismiss={() => close(false)} anchorRef={trigger} matchWidth={false} width={232} align="end" className="p-1">
         <div ref={list} id={id} role="menu" aria-label={label} className="flex flex-col" onKeyDown={onListKey}>
           {items.map((item) => (
-            <div key={item.label} className="contents">
+            <div key={item.id} className="contents">
               {item.separated || item.destructive ? <div role="separator" className="my-1 h-px bg-border" /> : null}
               <button
                 type="button"
@@ -92,7 +102,8 @@ export function ActionMenu({ label, items, className }: { label: string; items: 
                 )}
                 onClick={() => {
                   close();
-                  requestAnimationFrame(item.onSelect);
+                  // Дія — після закриття меню, щоб діалог підтвердження отримав фокус.
+                  window.setTimeout(item.onSelect, 0);
                 }}
               >
                 {item.icon}

@@ -8,7 +8,9 @@ import { saveVersion } from "../actions";
 
 /**
  * Смуга збереження редактора: видно, лише коли є «Unpublished changes» (AC-EDITOR-01). «Save» створює версію
- * (AC-EDITOR-03; відмова AC-EDITOR-04 — повідомленням над редактором). ⌘S / Ctrl S — те саме, що «Save».
+ * (AC-EDITOR-03; відмова AC-EDITOR-04 — повідомленням над редактором). ⌘S / Ctrl S — те саме, що «Save», але якщо у
+ * фокусі змінене поле редактора (InlineInput), перше натискання лише зберігає це поле: інакше версія взяла б стару
+ * назву, а введене зникло б після переходу. Наступне натискання зберігає версію.
  */
 export function PublishBar({ templateId, lines }: { templateId: string; lines: string[] }) {
   const form = useRef<HTMLFormElement>(null);
@@ -24,6 +26,12 @@ export function PublishBar({ templateId, lines }: { templateId: string; lines: s
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
+        const active = document.activeElement;
+        if (active instanceof HTMLInputElement && active.dataset.inlineCommit && active.form !== form.current && active.value.trim() && active.value !== active.defaultValue) {
+          if (active.dataset.inlineCommit === "blur") active.blur();
+          else active.form?.requestSubmit();
+          return;
+        }
         form.current?.requestSubmit();
       }
     };

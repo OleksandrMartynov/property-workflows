@@ -51,9 +51,10 @@ export function ItemActions({
   );
 
   const items: ActionMenuItem[] = [
-    { label: "Move up", icon: <ArrowUpIcon />, disabled: !canMoveUp, onSelect: () => up.current?.requestSubmit() },
-    { label: "Move down", icon: <ArrowDownIcon />, disabled: !canMoveDown, onSelect: () => down.current?.requestSubmit() },
+    { id: "up", label: "Move up", icon: <ArrowUpIcon />, disabled: !canMoveUp, onSelect: () => up.current?.requestSubmit() },
+    { id: "down", label: "Move down", icon: <ArrowDownIcon />, disabled: !canMoveDown, onSelect: () => down.current?.requestSubmit() },
     ...moveTargets.map((s, i) => ({
+      id: `move-${s.id}`,
       label: `Move to “${s.name}”`,
       icon: <MoveToIcon />,
       separated: i === 0,
@@ -62,7 +63,7 @@ export function ItemActions({
         moveTo.current?.requestSubmit();
       },
     })),
-    { label: `Remove ${noun}`, icon: <TrashIcon />, destructive: true, onSelect: () => setConfirming(true) },
+    { id: "remove", label: `Remove ${noun}`, icon: <TrashIcon />, destructive: true, onSelect: () => setConfirming(true) },
   ];
 
   return (
