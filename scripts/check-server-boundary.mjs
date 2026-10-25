@@ -3,6 +3,8 @@
 // 1) SUPABASE_SECRET_KEY / SERVICE_ROLE читається лише в src/lib/supabase/admin.ts і в scripts/ (поза src/).
 // 2) src/lib/supabase/admin.ts починається з `import "server-only"`.
 // 3) admin-клієнт (@/lib/supabase/admin) імпортують лише серверні файли: actions.ts, route.ts або файли з "use server".
+//    Імпорт — будь-який (`from`, `import "…"`, `import(…)`, `require(…)`); шлях (`@/…` чи відносний) розв'язуємо до файлу
+//    й порівнюємо з admin.ts, а не текст шляху: `./admin` у src/app/admin/ — не admin-клієнт.
 //    Файл з "use client" не може його імпортувати. Увага: кожен експорт файлу з "use server" — публічний POST-ендпойнт,
 //    його викликають напряму. Тому перевірка ролі (getClaims + роль з profiles) — ДО admin-клієнта. Скрипт її не бачить:
 //    це тест і рев'ю. Не додавайте "use server" у допоміжний модуль, щоб пройти перевірку.
@@ -12,7 +14,7 @@
 // Код виходу: 0 — порушень немає, 1 — є порушення, 2 — немає чого перевіряти (ні src/, ні app/, components/, lib/).
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, join, relative, sep } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 const args = process.argv.slice(2);
 const rootIdx = args.indexOf("--root");
@@ -54,6 +56,19 @@ function walk(dir, out = []) {
   return out;
 }
 
+// from "…", import "…", import("…"), require("…").
+const IMPORT = /(?:\bfrom\s*|\bimport\s+)["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)|\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
+const ADMIN_ABS = join(root, ADMIN_FILE).replace(/\.ts$/, "");
+/** Шлях імпорту веде саме до admin.ts? `@/` — тека src/ (або корінь без src/), відносний — від файлу, решта — пакети. */
+function isAdminImport(file, spec) {
+  let target;
+  if (spec.startsWith("@/")) target = join(root, hasSrc ? "src" : "", spec.slice(2));
+  else if (spec.startsWith(".")) target = resolve(dirname(file), spec);
+  else return false;
+  const bare = target.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "").replace(/[\\/]index$/, "");
+  return bare === ADMIN_ABS;
+}
+
 const problems = [];
 const report = (file, line, message) => problems.push(`${file.split(sep).join("/")}:${line}  ${message}`);
 
@@ -72,19 +87,23 @@ for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
     if (/SUPABASE_SECRET_KEY|SERVICE_ROLE_KEY/.test(line) && rel !== ADMIN_FILE) {
       report(rel, i + 1, `секретний ключ читається поза ${ADMIN_SHOWN}`);
     }
-    if (/from\s+["'](@\/lib\/supabase\/admin|(\.\.\/)+lib\/supabase\/admin|\.\/admin)["']/.test(line) && rel !== ADMIN_FILE) {
-      if (isClient) report(rel, i + 1, 'admin-клієнт імпортовано у файлі з "use client"');
-      else if (!isServerFile) {
-        report(
-          rel,
-          i + 1,
-          'admin-клієнт імпортовано не з actions.ts / route.ts / "use server" — викликайте його з Server Action чи Route ' +
-            'Handler після перевірки ролі. Не додавайте "use server" у допоміжний модуль: кожен його експорт стане ' +
-            "публічним ендпойнтом",
-        );
-      }
-    }
   });
+
+  for (const m of text.matchAll(IMPORT)) {
+    const spec = m[1] ?? m[2] ?? m[3];
+    if (rel === ADMIN_FILE || !isAdminImport(file, spec)) continue;
+    const line = text.slice(0, m.index).split(/\r?\n/).length;
+    if (isClient) report(rel, line, 'admin-клієнт імпортовано у файлі з "use client"');
+    else if (!isServerFile) {
+      report(
+        rel,
+        line,
+        'admin-клієнт імпортовано не з actions.ts / route.ts / "use server" — викликайте його з Server Action чи Route ' +
+          'Handler після перевірки ролі. Не додавайте "use server" у допоміжний модуль: кожен його експорт стане ' +
+          "публічним ендпойнтом",
+      );
+    }
+  }
 }
 
 const adminPath = join(root, ADMIN_FILE);

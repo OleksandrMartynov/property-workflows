@@ -17,5 +17,7 @@ describe("Сторінки без входу (proxy)", () => {
     expect(isPublicPath("/auth/confirm")).toBe(true);
     expect(isPublicPath("/login-as-admin")).toBe(false);
     expect(isPublicPath("/authorize")).toBe(false);
+    expect(isPublicPath("/auth")).toBe(false);
+    expect(isPublicPath("/auth/settings")).toBe(false);
   });
 });
