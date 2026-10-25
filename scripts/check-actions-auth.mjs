@@ -5,16 +5,21 @@
 //    async (…) => …`, `export default async function`, `export { local as name }`) — викликає getClaims() — прямо,
 //    через requireViewer() / requireAdmin() з src/lib/supabase/viewer.ts або через локальну функцію того самого файлу,
 //    яка сама їх викликає (наприклад, editorContext() редактора шаблону), — і ДО першого запису (insert, update,
-//    upsert, delete, rpc). Так само — вбудована дія: функція з "use server" на початку тіла (у page.tsx тощо);
+//    upsert, delete, rpc). Так само — вбудована дія: функція з "use server" на початку тіла (у page.tsx тощо),
+//    зокрема анонімна (`action={async (fd) => { "use server"; … }}`, `{ remove: async () => { "use server"; … } }`);
 //    виняток — дії, що сесію створюють чи завершують (вхід і вихід, src/app/login/actions.ts). Експорт, тіла якого
 //    правило не бачить (re-export з іншого модуля, не async-функція у файлі з "use server"), — теж порушення;
 // 2) жодного getSession() у коді src/ (коментарі не рахуються) — він не перевіряє підпис JWT;
 // 3) жодного middleware.ts — у Next.js 16 сесію оновлює src/proxy.ts.
+// Вміст рядкових літералів правило не читає як код («requireAdmin() не викликано» — не перевірка, "{" — не дужка);
+// символьне посилання в src/ — порушення: правило за ним не переходить.
 // Роль і дані захищають ще RLS і функції бази; правило ловить дію, яка забула перевірку (як-от нова дія редактора).
-// Використання: node scripts/check-actions-auth.mjs [--root <dir>]. Код виходу: 0 — OK, 1 — є порушення, 2 — немає src/.
+// Використання: node scripts/check-actions-auth.mjs [--root <dir>]. Код виходу: 0 — OK, 1 — є порушення, 2 — немає src/ чи
+// її не вдалося прочитати.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, sep } from "node:path";
+import { walkSources } from "./lib/source-files.mjs";
 
 const args = process.argv.slice(2);
 const rootIdx = args.indexOf("--root");
@@ -32,28 +37,27 @@ if (!existsSync(join(root, "src"))) {
 // Дії, які сесію створюють чи завершують: перевіряти ще нічого (signInWithPassword / signOut самі є перевіркою).
 const SESSION_ACTIONS = new Map([["src/app/login/actions.ts", new Set(["login", "signOut"])]]);
 const AUTH_CALL = /\b(getClaims|requireViewer|requireAdmin)\s*\(/;
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git"]);
-const EXT = /\.(tsx?|jsx?|mjs|cjs)$/;
-
-function walk(dir, out = []) {
-  if (!existsSync(dir)) return out;
-  for (const name of readdirSync(dir)) {
-    if (SKIP_DIRS.has(name)) continue;
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (EXT.test(name)) out.push(full);
-  }
-  return out;
+let sources;
+try {
+  sources = walkSources(join(root, "src"));
+} catch (error) {
+  console.error(`check-actions-auth: ${error.message} — перевірку не завершено.`);
+  process.exit(2);
 }
 
 /**
- * Код без коментарів (// і /* … *\/), з тими самими номерами рядків. Один прохід зліва направо: рядкові літерали
- * лишаються як є (`"a // b"`, `"public/*"`), коментарі стають пробілами — `/*` у рядковому коментарі нічого не затирає.
+ * Лише код, з тими самими номерами рядків. Один прохід зліва направо: коментарі (// і /* … *\/) стають пробілами,
+ * у рядкових літералах лишаються лапки, а вміст стає `_` — `/*` у коментарі нічого не затирає, `"a // b"` не обрізає
+ * рядок, а «requireAdmin()» чи "{" у тексті не стають викликом чи дужкою. Директиви "use server" / "use client" — як є.
  */
-const stripComments = (text) =>
+const codeOnly = (text) =>
   text.replace(
     /("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,
-    (m, str) => str ?? m.replace(/[^\n]/g, " "),
+    (m, str) => {
+      if (!str) return m.replace(/[^\n]/g, " ");
+      if (/^["']use (server|client)["']$/.test(str)) return str;
+      return str[0] + str.slice(1, -1).replace(/[^\n]/g, "_") + str.at(-1);
+    },
   );
 
 /** Індекс дужки, що закриває відкриту в `i` (`(`, `{` чи `[`). */
@@ -152,9 +156,13 @@ const problems = [];
 const posix = (p) => p.split(sep).join("/");
 const lineOf = (code, index) => code.slice(0, index).split("\n").length;
 
-for (const file of walk(join(root, "src"))) {
+for (const link of sources.links) {
+  problems.push(`${posix(relative(root, link))}:1  символьне посилання — правило за ним не переходить; покладіть файл у src/`);
+}
+
+for (const file of sources.files) {
   const rel = posix(relative(root, file));
-  const code = stripComments(readFileSync(file, "utf8"));
+  const code = codeOnly(readFileSync(file, "utf8"));
 
   // 2) getSession() для авторизації заборонено.
   for (const m of code.matchAll(/\bgetSession\s*\(/g)) {
@@ -169,10 +177,16 @@ for (const file of walk(join(root, "src"))) {
   // Вбудована дія: функція (і експортована теж), чиє тіло починається з "use server" (наприклад, у page.tsx чи
   // звичайному модулі src/lib), — теж публічний POST.
   const inlineActions = decls.filter((d) => d.fn && /^\{\s*["']use server["']/.test(d.body));
+  // Анонімна вбудована дія (стрілка в action={…}, метод об'єкта): блок, що починається з "use server", якого немає серед
+  // іменованих оголошень.
+  const namedBodies = new Set(inlineActions.map((d) => d.body));
+  const anonymousActions = [...code.matchAll(/\{\s*["']use server["']/g)]
+    .map((m) => ({ fn: true, async: true, body: code.slice(m.index, matchClose(code, m.index) + 1), index: m.index }))
+    .filter((d) => !namedBodies.has(d.body));
   const exportName = (d) => (d.isDefault && d.name === "default" ? "default" : d.name);
   // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
   const actionsModule = useServer || (rel.startsWith("src/app/") && basename(file) === "actions.ts");
-  if (!actionsModule && inlineActions.length === 0) continue;
+  if (!actionsModule && inlineActions.length === 0 && anonymousActions.length === 0) continue;
   const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
   // Локальні (не експортовані) функції файлу, які самі перевіряють вхід: виклик такої функції — теж перевірка.
   // Транзитивно: move() → editorContext() → requireAdmin() — теж перевірка.
@@ -188,7 +202,8 @@ for (const file of walk(join(root, "src"))) {
       }
     }
   }
-  const fail = (index, name, why) => problems.push(`${rel}:${lineOf(code, index)}  Server Action ${name}() ${why}`);
+  const fail = (index, name, why) =>
+    problems.push(`${rel}:${lineOf(code, index)}  Server Action ${name === null ? "без імені" : `${name}()`} ${why}`);
   const WRITE_FIRST = "пише до перевірки входу: getClaims() / requireViewer() / requireAdmin() — першим кроком, до будь-якого запису";
   const NO_AUTH = "не перевіряє вхід: getClaims() прямо або через requireViewer() / requireAdmin() — першим кроком, до будь-якого запису";
 
@@ -206,6 +221,7 @@ for (const file of walk(join(root, "src"))) {
   };
 
   for (const d of inlineActions) verify(d, exportName(d), d.index);
+  for (const d of anonymousActions) verify(d, null, d.index);
   if (!actionsModule) continue; // у звичайному модулі (сторінка) експорти — не дії
   for (const d of decls.filter((x) => x.exported && !inlineActions.includes(x))) verify(d, exportName(d), d.index);
 

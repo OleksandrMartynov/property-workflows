@@ -1,6 +1,6 @@
 // Архітектурне правило «кожна Server Action перевіряє вхід» (scripts/check-actions-auth.mjs, ADR 0006):
 // на тимчасових проєктах перевіряємо, що правило пропускає правильні дії й ловить порушення.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -301,6 +301,82 @@ export async function note(fd: FormData) { const sep = "a // b"; const { supabas
     });
     expect(out).toContain("OK");
     expect(code).toBe(0);
+  });
+
+  it("текст у рядку не є перевіркою: «requireAdmin() не викликано» до запису — порушення", () => {
+    const { code, out } = project({
+      "src/app/(app)/runs/actions.ts": `"use server";
+export async function remove(fd: FormData) {
+  const note = "requireAdmin() не викликано";
+  await createClient().from("runs").delete().eq("id", String(fd.get("id"))).eq("note", note);
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/app/(app)/runs/actions.ts:2  Server Action remove() не перевіряє вхід");
+  });
+
+  it("незбалансована дужка в рядку не зсуває тіло дії на наступну дію з перевіркою", () => {
+    const { code, out } = project({
+      "src/app/(app)/runs/actions.ts": `"use server";
+export async function remove(fd: FormData) {
+  const open = "{";
+  await createClient().from("runs").delete().eq("id", open + String(fd.get("id")));
+}
+export async function safe() {
+  const { supabase } = await requireAdmin();
+  return supabase.from("runs").delete();
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("Server Action remove() не перевіряє вхід");
+    expect(out).not.toContain("safe()");
+  });
+
+  it("ловить анонімну вбудовану дію: стрілку в action={…} і метод об'єкта з \"use server\"", () => {
+    const { code, out } = project({
+      "src/app/(app)/templates/page.tsx": `export default function Page() {
+  return (
+    <form
+      action={async (fd: FormData) => {
+        "use server";
+        await createClient().from("templates").delete().eq("id", String(fd.get("id")));
+      }}
+    />
+  );
+}
+const handlers = {
+  remove: async () => {
+    "use server";
+    await createClient().from("templates").delete();
+  },
+  safe: async () => {
+    "use server";
+    const { supabase } = await requireAdmin();
+    await supabase.from("templates").delete();
+  },
+};
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/app/(app)/templates/page.tsx:4  Server Action без імені не перевіряє вхід");
+    expect(out).toContain("src/app/(app)/templates/page.tsx:12  Server Action без імені не перевіряє вхід");
+    expect(out).not.toContain("page.tsx:16");
+  });
+
+  it("перевіряє й .mts / .cts; символьне посилання в src/ — порушення, а не пропуск", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "actions-auth-link-"));
+    dirs.push(root);
+    const outside = mkdtempSync(path.join(tmpdir(), "actions-auth-outside-"));
+    dirs.push(outside);
+    mkdirSync(path.join(root, "src", "lib"), { recursive: true });
+    writeFileSync(path.join(root, "src", "lib", "jobs.mts"), `"use server";\nexport async function purge() { await createClient().from("runs").delete(); }\n`);
+    symlinkSync(outside, path.join(root, "src", "linked"));
+    const { code, out } = runScript("check-actions-auth.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("src/lib/jobs.mts:2  Server Action purge() не перевіряє вхід");
+    expect(out).toContain("src/linked:1  символьне посилання");
   });
 
   it("без src/ чи без значення --root — код 2 і пояснення, а не «OK»", () => {

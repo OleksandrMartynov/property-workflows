@@ -1,6 +1,6 @@
 // Архітектурне правило «секретний ключ лише на сервері» (scripts/check-server-boundary.mjs, ADR 0006): шлях імпорту
 // admin-клієнта розв'язується до файлу, тож правило ловить відносні й динамічні імпорти та не плутає чужий `./admin`.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -99,5 +99,49 @@ import { createAdminClient } from "@/lib/supabase/admin";
     expect(code).toBe(1);
     expect(out).toContain("src/lib/env.ts:1  секретний ключ читається поза src/lib/supabase/admin.ts");
     expect(out).toContain("src/lib/env.ts:2  NEXT_PUBLIC_ зі секретом");
+  });
+
+  it("перевіряє .mts і .cts, символьне посилання — порушення (за ним не переходить)", () => {
+    const outside = mkdtempSync(path.join(tmpdir(), "server-boundary-outside-"));
+    dirs.push(outside);
+    writeFileSync(path.join(outside, "leak.ts"), "export const key = process.env.SUPABASE_SECRET_KEY;\n");
+    const root = mkdtempSync(path.join(tmpdir(), "server-boundary-link-"));
+    dirs.push(root);
+    mkdirSync(path.join(root, "src", "lib", "supabase"), { recursive: true });
+    writeFileSync(path.join(root, "src", "lib", "supabase", "admin.ts"), ADMIN);
+    writeFileSync(path.join(root, "src", "lib", "env.mts"), "export const key = process.env.SUPABASE_SECRET_KEY;\n");
+    writeFileSync(path.join(root, "src", "lib", "env.cts"), "export const key = process.env.SUPABASE_SECRET_KEY;\n");
+    symlinkSync(outside, path.join(root, "src", "linked"));
+    const { code, out } = runScript("check-server-boundary.mjs", root);
+    expect(code).toBe(1);
+    expect(out).toContain("src/lib/env.mts:1  секретний ключ читається поза");
+    expect(out).toContain("src/lib/env.cts:1  секретний ключ читається поза");
+    expect(out).toContain("src/linked:1  символьне посилання");
+    expect(out).not.toContain("leak.ts");
+  });
+
+  it.skipIf(process.getuid?.() === 0)("теку в src/ не вдалося прочитати — код 2 і пояснення, а не «OK»", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "server-boundary-locked-"));
+    dirs.push(root);
+    mkdirSync(path.join(root, "src", "lib", "supabase"), { recursive: true });
+    writeFileSync(path.join(root, "src", "lib", "supabase", "admin.ts"), ADMIN);
+    const locked = path.join(root, "src", "locked");
+    mkdirSync(locked);
+    chmodSync(locked, 0o000);
+    try {
+      const { code, out } = runScript("check-server-boundary.mjs", root);
+      expect(code).toBe(2);
+      expect(out).toContain("не вдалося прочитати теку");
+      expect(out).not.toContain("OK");
+    } finally {
+      chmodSync(locked, 0o755);
+    }
+  });
+
+  it("--root без значення — код 2 і пояснення, а не TypeError", () => {
+    const result = spawnSync(process.execPath, [path.join(repoRoot, "scripts", "check-server-boundary.mjs"), "--root"], { encoding: "utf8" });
+    expect(result.status).toBe(2);
+    expect(`${result.stdout}${result.stderr}`).toContain("після --root вкажіть теку проєкту");
+    expect(result.stderr).not.toContain("TypeError");
   });
 });

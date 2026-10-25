@@ -11,14 +11,20 @@
 // 4) Жодної змінної NEXT_PUBLIC_*SECRET* / NEXT_PUBLIC_*SERVICE_ROLE* — усе з NEXT_PUBLIC_ потрапляє в браузер.
 // Шукає в src/. Якщо теки src/ немає — у app/, components/ і lib/ кореня (admin-клієнт — lib/supabase/admin.ts).
 // Використання: node scripts/check-server-boundary.mjs [--root <dir>]
-// Код виходу: 0 — порушень немає, 1 — є порушення, 2 — немає чого перевіряти (ні src/, ні app/, components/, lib/).
+// Код виходу: 0 — порушень немає, 1 — є порушення (зокрема символьне посилання: за ним не переходимо), 2 — помилка
+// виклику: --root без значення, немає чого перевіряти (ні src/, ні app/, components/, lib/) чи теку не вдалося прочитати.
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { SOURCE_EXT, walkSources } from "./lib/source-files.mjs";
 
 const args = process.argv.slice(2);
 const rootIdx = args.indexOf("--root");
 const root = rootIdx >= 0 ? args[rootIdx + 1] : process.cwd();
+if (!root) {
+  console.error("check-server-boundary: після --root вкажіть теку проєкту.");
+  process.exit(2);
+}
 
 const isDir = (p) => {
   try {
@@ -37,23 +43,12 @@ if (BASES.length === 0) {
 }
 const ADMIN_FILE = join(hasSrc ? "src" : "", "lib", "supabase", "admin.ts");
 const ADMIN_SHOWN = ADMIN_FILE.split(sep).join("/");
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git"]);
-const EXT = /\.(tsx?|jsx?|mjs|cjs)$/;
-
-function walk(dir, out = []) {
-  let entries;
-  try {
-    entries = readdirSync(dir);
-  } catch {
-    return out;
-  }
-  for (const name of entries) {
-    if (SKIP_DIRS.has(name)) continue;
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (EXT.test(name)) out.push(full);
-  }
-  return out;
+const sources = { files: [], links: [] };
+try {
+  for (const base of BASES) walkSources(join(root, base), sources);
+} catch (error) {
+  console.error(`check-server-boundary: ${error.message} — перевірку не завершено.`);
+  process.exit(2);
 }
 
 // from "…", import "…", import("…"), require("…").
@@ -65,14 +60,16 @@ function isAdminImport(file, spec) {
   if (spec.startsWith("@/")) target = resolve(root, hasSrc ? "src" : "", spec.slice(2));
   else if (spec.startsWith(".")) target = resolve(dirname(file), spec);
   else return false;
-  const bare = target.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "").replace(/[\\/]index$/, "");
+  const bare = target.replace(SOURCE_EXT, "").replace(/[\\/]index$/, "");
   return bare === ADMIN_ABS;
 }
 
 const problems = [];
 const report = (file, line, message) => problems.push(`${file.split(sep).join("/")}:${line}  ${message}`);
 
-for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
+for (const link of sources.links) report(relative(root, link), 1, "символьне посилання — перевірка за ним не переходить; покладіть файл у теку");
+
+for (const file of sources.files) {
   const rel = relative(root, file);
   const text = readFileSync(file, "utf8");
   const lines = text.split(/\r?\n/);

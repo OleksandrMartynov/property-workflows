@@ -21,6 +21,12 @@ begin
   if p_direction not in ('up', 'down') or p_kind not in ('section', 'task') then
     raise exception 'DB_ERROR';
   end if;
+  -- Спершу рядок шаблону, як у решти функцій редактора: однаковий порядок блокувань (шаблон → секція / задача)
+  -- не дає deadlock із паралельним додаванням чи перенесенням задачі (тригер незбережених змін оновлює той самий шаблон).
+  perform 1 from public.templates as t where t.id = p_template_id for update;
+  if not found then
+    raise exception 'DB_ERROR';
+  end if;
 
   if p_kind = 'section' then
     -- for update: два переміщення в одному шаблоні йдуть по черзі й бачать позиції одне одного.
