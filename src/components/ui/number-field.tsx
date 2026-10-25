@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useFieldAria } from "./listbox-parts";
 import { clampNumber, decimalsOf, parseDecimal, roundTo, toPlain } from "@/lib/numbers";
 import { MinusGlyph, PlusGlyph, prefersReducedMotion, useControllable } from "./dt-shared";
 import { AlertGlyph, fieldClass, fieldHeight } from "./input";
@@ -51,7 +52,7 @@ interface Money {
 }
 
 function NumberInput({
-  id,
+  id: idProp,
   name,
   value,
   defaultValue = null,
@@ -72,8 +73,10 @@ function NumberInput({
   required,
   className,
   money,
-  ...aria
+  ...ariaProps
 }: NumberFieldProps & { money?: Money }) {
+  // Усередині Field — id, aria-describedby і aria-invalid з контексту (як Input і Combobox); явні пропси сильніші.
+  const { id, aria } = useFieldAria(idProp, ariaProps);
   const dec = decimals ?? (money ? 2 : decimalsOf(step));
   const lo = min ?? -Infinity;
   const hi = max ?? Infinity;
@@ -284,7 +287,7 @@ function NumberInput({
           ×{rate}
         </span>
       ) : null}
-      {name ? <input type="hidden" name={name} value={toPlain(current, dec)} /> : null}
+      {name ? <input type="hidden" name={name} value={toPlain(current, dec)} disabled={disabled} /> : null}
     </div>
   );
 }

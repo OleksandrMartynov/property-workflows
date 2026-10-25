@@ -94,7 +94,11 @@ export function LaunchForm({
   const onKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
-      event.currentTarget.requestSubmit();
+      // requestSubmit() без submitter не перевіряє, чи вимкнена кнопка: поки дія виконується (кнопка disabled),
+      // повторний ⌘/Ctrl + Enter не надсилає форму вдруге — інакше було б два запуски.
+      const submit = event.currentTarget.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (!submit || submit.disabled) return;
+      event.currentTarget.requestSubmit(submit);
     }
   };
 

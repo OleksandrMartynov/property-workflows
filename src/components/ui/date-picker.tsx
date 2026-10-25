@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useFieldAria } from "./listbox-parts";
 import {
   addDays,
   addMonths,
@@ -383,7 +384,7 @@ export interface DatePickerProps extends FieldAria {
  * прихований input. Помилку показує обгортка `Field` (`aria-invalid` лише фарбує поле й додає значок).
  */
 export function DatePicker({
-  id,
+  id: idProp,
   name,
   value,
   defaultValue = "",
@@ -400,8 +401,10 @@ export function DatePicker({
   readOnly,
   required,
   className,
-  ...aria
+  ...ariaProps
 }: DatePickerProps) {
+  // Усередині Field — id, aria-describedby і aria-invalid з контексту (як Input і Combobox); явні пропси сильніші.
+  const { id, aria } = useFieldAria(idProp, ariaProps);
   const reactId = useId();
   const popId = `${reactId}-cal`;
   const today = useToday(todayProp);
@@ -536,7 +539,7 @@ export function DatePicker({
           ))}
         </div>
       ) : null}
-      {name ? <input type="hidden" name={name} value={current} /> : null}
+      {name ? <input type="hidden" name={name} value={current} disabled={disabled} /> : null}
     </div>
   );
 }
@@ -567,7 +570,7 @@ const EMPTY_RANGE: DateRange = { start: "", end: "" };
 
 /** Діапазон дат: два поля тексту й календар на два місяці (на вузьких екранах — один) із підсвіткою ходу вибору. */
 export function DateRangePicker({
-  id,
+  id: idProp,
   startName,
   endName,
   value,
@@ -586,8 +589,10 @@ export function DateRangePicker({
   readOnly,
   required,
   className,
-  ...aria
+  ...ariaProps
 }: DateRangePickerProps) {
+  // Усередині Field — id, aria-describedby і aria-invalid з контексту (як Input і Combobox); явні пропси сильніші.
+  const { id, aria } = useFieldAria(idProp, ariaProps);
   const reactId = useId();
   const popId = `${reactId}-cal`;
   const today = useToday(todayProp);
@@ -749,8 +754,8 @@ export function DateRangePicker({
           </div>
         </Popover>
       </div>
-      {startName ? <input type="hidden" name={startName} value={range.start} /> : null}
-      {endName ? <input type="hidden" name={endName} value={range.end} /> : null}
+      {startName ? <input type="hidden" name={startName} value={range.start} disabled={disabled} /> : null}
+      {endName ? <input type="hidden" name={endName} value={range.end} disabled={disabled} /> : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, hasSizeClass } from "@/lib/utils";
 
 /** Знак Echo Roof: дах, що луною повторює себе всередині, — «один процес, який щоразу запускається знову». Колір — currentColor. */
 export function LogoMark({ className, title }: { className?: string; title?: string }) {
@@ -6,7 +6,7 @@ export function LogoMark({ className, title }: { className?: string; title?: str
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className={cn("size-5 shrink-0", className)}
+      className={cn("shrink-0", !hasSizeClass(className) && "size-5", className)}
       role={title ? "img" : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}

@@ -199,7 +199,7 @@ export function Select({
   return (
     <div className="relative">
       {/* Браузер не перевіряє hidden-поля: обов'язковість — aria-required на видимому контролі, перевірка — на сервері. */}
-      <input type="hidden" name={name} value={selected} />
+      <input type="hidden" name={name} value={selected} disabled={disabled} />
       <button
         ref={button}
         type="button"

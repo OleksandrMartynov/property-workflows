@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type RefObject } from "react";
 import { cn } from "@/lib/utils";
+import { useFieldAria } from "./listbox-parts";
 import { Button } from "./button";
 import { ChevronDownGlyph, ClockGlyph, focusSoon, IconButton, TimezoneTag, trapTab, useControllable } from "./dt-shared";
 import { AlertGlyph, fieldHeight } from "./input";
@@ -159,7 +160,7 @@ export interface TimeFieldProps {
  * Час — Київ; зсув пояса показує лише позначка, а не поле.
  */
 export function TimeField({
-  id,
+  id: idProp,
   name,
   value,
   defaultValue = "",
@@ -171,8 +172,10 @@ export function TimeField({
   disabled,
   required,
   className,
-  ...aria
+  ...ariaProps
 }: TimeFieldProps) {
+  // Усередині Field — id, aria-describedby і aria-invalid з контексту (як Input і Combobox); явні пропси сильніші.
+  const { id, aria } = useFieldAria(idProp, ariaProps);
   const reactId = useId();
   const popId = `${reactId}-time`;
   const [current, setCurrent] = useControllable<string>(value, defaultValue, onValueChange);

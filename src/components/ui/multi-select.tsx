@@ -259,7 +259,7 @@ export function MultiSelect({
   return (
     <div className="relative">
       {selected.map((v) => (
-        <input key={v} type="hidden" name={name} value={v} />
+        <input key={v} type="hidden" name={name} value={v} disabled={disabled} />
       ))}
       <div
         ref={shell}

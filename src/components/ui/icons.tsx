@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn, hasSizeClass } from "@/lib/utils";
 
 // Лінійні іконки 16×16, штрих 1.5, колір — currentColor. Лише декор: `aria-hidden`, підпис завжди поруч.
 function Icon({ className, children }: { className?: string; children: ReactNode }) {
@@ -12,7 +12,7 @@ function Icon({ className, children }: { className?: string; children: ReactNode
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className={cn("size-4 shrink-0", className)}
+      className={cn("shrink-0", !hasSizeClass(className) && "size-4", className)}
     >
       {children}
     </svg>
