@@ -67,5 +67,5 @@
   `tests/db/run-launch-db.test.ts`.
 - Мутаційна перевірка в PR задачі 1: послаблення політики `template_versions_select` чи перевірки ролі в
   `save_template_version` червонить саме ці тести.
-- Архітектурне правило в `.github/workflows/architecture.yml` (задача 2): кожна Server Action редактора викликає
+- Архітектурне правило в `.github/workflows/server-checks.yml` (задача 2): кожна Server Action редактора викликає
   `getClaims()` через `requireViewer()` / `requireAdmin()` до запису — перевірка ролі не лише в базі, а й у дії.
