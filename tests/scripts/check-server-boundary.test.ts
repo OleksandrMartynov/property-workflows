@@ -111,7 +111,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
     writeFileSync(path.join(root, "src", "lib", "supabase", "admin.ts"), ADMIN);
     writeFileSync(path.join(root, "src", "lib", "env.mts"), "export const key = process.env.SUPABASE_SECRET_KEY;\n");
     writeFileSync(path.join(root, "src", "lib", "env.cts"), "export const key = process.env.SUPABASE_SECRET_KEY;\n");
-    symlinkSync(outside, path.join(root, "src", "linked"));
+    symlinkSync(outside, path.join(root, "src", "linked"), "junction"); // "junction": на Windows тека без прав адміністратора
     const { code, out } = runScript("check-server-boundary.mjs", root);
     expect(code).toBe(1);
     expect(out).toContain("src/lib/env.mts:1  секретний ключ читається поза");
@@ -120,7 +120,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
     expect(out).not.toContain("leak.ts");
   });
 
-  it.skipIf(process.getuid?.() === 0)("теку в src/ не вдалося прочитати — код 2 і пояснення, а не «OK»", () => {
+  // root читає будь-що, а на Windows chmod не знімає права читання — тест там не має сенсу.
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)("теку в src/ не вдалося прочитати — код 2 і пояснення, а не «OK»", () => {
     const root = mkdtempSync(path.join(tmpdir(), "server-boundary-locked-"));
     dirs.push(root);
     mkdirSync(path.join(root, "src", "lib", "supabase"), { recursive: true });
