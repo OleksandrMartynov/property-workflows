@@ -181,7 +181,8 @@ export function Combobox({
 
   return (
     <div className="relative">
-      <input type="hidden" name={name} value={selected} required={required} />
+      {/* Браузер не перевіряє hidden-поля: обов'язковість — aria-required на видимому контролі, перевірка — на сервері. */}
+      <input type="hidden" name={name} value={selected} />
       <div
         ref={shell}
         data-open={open}
@@ -208,6 +209,7 @@ export function Combobox({
           id={id}
           role="combobox"
           aria-autocomplete="list"
+          aria-required={required || undefined}
           aria-expanded={open}
           aria-controls={listId}
           aria-activedescendant={open && visible.length && !loading ? optionId(active) : undefined}

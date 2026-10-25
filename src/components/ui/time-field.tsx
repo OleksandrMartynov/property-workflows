@@ -29,13 +29,14 @@ interface SegmentProps {
   inputRef: RefObject<HTMLInputElement | null>;
   id?: string;
   disabled?: boolean;
+  required?: boolean;
   invalid: boolean;
   describedBy?: string;
   onOpen?: () => void;
 }
 
 /** Один сегмент часу: spinbutton на текстовому полі (не type=number: без рідних стрілок і з власною клавіатурою). */
-function Segment({ which, parts, update, jump, inputRef, id, disabled, invalid, describedBy, onOpen }: SegmentProps) {
+function Segment({ which, parts, update, jump, inputRef, id, disabled, required, invalid, describedBy, onOpen }: SegmentProps) {
   const buffer = useRef("");
   const max = which === "h" ? 23 : 59;
   const val = parts[which];
@@ -107,6 +108,7 @@ function Segment({ which, parts, update, jump, inputRef, id, disabled, invalid, 
       aria-valuemax={max}
       aria-valuenow={val ?? undefined}
       aria-valuetext={val === null ? "Empty" : `${pad2(val)} ${which === "h" ? "hours" : "minutes"}`}
+      aria-required={required || undefined}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
       onKeyDown={onKeyDown}
@@ -167,6 +169,7 @@ export function TimeField({
   showTimezone,
   size = "md",
   disabled,
+  required,
   className,
   ...aria
 }: TimeFieldProps) {
@@ -300,11 +303,11 @@ export function TimeField({
         <span className="dt-time__lead" aria-hidden="true">
           <ClockGlyph />
         </span>
-        <Segment which="h" id={id} parts={parts} update={update} jump={jump} inputRef={hourRef} disabled={disabled} invalid={invalid} describedBy={aria["aria-describedby"]} onOpen={popover ? openPopover : undefined} />
+        <Segment which="h" id={id} parts={parts} update={update} jump={jump} inputRef={hourRef} disabled={disabled} required={required} invalid={invalid} describedBy={aria["aria-describedby"]} onOpen={popover ? openPopover : undefined} />
         <span className="dt-time__colon" aria-hidden="true">
           :
         </span>
-        <Segment which="m" parts={parts} update={update} jump={jump} inputRef={minuteRef} disabled={disabled} invalid={invalid} describedBy={aria["aria-describedby"]} onOpen={popover ? openPopover : undefined} />
+        <Segment which="m" parts={parts} update={update} jump={jump} inputRef={minuteRef} disabled={disabled} required={required} invalid={invalid} describedBy={aria["aria-describedby"]} onOpen={popover ? openPopover : undefined} />
         <span className="dt-time__spacer" />
         {invalid ? <AlertGlyph /> : null}
         {popover ? (
@@ -369,7 +372,8 @@ export function TimeField({
           </Popover>
         ) : null}
       </div>
-      {name ? <input type="hidden" name={name} value={current} /> : null}
+      {/* Вимкнене поле не надсилає значення у FormData, як Segmented і Slider; обов'язковість — aria-required на сегментах. */}
+      {name ? <input type="hidden" name={name} value={current} disabled={disabled} /> : null}
     </div>
   );
 }
