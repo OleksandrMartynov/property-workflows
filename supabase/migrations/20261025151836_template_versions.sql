@@ -62,7 +62,8 @@ alter table public.template_version_tasks enable row level security;
 revoke all on table public.template_versions, public.template_version_tasks from anon, authenticated;
 -- Клієнт лише читає. Insert — функція збереження; update і delete не дає ніхто: збережена версія ніколи не змінюється.
 grant select on table public.template_versions, public.template_version_tasks to authenticated;
-grant select, insert, update, delete on table public.template_versions, public.template_version_tasks to service_role;
+-- service_role (обслуговування) теж лише читає й додає: прямих update і delete версій немає ні в кого (ADR 0006).
+grant select, insert on table public.template_versions, public.template_version_tasks to service_role;
 
 -- admin бачить усі версії (список версій, AC-EDITOR-05); manager — лише поточну версію шаблону (AC-EDITOR-02, AC-EDITOR-07).
 create policy template_versions_select on public.template_versions
@@ -149,17 +150,29 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_template_id uuid;
+  v_old_template_id uuid;
+  v_new_template_id uuid;
 begin
+  -- Перенесення секції чи задачі в інший шаблон змінює обидва: позначаємо і старий (OLD), і новий (NEW).
   if tg_table_name = 'template_sections' then
-    v_template_id := coalesce(new.template_id, old.template_id);
+    if tg_op <> 'INSERT' then
+      v_old_template_id := old.template_id;
+    end if;
+    if tg_op <> 'DELETE' then
+      v_new_template_id := new.template_id;
+    end if;
   else
-    select s.template_id into v_template_id
-    from public.template_sections as s
-    where s.id = coalesce(new.section_id, old.section_id);
+    if tg_op <> 'INSERT' then
+      select s.template_id into v_old_template_id from public.template_sections as s where s.id = old.section_id;
+    end if;
+    if tg_op <> 'DELETE' then
+      select s.template_id into v_new_template_id from public.template_sections as s where s.id = new.section_id;
+    end if;
   end if;
+  -- Без умови «not has_unpublished_changes»: update бере блокування рядка шаблону й чекає save_template_version
+  -- (for update), тож збереження, що йде паралельно зі зміною, не скине позначку для ще не збереженої зміни.
   update public.templates set has_unpublished_changes = true
-  where id = v_template_id and not has_unpublished_changes;
+  where id in (v_old_template_id, v_new_template_id);
   return null;
 end;
 $$;

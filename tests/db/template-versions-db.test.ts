@@ -118,6 +118,30 @@ describe("База: незбережені зміни шаблону", () => {
     const [v1] = await t.asService<{ name: string }>("select name from public.template_versions where template_id = $1", [tpl.id]);
     expect(v1.name).toBe("Tenant move-in (rename)");
   });
+
+  it("AC-EDITOR-01: секцію перенесено в інший шаблон — «Unpublished changes» в обох шаблонах", async () => {
+    const from = await tenantMoveInV1("Tenant move-in (section moved out)");
+    const to = await tenantMoveInV1("Tenant move-in (section moved in)");
+    await t.asUser(ADMIN, "update public.template_sections set template_id = $1, position = 3 where id = $2", [to.id, from.sections[1]]);
+    expect((await state(from.id)).has_unpublished_changes).toBe(true);
+    expect((await state(to.id)).has_unpublished_changes).toBe(true);
+  });
+
+  it("AC-EDITOR-01: задачу перенесено в секцію іншого шаблону — «Unpublished changes» в обох шаблонах", async () => {
+    const from = await tenantMoveInV1("Tenant move-in (task moved out)");
+    const to = await tenantMoveInV1("Tenant move-in (task moved in)");
+    await t.asUser(ADMIN, "update public.template_tasks set section_id = $1, position = 4 where id = $2", [to.sections[0], from.tasks[2]]);
+    expect((await state(from.id)).has_unpublished_changes).toBe(true);
+    expect((await state(to.id)).has_unpublished_changes).toBe(true);
+  });
+
+  it("AC-EDITOR-01: позначку ставить безумовний update — він чекає блокування збереження (for update) і не губиться", async () => {
+    const [{ def }] = await t.db.query<{ def: string }>(
+      "select pg_get_functiondef('private.mark_template_unpublished()'::regprocedure) as def",
+    ).then((r) => r.rows);
+    expect(def).toContain("where id in (v_old_template_id, v_new_template_id)");
+    expect(def).not.toMatch(/and\s+not\s+has_unpublished_changes/);
+  });
 });
 
 describe("База: менеджер бачить лише поточну версію", () => {
@@ -176,6 +200,17 @@ describe("База: збереження версії", () => {
     ).rejects.toThrow("permission denied");
     await expect(
       t.asUser(ADMIN, "delete from public.template_version_tasks where version_id in (select id from public.template_versions where template_id = $1)", [tpl.id]),
+    ).rejects.toThrow("permission denied");
+    expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
+  });
+
+  it("AC-EDITOR-03: прямих update і delete версій немає й у service_role — лише select і insert", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (immutable for service)");
+    await expect(t.asService("update public.template_versions set name = 'x' where template_id = $1", [tpl.id])).rejects.toThrow(
+      "permission denied",
+    );
+    await expect(
+      t.asService("delete from public.template_version_tasks where version_id in (select id from public.template_versions where template_id = $1)", [tpl.id]),
     ).rejects.toThrow("permission denied");
     expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
   });
