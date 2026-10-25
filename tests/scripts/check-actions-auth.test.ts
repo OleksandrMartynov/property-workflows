@@ -59,6 +59,30 @@ export async function removeTask(formData: FormData) {
     expect(out).not.toContain("renameTask()");
   });
 
+  it("приймає перевірку через локальний хелпер файлу, який сам викликає requireAdmin(), і не приймає хелпер без перевірки", () => {
+    const { code, out } = project({
+      "src/app/(app)/templates/[id]/edit/actions.ts": `"use server";
+async function editorContext(formData: FormData) {
+  const { supabase } = await requireAdmin("/templates");
+  return { supabase, id: String(formData.get("template_id")) };
+}
+async function sectionsOf(supabase: unknown, id: string) {
+  return [supabase, id];
+}
+export async function addSection(formData: FormData) {
+  const { supabase, id } = await editorContext(formData);
+  await supabase.from("template_sections").insert({ template_id: id });
+}
+export async function sneaky(formData: FormData) {
+  await sectionsOf(null, String(formData.get("id")));
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("sneaky() не перевіряє вхід");
+    expect(out).not.toContain("addSection()");
+  });
+
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {
     const { code, out } = project({
       "src/lib/supabase/viewer.ts": `// getSession() для авторизації не використовуємо

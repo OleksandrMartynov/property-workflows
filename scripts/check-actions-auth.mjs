@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Архітектурне правило «кожна Server Action перевіряє, хто її викликає» (ADR 0006, AGENTS.md «Межі»).
 // Server Action — публічний POST-ендпойнт: її викликають напряму, оминаючи сторінку й сховану кнопку. Тому:
-// 1) кожна експортована async-функція у src/app/**/actions.ts і у файлах з "use server" викликає getClaims() — прямо
-//    або через requireViewer() / requireAdmin() з src/lib/supabase/viewer.ts — у власному тілі;
+// 1) кожна експортована async-функція у src/app/**/actions.ts і у файлах з "use server" викликає getClaims() — прямо,
+//    через requireViewer() / requireAdmin() з src/lib/supabase/viewer.ts або через локальну функцію того самого файлу,
+//    яка сама їх викликає (наприклад, editorContext() редактора шаблону);
 //    виняток — дії, що сесію створюють чи завершують (вхід і вихід, src/app/login/actions.ts);
 // 2) жодного getSession() у коді src/ (коментарі не рахуються) — він не перевіряє підпис JWT;
 // 3) жодного middleware.ts — у Next.js 16 сесію оновлює src/proxy.ts.
@@ -65,10 +66,16 @@ for (const file of walk(join(root, "src"))) {
   const isActions = basename(file) === "actions.ts" || /^\s*["']use server["']/m.test(code);
   if (!rel.startsWith("src/app/") || !isActions) continue;
   const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
+  // Локальні (не експортовані) функції файлу, які самі перевіряють вхід: виклик такої функції — теж перевірка.
+  const guards = [...code.matchAll(/(?<!export\s+)(?:async\s+)?function\s+([A-Za-z0-9_]+)\s*\(/g)]
+    .filter((m) => !/export\s+$/.test(code.slice(Math.max(0, m.index - 20), m.index)) && AUTH_CALL.test(bodyFrom(code, m.index)))
+    .map((m) => m[1]);
+  const guarded = guards.length ? new RegExp(`\\b(${guards.join("|")})\\s*\\(`) : null;
   for (const m of code.matchAll(/export\s+async\s+function\s+([A-Za-z0-9_]+)\s*\(/g)) {
     const name = m[1];
     if (allowed.has(name)) continue;
-    if (!AUTH_CALL.test(bodyFrom(code, m.index))) {
+    const body = bodyFrom(code, m.index);
+    if (!AUTH_CALL.test(body) && !(guarded && guarded.test(body))) {
       problems.push(
         `${rel}:${lineOf(code, m.index)}  Server Action ${name}() не перевіряє вхід: getClaims() прямо або через ` +
           "requireViewer() / requireAdmin() — першим кроком, до будь-якого запису",
