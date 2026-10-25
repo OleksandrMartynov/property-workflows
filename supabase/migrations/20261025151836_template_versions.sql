@@ -21,6 +21,11 @@ comment on column public.templates.has_unpublished_changes is
 revoke insert, update on table public.templates from authenticated;
 grant insert (name) on table public.templates to authenticated;
 grant update (name) on table public.templates to authenticated;
+-- templates.name — назва з незбережених змін (назва — частина версії, робоче припущення QC), а RLS обмежує рядки,
+-- не колонки: без column grant менеджер прочитав би незбережену назву (рев'ю CodeRabbit у PR #22). Клієнт читає лише
+-- id, номер поточної версії й дату; опубліковану назву — з template_versions, незбережену — list_template_drafts().
+revoke select on table public.templates from authenticated;
+grant select (id, current_version, created_at) on table public.templates to authenticated;
 
 -- ── Версії: незмінний знімок ───────────────────────────────────────────────────
 create table public.template_versions (
@@ -100,6 +105,40 @@ alter policy template_tasks_select_app_users on public.template_tasks
 alter policy templates_select_app_users on public.templates rename to templates_select_by_role;
 alter policy template_sections_select_app_users on public.template_sections rename to template_sections_select_admin;
 alter policy template_tasks_select_app_users on public.template_tasks rename to template_tasks_select_admin;
+
+-- ── Незбережені зміни для адміністратора: назва й позначка (AC-EDITOR-01, AC-EDITOR-04) ──
+create or replace function private.list_template_drafts()
+returns table (id uuid, name text, current_version integer, has_unpublished_changes boolean)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  -- Матриця прав «See templates»: незбережені зміни бачить лише admin.
+  if (select auth.uid()) is null or (select private.current_app_role()) is distinct from 'admin' then
+    raise exception 'NOT_ALLOWED';
+  end if;
+  return query
+    select t.id, t.name, t.current_version, t.has_unpublished_changes
+    from public.templates as t
+    order by t.name;
+end;
+$$;
+revoke execute on function private.list_template_drafts() from public, anon;
+grant execute on function private.list_template_drafts() to authenticated;
+
+create or replace function public.list_template_drafts()
+returns table (id uuid, name text, current_version integer, has_unpublished_changes boolean)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select d.id, d.name, d.current_version, d.has_unpublished_changes from private.list_template_drafts() as d;
+$$;
+revoke execute on function public.list_template_drafts() from public, anon;
+grant execute on function public.list_template_drafts() to authenticated;
 
 -- ── Позначка «Unpublished changes» (AC-EDITOR-01) ─────────────────────────────────
 -- security definer: адміністратор не має grant update на has_unpublished_changes (column grant вище).

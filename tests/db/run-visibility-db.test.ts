@@ -140,6 +140,8 @@ describe("База: список запусків після відповіде�
     await publish(t, ADMIN, repair);
 
     const moveIn = await launch(t, MANAGER_A, "Apartment 12");
+    // «Пізніше» з AC: інакше обидва запуски можуть отримати той самий created_at, і порядок вирішив би випадковий id.
+    await t.db.query("select pg_sleep(0.02)");
     const repairRun = await launch(t, MANAGER_A, "Apartment 12", {}, repair);
     const rows = (await listedRuns(MANAGER_A)).filter((r) => r.id === moveIn || r.id === repairRun);
     expect(rows.map((r) => [r.case_name, r.template_name])).toEqual([

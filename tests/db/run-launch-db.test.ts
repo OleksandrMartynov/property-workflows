@@ -238,7 +238,8 @@ describe("База: менеджер запуску й виконавці", () =
 
 describe("База: доступ до шаблонів і запусків", () => {
   it("AC-RUN-04: менеджер бачить шаблони; список виконавців — лише id і email менеджерів та адміністраторів", async () => {
-    const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.templates order by name");
+    // Опублікована назва — з поточної версії: templates.name — незбережені зміни, менеджер його не читає (ADR 0006).
+    const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.template_versions order by name");
     expect(templates.map((x) => x.name)).toEqual(["Apartment repair", "Tenant move-in"]);
     const assignable = await t.asUser<{ email: string }>(MANAGER_A, "select * from public.list_assignable_users()");
     expect(assignable.map((x) => x.email)).toEqual(

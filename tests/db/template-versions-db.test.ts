@@ -105,7 +105,7 @@ describe("База: незбережені зміни шаблону", () => {
     expect(n).toBe(6);
     const [flag] = await t.asUser<{ has_unpublished_changes: boolean; current_version: number }>(
       ADMIN,
-      "select has_unpublished_changes, current_version from public.templates where id = $1",
+      "select has_unpublished_changes, current_version from public.list_template_drafts() where id = $1",
       [tpl.id],
     );
     expect(flag).toEqual({ has_unpublished_changes: true, current_version: 1 });
@@ -121,6 +121,22 @@ describe("База: незбережені зміни шаблону", () => {
 });
 
 describe("База: менеджер бачить лише поточну версію", () => {
+  it("AC-EDITOR-02: незбережену назву шаблону менеджер не читає — лише опубліковану назву поточної версії", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (published name)");
+    await t.asUser(ADMIN, "update public.templates set name = 'Tenant move-in (renamed draft)' where id = $1", [tpl.id]);
+    await expect(t.asUser(MANAGER_B, "select name from public.templates where id = $1", [tpl.id])).rejects.toThrow("permission denied");
+    await expect(t.asUser(MANAGER_B, "select has_unpublished_changes from public.templates where id = $1", [tpl.id])).rejects.toThrow(
+      "permission denied",
+    );
+    expect(await errorOf(t.asUser(MANAGER_B, "select * from public.list_template_drafts()"))).toContain("NOT_ALLOWED");
+    const [published] = await t.asUser<{ name: string }>(
+      MANAGER_B,
+      "select v.name from public.template_versions as v join public.templates as t on t.id = v.template_id and t.current_version = v.number where t.id = $1",
+      [tpl.id],
+    );
+    expect(published.name).toBe("Tenant move-in (published name)");
+  });
+
   it("AC-EDITOR-02: адміністратор додав шосту задачу без збереження — менеджер B бачить версію 1 з 5 задачами і не бачить незбережених змін", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (AC-EDITOR-02)");
     await addSixthTask(tpl.id, tpl.sections[1]);
@@ -162,6 +178,15 @@ describe("База: збереження версії", () => {
       t.asUser(ADMIN, "delete from public.template_version_tasks where version_id in (select id from public.template_versions where template_id = $1)", [tpl.id]),
     ).rejects.toThrow("permission denied");
     expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
+  });
+
+  it("AC-EDITOR-03: адміністратор видаляє задачу з незбережених змін — знімок збереженої версії не змінюється", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (delete source task)");
+    await t.asUser(ADMIN, "delete from public.template_tasks where id = $1", [tpl.tasks[2]]);
+    const names = (await versionTasks(ADMIN, tpl.id, 1)).map((x) => x.name);
+    expect(names).toHaveLength(5);
+    expect(names).toContain("Order cleaning");
+    expect((await state(tpl.id)).has_unpublished_changes).toBe(true);
   });
 
   it("AC-EDITOR-03: збереження без незбережених змін нової версії не створює (робоче припущення, #22)", async () => {
