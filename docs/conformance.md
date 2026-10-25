@@ -63,3 +63,16 @@
 | AC-TASK-16 | скасування на підтвердженні останньої обов'язкової задачі — задача «to do», запуск «in progress»; без підтвердження повтору немає (fail-closed, ADR 0003) | `supabase/migrations/20261021093442_complete_task_confirmation.sql` (private.complete_task) (CONFIRMATION_REQUIRED), `src/lib/runs/confirmation.ts` (withConfirmation), `src/app/(app)/runs/[id]/mark-done-form.tsx`, `src/app/(app)/runs/actions.ts` (completeTask: повтор лише для confirmed) | `tests/db/run-progress-db.test.ts`, `tests/runs/confirmation.test.tsx`, `tests/runs/complete-task-action.test.ts` | реалізовано |
 | AC-TASK-17 | виконавець B бачить у списку запуск менеджера A з прогресом «2 of 5 done» | `supabase/migrations/20261019183128_run_progress_view.sql` (run_progress), `src/app/(app)/runs/page.tsx` | `tests/db/run-visibility-db.test.ts` | реалізовано |
 | AC-TASK-18 | менеджер C бачить можливість позначки на своїй задачі й не бачить на задачі менеджера B | `src/lib/runs/access.ts` (canCompleteTask), `src/app/(app)/runs/[id]/page.tsx` | `tests/runs/run-page.test.tsx` | реалізовано |
+| AC-EDITOR-01 | шоста задача без збереження — «Unpublished changes», у редакторі знову 6 задач | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-02 | менеджер бачить версію 1 з 5 задачами без позначки про незбережені зміни | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-03 | збереження — поточна версія 2 з 6 задачами, позначка зникає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-04 | без обов'язкової задачі — «A template needs at least one required task», версії немає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-05 | список версій: версія 2 «12.10.2026 14:05» з email C, потім версія 1 з email A | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-06 | запуск із версії 1 показує «Template version 1» і 5 задач | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-07 | менеджер за посиланням на список версій — «Not enough rights», версій немає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-08 | прямий запит менеджера не змінює шаблон і не створює версію | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-09 | відвідувач без входу за посиланням на редактор — сторінка входу, без вмісту | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-01 | статуси «in progress» синій і «completed» зелений, слово поруч із кольором, у списку й на сторінках | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-02 | менеджер у редакторі — «Not enough rights» і «Back to templates» у спільному макеті, шаблон без змін | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-03 | відвідувач без входу за посиланням на запуск — сторінка входу, без даних запуску | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-04 | менеджер без запусків — «No runs yet. Launch a template to start one.» і «Launch a template» | — | — | відкладено (чекає реалізації) |
