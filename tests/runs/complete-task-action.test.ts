@@ -14,7 +14,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
-const { completeTask } = await import("@/app/runs/actions");
+const { completeTask } = await import("@/app/(app)/runs/actions");
 
 const RUN = "11111111-1111-1111-1111-111111111111";
 const TASK = "22222222-2222-2222-2222-222222222222";

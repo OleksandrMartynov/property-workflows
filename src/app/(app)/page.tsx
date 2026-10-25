@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { PageShell } from "./_components/ui";
-import { HomeView } from "./_components/home-view";
+import { PageShell } from "@/app/_components/ui";
+import { HomeView } from "@/app/_components/home-view";
 import { loadRunSummaries } from "./runs/_lib/summaries";
 
 // Головна: хто увійшов і куди далі. Сторінка читає cookies, тому рендериться динамічно.
@@ -47,8 +47,6 @@ export default async function Home() {
   return (
     <PageShell
       title="Home"
-      email={profile?.email ?? claims.email}
-      role={profile?.role}
       actions={
         profile ? (
           <Link href="/templates" className={buttonVariants({ variant: "default" })}>

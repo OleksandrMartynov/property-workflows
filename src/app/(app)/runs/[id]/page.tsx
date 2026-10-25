@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
 import { requireViewer } from "@/lib/supabase/viewer";
-import { Notice, PageShell } from "../../_components/ui";
+import { Notice, PageShell } from "@/app/_components/ui";
 import { completeTask } from "../actions";
 import { RunDetail } from "./_components/run-detail";
 
@@ -39,8 +39,6 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       title={run.case_name}
       description={run.template_name}
       back={{ href: "/runs", label: "Runs" }}
-      email={viewer.email}
-      role={viewer.role}
       actions={<StatusBadge status={run.status === "completed" ? "done" : "progress"}>{runStatusLabel(run.status)}</StatusBadge>}
     >
       {done === "launched" ? <Notice kind="success">Run launched.</Notice> : null}

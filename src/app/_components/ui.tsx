@@ -1,29 +1,23 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Alert } from "@/components/ui/alert";
-import { AppShell } from "@/components/ui/app-shell";
-import { signOut } from "../login/actions";
 
-/** Каркас сторінок застосунку: сайдбар, роль, вихід, заголовок сторінки. */
+/** Заголовок сторінки застосунку. Сайдбар, акаунт і вихід — у спільному layout сегмента (app). */
 export function PageShell({
   title,
   description,
-  email,
-  role,
   actions,
   back,
   children,
 }: {
   title: string;
   description?: ReactNode;
-  email?: string | null;
-  role?: string;
   actions?: ReactNode;
   back?: { href: string; label: string };
   children: ReactNode;
 }) {
   return (
-    <AppShell email={email} role={role} signOutAction={signOut}>
+    <>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           {back ? (
@@ -37,7 +31,7 @@ export function PageShell({
         {actions}
       </header>
       {children}
-    </AppShell>
+    </>
   );
 }
 

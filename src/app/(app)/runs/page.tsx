@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { requireViewer } from "@/lib/supabase/viewer";
-import { PageShell } from "../_components/ui";
+import { PageShell } from "@/app/_components/ui";
 import { RunsList } from "./_components/runs-list";
 import { loadRunSummaries } from "./_lib/summaries";
 
@@ -40,7 +40,7 @@ export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
   const managerOf = (run: { run_manager_id: string }) => (run.run_manager_id === viewer.id ? "me" : (emailOf.get(run.run_manager_id) ?? "—"));
 
   return (
-    <PageShell title="Runs" email={viewer.email} role={viewer.role}>
+    <PageShell title="Runs">
       <RunsList runs={runs ?? []} summary={summary} managerOf={managerOf} />
       {page > 1 || hasNext ? (
         <nav className="flex items-center justify-between text-body" aria-label="Pages">

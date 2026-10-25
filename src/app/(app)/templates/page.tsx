@@ -1,12 +1,12 @@
 import { requireViewer } from "@/lib/supabase/viewer";
-import { PageShell } from "../_components/ui";
+import { PageShell } from "@/app/_components/ui";
 import { TemplatesList, type TemplateCounts } from "./_components/templates-list";
 
 // Шаблони (матриця прав «See templates»: manager і admin). Екрана редагування в зрізі немає (Non-goals).
 export const metadata = { title: "Templates" };
 
 export default async function TemplatesPage() {
-  const { supabase, viewer } = await requireViewer();
+  const { supabase } = await requireViewer();
   const [{ data: templates }, { data: sections }, { data: tasks }] = await Promise.all([
     supabase.from("templates").select("id, name").order("name"),
     supabase.from("template_sections").select("id, template_id"),
@@ -27,7 +27,7 @@ export default async function TemplatesPage() {
   }
 
   return (
-    <PageShell title="Templates" email={viewer.email} role={viewer.role}>
+    <PageShell title="Templates">
       <TemplatesList templates={templates ?? []} counts={Object.fromEntries(counts)} />
     </PageShell>
   );

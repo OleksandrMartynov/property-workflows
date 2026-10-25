@@ -8,7 +8,7 @@ import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { CANNOT_BE_UNDONE, withConfirmation } from "@/lib/runs/confirmation";
-import { SubmitButton } from "../../_components/submit-button";
+import { SubmitButton } from "@/app/_components/submit-button";
 
 export function MarkDoneForm({
   action,

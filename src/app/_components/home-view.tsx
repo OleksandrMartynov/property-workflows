@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RunsList, type RunRow, type RunSummary } from "../runs/_components/runs-list";
+import { RunsList, type RunRow, type RunSummary } from "@/app/(app)/runs/_components/runs-list";
 
 function Stat({ href, label, value }: { href: string; label: string; value: number }) {
   return (

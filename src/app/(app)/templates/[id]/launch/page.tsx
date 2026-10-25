@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { errorMessage } from "@/lib/runs/messages";
 import { requireViewer } from "@/lib/supabase/viewer";
-import { Notice, PageShell } from "../../../_components/ui";
+import { Notice, PageShell } from "@/app/_components/ui";
 import { launchRun } from "../../../runs/actions";
 import { LaunchForm } from "./_components/launch-form";
 
@@ -29,8 +29,6 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
   return (
     <PageShell
       title={`Launch “${template.name}”`}
-      email={viewer.email}
-      role={viewer.role}
     >
       {message ? <Notice kind="error">{message}</Notice> : null}
       <LaunchForm

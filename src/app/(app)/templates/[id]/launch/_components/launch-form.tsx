@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 import { assigneeField } from "@/lib/runs/assignees";
 import { CASE_NAME_MAX_LENGTH } from "@/lib/runs/messages";
 import { cn } from "@/lib/utils";
-import { SubmitButton } from "../../../../_components/submit-button";
+import { SubmitButton } from "@/app/_components/submit-button";
 
 export interface LaunchSection {
   id: string;
