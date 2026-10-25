@@ -1,5 +1,6 @@
 # Архітектурні правила — окремий workflow, щоб не чіпати назви jobs у ci.yml (на них спирається ruleset).
-# Кожне правило — швидкий скрипт без залежностей; пояснення — в ADR у docs/decisions/.
+# Кожне правило — швидкий скрипт без залежностей; пояснення — в ADR у docs/decisions/: дизайн-система (ADR 0004),
+# серверні межі — секретний ключ і admin-клієнт лише в серверному коді, кожна Server Action перевіряє вхід (ADR 0006).
 name: architecture
 
 on:
@@ -49,3 +50,31 @@ jobs:
         with:
           node-version: 24
       - run: node scripts/check-ui-copy.mjs
+
+  server-boundary:
+    name: "Секретний ключ лише на сервері"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Матеріали курсу WS7 (materials/scripts/check-server-boundary.mjs): SUPABASE_SECRET_KEY лише в admin.ts.
+      - run: node scripts/check-server-boundary.mjs
+
+  actions-auth:
+    name: "Кожна Server Action перевіряє вхід"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # ADR 0006: getClaims() (прямо чи через requireViewer / requireAdmin) у кожній дії; без getSession() і middleware.ts.
+      - run: node scripts/check-actions-auth.mjs
