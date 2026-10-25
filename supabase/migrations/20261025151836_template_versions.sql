@@ -227,7 +227,7 @@ declare
   v_version   uuid;
 begin
   -- Матриця прав «Create a template, edit it and save it as a new version»: лише admin (AC-EDITOR-08).
-  if false then
+  if v_uid is null or (select private.current_app_role()) is distinct from 'admin' then
     raise exception 'NOT_ALLOWED';
   end if;
 
