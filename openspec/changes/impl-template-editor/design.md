@@ -41,6 +41,9 @@
 - **`template_versions`** (`id`, `template_id`, `number`, `name`, `saved_at`, `saved_by` → `profiles`, `null` —
   «Initial data»; `unique (template_id, number)`) і **`template_version_tasks`** (`version_id`, `template_task_id`,
   `section_name`, `section_position`, `position`, `name`, `required`) — незмінний знімок (AC-EDITOR-03, AC-EDITOR-06).
+  `template_task_id` — **без зовнішнього ключа** на `template_tasks`: адміністратор може видалити задачу з незбережених
+  змін, а знімок версії й ключ призначення у формі запуску лишаються (як `run_tasks.template_task_id`); тест видаляє
+  вихідну задачу після збереження й перевіряє знімок.
   `enable row level security`, `revoke all … from anon, authenticated`, `grant select` лише `authenticated`; insert —
   лише функція збереження; **update і delete не дає ніхто** — збережена версія ніколи не змінюється (припущення PM).
   - `template_versions_select`: `admin` — усі версії (AC-EDITOR-05); `manager` — лише поточна версія шаблону
@@ -49,6 +52,11 @@
 - **`templates`**: нові колонки `current_version` (номер, `null` — ще не збережено) і `has_unpublished_changes`
   (`boolean`). Обидві ставить лише функція збереження й тригери: **column grant** `update (name)` для
   `authenticated` замість update на весь рядок — адміністратор змінює назву, а не номер версії чи позначку.
+  `templates.name` — назва з незбережених змін (назва — частина версії), тож **column grant `select`** лише на `id`,
+  `current_version`, `created_at`: RLS обмежує рядки, а не колонки, і інакше менеджер прочитав би незбережену назву.
+  Опубліковану назву обидві ролі читають з `template_versions` (поточна версія); незбережену назву й позначку
+  адміністратор отримує функцією `list_template_drafts()` (`private`, `security definer`, роль `admin` першим рядком,
+  обгортка `public`) (AC-EDITOR-01, AC-EDITOR-02).
   Політики:
   - `templates_select`: `admin` — усі; `manager` — лише `current_version is not null` (AC-EDITOR-02);
   - `templates_insert_admin`, `templates_update_admin`, `templates_delete_admin` — лише `admin`, як були.
@@ -61,15 +69,21 @@
   поточної версії — `TEMPLATE_NOT_PUBLISHED` (робоче припущення #21). Блокування: рядок шаблону `for share` до кінця
   транзакції, щоб збереження нової версії не змінило «поточну» посеред запуску (ADR 0003).
 - **`save_template_version(p_template_id)`** — `private` (`security definer`, `set search_path = ''`), обгортка
-  `public` (`security invoker`), `grant execute` лише `authenticated`. Першим рядком — роль із
+  `public` (`security invoker`), `revoke execute … from public, anon`, потім `grant execute` лише `authenticated`
+  (як `launch_run`). Першим рядком — роль із
   `private.current_app_role()`: не `admin` → `NOT_ALLOWED` (AC-EDITOR-08). Потім: шаблон `for update`; немає
   незбережених змін → `NO_UNPUBLISHED_CHANGES` (робоче припущення #22); жодної обов'язкової задачі →
   `TEMPLATE_NEEDS_REQUIRED_TASK` (AC-EDITOR-04); секція без задач → `SECTION_WITHOUT_TASKS` (робоче припущення QA);
   інакше `number = coalesce(max, 0) + 1` (версія 1 для нового), копія секцій і задач у `template_version_tasks`,
   `current_version`, `has_unpublished_changes = false` (AC-EDITOR-03).
 - **Перехід даних зрізу 1:** кожен наявний шаблон — версія 1 зі знімком поточних секцій і задач, `saved_by = null`,
-  `saved_at = now()`; наявні запуски — `template_version = 1`. Менеджери й далі запускають ті самі шаблони.
-- **Ролі** не змінюються (`manager`, `admin`): міграції ролей у зрізі немає. Нові адреси для PM — `pm-manager@` і
+  `saved_at = now()`; наявні запуски — `template_version = 1`. Це чесно, бо в зрізі 1 шаблони змінювали лише міграції
+  (екрана редагування не було, DDL і DML поза міграціями заборонені `AGENTS.md`): шаблон на момент цієї міграції —
+  той самий, з якого запущено кожен наявний запуск. Задачі старих запусків і так зафіксовані в `run_tasks`.
+- **Форма запуску й дія** `launchRun` (`src/app/(app)/runs/actions.ts`): задачі для поля виконавця — з
+  `template_version_tasks` поточної версії (ключ — `template_task_id`), не з робочих таблиць (AC-EDITOR-02,
+  AC-EDITOR-06).
+- **Ролі** не змінюються (`manager`, `admin`): міграції ролей у зрізі немає. Нові адреси для PM — `pm-manager@example.test` і
   `pm-admin@example.test` у `supabase/demo-users.json`.
 
 ## Auth
