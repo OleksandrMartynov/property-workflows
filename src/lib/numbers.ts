@@ -2,9 +2,12 @@
 
 export const clampNumber = (v: number, min = -Infinity, max = Infinity) => Math.min(max, Math.max(min, v));
 
+/** Округлення половинок від нуля для обох знаків: roundTo(1.005, 2) = 1.01, roundTo(-1.005, 2) = -1.01. */
 export function roundTo(v: number, decimals: number): number {
-  if (String(v).includes("e")) return Number(v.toFixed(decimals));
-  return Number(Math.round(Number(`${v}e${decimals}`)) + `e-${decimals}`);
+  const sign = v < 0 ? -1 : 1;
+  const abs = Math.abs(v);
+  if (String(abs).includes("e")) return sign * Number(abs.toFixed(decimals)) || 0;
+  return sign * Number(Math.round(Number(`${abs}e${decimals}`)) + `e-${decimals}`) || 0;
 }
 
 /** Кількість знаків після коми в числі (для кроку 0.25 → 2). */
@@ -19,7 +22,7 @@ export const toPlain = (v: number | null, decimals: number) => (v === null ? "" 
 
 /**
  * Розбирає введення: «€1,250.00», «1 250,5», «1.250,50», «-12». Остання кома чи крапка — десяткова; єдина кома з
- * трьома цифрами після неї («1,250») — розділювач тисяч. `null` — не число.
+ * трьома цифрами після неї («1,250») — розділювач тисяч, крім «0,500». `null` — не число.
  */
 export function parseDecimal(text: string): number | null {
   let s = text.replace(/[\s  ]/g, "").replace("−", "-").replace(/[^\d.,-]/g, "");
@@ -33,7 +36,9 @@ export function parseDecimal(text: string): number | null {
     const other = char === "," ? "." : ",";
     const onlyThisSeparator = !s.includes(other);
     const repeated = s.split(char).length > 2;
-    const thousands = onlyThisSeparator && (repeated || (char === "," && tail.length === 3));
+    // «0,500» — десятковий запис: число з розділювачем тисяч не починається з нуля.
+    const leadingZero = /^0[.,]/.test(s);
+    const thousands = onlyThisSeparator && (repeated || (char === "," && tail.length === 3 && !leadingZero));
     s = thousands ? s.replaceAll(char, "") : `${s.slice(0, sep).replace(/[.,]/g, "")}.${tail}`;
   }
   const v = Number.parseFloat(s);

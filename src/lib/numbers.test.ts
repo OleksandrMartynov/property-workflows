@@ -13,6 +13,8 @@ describe("numbers: розбір введення", () => {
     expect(parseDecimal("12,5")).toBe(12.5);
     expect(parseDecimal("1,250")).toBe(1250);
     expect(parseDecimal("0.75")).toBe(0.75);
+    expect(parseDecimal("0,500")).toBe(0.5);
+    expect(parseDecimal("0,125")).toBe(0.125);
   });
 
   it("розуміє мінус і відкидає не-числа", () => {
@@ -28,6 +30,8 @@ describe("numbers: округлення і крок", () => {
   it("округлює без дрейфу плаваючої коми", () => {
     expect(roundTo(0.1 + 0.2, 2)).toBe(0.3);
     expect(roundTo(1.005, 2)).toBe(1.01);
+    expect(roundTo(-1.005, 2)).toBe(-1.01);
+    expect(roundTo(-0.004, 2)).toBe(0);
     expect(roundTo(2.5, 0)).toBe(3);
   });
 
