@@ -103,7 +103,7 @@ const PAIRS = [
   ["variable-mark", "background", 3, "Позначка змінної"],
   ["accent-foreground", "accent", 4.5, "Підсвічений пункт меню й списку"],
   ["sidebar-primary-foreground", "sidebar-primary", 4.5, "Активний пункт сайдбара"],
-  ["sidebar-accent-foreground", "sidebar-accent", 4.5, "Наведення в сайдбарі"],
+  ["sidebar-accent-foreground", "sidebar-accent", 4.5, "Поточний пункт сайдбара (aria-current)"],
 ];
 
 const rows = [];
