@@ -11,3 +11,11 @@ export const requiredLabel = (required: boolean) => (required ? "required" : "op
 
 // AC-EDITOR-06: версія шаблону запуску — дослівно «Template version N» (припущення PM у вимозі #20).
 export const templateVersionLabel = (version: number | null) => (version === null ? "—" : `Template version ${version}`);
+
+// AC-DSYS-01: той самий статус — той самий колір на кожній сторінці («Вигляд і тон»): «in progress» — синій (progress),
+// «completed» — зелений (done); слово статусу завжди поруч із кольором (StatusBadge показує і значок, і текст).
+export const runStatusTone = (status: string) => (status === "completed" ? "done" : "progress") as "done" | "progress";
+
+// AC-DSYS-04: порожній список запусків — дослівно з AC.
+export const NO_RUNS_TITLE = "No runs yet. Launch a template to start one.";
+export const NO_RUNS_ACTION = "Launch a template";

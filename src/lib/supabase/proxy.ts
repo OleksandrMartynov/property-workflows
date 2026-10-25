@@ -4,9 +4,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
+import { isPublicPath } from "./public-paths";
 
-// Сторінки, доступні без входу.
-const PUBLIC_PATHS = ["/login", "/auth"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -41,9 +40,7 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
 
-  const isPublic = PUBLIC_PATHS.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
-  );
+  const isPublic = isPublicPath(request.nextUrl.pathname);
 
   if (!claims && !isPublic) {
     const url = request.nextUrl.clone();

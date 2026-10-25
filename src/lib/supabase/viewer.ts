@@ -33,3 +33,16 @@ export async function requireViewer() {
   const viewer: Viewer = { id: claims.sub, role: profile.role, email: profile.email ?? claims.email ?? null };
   return { supabase, viewer };
 }
+
+/** Шаблони створює, редагує й зберігає як версію лише admin (матриця прав «Create a template, edit it and save it…»). */
+export const canManageTemplates = (role: AppRole) => role === "admin";
+
+/**
+ * Для дій адміністратора (редактор шаблону): getClaims() і роль із profiles — до будь-якого запису. Не admin — на
+ * сторінку `deniedPath`, де показано «Not enough rights»; запис не відбувається (AC-EDITOR-08, AC-DSYS-02).
+ */
+export async function requireAdmin(deniedPath = "/templates") {
+  const result = await requireViewer();
+  if (!canManageTemplates(result.viewer.role)) redirect(deniedPath);
+  return result;
+}

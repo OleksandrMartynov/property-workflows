@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, rowLinkClass } from "@/components/ui/table";
-import { runStatusLabel } from "@/lib/runs/labels";
+import { NO_RUNS_ACTION, NO_RUNS_TITLE, runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import { formatProgress } from "@/lib/runs/progress";
 
 export interface RunRow {
@@ -31,10 +31,10 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
   if (!runs.length) {
     return (
       <EmptyState
-        title="No runs yet."
+        title={NO_RUNS_TITLE}
         action={
           <Link href="/templates" className={buttonVariants({ variant: "default" })}>
-            Launch a template
+            {NO_RUNS_ACTION}
           </Link>
         }
       />
@@ -80,7 +80,7 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
                 <AvatarStack emails={s.assignees} />
               </TableCell>
               <TableCell>
-                <StatusBadge status={run.status === "completed" ? "done" : "progress"}>{runStatusLabel(run.status)}</StatusBadge>
+                <StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>
               </TableCell>
             </TableRow>
           );

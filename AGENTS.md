@@ -29,6 +29,11 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
 - `npm run dev` · `npm run build` (має показати `ƒ Proxy (Middleware)`) · `npm run lint` (0 warnings)
 - `npm run typecheck` (`next typegen && tsc --noEmit`) · `npm test` (Vitest)
 - `npm run spec:validate` · `npm run spec:check` · `npm run ac:coverage` · `npm run check:design` · `npm run check:contrast` · `npm run check:copy`
+- `npm run check:actions` — кожна Server Action (`src/app/**/actions.ts`, файли з `"use server"` і вбудовані дії в
+  `src/`) викликає `getClaims()` (прямо чи через `requireViewer()` / `requireAdmin()`) до першого запису, крім дій входу
+  й виходу в `src/app/login/actions.ts`; без `getSession()` і `middleware.ts`. `npm run check:boundary` перевіряє `src/`:
+  `SUPABASE_SECRET_KEY` лише в `src/lib/supabase/admin.ts`, admin-клієнт — лише в серверних файлах; `scripts/` (поза
+  `src/`) читають ключ як серверні скрипти (обидва — `.github/workflows/server-checks.yml`, ADR 0006)
 - `node scripts/check-migration-order.mjs` — нова міграція новіша за `origin/main`, застосовані не змінено (у CI — `db-check`)
 - `npx supabase migration new <назва>` → SQL → PR. Застосовує міграції у вашу базу ЛИШЕ CI (`db-deploy` після merge у `main`)
 - Типи БД: готовий `database.types.ts` — у Summary прогону job `db-check` (Docker не потрібен); або `npm run db:types`
@@ -51,7 +56,7 @@ OpenSpec 1.14.1 (devDependency + глобальний CLI тієї ж версі
   `openspec/config.yaml` — правила перекладу
 - `product/` — лише списки denylist для `spec:check`; `docs/` — `bootstrap.md` (чекліст дня 0),
   `conformance.md` (ваша матриця; у шапці — звідки й коли знімок вимог), `spec-reading.md` (журнал), `decisions/` (ADR)
-- `.github/` — `ci.yml`, `workflows/architecture.yml` (правила дизайн-системи), шаблон PR
+- `.github/` — `ci.yml`, `workflows/architecture.yml` (правила дизайн-системи), `workflows/server-checks.yml` (серверні межі), шаблон PR
 - `src/components/ui/` — компоненти дизайн-системи; `DESIGN.md` — її правила; `scripts/` — перевірки спеки, покриття AC і дизайн-системи (`check-design-tokens.mjs`, `check-contrast.mjs`); `tests/` — тести (`tests/fixtures/` — дані тестів скриптів)
 - `.claude/commands/` — наші `requirements-sync.md` і `conformance.md` (у `.cursor/commands/` — посилання на них);
   `.claude/skills/` — наші скіли `spec-clarify` і `spec-review`; Cursor читає їх звідти ж. `openspec-*` і `/opsx*`

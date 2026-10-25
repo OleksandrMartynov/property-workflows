@@ -13,6 +13,13 @@ export const MESSAGES = {
   INVALID_ASSIGNEE: "An assignee must be a manager or an administrator",
   TEMPLATE_NOT_FOUND: "Template not found",
   TEMPLATE_EMPTY: "The template has no tasks",
+  // Зріз 2 (AC-EDITOR-04, AC-EDITOR-07, AC-DSYS-02): тексти PM дослівно.
+  TEMPLATE_NEEDS_REQUIRED_TASK: "A template needs at least one required task",
+  NOT_ALLOWED_TEMPLATES: "Not enough rights",
+  // Робочі припущення до відповіді PM (docs/spec-reading.md «Зріз 2»): секція без задач (QA), «Save» без змін (#22).
+  SECTION_WITHOUT_TASKS: "Every section needs at least one task",
+  NO_UNPUBLISHED_CHANGES: "There are no unpublished changes to save",
+  NAME_REQUIRED: "Enter a name",
   // Робоче припущення (solomchaak/property-workflows-spec#21): шаблон без збереженої версії не запускає ніхто.
   TEMPLATE_NOT_PUBLISHED: "Save the template as a version to launch it",
   TASK_NOT_FOUND: "Task not found",
