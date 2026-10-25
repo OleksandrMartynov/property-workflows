@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { dbErrorCode } from "@/lib/runs/messages";
-import { requireAdmin, requireViewer } from "@/lib/supabase/viewer";
+import { requireAdmin } from "@/lib/supabase/viewer";
 import { cleanName, nextPosition, swapWithNeighbour } from "@/lib/templates/editor";
 
 // Дії редактора шаблону (зріз 2, задача 2): кожна — публічний POST-ендпойнт, тож першим кроком requireAdmin()
@@ -18,7 +18,7 @@ const field = (formData: FormData, name: string) => String(formData.get(name) ??
 async function editorContext(formData: FormData) {
   const templateId = field(formData, "template_id");
   const editPath = UUID.test(templateId) ? `/templates/${templateId}/edit` : "/templates";
-  const { supabase, viewer } = await requireViewer();
+  const { supabase, viewer } = await requireAdmin(editPath);
   if (!UUID.test(templateId)) redirect("/templates");
   const back = (query = "") => {
     revalidatePath(editPath);
