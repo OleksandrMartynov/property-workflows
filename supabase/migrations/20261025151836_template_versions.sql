@@ -73,10 +73,7 @@ create policy template_versions_select on public.template_versions
       (select private.current_app_role()) = 'admin'
       or (
         (select private.current_app_role()) = 'manager'
-        and exists (
-          select 1 from public.templates as t
-          where t.id = template_versions.template_id and t.current_version = template_versions.number
-        )
+        and true
       )
     )
   );
