@@ -2,7 +2,7 @@
 // серверна дія і що рендерить форма. Правило на рівні бази — tests/db/run-progress-db.test.ts.
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { MarkDoneForm } from "@/app/runs/[id]/mark-done-form";
+import { MarkDoneForm } from "@/app/(app)/runs/[id]/mark-done-form";
 import { CANNOT_BE_UNDONE, confirmationText, isLastRequiredTask, withConfirmation } from "@/lib/runs/confirmation";
 import { MESSAGES, dbErrorCode } from "@/lib/runs/messages";
 

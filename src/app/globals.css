@@ -1,26 +1,798 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Property Workflows — токени дизайн-системи (джерело правил — DESIGN.md)
+   --------------------------------------------------------------------------
+   Один спосіб теми: prefers-color-scheme. Варіант Tailwind `dark:` за замовчуванням теж іде за системою,
+   тож `@custom-variant dark` не потрібен. У сторінках і компонентах — лише семантичні утиліти
+   (bg-primary, text-muted-foreground, border-input …), жодних hex і сирих палітр.
+   Новий токен: DESIGN.md → :root і блок dark нижче → --color-<назва> у @theme inline.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Токени, однакові в обох темах: розміри, відступи, рух
+   -------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 6px;
+
+  --size-control: 32px;
+  --size-control-sm: 28px;
+  --size-control-lg: 36px;
+  --size-header: 44px;
+  --size-sidebar: 240px;
+  --size-sidebar-rail: 3.5rem;
+
+  /* Фокус: чіткий 2px outline з відступом, ніколи не «світіння» */
+  --ring-width: 2px;
+  --ring-offset: 2px;
+
+  /* Рух: живий, але не дерев'яний. Інтерфейс 120–240 мс, завершення запуску ≤ 400 мс */
+  --duration-instant: 90ms;
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --duration-moderate: 240ms;
+  --duration-slow: 320ms;
+  --duration-celebrate: 400ms;
+  --exit-factor: 0.7;
+  --distance-1: 2px;
+  --distance-2: 4px;
+  --distance-3: 6px;
+  --scale-enter: 0.98;
+  --scale-press: 0.97;
+  --shimmer-duration: 1600ms;
+
+  /* Пружини — linear() наближення; opacity і колір ніколи не на пружині з перельотом */
+  --spring-snappy: linear(0, 0.012 2%, 0.054 4.5%, 0.147 8%, 0.537 20%, 0.674 25%, 0.783 30%, 0.871 35.5%, 0.936 41.5%, 0.982 49%, 1.007 59%, 1.007 81.5%, 1);
+  --spring-smooth: linear(0, 0.013 2%, 0.057 4.5%, 0.163 8.5%, 0.464 18.5%, 0.603 24%, 0.712 29.5%, 0.802 35.5%, 0.874 42.5%, 0.929 51%, 0.968 62.5%, 0.992 81.5%, 1);
+  --spring-snappy-duration: 280ms;
+  --spring-smooth-duration: 360ms;
+
+  /* Скло — лише для шарів, що плавають (меню, палітра, тости) */
+  --glass-alpha: 84%;
+  --glass-blur: 20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@supports not (transition-timing-function: linear(0, 1)) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --spring-snappy: cubic-bezier(0.25, 1, 0.5, 1);
+    --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Сцена hero входу. Світла тема — світла сцена (бліда лавандова основа, пастельні хвилі, темний текст), темна — кінематографічна. */
+:root {
+  --stage: oklch(0.955 0.02 268);
+  --stage-foreground: oklch(0.22 0.04 268);
+  --stage-muted: oklch(0.42 0.035 268);
+  --stage-card: oklch(1 0 0 / 0.62);
+  --stage-border: oklch(0.25 0.04 268 / 0.14);
+  --stage-accent: oklch(0.47 0.17 268);
+  --stage-glow-1: oklch(0.74 0.13 268);
+  --stage-glow-2: oklch(0.78 0.12 325);
+  --stage-glow-3: oklch(0.84 0.08 192);
+}
+
+/* --------------------------------------------------------------------------
+   2. Світла тема
+   -------------------------------------------------------------------------- */
+:root {
+  color-scheme: light dark;
+
+  /* Полотно й текст */
+  --background: oklch(0.991 0.004 85);
+  --foreground: oklch(0.21 0.008 80);
+  --card: oklch(0.998 0.002 85);
+  --card-foreground: oklch(0.21 0.008 80);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.008 80);
+
+  /* Дії */
+  --primary: oklch(0.50 0.13 268);
+  --primary-foreground: oklch(0.985 0.006 268);
+  --secondary: oklch(0.955 0.005 85);
+  --secondary-foreground: oklch(0.21 0.008 80);
+  --muted: oklch(0.962 0.005 85);
+  --muted-foreground: oklch(0.505 0.009 80);
+  --accent: oklch(0.952 0.006 85);
+  --accent-foreground: oklch(0.21 0.008 80);
+  --destructive: oklch(0.55 0.19 25);
+  --destructive-foreground: oklch(0.99 0.004 25);
+
+  /* Лінії й поля */
+  --border: oklch(0.912 0.006 85);
+  --border-strong: oklch(0.60 0.01 80);
+  --input: oklch(0.60 0.01 80);
+  --field: oklch(0.998 0.002 85);
+  --ring: oklch(0.55 0.15 268);
+
+  /* Сайдбар — на крок тихіший за полотно */
+  --sidebar: oklch(0.968 0.005 85);
+  --sidebar-foreground: oklch(0.30 0.008 80);
+  --sidebar-primary: oklch(0.50 0.13 268);
+  --sidebar-primary-foreground: oklch(0.985 0.006 268);
+  --sidebar-accent: oklch(0.935 0.006 85);
+  --sidebar-accent-foreground: oklch(0.21 0.008 80);
+  --sidebar-border: oklch(0.905 0.006 85);
+  --sidebar-ring: oklch(0.55 0.15 268);
+
+  /* Підкладка модалок і тіні (у світлій темі глибина — тінню, а не світлістю) */
+  --overlay: oklch(0.21 0.01 80 / 0.28);
+  --elevation-1: 0 1px 2px oklch(0.2 0.01 80 / 0.06), 0 2px 6px -1px oklch(0.2 0.01 80 / 0.06);
+  --elevation-2: 0 2px 4px -1px oklch(0.2 0.01 80 / 0.06), 0 8px 24px -6px oklch(0.2 0.01 80 / 0.14);
+  --elevation-3: 0 4px 8px -2px oklch(0.2 0.01 80 / 0.06), 0 24px 56px -12px oklch(0.2 0.01 80 / 0.22);
+
+  /* Статуси: tint (фон) · foreground (текст) · mark (крапка, іконка) */
+  --status-todo: oklch(0.955 0.005 85);
+  --status-todo-foreground: oklch(0.46 0.01 80);
+  --status-todo-mark: oklch(0.62 0.01 80);
+  --status-progress: oklch(0.955 0.02 268);
+  --status-progress-foreground: oklch(0.47 0.13 268);
+  --status-progress-mark: oklch(0.62 0.13 268);
+  --status-done: oklch(0.955 0.04 150);
+  --status-done-foreground: oklch(0.47 0.12 150);
+  --status-done-mark: oklch(0.62 0.15 150);
+  --status-overdue: oklch(0.955 0.022 25);
+  --status-overdue-foreground: oklch(0.47 0.16 25);
+  --status-overdue-mark: oklch(0.62 0.19 25);
+  --status-due-soon: oklch(0.955 0.045 85);
+  --status-due-soon-foreground: oklch(0.47 0.095 75);
+  --status-due-soon-mark: oklch(0.62 0.13 75);
+
+  /* AI-чернетки — пурпурний, ніколи не primary; змінні запуску {{…}} — бірюзовий */
+  --ai: oklch(0.958 0.03 325);
+  --ai-foreground: oklch(0.47 0.17 325);
+  --ai-mark: oklch(0.55 0.19 325);
+  --variable: oklch(0.955 0.03 192);
+  --variable-foreground: oklch(0.45 0.075 192);
+  --variable-mark: oklch(0.60 0.10 192);
+
+  /* Графіки (shadcn) */
+  --chart-1: oklch(0.55 0.13 268);
+  --chart-2: oklch(0.64 0.10 192);
+  --chart-3: oklch(0.66 0.12 75);
+  --chart-4: oklch(0.60 0.15 150);
+  --chart-5: oklch(0.58 0.06 80);
+
+
+  /* Компенсація ваги тексту: на темному тлі трохи важчий */
+  --weight-body: 400;
+}
+
+/* --------------------------------------------------------------------------
+   3. Темна тема — спроєктована, не інвертована. Підйом = світліша поверхня.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.178 0.004 80);
+    --foreground: oklch(0.945 0.004 80);
+    --card: oklch(0.200 0.005 80);
+    --card-foreground: oklch(0.945 0.004 80);
+    --popover: oklch(0.228 0.005 80);
+    --popover-foreground: oklch(0.945 0.004 80);
+
+    --primary: oklch(0.74 0.12 268);
+    --primary-foreground: oklch(0.20 0.035 268);
+    --secondary: oklch(0.235 0.005 80);
+    --secondary-foreground: oklch(0.945 0.004 80);
+    --muted: oklch(0.235 0.005 80);
+    --muted-foreground: oklch(0.705 0.008 80);
+    --accent: oklch(0.240 0.005 80);
+    --accent-foreground: oklch(0.945 0.004 80);
+    --destructive: oklch(0.66 0.18 25);
+    --destructive-foreground: oklch(0.18 0.02 25);
+
+    --border: oklch(0.275 0.005 80);
+    --border-strong: oklch(0.54 0.008 80);
+    --input: oklch(0.54 0.008 80);
+    --field: oklch(0.198 0.005 80);
+    --ring: oklch(0.74 0.12 268);
+
+    --sidebar: oklch(0.158 0.004 80);
+    --sidebar-foreground: oklch(0.86 0.005 80);
+    --sidebar-primary: oklch(0.74 0.12 268);
+    --sidebar-primary-foreground: oklch(0.20 0.035 268);
+    --sidebar-accent: oklch(0.225 0.005 80);
+    --sidebar-accent-foreground: oklch(0.945 0.004 80);
+    --sidebar-border: oklch(0.245 0.005 80);
+    --sidebar-ring: oklch(0.74 0.12 268);
+
+    --overlay: oklch(0.08 0.004 80 / 0.56);
+    --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3), 0 2px 6px -1px oklch(0 0 0 / 0.3);
+    --elevation-2: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 2px 4px -1px oklch(0 0 0 / 0.3), 0 12px 32px -8px oklch(0 0 0 / 0.55);
+    --elevation-3: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 4px 8px -2px oklch(0 0 0 / 0.35), 0 28px 64px -12px oklch(0 0 0 / 0.65);
+
+    --status-todo: oklch(0.26 0.005 80);
+    --status-todo-foreground: oklch(0.82 0.008 80);
+    --status-todo-mark: oklch(0.74 0.01 80);
+    --status-progress: oklch(0.27 0.05 268);
+    --status-progress-foreground: oklch(0.82 0.08 268);
+    --status-progress-mark: oklch(0.74 0.12 268);
+    --status-done: oklch(0.27 0.05 150);
+    --status-done-foreground: oklch(0.82 0.12 150);
+    --status-done-mark: oklch(0.74 0.15 150);
+    --status-overdue: oklch(0.27 0.06 25);
+    --status-overdue-foreground: oklch(0.82 0.10 25);
+    --status-overdue-mark: oklch(0.74 0.15 25);
+    --status-due-soon: oklch(0.27 0.05 75);
+    --status-due-soon-foreground: oklch(0.82 0.12 75);
+    --status-due-soon-mark: oklch(0.74 0.14 75);
+
+    --ai: oklch(0.27 0.07 325);
+    --ai-foreground: oklch(0.82 0.12 325);
+    --ai-mark: oklch(0.74 0.16 325);
+    --variable: oklch(0.27 0.04 192);
+    --variable-foreground: oklch(0.82 0.09 192);
+    --variable-mark: oklch(0.74 0.11 192);
+
+    --chart-1: oklch(0.70 0.13 268);
+    --chart-2: oklch(0.74 0.10 192);
+    --chart-3: oklch(0.80 0.13 75);
+    --chart-4: oklch(0.72 0.15 150);
+    --chart-5: oklch(0.62 0.03 80);
+
+
+    --weight-body: 420;
+    --stage: oklch(0.145 0.035 268);
+    --stage-foreground: oklch(0.97 0.008 268);
+    --stage-muted: oklch(0.80 0.02 268);
+    --stage-card: oklch(0.24 0.035 268 / 0.55);
+    --stage-border: oklch(1 0 0 / 0.14);
+    --stage-accent: oklch(0.78 0.12 268);
+    --stage-glow-1: oklch(0.52 0.18 268);
+    --stage-glow-2: oklch(0.50 0.20 325);
+    --stage-glow-3: oklch(0.60 0.12 192);
+  }
+}
+
+/* Широка гама: лише мітки (крапки, іконки, AI, змінні). Текстові токени лишаються в sRGB, щоб контраст був чесним. */
+@media (color-gamut: p3) {
+  :root {
+    --status-done-mark: oklch(0.62 0.19 150);
+    --status-overdue-mark: oklch(0.62 0.22 25);
+    --status-due-soon-mark: oklch(0.62 0.15 75);
+    --status-progress-mark: oklch(0.62 0.15 268);
+    --ai-mark: oklch(0.55 0.23 325);
+    --variable-mark: oklch(0.60 0.12 192);
+  }
+}
+@media (color-gamut: p3) and (prefers-color-scheme: dark) {
+  :root {
+    --status-done-mark: oklch(0.74 0.19 150);
+    --status-overdue-mark: oklch(0.74 0.17 25);
+    --status-due-soon-mark: oklch(0.74 0.16 75);
+    --status-progress-mark: oklch(0.74 0.14 268);
+    --ai-mark: oklch(0.74 0.19 325);
+    --variable-mark: oklch(0.74 0.13 192);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Похідні токени: стани як альфа-шар поверх будь-якого фону
+   -------------------------------------------------------------------------- */
+:root {
+  --state-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --state-pressed: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --state-selected: color-mix(in oklab, var(--primary) 10%, transparent);
+  --primary-hover: color-mix(in oklab, var(--primary), var(--foreground) 10%);
+  --primary-active: color-mix(in oklab, var(--primary), var(--foreground) 18%);
+  --destructive-hover: color-mix(in oklab, var(--destructive), var(--foreground) 10%);
+  --glass-bg: color-mix(in oklch, var(--popover) var(--glass-alpha), transparent);
+  --selection: color-mix(in oklch, var(--primary) 24%, transparent);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 16%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 28%, transparent);
+  --skeleton: var(--muted);
+  --skeleton-sheen: color-mix(in oklab, var(--muted), var(--foreground) 6%);
+  --glow-done: color-mix(in oklch, var(--status-done-mark) 32%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   5. Налаштування користувача
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --distance-1: 0px;
+    --distance-2: 0px;
+    --distance-3: 0px;
+    --scale-enter: 1;
+    --scale-press: 1;
+    --spring-snappy: var(--ease-standard);
+    --spring-smooth: var(--ease-standard);
+    --spring-snappy-duration: var(--duration-fast);
+    --spring-smooth-duration: var(--duration-fast);
+    --duration-slow: var(--duration-fast);
+    --duration-celebrate: var(--duration-base);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-alpha: 100%;
+    --glass-blur: 0px;
+  }
+}
+
+/* Підвищений контраст: приглушений текст і межі темнішають, кільце товстішає, скло — суцільне */
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: oklch(0.42 0.01 80);
+    --border: oklch(0.55 0.01 80);
+    --ring-width: 3px;
+    --glass-alpha: 100%;
+    --glass-blur: 0px;
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --muted-foreground: oklch(0.80 0.006 80);
+    --border: oklch(0.62 0.008 80);
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --glass-alpha: 100%;
+    --glass-blur: 0px;
+    --glass-bg: Canvas;
+    --ring: Highlight;
+    --border: CanvasText;
+    --input: CanvasText;
+    --border-strong: CanvasText;
+  }
+}
+
+/* Контролі форм: геометрія й похідні кольори (з токенів, перераховуються з темою). Джерело — forms.css дизайн-лабораторії. */
+:root {
+  --size-check: 1rem;
+  --size-switch-w: 2rem;
+  --size-switch-h: 1.25rem;
+  --size-thumb: 1rem;
+  --size-track: 0.25rem;
+  --size-day: 2rem;
+  --size-listbox-max: 16.5rem;
+  --size-option: 2rem;
+  --size-option-rich: 2.75rem;
+  --size-chip: 1.375rem;
+  --size-popover-cal: 17rem;
+  --size-hit: 1.5rem;
+  --distance-slide: 24px;
+  --scale-thumb: 1.12;
+  --accent-float: color-mix(in oklab, var(--popover), var(--foreground) 7%);
+  /* Наведення на межу поля: на крок темніша за `input` в обох темах (Input, DatePicker, Combobox, FileDrop). */
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
+  --primary-tint: color-mix(in oklch, var(--primary) 12%, transparent);
+  --primary-tint-strong: color-mix(in oklch, var(--primary) 22%, transparent);
+  --match: color-mix(in oklch, var(--primary) 20%, transparent);
+  --destructive-tint: color-mix(in oklch, var(--destructive) 10%, transparent);
+  --done-tint: color-mix(in oklch, var(--status-done) 14%, transparent);
+  --control-off: color-mix(in oklab, var(--muted), var(--foreground) 6%);
+  --control-disabled-fill: color-mix(in oklab, var(--muted-foreground), var(--background) 62%);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --distance-slide: 0px; --scale-thumb: 1; }
+}
+@media (forced-colors: active) {
+  :root { --accent-float: Highlight; --match: Highlight; }
+}
+
+/* --------------------------------------------------------------------------
+   6. Tailwind: імена токенів → утиліти
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --font-display: var(--font-instrument-serif), ui-serif, "Iowan Old Style", Georgia, serif;
+
+  --color-accent-float: var(--accent-float);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-tint-strong: var(--primary-tint-strong);
+  --color-match: var(--match);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-done-tint: var(--done-tint);
+  --color-control-off: var(--control-off);
+  --color-control-disabled: var(--control-disabled-fill);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-field: var(--field);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-state-hover: var(--state-hover);
+  --color-state-pressed: var(--state-pressed);
+  --color-state-selected: var(--state-selected);
+
+  --color-status-todo: var(--status-todo);
+  --color-status-todo-foreground: var(--status-todo-foreground);
+  --color-status-todo-mark: var(--status-todo-mark);
+  --color-status-progress: var(--status-progress);
+  --color-status-progress-foreground: var(--status-progress-foreground);
+  --color-status-progress-mark: var(--status-progress-mark);
+  --color-status-done: var(--status-done);
+  --color-status-done-foreground: var(--status-done-foreground);
+  --color-status-done-mark: var(--status-done-mark);
+  --color-status-overdue: var(--status-overdue);
+  --color-status-overdue-foreground: var(--status-overdue-foreground);
+  --color-status-overdue-mark: var(--status-overdue-mark);
+  --color-status-due-soon: var(--status-due-soon);
+  --color-status-due-soon-foreground: var(--status-due-soon-foreground);
+  --color-status-due-soon-mark: var(--status-due-soon-mark);
+
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-ai-mark: var(--ai-mark);
+  --color-variable: var(--variable);
+  --color-variable-foreground: var(--variable-foreground);
+  --color-variable-mark: var(--variable-mark);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-stage: var(--stage);
+  --color-stage-foreground: var(--stage-foreground);
+  --color-stage-muted: var(--stage-muted);
+  --color-stage-card: var(--stage-card);
+  --color-stage-border: var(--stage-border);
+  --color-stage-accent: var(--stage-accent);
+  --color-stage-glow-1: var(--stage-glow-1);
+  --color-stage-glow-2: var(--stage-glow-2);
+  --color-stage-glow-3: var(--stage-glow-3);
+
+
+  --radius-xs: 4px;
+  --radius-sm: var(--radius);
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+
+  --shadow-sm: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-3);
+
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Типографська шкала (Linear-щільність): text-display · title · heading · body · label · meta */
+@theme {
+  --text-display: 1.75rem;
+  --text-display--line-height: 2rem;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 600;
+  --text-hero: clamp(2.25rem, 3.7vw, 3.75rem);
+  --text-hero--line-height: 1.04;
+  --text-hero--letter-spacing: -0.038em;
+  --text-hero--font-weight: 600;
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow--letter-spacing: 0.14em;
+  --text-eyebrow--font-weight: 500;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.75rem;
+  --text-title--letter-spacing: -0.016em;
+  --text-title--font-weight: 600;
+  --text-heading: 0.9375rem;
+  --text-heading--line-height: 1.25rem;
+  --text-heading--letter-spacing: -0.008em;
+  --text-heading--font-weight: 600;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-body--letter-spacing: -0.006em;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.125rem;
+  --text-label--font-weight: 500;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
+  --text-meta--letter-spacing: 0.004em;
+}
+
+/* --------------------------------------------------------------------------
+   7. База
+   -------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--border); /* інакше межа — колір тексту: border-b без кольору */
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-gutter: stable;
+    /* WCAG 2.4.11: сфокусований елемент не ховається під липкою шапкою */
+    scroll-padding-block: calc(var(--size-header) + 0.5rem);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    letter-spacing: var(--text-body--letter-spacing);
+    font-weight: var(--weight-body);
+    font-optical-sizing: auto;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    caret-color: var(--primary);
+    accent-color: var(--primary);
+  }
+
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+
+  ::selection { background: var(--selection); color: inherit; }
+  ::placeholder { color: var(--muted-foreground); opacity: 1; }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  /* Кнопки не мають вигляду браузера; курсор — стрілка, як у десктопних застосунках */
+  button, [role="button"] { cursor: default; }
+  button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+
+  /* Фокус: чіткий outline з відступом. Компонент може змістити його всередину (outline-offset: -2px) */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: var(--ring-width) solid var(--ring);
+    outline-offset: var(--ring-offset);
+  }
+  [aria-invalid="true"]:focus-visible { outline-color: var(--destructive); }
+
+  /* Автозаповнення браузера не перебиває кольори поля */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--primary);
+    box-shadow: 0 0 0 1000px var(--field) inset;
+    transition: background-color 600000s 0s, color 600000s 0s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. Спільні утиліти й анімації компонентів
+   -------------------------------------------------------------------------- */
+
+/* Стандартний перехід кольору, межі, тіні: 140 мс, ease-out */
+@utility transition-ui {
+  transition-property: color, background-color, border-color, box-shadow, opacity, text-decoration-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+/* Дотик: 0.98 масштабу на швидкій пружині */
+@utility press {
+  transition-property: transform, color, background-color, border-color, box-shadow, opacity;
+  transition-duration: var(--duration-fast), var(--duration-instant), var(--duration-instant), var(--duration-instant), var(--duration-fast), var(--duration-instant);
+  transition-timing-function: var(--spring-snappy), var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--ease-standard), var(--ease-standard);
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: scale(var(--scale-press));
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@keyframes ui-spin { to { transform: rotate(360deg); } }
+@keyframes ui-fade { from { opacity: 0; } }
+@keyframes ui-rise {
+  from { opacity: 0; transform: translateY(var(--distance-3)) scale(var(--scale-enter)); }
+}
+@keyframes ui-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+@keyframes ui-draw { to { stroke-dashoffset: 0; } }
+@keyframes ui-glow {
+  0% { box-shadow: 0 0 0 0 var(--glow-done); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+@keyframes ui-echo {
+  0% { transform: scale(0.5); opacity: 0; }
+  14% { opacity: 0.5; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes ui-reveal {
+  from { opacity: 0; filter: blur(10px); transform: translateY(14px); }
+}
+@property --count {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes ui-count { from { --count: 0; } }
+@keyframes ui-page { from { opacity: 0; transform: translateY(var(--distance-3)); } }
+@keyframes ui-ring { from { stroke-dasharray: 0 1; } }
+@keyframes ui-grow { from { width: 0; } }
+@keyframes ui-burst {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+}
+@keyframes ui-float {
+  from { transform: translateY(-3px); }
+  to { transform: translateY(5px); }
+}
+@keyframes ui-shine {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+@keyframes ui-fall {
+  to { opacity: 0; transform: translateY(calc(var(--distance-1) * -1)) scale(var(--scale-enter)); }
+}
+@keyframes ui-pop {
+  0% { transform: scale(0.82); }
+  55% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@keyframes ui-sheen {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to { transform: translateX(260%) skewX(-18deg); }
+}
+
+@utility animate-ui-spin { animation: ui-spin 700ms linear infinite; }
+@utility animate-ui-rise {
+  animation: ui-rise var(--spring-smooth-duration) var(--spring-smooth) both;
+  animation-delay: calc(min(var(--i, 0), 7) * 24ms);
+}
+@utility animate-ui-fade { animation: ui-fade var(--duration-base) var(--ease-standard) both; }
+@utility animate-ui-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ui-draw var(--duration-base) var(--ease-standard) 60ms forwards;
+}
+@utility animate-ui-glow { animation: ui-glow var(--duration-celebrate) var(--ease-standard) both; }
+@utility animate-ui-reveal { animation: ui-reveal 760ms var(--ease-emphasized) both; animation-delay: calc(var(--i, 0) * 70ms + var(--reveal-delay, 0ms)); }
+@utility animate-ui-page { animation: ui-page var(--duration-moderate) var(--ease-standard) both; }
+@utility animate-ui-ring { animation: ui-ring var(--duration-slow) var(--ease-in-out-soft) 120ms backwards; }
+@utility animate-ui-grow { animation: ui-grow var(--duration-slow) var(--ease-in-out-soft) 120ms backwards; }
+/* Число «набирається» від нуля: цілий кастомний --count задає кінцеве значення (inline), CSS малює лічильник. */
+@utility count-up {
+  counter-reset: count var(--count);
+  animation: ui-count 800ms var(--ease-standard) 80ms both;
+  &::after { content: counter(count); }
+}
+@utility animate-ui-burst { animation: ui-burst 760ms var(--ease-standard) both; animation-delay: var(--delay, 0ms); }
+@utility animate-ui-float { animation: ui-float 7s var(--ease-in-out-soft) infinite alternate; }
+@utility animate-ui-shine {
+  background-size: 220% 100%;
+  animation: ui-shine 6.5s var(--ease-in-out-soft) infinite;
+}
+@utility animate-ui-fall { animation: ui-fall calc(var(--duration-base) * var(--exit-factor)) var(--ease-exit) both; }
+@utility animate-ui-pop { animation: ui-pop var(--spring-snappy-duration) var(--ease-standard) both; }
+@utility animate-ui-echo { animation: ui-echo 9s var(--ease-standard) infinite; }
+@utility skeleton {
+  background: linear-gradient(90deg, var(--skeleton) 30%, var(--skeleton-sheen) 50%, var(--skeleton) 70%) 0 0 / 300% 100%;
+  animation: ui-shimmer var(--shimmer-duration) linear infinite;
+}
+
+/* Декоративний рух зникає цілком, а не лише пом'якшується */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ui-reveal, .animate-ui-pop, .animate-ui-ring, .animate-ui-grow, .count-up, .animate-ui-float, .animate-ui-shine { animation: none; }
+  .animate-ui-burst { display: none; }
+  .animate-ui-echo { animation: none; opacity: 0.18; }
+  .skeleton { animation: none; background: var(--skeleton); }
+  .animate-ui-spin { animation-duration: 1600ms; }
+  /* Вхід сторінки й рядків — лише коротке проявлення без затримки сходинкою; вихід (ui-fall) лишається анімацією,
+     щоб спрацювала подія animationend, яка закриває меню (тому не animation: none). */
+  .animate-ui-page,
+  .animate-ui-rise,
+  .animate-ui-fall {
+    animation-duration: var(--duration-instant);
+    animation-delay: 0ms;
+  }
+}
+
+/* Діалог: нативний <dialog>. Вхід — пружина, вихід — ×0.7 від входу; opacity лише на ease. */
+@layer components {
+  .ui-dialog {
+    margin: auto;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    color: var(--popover-foreground);
+    background: var(--popover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--elevation-3);
+    opacity: 0;
+    transform: translateY(var(--distance-3)) scale(var(--scale-enter));
+    transition:
+      opacity calc(var(--duration-moderate) * var(--exit-factor)) var(--ease-exit),
+      transform calc(var(--duration-moderate) * var(--exit-factor)) var(--ease-exit),
+      overlay calc(var(--duration-moderate) * var(--exit-factor)) allow-discrete,
+      display calc(var(--duration-moderate) * var(--exit-factor)) allow-discrete;
+  }
+  .ui-dialog[open] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--duration-moderate) var(--ease-standard),
+      transform var(--spring-smooth-duration) var(--spring-smooth),
+      overlay var(--duration-moderate) allow-discrete,
+      display var(--duration-moderate) allow-discrete;
+  }
+  .ui-dialog::backdrop {
+    background: var(--overlay);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition:
+      opacity calc(var(--duration-moderate) * var(--exit-factor)) var(--ease-exit),
+      overlay calc(var(--duration-moderate) * var(--exit-factor)) allow-discrete,
+      display calc(var(--duration-moderate) * var(--exit-factor)) allow-discrete;
+  }
+  .ui-dialog[open]::backdrop {
+    opacity: 1;
+    transition:
+      opacity var(--duration-moderate) var(--ease-standard),
+      overlay var(--duration-moderate) allow-discrete,
+      display var(--duration-moderate) allow-discrete;
+  }
+  @starting-style {
+    .ui-dialog[open] {
+      opacity: 0;
+      transform: translateY(var(--distance-3)) scale(var(--scale-enter));
+    }
+    .ui-dialog[open]::backdrop { opacity: 0; }
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ui-dialog::backdrop { backdrop-filter: none; }
+}
+
+/* Плаваюча поверхня (поповер, список, календар): скло лише тут, вхід — пружина, вихід — швидше. */
+@keyframes ui-float-in { from { opacity: 0; transform: translateY(calc(var(--float-dir, 1) * -4px)) scale(0.98); } }
+@keyframes ui-float-out { to { opacity: 0; transform: translateY(calc(var(--float-dir, 1) * -2px)) scale(0.985); } }
+@utility surface-float {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-3);
+  color: var(--popover-foreground);
+  transform-origin: var(--float-origin, top);
+  &[data-state="open"] { animation: ui-float-in var(--spring-snappy-duration) var(--spring-snappy) both; }
+  &[data-state="closing"] { animation: ui-float-out var(--duration-instant) var(--ease-exit) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-float[data-state] { animation-duration: 1ms; }
 }
