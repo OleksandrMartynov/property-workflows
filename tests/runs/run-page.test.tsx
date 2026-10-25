@@ -2,7 +2,7 @@
 // «optional», можливість позначки лише на дозволених задачах, «Run not found», назва випадку з пробілом.
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import RunNotFound from "@/app/runs/[id]/not-found";
+import RunNotFound from "@/app/(app)/runs/[id]/not-found";
 import { canCompleteTask } from "@/lib/runs/access";
 import { validateCaseName } from "@/lib/runs/case-name";
 import { requiredLabel } from "@/lib/runs/labels";

@@ -14,7 +14,10 @@
     "spec:check": "node scripts/check-spec.mjs",
     "ac:coverage": "node scripts/check-ac-coverage.mjs",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
-    "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs"
+    "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs",
+    "check:design": "node scripts/check-design-tokens.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check:copy": "node scripts/check-ui-copy.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
