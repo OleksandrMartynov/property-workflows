@@ -4,7 +4,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { runScript } from "./run-script";
+import { spawnSync } from "node:child_process";
+import { repoRoot, runScript } from "./run-script";
 
 const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -13,14 +14,20 @@ const ADMIN = `import "server-only";
 export const createAdminClient = () => process.env.SUPABASE_SECRET_KEY;
 `;
 
-function project(files: Record<string, string>) {
+function project(files: Record<string, string>, relativeRoot = false) {
   const root = mkdtempSync(path.join(tmpdir(), "server-boundary-"));
   dirs.push(root);
   for (const [file, text] of Object.entries({ "src/lib/supabase/admin.ts": ADMIN, ...files })) {
     mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
     writeFileSync(path.join(root, file), text);
   }
-  return runScript("check-server-boundary.mjs", root);
+  if (!relativeRoot) return runScript("check-server-boundary.mjs", root);
+  // --root відносно робочої теки: шляхи порівнюються після resolve().
+  const result = spawnSync(process.execPath, [path.join(repoRoot, "scripts", "check-server-boundary.mjs"), "--root", path.basename(root)], {
+    cwd: path.dirname(root),
+    encoding: "utf8",
+  });
+  return { code: result.status, out: `${result.stdout}${result.stderr}` };
 }
 
 describe("scripts/check-server-boundary.mjs", () => {
@@ -49,6 +56,40 @@ describe("scripts/check-server-boundary.mjs", () => {
     expect(out).toContain("src/lib/legacy.cjs:1  admin-клієнт імпортовано не з actions.ts");
     expect(out).toContain("src/app/(app)/page.tsx:1  admin-клієнт імпортовано не з actions.ts");
     expect(out).toContain('src/app/(app)/widget.tsx:2  admin-клієнт імпортовано у файлі з "use client"');
+  });
+
+  it("з відносним --root ловить відносний і @/-імпорт так само", () => {
+    const { code, out } = project(
+      {
+        "src/lib/users.ts": `import { createAdminClient } from "./supabase/admin";\n`,
+        "src/lib/more.ts": `import { createAdminClient } from "@/lib/supabase/admin";\n`,
+      },
+      true,
+    );
+    expect(code).toBe(1);
+    expect(out).toContain("src/lib/users.ts:1  admin-клієнт імпортовано не з actions.ts");
+    expect(out).toContain("src/lib/more.ts:1  admin-клієнт імпортовано не з actions.ts");
+  });
+
+  it("\"use server\" у тілі функції сторінки не робить сторінку серверним файлом для admin-клієнта", () => {
+    const { code, out } = project({
+      "src/app/(app)/page.tsx": `// Сторінка
+import { createAdminClient } from "@/lib/supabase/admin";
+export default function Page() {
+  async function save() {
+    "use server";
+  }
+  return save;
+}
+`,
+      "src/app/(app)/users/actions.ts": `// Дії
+"use server";
+import { createAdminClient } from "@/lib/supabase/admin";
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/app/(app)/page.tsx:2  admin-клієнт імпортовано не з actions.ts");
+    expect(out).not.toContain("users/actions.ts");
   });
 
   it("ловить секретний ключ поза admin.ts і NEXT_PUBLIC_ зі секретом", () => {

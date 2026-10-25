@@ -200,6 +200,30 @@ export async function update(fd: FormData) {
     expect(out).not.toContain("helper()");
   });
 
+  it("перший експорт на початку actions.ts без директиви теж перевіряється", () => {
+    const { code, out } = project({
+      "src/app/(app)/x/actions.ts": "export async function remove() { await createClient().from(\"runs\").delete(); }\n",
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/app/(app)/x/actions.ts:1  Server Action remove() не перевіряє вхід");
+  });
+
+  it("\"use server\" у тілі функції сторінки — вбудована дія, а не модуль: metadata й default сторінки не дії", () => {
+    const { code, out } = project({
+      "src/app/(app)/page.tsx": `export const metadata = { title: "Home" };
+export default function Page() {
+  async function save() {
+    "use server";
+    await requireAdmin();
+  }
+  return save;
+}
+`,
+    });
+    expect(out).toContain("OK");
+    expect(code).toBe(0);
+  });
+
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {
     const { code, out } = project({
       "src/lib/supabase/viewer.ts": `// getSession() для авторизації не використовуємо

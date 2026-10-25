@@ -58,11 +58,11 @@ function walk(dir, out = []) {
 
 // from "…", import "…", import("…"), require("…").
 const IMPORT = /(?:\bfrom\s*|\bimport\s+)["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)|\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
-const ADMIN_ABS = join(root, ADMIN_FILE).replace(/\.ts$/, "");
+const ADMIN_ABS = resolve(root, ADMIN_FILE).replace(/\.ts$/, "");
 /** Шлях імпорту веде саме до admin.ts? `@/` — тека src/ (або корінь без src/), відносний — від файлу, решта — пакети. */
 function isAdminImport(file, spec) {
   let target;
-  if (spec.startsWith("@/")) target = join(root, hasSrc ? "src" : "", spec.slice(2));
+  if (spec.startsWith("@/")) target = resolve(root, hasSrc ? "src" : "", spec.slice(2));
   else if (spec.startsWith(".")) target = resolve(dirname(file), spec);
   else return false;
   const bare = target.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "").replace(/[\\/]index$/, "");
@@ -76,9 +76,11 @@ for (const file of BASES.flatMap((b) => walk(join(root, b)))) {
   const rel = relative(root, file);
   const text = readFileSync(file, "utf8");
   const lines = text.split(/\r?\n/);
-  const isClient = /^\s*["']use client["']/m.test(text);
+  // Директива модуля — лише на початку файлу, після коментарів; "use server" у тілі функції сторінки — не модуль дій.
+  const head = text.replace(/^(?:\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*/, "");
+  const isClient = /^["']use client["']/.test(head);
   const isServerFile =
-    /^\s*["']use server["']/m.test(text) || ["actions.ts", "route.ts"].includes(basename(file)) || rel === ADMIN_FILE;
+    /^["']use server["']/.test(head) || ["actions.ts", "route.ts"].includes(basename(file)) || rel === ADMIN_FILE;
 
   lines.forEach((line, i) => {
     if (/NEXT_PUBLIC_[A-Z0-9_]*(SECRET|SERVICE_ROLE)/.test(line)) {

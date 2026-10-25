@@ -103,7 +103,8 @@ function declarations(code) {
   const out = [];
   for (const m of code.matchAll(FUNCTION_DECL)) {
     // Вираз `= function …` розбирає CONST_DECL; безіменна функція — лише `export default`.
-    if ("=(,".includes(prevChar(code, m.index)) || (!m[4] && !m[2])) continue;
+    const before = prevChar(code, m.index); // "" — початок файлу
+    if ((before !== "" && "=(,".includes(before)) || (!m[4] && !m[2])) continue;
     const paren = m.index + m[0].length - 1;
     out.push({ name: m[4] ?? "default", exported: Boolean(m[1]), isDefault: Boolean(m[2]), async: Boolean(m[3]), body: bodyFrom(code, paren), index: m.index, fn: true });
   }
@@ -146,7 +147,9 @@ for (const file of walk(join(root, "src"))) {
   }
 
   // 1) Кожна Server Action перевіряє виклик.
-  const useServer = /^\s*["']use server["']/m.test(code);
+  // Директива модуля — лише на початку файлу (коментарі вже замінено пробілами); "use server" у тілі функції — вбудована
+  // дія сторінки, а не модуль дій.
+  const useServer = /^\s*["']use server["']/.test(code);
   // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
   if (!useServer && !(rel.startsWith("src/app/") && basename(file) === "actions.ts")) continue;
   const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
