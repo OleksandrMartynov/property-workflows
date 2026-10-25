@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "default" | "secondary" | "outline" | "ghost" | "destructive" | "link";
+export type ButtonVariant = "default" | "soft" | "secondary" | "outline" | "ghost" | "destructive" | "link";
 export type ButtonSize = "sm" | "md" | "lg" | "xl" | "icon";
 
 const base =
@@ -9,6 +9,8 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover active:bg-primary-active",
+  // Акцентна, але не основна дія в повторюваних елементах (Launch у картці шаблону): тло state-selected, текст primary.
+  soft: "bg-state-selected text-primary hover:bg-state-pressed active:bg-state-pressed",
   secondary: "bg-secondary text-secondary-foreground hover:bg-accent active:bg-state-pressed",
   outline: "border border-border bg-card text-foreground hover:bg-state-hover active:bg-state-pressed",
   ghost: "text-foreground hover:bg-state-hover active:bg-state-pressed",

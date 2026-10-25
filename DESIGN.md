@@ -128,7 +128,7 @@
 
 | Компонент | Варіанти | Правило |
 |---|---|---|
-| `Button` / `buttonVariants` | `default`, `secondary`, `outline`, `ghost`, `destructive`, `link`; `sm`, `md`, `lg`, `xl`, `icon`; `loading` | `default` — одна основна дія на екран; `destructive` — лише з підтвердженням; для `Link` — `className={buttonVariants({…})}` |
+| `Button` / `buttonVariants` | `default`, `soft`, `secondary`, `outline`, `ghost`, `destructive`, `link`; `sm`, `md`, `lg`, `xl`, `icon`; `loading` | `default` — одна основна дія на екран; `soft` (тло `state-selected`, текст `primary`) — акцентна дія в повторюваних елементах (Launch у картці шаблону); `destructive` — лише з підтвердженням; для `Link` — `className={buttonVariants({…})}` |
 | `Input`, `Textarea`, `PasswordInput` | `size` `md` \| `lg` \| `xl`; `leading`, `trailing` | у кожного поля `Label` з `htmlFor`; межа — токен `input` (≥ 3:1); `aria-invalid` сам додає значок помилки; вимкнене — приглушене, лише читання — легка заливка |
 | `SearchInput` | керований або ні | лупа, «очистити», Esc очищає; без вбудованої кнопки браузера |
 | `Combobox`, `MultiSelect` | `options={[{ value, label, description?, avatar?, trailing? }]}`, `clearable`, `loading` | вибір виконавця й тегів; пошук за набором, аватар + email + роль; чипи видаляються Backspace; значення йде у форму прихованими input |
@@ -140,7 +140,11 @@
 | `Label`, `Field` | — | `Field` додає підказку (`${id}-hint`) і помилку (`${id}-error`, `role="alert"`) |
 | `Card` (+ `CardHeader`, `CardTitle`, `CardContent`, `CardFooter`) | — | рамка один раз; не вкладати картку в картку |
 | `Table` (+ `TableRow interactive`, `rowLinkClass`) | — | рядок клікабельний через посилання в першій комірці; прогрес словами «N of M done» |
-| `Badge` | `neutral`, `outline`, `primary`, `ai`, `variable` | нейтральна мітка («required», роль); статус домену — лише `StatusBadge` |
+| `Badge` | `neutral`, `outline`, `primary`, `changed`, `ai`, `variable` | нейтральна мітка («required», роль); `changed` — «New» / «Edited» у редакторі (теплий жовтий, як «Unpublished changes»); статус домену — лише `StatusBadge` |
+| `InlineInput` | `size` `title` \| `heading` \| `body`; `commit` `blur` \| `enter`; `tone` `accent` | назва, що редагується на місці (шаблон, секція, задача): виглядає як текст, межа — під курсором і у фокусі; Enter або втрата фокусу надсилають форму, Esc повертає збережене, порожнє не надсилається; `accent` — плейсхолдер `primary` для рядка «Add a task» |
+| `ToggleChip` | `onLabel`, `offLabel`, `submitOnChange` | позначка-перемикач у рядку списку («required» / «optional»): справжній checkbox, увімкнена — галочка й текст `primary` на `state-selected` (не лише колір) |
+| `ActionMenu` | `items` (`separated`, `destructive`, `disabled`) | меню «⋯» рядка: `role="menu"`, ↑ ↓ Home End, Enter, Esc повертає фокус на кнопку; незворотна дія — `destructive` за розділювачем і лише через `ConfirmDialog` |
+| `SaveBar` | `title`, `detail`, `icon` | плаваюча смуга збереження внизу екрана (патерн «contextual save bar»): лише коли є що зберегти; інверсна поверхня `foreground` / `background` — найпомітніший шар, дія — `default`. Редактор: «Unpublished changes», підсумок змін, «Save» і ⌘S / Ctrl S |
 | `StatusBadge`, `StatusIcon` | `todo`, `progress`, `done`, `overdue`, `due-soon` | статус — завжди іконка (форма) + слово, не лише колір |
 | `Alert` | `error`, `success`, `info` | помилка — `role="alert"`, текст дослівно з AC |
 | `ProgressRing`, `ProgressBar` | — | кільце — у списках, смужка — у панелі «Details»; число словами поруч; ширина й заповнення анімуються переходом |
@@ -168,7 +172,11 @@
 | Відмова в праві (AC-TASK-03) | `Alert` `error` | «Only the task's assignee, the run manager, or an administrator can mark a task as done» |
 | Немає права на дію (AC-TASK-18) | кнопки «Mark as done» немає | — |
 | Підтвердження незворотної дії (AC-TASK-04, 16) | `ConfirmDialog`: заголовок — назва задачі | «This cannot be undone» · «Cancel» / «OK» |
-| Успіх | `Alert` `success` | «Run launched.» |
+| Успіх | `Alert` `success` | «Run launched.» · «Version N saved» |
+| Незбережені зміни шаблону (AC-EDITOR-01) | `StatusBadge` `due-soon` у шапці й картці; `SaveBar` унизу редактора | «Unpublished changes» · «Since Version N · 1 task added · …» |
+| Зміна відносно поточної версії | `Badge` `changed` біля задачі чи секції | «New» · «Edited» |
+| Немає секцій у шаблоні | `EmptyState` з полем і кнопкою | «No sections yet.» · «Add section» |
+| Немає шаблонів за пошуком | `EmptyState` | «No templates found.» |
 | Завантаження дії | `Button loading`: спінер і слово дії; поля входу `readonly` | «Saving…», «Launching…», «Signing in…» |
 | Завантаження сторінки | `Skeleton` тієї ж форми, що й зміст (`role="status"`, «Loading runs…»), без стрибка макета | — |
 | Невідома адреса | `EmptyState` з дорогою додому | «Page not found» · «Back to home» |
@@ -223,7 +231,7 @@
 - `npm run check:copy` — правило тексту (розділ 8): жодних пояснювальних підзаголовків, підказок-«води» і копірайтів; виняток — коментар `copy-ok: <причина>`. Хук Claude Code (`.claude/settings.json`) запускає перевірку після кожної правки `src/**/*.tsx`; CI — job «Дизайн-система: без пояснювального тексту».
 - `npm run check:contrast` — контраст пар токенів в обох темах (той самий workflow, job «Контраст токенів»).
 - Виняток — коментар `design-ok: <причина>` у тому самому рядку; кожен — з реальною причиною.
-- Візуально: знімки `/login`, `/`, `/runs`, сторінки запуску у світлій і темній темі — `docs/img/ws7-before-*` і `docs/img/ws7-after-*`.
+- Візуально: знімки `/login`, `/`, `/runs`, сторінки запуску у світлій і темній темі — `docs/img/ws7-before-*` і `docs/img/ws7-after-*`; шаблони (галерея, редактор, Preview, версії, телефон) — `docs/img/ws7-templates-*`, `docs/img/ws7-editor-*`, `docs/img/ws7-versions-*`.
 
 ## Відомі прогалини першої версії
 

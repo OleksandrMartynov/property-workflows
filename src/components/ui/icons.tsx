@@ -157,3 +157,66 @@ export const LockIcon = ({ className }: P) => (
     <path d="M5.5 7V5.4a2.5 2.5 0 0 1 5 0V7" />
   </Icon>
 );
+export const PlusIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M8 3.5v9M3.5 8h9" />
+  </Icon>
+);
+export const ArrowUpIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M8 12.5v-9M4.5 7 8 3.5 11.5 7" />
+  </Icon>
+);
+export const ArrowDownIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M8 3.5v9M4.5 9 8 12.5 11.5 9" />
+  </Icon>
+);
+export const TrashIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M3 4.5h10M6.5 4.5V3.2h3v1.3M4.5 4.5l.6 8.3h5.8l.6-8.3M6.8 7v3.6M9.2 7v3.6" />
+  </Icon>
+);
+export const MoreIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <circle cx="3.75" cy="8" r=".6" fill="currentColor" />
+    <circle cx="8" cy="8" r=".6" fill="currentColor" />
+    <circle cx="12.25" cy="8" r=".6" fill="currentColor" />
+  </Icon>
+);
+export const PencilIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M10.2 3.3 12.7 5.8 6 12.5H3.5V10z" />
+    <path d="m9 4.5 2.5 2.5" />
+  </Icon>
+);
+export const HistoryIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M2.8 8a5.2 5.2 0 1 0 1.5-3.7" />
+    <path d="M2.6 2.8v2.4H5" />
+    <path d="M8 5.3v2.9l2 1.2" />
+  </Icon>
+);
+export const MoveToIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M4 3.5v4.2a1.8 1.8 0 0 0 1.8 1.8h6.7" />
+    <path d="m9.7 6.8 2.8 2.7-2.8 2.7" />
+  </Icon>
+);
+export const LayersIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="m8 2.8 5.5 2.9L8 8.6 2.5 5.7z" />
+    <path d="m2.5 8.3 5.5 2.9 5.5-2.9M2.5 10.9 8 13.8l5.5-2.9" />
+  </Icon>
+);
+export const EyeIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M1.8 8s2.3-4.3 6.2-4.3S14.2 8 14.2 8s-2.3 4.3-6.2 4.3S1.8 8 1.8 8z" />
+    <circle cx="8" cy="8" r="1.8" />
+  </Icon>
+);
+export const ChevronRightIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="m6 3.5 4.5 4.5L6 12.5" />
+  </Icon>
+);

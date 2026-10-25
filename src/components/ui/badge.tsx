@@ -1,12 +1,14 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-export type BadgeVariant = "neutral" | "outline" | "primary" | "ai" | "variable";
+export type BadgeVariant = "neutral" | "outline" | "primary" | "changed" | "ai" | "variable";
 
 const variants: Record<BadgeVariant, string> = {
   neutral: "bg-secondary text-secondary-foreground",
   outline: "border border-border text-muted-foreground",
   primary: "bg-status-progress text-status-progress-foreground",
+  // Незбережена зміна в редакторі («New», «Edited») — теплий жовтий, як «Unpublished changes» («Вигляд і тон»).
+  changed: "bg-status-due-soon text-status-due-soon-foreground",
   ai: "bg-ai text-ai-foreground",
   variable: "bg-variable text-variable-foreground",
 };
