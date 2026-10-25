@@ -2,7 +2,7 @@
 // на справжньому Postgres (PGlite) з усіма міграціями. Специфікація: openspec/specs/run-progress/spec.md.
 import { beforeAll, describe, expect, it } from "vitest";
 import { formatProgress } from "@/lib/runs/progress";
-import { createTestDb, launch, TENANT_MOVE_IN, type TestDb } from "./supabase-pglite";
+import { createTestDb, launch, TENANT_MOVE_IN, type TestDb, publish } from "./supabase-pglite";
 
 let t: TestDb;
 let ADMIN: string, MANAGER_A: string, MANAGER_B: string, MANAGER_C: string;
@@ -137,8 +137,11 @@ describe("База: список запусків після відповіде�
       [repair],
     );
     await t.asUser(ADMIN, "insert into public.template_tasks (section_id, name, required, position) values ($1, 'Fix the tap', true, 1)", [section]);
+    await publish(t, ADMIN, repair);
 
     const moveIn = await launch(t, MANAGER_A, "Apartment 12");
+    // «Пізніше» з AC: інакше обидва запуски можуть отримати той самий created_at, і порядок вирішив би випадковий id.
+    await t.db.query("select pg_sleep(0.02)");
     const repairRun = await launch(t, MANAGER_A, "Apartment 12", {}, repair);
     const rows = (await listedRuns(MANAGER_A)).filter((r) => r.id === moveIn || r.id === repairRun);
     expect(rows.map((r) => [r.case_name, r.template_name])).toEqual([

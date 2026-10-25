@@ -5,11 +5,11 @@
 
 ## 1. Версії шаблону в базі
 
-- [ ] 1.1 Міграція: `template_versions`, `template_version_tasks` (RLS, revoke, grant select, без update / delete);
+- [x] 1.1 Міграція: `template_versions`, `template_version_tasks` (RLS, revoke, grant select, без update / delete);
   `templates.current_version`, `templates.has_unpublished_changes` і column grant `update (name)`; `select` незбережених
   змін лише `admin`; тригери позначки; `save_template_version`; `launch_run` з поточної версії й
   `runs.template_version`; перехід даних зрізу 1 у версію 1; `database.types.ts`; ADR 0006.
-- [ ] 1.2 Форма запуску, дія `launchRun` (`src/app/(app)/runs/actions.ts`) і сторінка запуску читають поточну версію
+- [x] 1.2 Форма запуску, дія `launchRun` (`src/app/(app)/runs/actions.ts`) і сторінка запуску читають поточну версію
   (`template_version_tasks`), а не робочі таблиці; назва шаблону для менеджера — з версії; сторінка запуску показує
   «Template version N».
 - [ ] 1.3 Тести бази (PGlite) на кожен AC задачі, зокрема відмовні: менеджер не змінює незбережені зміни й не

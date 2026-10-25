@@ -38,10 +38,72 @@ export type Database = {
         Relationships: [];
       };
       templates: {
-        Row: { id: string; name: string; created_at: string };
-        Insert: { id?: string; name: string; created_at?: string };
-        Update: { id?: string; name?: string; created_at?: string };
+        Row: { id: string; name: string; created_at: string; current_version: number | null; has_unpublished_changes: boolean };
+        Insert: { id?: string; name: string; created_at?: string; current_version?: number | null; has_unpublished_changes?: boolean };
+        Update: { id?: string; name?: string; created_at?: string; current_version?: number | null; has_unpublished_changes?: boolean };
         Relationships: [];
+      };
+      template_versions: {
+        Row: { id: string; template_id: string; number: number; name: string; saved_at: string; saved_by: string | null };
+        Insert: { id?: string; template_id: string; number: number; name: string; saved_at?: string; saved_by?: string | null };
+        Update: { id?: string; template_id?: string; number?: number; name?: string; saved_at?: string; saved_by?: string | null };
+        Relationships: [
+          {
+            foreignKeyName: "template_versions_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "templates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "template_versions_saved_by_fkey";
+            columns: ["saved_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      template_version_tasks: {
+        Row: {
+          id: string;
+          version_id: string;
+          template_task_id: string;
+          section_name: string;
+          section_position: number;
+          position: number;
+          name: string;
+          required: boolean;
+        };
+        Insert: {
+          id?: string;
+          version_id: string;
+          template_task_id: string;
+          section_name: string;
+          section_position: number;
+          position: number;
+          name: string;
+          required: boolean;
+        };
+        Update: {
+          id?: string;
+          version_id?: string;
+          template_task_id?: string;
+          section_name?: string;
+          section_position?: number;
+          position?: number;
+          name?: string;
+          required?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "template_version_tasks_version_id_fkey";
+            columns: ["version_id"];
+            isOneToOne: false;
+            referencedRelation: "template_versions";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       template_sections: {
         Row: { id: string; template_id: string; name: string; position: number };
@@ -76,6 +138,7 @@ export type Database = {
           id: string;
           template_id: string | null;
           template_name: string;
+          template_version: number | null;
           case_name: string;
           run_manager_id: string;
           status: string;
@@ -86,6 +149,7 @@ export type Database = {
           id?: string;
           template_id?: string | null;
           template_name: string;
+          template_version?: number | null;
           case_name: string;
           run_manager_id: string;
           status?: string;
@@ -96,6 +160,7 @@ export type Database = {
           id?: string;
           template_id?: string | null;
           template_name?: string;
+          template_version?: number | null;
           case_name?: string;
           run_manager_id?: string;
           status?: string;
@@ -199,6 +264,14 @@ export type Database = {
       list_assignable_users: {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; email: string }[];
+      };
+      list_template_drafts: {
+        Args: Record<PropertyKey, never>;
+        Returns: { id: string; name: string; current_version: number | null; has_unpublished_changes: boolean }[];
+      };
+      save_template_version: {
+        Args: { p_template_id: string };
+        Returns: number;
       };
     };
     Enums: {

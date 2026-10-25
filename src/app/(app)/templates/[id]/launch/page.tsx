@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { errorMessage } from "@/lib/runs/messages";
+import { loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
 import { requireViewer } from "@/lib/supabase/viewer";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { launchRun } from "../../../runs/actions";
@@ -11,18 +12,16 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
   const [{ id }, { error, case_name }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
 
-  const { data: template } = await supabase.from("templates").select("id, name").eq("id", id).maybeSingle();
+  // Запускаємо лише поточну версію (AC-EDITOR-06): назва, секції й задачі — зі знімка версії, не з незбережених змін.
+  const [template] = await loadCurrentVersions(supabase, [id]);
   if (!template) notFound();
 
-  const [{ data: sections }, { data: users }] = await Promise.all([
-    supabase.from("template_sections").select("id, name, position").eq("template_id", id).order("position"),
+  const [versionTasks, { data: users }] = await Promise.all([
+    loadVersionTasks(supabase, [template.versionId]),
     // Робоче припущення Q1: у списку — лише email менеджерів і адміністраторів.
     supabase.rpc("list_assignable_users"),
   ]);
-  const sectionIds = (sections ?? []).map((s) => s.id);
-  const { data: tasks } = sectionIds.length
-    ? await supabase.from("template_tasks").select("id, section_id, name, required, position").in("section_id", sectionIds).order("position")
-    : { data: [] };
+  const { sections, tasks } = toLaunchSections(versionTasks);
   const others = (users ?? []).filter((u) => u.id !== viewer.id);
   const message = errorMessage(error);
 
@@ -32,10 +31,10 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
     >
       {message ? <Notice kind="error">{message}</Notice> : null}
       <LaunchForm
-        templateId={template.id}
+        templateId={template.templateId}
         templateName={template.name}
-        sections={sections ?? []}
-        tasks={tasks ?? []}
+        sections={sections}
+        tasks={tasks}
         viewer={viewer}
         others={others}
         caseName={typeof case_name === "string" ? case_name : ""}

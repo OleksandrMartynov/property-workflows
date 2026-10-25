@@ -1,7 +1,7 @@
 // Правила запуску шаблону, які виконує база (функція launch_run, RLS, check), — на справжньому Postgres (PGlite)
 // з усіма міграціями. Специфікація: openspec/specs/run-launch/spec.md.
 import { beforeAll, describe, expect, it, onTestFinished } from "vitest";
-import { createTestDb, launch, TENANT_MOVE_IN, type TestDb } from "./supabase-pglite";
+import { createTestDb, launch, TENANT_MOVE_IN, type TestDb, publish } from "./supabase-pglite";
 
 let t: TestDb;
 let ADMIN: string, MANAGER_A: string, MANAGER_B: string;
@@ -136,6 +136,8 @@ describe("База: запуск шаблону", () => {
     const handOverKeys = await addTask(moveInDay, "Hand over the keys", 1);
     await addTask(moveInDay, "Order cleaning", 2);
     await addTask(moveInDay, "Record meter readings", 3);
+    // Запуск — лише з версії (ADR 0006): адміністратор зберігає незбережені зміни як версію 1.
+    expect(await publish(t, ADMIN, templateId)).toBe(1);
 
     const id = await launch(t, MANAGER_A, "Apartment 17, move-in", {}, templateId);
     const sectionsOfRun = async () =>
@@ -236,7 +238,8 @@ describe("База: менеджер запуску й виконавці", () =
 
 describe("База: доступ до шаблонів і запусків", () => {
   it("AC-RUN-04: менеджер бачить шаблони; список виконавців — лише id і email менеджерів та адміністраторів", async () => {
-    const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.templates order by name");
+    // Опублікована назва — з поточної версії: templates.name — незбережені зміни, менеджер його не читає (ADR 0006).
+    const templates = await t.asUser<{ name: string }>(MANAGER_A, "select name from public.template_versions order by name");
     expect(templates.map((x) => x.name)).toEqual(["Apartment repair", "Tenant move-in"]);
     const assignable = await t.asUser<{ email: string }>(MANAGER_A, "select * from public.list_assignable_users()");
     expect(assignable.map((x) => x.email)).toEqual(
@@ -276,57 +279,51 @@ describe("База: доступ до шаблонів і запусків", () 
   });
 });
 
-describe("База: атомарний знімок шаблону під час запуску (ADR 0003)", () => {
-  // PGlite — одна сесія Postgres, тож конкурентну транзакцію адміністратора (вставку задачі між перевіркою й копією)
-  // тут не відтворити. Тому блокування й використання лише перевірених призначень перевіряємо структурно — у визначенні
-  // функції, що діє після всіх міграцій (pg_get_functiondef), — а поведінку запуску — звичайними викликами.
-  /** Визначення функції запуску, яке діє в базі після всіх міграцій (останнє create or replace). */
+describe("База: запуск із незмінної поточної версії (ADR 0006, замінює блокування ADR 0003)", () => {
+  // PGlite — одна сесія Postgres, тож конкурентне збереження версії посеред запуску тут не відтворити. Тому блокування й
+  // джерело копії перевіряємо структурно — у визначенні функції, що діє після всіх міграцій (pg_get_functiondef), — а
+  // поведінку запуску — звичайними викликами.
   // Схема private закрита для клієнтських ролей, тож читаємо від імені власника бази (як міграції).
   const launchRunDefinition = async () =>
     (
       await t.db.query<{ def: string }>("select pg_get_functiondef('private.launch_run(uuid, text, jsonb)'::regprocedure) as def")
     ).rows[0].def.toLowerCase();
 
-  it("AC-RUN-01: запуск блокує шаблон і його секції for update — нова секція чи задача не з'явиться між перевіркою й копією", async () => {
+  it("AC-RUN-01: запуск блокує рядок шаблону for share — збереження нової версії (for update) не змінить поточну посеред запуску", async () => {
     const def = await launchRunDefinition();
-    expect(def).toMatch(/from public\.templates as t where t\.id = p_template_id for update/);
-    expect(def).toMatch(/from public\.template_sections as s where s\.template_id = p_template_id for update/);
-    // Запуск із блокуваннями працює як і раніше: один запуск з усіма 5 задачами.
+    expect(def).toMatch(/from public\.templates as t where t\.id = p_template_id for share/);
     const before = await runsCount();
     const id = await launch(t, MANAGER_A, "Apartment 70, move-in");
     expect(await runsCount()).toBe(before + 1);
     expect(await tasksOf(MANAGER_A, id)).toHaveLength(5);
   });
 
-  it("AC-RUN-02: задачі шаблону заблоковано for share до кінця запуску — їх не змінять і не видалять посеред запуску", async () => {
+  it("AC-RUN-02: копія задач — із незмінної поточної версії, а не з незбережених змін шаблону", async () => {
     const def = await launchRunDefinition();
-    expect(def).toMatch(/for share of tt/);
+    expect(def).toContain("from public.template_version_tasks as vt");
+    expect(def).not.toMatch(/insert into public\.run_tasks[\s\S]*from public\.template_tasks/);
   });
 
-  it("AC-RUN-02: блокування стоять до перевірки призначень і до копії — знімок береться із заблокованого шаблону", async () => {
+  it("AC-RUN-02: блокування стоїть до перевірки призначень і до копії", async () => {
     const def = await launchRunDefinition();
     const at = (fragment: RegExp | string) => {
       const i = typeof fragment === "string" ? def.indexOf(fragment) : def.search(fragment);
       expect(i, String(fragment)).toBeGreaterThanOrEqual(0);
       return i;
     };
-    const lockTemplate = at(/from public\.templates as t where t\.id = p_template_id for update/);
-    const lockSections = at(/from public\.template_sections as s where s\.template_id = p_template_id for update/);
-    const lockTasks = at("for share of tt");
+    const lockTemplate = at(/from public\.templates as t where t\.id = p_template_id for share/);
     const validate = at("jsonb_each_text(v_assignees)");
     const insertRun = at("insert into public.runs");
     const copyTasks = at("insert into public.run_tasks");
-    expect(lockTemplate).toBeLessThan(lockSections);
-    expect(lockSections).toBeLessThan(lockTasks);
-    expect(lockTasks).toBeLessThan(validate);
+    expect(lockTemplate).toBeLessThan(validate);
     expect(validate).toBeLessThan(insertRun);
     expect(insertRun).toBeLessThan(copyTasks);
   });
 
   it("AC-RUN-04: копія задач бере виконавців лише з перевірених призначень (v_valid), не з сирого p_assignees", async () => {
     const def = await launchRunDefinition();
-    expect(def).toContain("coalesce((v_valid ->> tt.id::text)::uuid, v_uid)");
-    expect(def).not.toContain("v_assignees ->> tt.id");
+    expect(def).toContain("coalesce((v_valid ->> vt.template_task_id::text)::uuid, v_uid)");
+    expect(def).not.toContain("v_assignees ->> vt.");
     const [first, second] = TENANT_MOVE_IN.taskIds;
     const stale = "30000000-0000-0000-0000-000000000999";
     const id = await launch(t, MANAGER_A, "Apartment 71, move-in", { [first]: MANAGER_B, [second]: MANAGER_B, [stale]: MANAGER_B });
