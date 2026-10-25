@@ -26,6 +26,12 @@ export function Dialog({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Нативна подія close приходить на будь-яке закриття, зокрема на el.close() нижче, коли батько вже поставив
+  // open=false (наприклад, після «OK»). onClose кличемо лише тоді, коли вікно закрив браузер (Esc), а проп ще open.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   useEffect(() => {
     const el = ref.current;
@@ -41,7 +47,9 @@ export function Dialog({
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       className={cn("ui-dialog w-full max-w-md", className)}
-      onClose={onClose}
+      onClose={() => {
+        if (openRef.current) onClose();
+      }}
       onClick={(event) => {
         if (role === "dialog" && event.target === event.currentTarget) onClose();
       }}
