@@ -42,7 +42,7 @@ IF відвідувач, який не увійшов, відкриває сто
 
 ### Requirement: Порожній список запусків
 
-WHEN менеджер, у якого немає запусків, відкриває список запусків, the system SHALL показати повідомлення «No runs yet. Launch a template to start one.» і посилання «Launch a template» замість порожньої таблиці.
+WHEN менеджер, у списку запусків якого немає жодного запуску, відкриває список запусків, the system SHALL показати повідомлення «No runs yet. Launch a template to start one.» і посилання «Launch a template» замість порожньої таблиці.
 
 #### Scenario: AC-DSYS-04 Менеджер без запусків
 
