@@ -285,9 +285,25 @@ export type Database = {
         Args: { p_section_id: string; p_task_id: string; p_template_id: string };
         Returns: undefined;
       };
+      remove_template_section: {
+        Args: { p_section_id: string; p_template_id: string };
+        Returns: undefined;
+      };
+      remove_template_task: {
+        Args: { p_task_id: string; p_template_id: string };
+        Returns: undefined;
+      };
+      rename_template_section: {
+        Args: { p_name: string; p_section_id: string; p_template_id: string };
+        Returns: undefined;
+      };
       save_template_version: {
         Args: { p_template_id: string };
         Returns: number;
+      };
+      update_template_task: {
+        Args: { p_name: string; p_required: boolean; p_task_id: string; p_template_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

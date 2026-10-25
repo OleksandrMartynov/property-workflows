@@ -8,8 +8,9 @@ import { cleanName } from "@/lib/templates/editor";
 
 // Дії редактора шаблону (зріз 2, задача 2): кожна — публічний POST-ендпойнт, тож першим кроком requireAdmin()
 // (getClaims() + роль admin із profiles) до будь-якого запису (AC-EDITOR-08, AC-DSYS-02). Запис — клієнтом
-// користувача: діють RLS (лише admin змінює незбережені зміни) і column grants. Кожна зміна зберігається одразу —
-// незбережені зміни шаблону (AC-EDITOR-01); тригери бази ставлять «Unpublished changes».
+// користувача: діють RLS (лише admin змінює незбережені зміни) і column grants. Зміни секцій і задач — лише функціями
+// бази, які першим кроком блокують рядок шаблону: однаковий порядок блокувань (шаблон → секція / задача), без deadlock.
+// Кожна зміна зберігається одразу — незбережені зміни шаблону (AC-EDITOR-01); тригери бази ставлять «Unpublished changes».
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const field = (formData: FormData, name: string) => String(formData.get(name) ?? "");
@@ -31,13 +32,6 @@ async function editorContext(formData: FormData) {
     return back(`?error=${code === "NOT_ALLOWED" ? "NOT_ALLOWED_TEMPLATES" : code}`);
   };
   return { supabase, viewer, templateId, back, fail };
-}
-
-/** Секції цього шаблону: id секції з форми не довіряємо — лише секція того самого шаблону. */
-async function sectionsOf(supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"], templateId: string) {
-  const { data, error } = await supabase.from("template_sections").select("id, position").eq("template_id", templateId);
-  if (error) throw error;
-  return data ?? [];
 }
 
 export async function createTemplate(formData: FormData) {
@@ -73,11 +67,11 @@ export async function renameSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const name = cleanName(formData.get("name"));
   if (!name) return back("?error=NAME_REQUIRED");
-  const { error } = await supabase
-    .from("template_sections")
-    .update({ name })
-    .eq("id", field(formData, "section_id"))
-    .eq("template_id", templateId);
+  const { error } = await supabase.rpc("rename_template_section", {
+    p_template_id: templateId,
+    p_section_id: field(formData, "section_id"),
+    p_name: name,
+  });
   if (error) return fail(error);
   back();
 }
@@ -101,7 +95,7 @@ export async function moveSection(formData: FormData) {
 
 export async function removeSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const { error } = await supabase.from("template_sections").delete().eq("id", field(formData, "section_id")).eq("template_id", templateId);
+  const { error } = await supabase.rpc("remove_template_section", { p_template_id: templateId, p_section_id: field(formData, "section_id") });
   if (error) return fail(error);
   back();
 }
@@ -120,21 +114,17 @@ export async function addTask(formData: FormData) {
   back();
 }
 
-/** Задача цього шаблону: id з форми перевіряємо через секції шаблону. */
-async function taskOfTemplate(supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"], templateId: string, taskId: string) {
-  const sectionIds = (await sectionsOf(supabase, templateId)).map((s) => s.id);
-  if (!sectionIds.length) return null;
-  const { data } = await supabase.from("template_tasks").select("id, section_id, position").eq("id", taskId).in("section_id", sectionIds).maybeSingle();
-  return data;
-}
-
+/** Задача цього шаблону: id з форми перевіряє функція бази (через секції шаблону). */
 export async function updateTask(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const task = await taskOfTemplate(supabase, templateId, field(formData, "task_id"));
   const name = cleanName(formData.get("name"));
-  if (!task) return back("?error=DB_ERROR");
   if (!name) return back("?error=NAME_REQUIRED");
-  const { error } = await supabase.from("template_tasks").update({ name, required: formData.get("required") === "on" }).eq("id", task.id);
+  const { error } = await supabase.rpc("update_template_task", {
+    p_template_id: templateId,
+    p_task_id: field(formData, "task_id"),
+    p_name: name,
+    p_required: formData.get("required") === "on",
+  });
   if (error) return fail(error);
   back();
 }
@@ -156,9 +146,7 @@ export async function moveTaskToSection(formData: FormData) {
 
 export async function removeTask(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const task = await taskOfTemplate(supabase, templateId, field(formData, "task_id"));
-  if (!task) return back("?error=DB_ERROR");
-  const { error } = await supabase.from("template_tasks").delete().eq("id", task.id);
+  const { error } = await supabase.rpc("remove_template_task", { p_template_id: templateId, p_task_id: field(formData, "task_id") });
   if (error) return fail(error);
   back();
 }

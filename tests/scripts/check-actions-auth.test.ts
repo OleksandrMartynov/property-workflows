@@ -372,7 +372,7 @@ const handlers = {
     dirs.push(outside);
     mkdirSync(path.join(root, "src", "lib"), { recursive: true });
     writeFileSync(path.join(root, "src", "lib", "jobs.mts"), `"use server";\nexport async function purge() { await createClient().from("runs").delete(); }\n`);
-    symlinkSync(outside, path.join(root, "src", "linked"));
+    symlinkSync(outside, path.join(root, "src", "linked"), "junction"); // "junction": на Windows тека без прав адміністратора
     const { code, out } = runScript("check-actions-auth.mjs", root);
     expect(code).toBe(1);
     expect(out).toContain("src/lib/jobs.mts:2  Server Action purge() не перевіряє вхід");

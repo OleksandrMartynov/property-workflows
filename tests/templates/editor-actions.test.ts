@@ -101,6 +101,30 @@ describe("Дії редактора: менеджер напряму", () => {
     });
   });
 
+  it("AC-EDITOR-01: адміністратор видаляє чи перейменовує секцію або задачу — лише функції бази (блокування шаблону першим), без прямих записів", async () => {
+    role = "admin";
+    const TASK = "30000000-0000-0000-0000-000000000111";
+    for (const [name, fields, fn, args] of [
+      ["removeSection", { section_id: SECTION }, "remove_template_section", { p_template_id: TEMPLATE, p_section_id: SECTION }],
+      ["removeTask", { task_id: TASK }, "remove_template_task", { p_template_id: TEMPLATE, p_task_id: TASK }],
+      ["renameSection", { section_id: SECTION, name: " Handover " }, "rename_template_section", { p_template_id: TEMPLATE, p_section_id: SECTION, p_name: "Handover" }],
+      ["updateTask", { task_id: TASK, name: "Clean", required: "on" }, "update_template_task", { p_template_id: TEMPLATE, p_task_id: TASK, p_name: "Clean", p_required: true }],
+    ] as const) {
+      rpc.mockClear();
+      const result = await run((actions as Record<string, (fd: FormData) => Promise<void>>)[name](form(fields)));
+      expect(result, name).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit`);
+      expect(rpc, name).toHaveBeenCalledWith(fn, args);
+    }
+    expect(touched.filter((t) => !t.startsWith("read ")), "прямі записи").toEqual([]);
+    expect(touched.filter((t) => t !== "read profiles"), "прямі читання таблиць шаблону").toEqual([]);
+  });
+
+  it("AC-EDITOR-08: роль змінилась між перевіркою й записом — база відмовила у видаленні (NOT_ALLOWED), на сторінці «Not enough rights»", async () => {
+    role = "admin";
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "NOT_ALLOWED" } } as never);
+    expect(await run(actions.removeSection(form({ section_id: SECTION })))).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit?error=NOT_ALLOWED_TEMPLATES`);
+  });
+
   it("AC-EDITOR-03: адміністратор зберігає версію — функція бази, повідомлення «Version 2 saved»", async () => {
     role = "admin";
     expect(await run(actions.saveVersion(form({})))).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit?saved=2`);
