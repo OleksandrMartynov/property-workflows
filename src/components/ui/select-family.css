@@ -28,7 +28,7 @@
       color var(--duration-instant) var(--ease-standard);
   }
   .sf-shell:where(:hover) {
-    border-color: var(--border-hover, color-mix(in oklab, var(--input), var(--foreground) 14%));
+    border-color: var(--border-hover);
   }
   .sf-shell[data-open="true"],
   .sf-shell:has(.sf-input:focus-visible) {

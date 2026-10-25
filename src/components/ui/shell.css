@@ -30,4 +30,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-collapsed="true"] .rail-tip:is(:hover, :focus-visible)::after { animation: none; }
+  /* Зміна ширини — це зміна розкладки: без анімації панель просто перемикається між двома ширинами. */
+  .shell-rail { transition: none; }
 }

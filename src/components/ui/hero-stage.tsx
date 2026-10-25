@@ -272,7 +272,7 @@ export function HeroStage() {
   return (
     <div
       ref={root}
-      className="relative isolate h-full min-h-dvh w-full overflow-hidden bg-stage text-stage-foreground"
+      className="group/stage relative isolate h-full min-h-dvh w-full overflow-hidden bg-stage text-stage-foreground"
       onPointerMove={(event) => {
         if (reduced || !root.current) return;
         const rect = root.current.getBoundingClientRect();
@@ -340,13 +340,13 @@ export function HeroStage() {
         </div>
       </div>
 
-      {/* Кнопка паузи (WCAG 2.2.2): невидима, доки на неї не потрапить фокус із клавіатури. */}
+      {/* Кнопка паузи (WCAG 2.2.2): видно під курсором над сценою, на сенсорних екранах, у фокусі з клавіатури й на паузі. */}
       {reduced ? null : (
         <button
           type="button"
           aria-pressed={paused}
           onClick={() => setPaused((p) => !p)}
-          className="pointer-events-none absolute right-5 top-5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-stage-border bg-stage-card px-3 text-label text-stage-foreground opacity-0 backdrop-blur-md transition-ui focus-visible:pointer-events-auto focus-visible:opacity-100"
+          className="absolute right-5 top-5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-stage-border bg-stage-card px-3 text-label text-stage-foreground opacity-0 backdrop-blur-md transition-ui group-hover/stage:opacity-100 focus-visible:opacity-100 aria-pressed:opacity-100 pointer-coarse:opacity-100"
         >
           {paused ? <PlayIcon className="size-3" /> : <PauseIcon className="size-3" />}
           {paused ? "Play animation" : "Pause animation"}

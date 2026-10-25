@@ -357,6 +357,8 @@
   --distance-slide: 24px;
   --scale-thumb: 1.12;
   --accent-float: color-mix(in oklab, var(--popover), var(--foreground) 7%);
+  /* Наведення на межу поля: на крок темніша за `input` в обох темах (Input, DatePicker, Combobox, FileDrop). */
+  --border-hover: color-mix(in oklab, var(--input), var(--foreground) 14%);
   --primary-tint: color-mix(in oklch, var(--primary) 12%, transparent);
   --primary-tint-strong: color-mix(in oklch, var(--primary) 22%, transparent);
   --match: color-mix(in oklch, var(--primary) 20%, transparent);
@@ -709,6 +711,14 @@
   .animate-ui-echo { animation: none; opacity: 0.18; }
   .skeleton { animation: none; background: var(--skeleton); }
   .animate-ui-spin { animation-duration: 1600ms; }
+  /* Вхід сторінки й рядків — лише коротке проявлення без затримки сходинкою; вихід (ui-fall) лишається анімацією,
+     щоб спрацювала подія animationend, яка закриває меню (тому не animation: none). */
+  .animate-ui-page,
+  .animate-ui-rise,
+  .animate-ui-fall {
+    animation-duration: var(--duration-instant);
+    animation-delay: 0ms;
+  }
 }
 
 /* Діалог: нативний <dialog>. Вхід — пружина, вихід — ×0.7 від входу; opacity лише на ease. */

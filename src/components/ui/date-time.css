@@ -18,7 +18,7 @@
   letter-spacing: var(--text-body--letter-spacing);
   transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
-.dt-shell:hover { border-color: var(--border-hover, color-mix(in oklab, var(--foreground) 60%, transparent)); }
+.dt-shell:hover { border-color: var(--border-hover); }
 .dt-shell:has(.dt-input:focus),
 .dt-shell[data-open="true"] { border-color: var(--ring); }
 .dt-shell:has(.dt-input:focus-visible) { outline: var(--ring-width) solid var(--ring); outline-offset: -1px; }
