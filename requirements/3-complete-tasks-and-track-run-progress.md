@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-10-20T16:11:41Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-10-25T13:12:13Z
 
 # Requirement: Complete tasks and track run progress
 
