@@ -101,7 +101,7 @@ alter policy templates_select_app_users on public.templates
 alter policy template_sections_select_app_users on public.template_sections
   using ((select auth.uid()) is not null and (select private.current_app_role()) = 'admin');
 alter policy template_tasks_select_app_users on public.template_tasks
-  using ((select auth.uid()) is not null and (select private.current_app_role()) = 'admin');
+  using ((select auth.uid()) is not null);
 alter policy templates_select_app_users on public.templates rename to templates_select_by_role;
 alter policy template_sections_select_app_users on public.template_sections rename to template_sections_select_admin;
 alter policy template_tasks_select_app_users on public.template_tasks rename to template_tasks_select_admin;
