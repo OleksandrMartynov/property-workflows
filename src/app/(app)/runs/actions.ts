@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { collectAssignees } from "@/lib/runs/assignees";
 import { validateCaseName } from "@/lib/runs/case-name";
 import { dbErrorCode, isMissingRpcSignature } from "@/lib/runs/messages";
+import { loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { requireViewer } from "@/lib/supabase/viewer";
 
 const text = (formData: FormData, name: string) => String(formData.get(name) ?? "");
@@ -22,19 +23,17 @@ export async function launchRun(formData: FormData) {
   const caseName = validateCaseName(rawCaseName);
   if (!caseName.ok) redirect(back(caseName.error));
 
-  // Задачі шаблону — щоб узяти з форми лише їхні поля виконавців (AC-RUN-04, AC-RUN-08, AC-RUN-09).
-  // Помилка цих запитів — не запускаємо: інакше launch_run поставив би всі задачі на менеджера запуску.
-  const { data: sections, error: sectionsError } = await supabase
-    .from("template_sections")
-    .select("id")
-    .eq("template_id", templateId);
-  if (sectionsError) redirect(back(dbErrorCode(sectionsError)));
-  const sectionIds = (sections ?? []).map((s) => s.id);
-  const { data: tasks, error: tasksError } = sectionIds.length
-    ? await supabase.from("template_tasks").select("id").in("section_id", sectionIds)
-    : { data: [] as { id: string }[], error: null };
-  if (tasksError) redirect(back(dbErrorCode(tasksError)));
-  const assignees = collectAssignees(formData, (tasks ?? []).map((t) => t.id), viewer.id);
+  // Задачі поточної версії — щоб узяти з форми лише їхні поля виконавців (AC-RUN-04, AC-RUN-08, AC-RUN-09,
+  // AC-EDITOR-06). Ключ — template_task_id знімка версії. Помилка цих запитів — не запускаємо: інакше launch_run
+  // поставив би всі задачі на менеджера запуску.
+  let taskIds: string[];
+  try {
+    const [current] = await loadCurrentVersions(supabase, [templateId]);
+    taskIds = current ? (await loadVersionTasks(supabase, [current.versionId])).map((t) => t.template_task_id) : [];
+  } catch (error) {
+    redirect(back(dbErrorCode(error as { message?: string })));
+  }
+  const assignees = collectAssignees(formData, taskIds, viewer.id);
 
   const { data: runId, error } = await supabase.rpc("launch_run", {
     p_template_id: templateId,

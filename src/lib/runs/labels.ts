@@ -8,3 +8,6 @@ export const runStatusLabel = (status: string) => RUN_STATUS_LABELS[status] ?? s
 
 /** AC-TASK-15: позначка біля статусу задачі — словами PM «required» / «optional». */
 export const requiredLabel = (required: boolean) => (required ? "required" : "optional");
+
+// AC-EDITOR-06: версія шаблону запуску — дослівно «Template version N» (припущення PM у вимозі #20).
+export const templateVersionLabel = (version: number | null) => (version === null ? "—" : `Template version ${version}`);
