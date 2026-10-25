@@ -293,8 +293,10 @@ export function MultiSelect({
               avatarOf(v) ? "pl-0.5" : "pl-2",
             )}
           >
-            {avatarOf(v) ? <Avatar email={avatarOf(v)!} className="size-[18px] text-[9px]" /> : null}
-            <span className={cn("truncate pr-0.5", avatarOf(v) && "pl-1")}>{avatarOf(v)?.split("@")[0] ?? item.text}</span>
+            {avatarOf(v) ? <Avatar email={avatarOf(v)!} size="xs" /> : null}
+            <span className={cn("truncate pr-0.5", avatarOf(v) && "pl-1")} title={avatarOf(v) ?? undefined}>
+              {avatarOf(v)?.split("@")[0] ?? item.text}
+            </span>
             {disabled ? null : (
               <button
                 type="button"

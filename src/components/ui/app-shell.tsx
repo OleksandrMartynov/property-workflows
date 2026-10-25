@@ -93,7 +93,7 @@ function AccountMenu({ email, role, collapsed }: { email: string; role?: string;
       <Popover open={open} onDismiss={() => setOpen(false)} anchorRef={anchor} width={256} id={`${id}-account`} role="dialog" aria-label="Account">
         <div className="flex flex-col gap-3 p-3">
           <div className="flex items-start gap-2.5">
-            <Avatar email={email} className="size-8 text-xs" />
+            <Avatar email={email} size="md" />
             <span className="min-w-0 flex-1 break-words text-label font-medium leading-5">{email}</span>
           </div>
           {role ? (
