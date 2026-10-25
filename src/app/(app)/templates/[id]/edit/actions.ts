@@ -175,3 +175,10 @@ export async function saveVersion(formData: FormData) {
   }
   back(`?saved=${number}`);
 }
+
+// Навмисне порушення для доказу архітектурного правила (revert одразу після червоного прогону).
+export async function resetDraft(formData: FormData) {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  await supabase.from("template_sections").delete().eq("template_id", String(formData.get("template_id")));
+}
