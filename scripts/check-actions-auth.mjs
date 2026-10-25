@@ -151,8 +151,10 @@ for (const file of walk(join(root, "src"))) {
   // дія сторінки, а не модуль дій.
   const useServer = /^\s*["']use server["']/.test(code);
   const decls = declarations(code);
-  // Вбудована дія: функція, чиє тіло починається з "use server" (наприклад, усередині page.tsx), — теж публічний POST.
-  const inlineActions = decls.filter((d) => d.fn && !d.exported && /^\{\s*["']use server["']/.test(d.body));
+  // Вбудована дія: функція (і експортована теж), чиє тіло починається з "use server" (наприклад, у page.tsx чи
+  // звичайному модулі src/lib), — теж публічний POST.
+  const inlineActions = decls.filter((d) => d.fn && /^\{\s*["']use server["']/.test(d.body));
+  const exportName = (d) => (d.isDefault && d.name === "default" ? "default" : d.name);
   // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
   const actionsModule = useServer || (rel.startsWith("src/app/") && basename(file) === "actions.ts");
   if (!actionsModule && inlineActions.length === 0) continue;
@@ -188,9 +190,9 @@ for (const file of walk(join(root, "src"))) {
     else if (order === "late") fail(index, exportedAs, WRITE_FIRST);
   };
 
-  for (const d of inlineActions) verify(d, d.name, d.index);
+  for (const d of inlineActions) verify(d, exportName(d), d.index);
   if (!actionsModule) continue; // у звичайному модулі (сторінка) експорти — не дії
-  for (const d of decls.filter((x) => x.exported)) verify(d, d.isDefault && d.name === "default" ? "default" : d.name, d.index);
+  for (const d of decls.filter((x) => x.exported && !inlineActions.includes(x))) verify(d, exportName(d), d.index);
 
   // export { a, b as c } — розгортаємо до оголошень цього файлу; export … from — тіла не видно.
   for (const m of code.matchAll(new RegExp(`export\\s+(type\\s+)?\\{([^}]*)\\}\\s*(from\\s*["'][^"']+["'])?`, "g"))) {

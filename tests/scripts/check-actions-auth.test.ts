@@ -253,6 +253,28 @@ export default function Page() {
     expect(out).not.toContain("Page()");
   });
 
+  it("ловить експортовану функцію з \"use server\" на початку тіла у звичайному модулі src/", () => {
+    const { code, out } = project({
+      "src/lib/templates/danger.ts": `export async function purge(fd: FormData) {
+  "use server";
+  await createClient().from("templates").delete().eq("id", String(fd.get("id")));
+}
+export const safe = async (fd: FormData) => {
+  "use server";
+  await requireAdmin();
+  return fd;
+};
+export function helper() {
+  return 1;
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/lib/templates/danger.ts:1  Server Action purge() не перевіряє вхід");
+    expect(out).not.toContain("safe()");
+    expect(out).not.toContain("helper()");
+  });
+
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {
     const { code, out } = project({
       "src/lib/supabase/viewer.ts": `// getSession() для авторизації не використовуємо
