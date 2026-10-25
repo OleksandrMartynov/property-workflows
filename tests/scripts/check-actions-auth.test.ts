@@ -4,7 +4,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { runScript } from "./run-script";
+import { spawnSync } from "node:child_process";
+import { repoRoot, runScript } from "./run-script";
 
 const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -273,6 +274,45 @@ export function helper() {
     expect(out).toContain("src/lib/templates/danger.ts:1  Server Action purge() не перевіряє вхід");
     expect(out).not.toContain("safe()");
     expect(out).not.toContain("helper()");
+  });
+
+  it("`/*` у рядковому коментарі не затирає код до наступного `*/` — дія без перевірки між ними знайдена", () => {
+    const { code, out } = project({
+      "src/app/(app)/runs/actions.ts": `"use server";
+// шлях: public/*
+export async function remove(fd: FormData) {
+  await createClient().from("runs").delete().eq("id", String(fd.get("id")));
+}
+/** doc */
+export async function list() {
+  return requireViewer();
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/app/(app)/runs/actions.ts:3  Server Action remove() не перевіряє вхід");
+  });
+
+  it("`//` усередині рядка не обрізає код після нього — перевірка в тому самому рядку видна", () => {
+    const { code, out } = project({
+      "src/app/(app)/runs/actions.ts": `"use server";
+export async function note(fd: FormData) { const sep = "a // b"; const { supabase } = await requireAdmin(); return supabase.from("runs").update({ note: sep + String(fd.get("n")) }); }
+`,
+    });
+    expect(out).toContain("OK");
+    expect(code).toBe(0);
+  });
+
+  it("без src/ чи без значення --root — код 2 і пояснення, а не «OK»", () => {
+    const empty = mkdtempSync(path.join(tmpdir(), "actions-auth-empty-"));
+    dirs.push(empty);
+    const noSrc = runScript("check-actions-auth.mjs", empty);
+    expect(noSrc.code).toBe(2);
+    expect(noSrc.out).toContain("немає src/");
+    expect(noSrc.out).not.toContain("OK");
+    const noValue = spawnSync(process.execPath, [path.join(repoRoot, "scripts", "check-actions-auth.mjs"), "--root"], { encoding: "utf8" });
+    expect(noValue.status).toBe(2);
+    expect(`${noValue.stdout}${noValue.stderr}`).toContain("після --root вкажіть теку проєкту");
   });
 
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {

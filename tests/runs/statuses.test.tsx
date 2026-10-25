@@ -24,6 +24,19 @@ describe("Статуси запуску", () => {
     expect(runStatusTone("in_progress")).toBe("progress");
     expect(runStatusTone("completed")).toBe("done");
   });
+
+  it("AC-DSYS-01: список запусків показує «in progress» синім і «completed» зеленим, зі словом статусу", () => {
+    const run = (id: string, status: string) => ({ id, case_name: `Case ${id}`, template_name: "Tenant move-in", status, run_manager_id: "m" });
+    const html = renderToStaticMarkup(
+      <RunsList runs={[run("r1", "in_progress"), run("r2", "completed")]} summary={{}} managerOf={() => "manager.a@example.test"} />,
+    );
+    const rows = html.split('data-testid="run-row"').slice(1);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toContain("bg-status-progress");
+    expect(rows[0]).toContain(">in progress<");
+    expect(rows[1]).toContain("bg-status-done");
+    expect(rows[1]).toContain(">completed<");
+  });
 });
 
 describe("Порожній список запусків", () => {

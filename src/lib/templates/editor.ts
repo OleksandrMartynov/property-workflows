@@ -20,8 +20,12 @@ export function formatSavedAt(iso: string): string {
   return `${parts.day}.${parts.month}.${parts.year} ${parts.hour}:${parts.minute}`;
 }
 
-/** Автор версії: email адміністратора; версія з початкових даних зрізу 1 автора не має (ADR 0006). */
-export const versionAuthor = (email: string | null | undefined) => email ?? "Initial data";
+/**
+ * Автор версії: email адміністратора. «Initial data» — лише версія без автора (початкові дані зрізу 1, ADR 0006); якщо
+ * автор є, а email у профілі порожній, показуємо його id, а не «Initial data».
+ */
+export const versionAuthor = (savedBy: string | null, email: string | null | undefined) =>
+  savedBy === null ? "Initial data" : (email ?? savedBy);
 
 export interface VersionRow {
   number: number;
@@ -36,12 +40,9 @@ export function versionList(rows: readonly VersionRow[], emailOf: ReadonlyMap<st
     .map((v) => ({
       label: `Version ${v.number}`,
       savedAt: formatSavedAt(v.saved_at),
-      author: versionAuthor(v.saved_by ? (emailOf.get(v.saved_by) ?? null) : null),
+      author: versionAuthor(v.saved_by, v.saved_by ? emailOf.get(v.saved_by) : null),
     }));
 }
-
-/** Наступна позиція в кінці списку. */
-export const nextPosition = (items: readonly { position: number }[]) => items.reduce((max, x) => Math.max(max, x.position), 0) + 1;
 
 /** Назва секції чи задачі: вільний текст без пробілів на краях, не порожній (довжину PM не обмежує). */
 export function cleanName(raw: FormDataEntryValue | null): string | null {

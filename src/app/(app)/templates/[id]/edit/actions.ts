@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { dbErrorCode } from "@/lib/runs/messages";
 import { requireAdmin } from "@/lib/supabase/viewer";
-import { cleanName, nextPosition } from "@/lib/templates/editor";
+import { cleanName } from "@/lib/templates/editor";
 
 // Дії редактора шаблону (зріз 2, задача 2): кожна — публічний POST-ендпойнт, тож першим кроком requireAdmin()
 // (getClaims() + роль admin із profiles) до будь-якого запису (AC-EDITOR-08, AC-DSYS-02). Запис — клієнтом
@@ -25,7 +25,11 @@ async function editorContext(formData: FormData) {
     revalidatePath("/templates");
     redirect(`${editPath}${query}`);
   };
-  const fail = (error: { message?: string } | null | undefined) => back(`?error=${dbErrorCode(error)}`);
+  // NOT_ALLOWED функції бази — та сама відмова, що й на сторінці: «Not enough rights».
+  const fail = (error: { message?: string } | null | undefined) => {
+    const code = dbErrorCode(error);
+    return back(`?error=${code === "NOT_ALLOWED" ? "NOT_ALLOWED_TEMPLATES" : code}`);
+  };
   return { supabase, viewer, templateId, back, fail };
 }
 
@@ -59,8 +63,8 @@ export async function addSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const name = cleanName(formData.get("name"));
   if (!name) return back("?error=NAME_REQUIRED");
-  const sections = await sectionsOf(supabase, templateId);
-  const { error } = await supabase.from("template_sections").insert({ template_id: templateId, name, position: nextPosition(sections) });
+  // Позицію в кінці рахує функція бази під блокуванням шаблону: паралельні додавання не дадуть однакову позицію.
+  const { error } = await supabase.rpc("add_template_section", { p_template_id: templateId, p_name: name });
   if (error) return fail(error);
   back();
 }
@@ -87,7 +91,7 @@ async function move(formData: FormData, kind: "section" | "task", idField: strin
     p_id: field(formData, idField),
     p_direction: field(formData, "direction") === "up" ? "up" : "down",
   });
-  if (error) return dbErrorCode(error) === "NOT_ALLOWED" ? back("?error=NOT_ALLOWED_TEMPLATES") : fail(error);
+  if (error) return fail(error);
   back();
 }
 
@@ -104,15 +108,14 @@ export async function removeSection(formData: FormData) {
 
 export async function addTask(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const sectionId = field(formData, "section_id");
   const name = cleanName(formData.get("name"));
   if (!name) return back("?error=NAME_REQUIRED");
-  if (!(await sectionsOf(supabase, templateId)).some((s) => s.id === sectionId)) return back("?error=DB_ERROR");
-  const { data: tasks, error: tasksError } = await supabase.from("template_tasks").select("position").eq("section_id", sectionId);
-  if (tasksError) return fail(tasksError);
-  const { error } = await supabase
-    .from("template_tasks")
-    .insert({ section_id: sectionId, name, required: formData.get("required") === "on", position: nextPosition(tasks ?? []) });
+  const { error } = await supabase.rpc("add_template_task", {
+    p_template_id: templateId,
+    p_section_id: field(formData, "section_id"),
+    p_name: name,
+    p_required: formData.get("required") === "on",
+  });
   if (error) return fail(error);
   back();
 }
@@ -142,13 +145,11 @@ export async function moveTask(formData: FormData) {
 
 export async function moveTaskToSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const task = await taskOfTemplate(supabase, templateId, field(formData, "task_id"));
-  const targetId = field(formData, "target_section_id");
-  if (!task || !(await sectionsOf(supabase, templateId)).some((s) => s.id === targetId)) return back("?error=DB_ERROR");
-  if (targetId === task.section_id) return back();
-  const { data: targetTasks, error: targetError } = await supabase.from("template_tasks").select("position").eq("section_id", targetId);
-  if (targetError) return fail(targetError);
-  const { error } = await supabase.from("template_tasks").update({ section_id: targetId, position: nextPosition(targetTasks ?? []) }).eq("id", task.id);
+  const { error } = await supabase.rpc("move_template_task_to_section", {
+    p_template_id: templateId,
+    p_task_id: field(formData, "task_id"),
+    p_section_id: field(formData, "target_section_id"),
+  });
   if (error) return fail(error);
   back();
 }
@@ -164,11 +165,8 @@ export async function removeTask(formData: FormData) {
 
 /** AC-EDITOR-03, AC-EDITOR-04: збереження версії — функцією бази (роль перевіряє й вона, AC-EDITOR-08). */
 export async function saveVersion(formData: FormData) {
-  const { supabase, templateId, back } = await editorContext(formData);
+  const { supabase, templateId, back, fail } = await editorContext(formData);
   const { data: number, error } = await supabase.rpc("save_template_version", { p_template_id: templateId });
-  if (error || !number) {
-    const code = dbErrorCode(error);
-    return back(`?error=${code === "NOT_ALLOWED" ? "NOT_ALLOWED_TEMPLATES" : code}`);
-  }
+  if (error || !number) return fail(error);
   back(`?saved=${number}`);
 }

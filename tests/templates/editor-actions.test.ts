@@ -88,10 +88,17 @@ describe("Дії редактора: менеджер напряму", () => {
     expect(touched).toEqual(["read profiles"]);
   });
 
-  it("AC-EDITOR-01: адміністратор додає задачу — запис іде (зміна зберігається одразу)", async () => {
+  it("AC-EDITOR-01: адміністратор додає задачу — запис іде функцією бази (позиція в кінці атомарно), зміна зберігається одразу", async () => {
     role = "admin";
-    expect(await run(actions.addTask(form({ section_id: SECTION, name: "Sign handover act" })))).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit`);
-    expect(touched).toContain("insert template_tasks");
+    expect(await run(actions.addTask(form({ section_id: SECTION, name: " Sign handover act ", required: "on" })))).toBe(
+      `NEXT_REDIRECT /templates/${TEMPLATE}/edit`,
+    );
+    expect(rpc).toHaveBeenCalledWith("add_template_task", {
+      p_template_id: TEMPLATE,
+      p_section_id: SECTION,
+      p_name: "Sign handover act",
+      p_required: true,
+    });
   });
 
   it("AC-EDITOR-03: адміністратор зберігає версію — функція бази, повідомлення «Version 2 saved»", async () => {

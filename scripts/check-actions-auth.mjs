@@ -11,7 +11,7 @@
 // 2) жодного getSession() у коді src/ (коментарі не рахуються) — він не перевіряє підпис JWT;
 // 3) жодного middleware.ts — у Next.js 16 сесію оновлює src/proxy.ts.
 // Роль і дані захищають ще RLS і функції бази; правило ловить дію, яка забула перевірку (як-от нова дія редактора).
-// Використання: node scripts/check-actions-auth.mjs [--root <dir>]. Код виходу: 0 — OK, 1 — є порушення.
+// Використання: node scripts/check-actions-auth.mjs [--root <dir>]. Код виходу: 0 — OK, 1 — є порушення, 2 — немає src/.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join, relative, sep } from "node:path";
@@ -19,6 +19,15 @@ import { basename, join, relative, sep } from "node:path";
 const args = process.argv.slice(2);
 const rootIdx = args.indexOf("--root");
 const root = rootIdx >= 0 ? args[rootIdx + 1] : process.cwd();
+if (!root) {
+  console.error("check-actions-auth: після --root вкажіть теку проєкту.");
+  process.exit(2);
+}
+if (!existsSync(join(root, "src"))) {
+  // Без src/ перевіряти нічого — це помилка виклику, а не «порушень немає»: інакше хибний --root вимкнув би правило.
+  console.error(`check-actions-auth: у ${root} немає src/ — вкажіть --root <корінь проєкту>.`);
+  process.exit(2);
+}
 
 // Дії, які сесію створюють чи завершують: перевіряти ще нічого (signInWithPassword / signOut самі є перевіркою).
 const SESSION_ACTIONS = new Map([["src/app/login/actions.ts", new Set(["login", "signOut"])]]);
@@ -37,9 +46,15 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** Код без коментарів (// і /* … *\/), з тими самими номерами рядків. */
+/**
+ * Код без коментарів (// і /* … *\/), з тими самими номерами рядків. Один прохід зліва направо: рядкові літерали
+ * лишаються як є (`"a // b"`, `"public/*"`), коментарі стають пробілами — `/*` у рядковому коментарі нічого не затирає.
+ */
 const stripComments = (text) =>
-  text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")).replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
+  text.replace(
+    /("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,
+    (m, str) => str ?? m.replace(/[^\n]/g, " "),
+  );
 
 /** Індекс дужки, що закриває відкриту в `i` (`(`, `{` чи `[`). */
 function matchClose(code, i) {

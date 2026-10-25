@@ -182,6 +182,60 @@ describe("База: переміщення секцій і задач (move_temp
   });
 });
 
+describe("База: додавання секції й задачі та перенесення задачі (функції редактора)", () => {
+  const positions = (sql: string, id: string) => t.asService<{ name: string; position: number }>(sql, [id]);
+  const sectionsOf = (id: string) => positions("select name, position from public.template_sections where template_id = $1 order by position", id);
+  const tasksOf = (id: string) => positions("select name, position from public.template_tasks where section_id = $1 order by position", id);
+
+  it("AC-EDITOR-01: нова секція й задача стають у кінець (позицію рахує база), «Unpublished changes»", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (add)");
+    await t.asUser(ADMIN, "select public.add_template_section($1, '  After move-in ')", [tpl.id]);
+    await t.asUser(ADMIN, "select public.add_template_task($1, $2, 'Sign handover act', true)", [tpl.id, tpl.sections[1]]);
+    expect(await sectionsOf(tpl.id)).toEqual([
+      { name: "Before move-in", position: 1 },
+      { name: "Move-in day", position: 2 },
+      { name: "After move-in", position: 3 },
+    ]);
+    expect((await tasksOf(tpl.sections[1])).at(-1)).toEqual({ name: "Sign handover act", position: 3 });
+    expect((await state(tpl.id)).has_unpublished_changes).toBe(true);
+  });
+
+  it("AC-EDITOR-01: задачу перенесено в іншу секцію шаблону — у кінець цільової секції", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (task to section)");
+    await t.asUser(ADMIN, "select public.move_template_task_to_section($1, $2, $3)", [tpl.id, tpl.tasks[2], tpl.sections[1]]);
+    expect(await tasksOf(tpl.sections[1])).toEqual([
+      { name: "Hand over the keys", position: 1 },
+      { name: "Record meter readings", position: 2 },
+      { name: "Order cleaning", position: 3 },
+    ]);
+  });
+
+  it("AC-EDITOR-01: секція чи задача іншого шаблону й порожня назва — помилка без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (add guard)");
+    const other = await tenantMoveInV1("Tenant move-in (add other)");
+    expect(await errorOf(t.asUser(ADMIN, "select public.add_template_task($1, $2, 'x', false)", [tpl.id, other.sections[0]]))).toContain("DB_ERROR");
+    expect(await errorOf(t.asUser(ADMIN, "select public.move_template_task_to_section($1, $2, $3)", [tpl.id, tpl.tasks[0], other.sections[0]]))).toContain(
+      "DB_ERROR",
+    );
+    expect(await errorOf(t.asUser(ADMIN, "select public.add_template_section($1, '   ')", [tpl.id]))).toContain("NAME_REQUIRED");
+    expect(await state(tpl.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+    expect(await state(other.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+  });
+
+  it("AC-EDITOR-08: менеджер напряму додає секцію чи задачу або переносить задачу — NOT_ALLOWED, шаблон без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (add by manager)");
+    for (const [sql, params] of [
+      ["select public.add_template_section($1, 'x')", [tpl.id]],
+      ["select public.add_template_task($1, $2, 'x', true)", [tpl.id, tpl.sections[0]]],
+      ["select public.move_template_task_to_section($1, $2, $3)", [tpl.id, tpl.tasks[0], tpl.sections[1]]],
+    ] as const) {
+      expect(await errorOf(t.asUser(MANAGER_A, sql, [...params]))).toContain("NOT_ALLOWED");
+    }
+    expect(await state(tpl.id)).toMatchObject({ has_unpublished_changes: false, draft_tasks: 5 });
+    expect(await sectionsOf(tpl.id)).toHaveLength(2);
+  });
+});
+
 describe("База: менеджер бачить лише поточну версію", () => {
   it("AC-EDITOR-02: незбережену назву шаблону менеджер не читає — лише опубліковану назву поточної версії", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (published name)");

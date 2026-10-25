@@ -253,6 +253,14 @@ export type Database = {
       };
     };
     Functions: {
+      add_template_section: {
+        Args: { p_name: string; p_template_id: string };
+        Returns: string;
+      };
+      add_template_task: {
+        Args: { p_name: string; p_required: boolean; p_section_id: string; p_template_id: string };
+        Returns: string;
+      };
       complete_task: {
         Args: { p_task_id: string; p_confirmed?: boolean };
         Returns: { task_status: string; run_status: string }[];
@@ -271,6 +279,10 @@ export type Database = {
       };
       move_template_item: {
         Args: { p_direction: string; p_id: string; p_kind: string; p_template_id: string };
+        Returns: undefined;
+      };
+      move_template_task_to_section: {
+        Args: { p_section_id: string; p_task_id: string; p_template_id: string };
         Returns: undefined;
       };
       save_template_version: {
