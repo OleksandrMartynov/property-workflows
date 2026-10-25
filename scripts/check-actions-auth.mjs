@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Архітектурне правило «кожна Server Action перевіряє, хто її викликає» (ADR 0006, AGENTS.md «Межі»).
 // Server Action — публічний POST-ендпойнт: її викликають напряму, оминаючи сторінку й сховану кнопку. Тому:
-// 1) кожна дія — експорт у src/app/**/actions.ts і у файлах з "use server" (`export async function`, `export const x =
+// 1) кожна дія — експорт у src/app/**/actions.ts і у файлах з "use server" будь-де в src/ (`export async function`, `export const x =
 //    async (…) => …`, `export default async function`, `export { local as name }`) — викликає getClaims() — прямо,
 //    через requireViewer() / requireAdmin() з src/lib/supabase/viewer.ts або через локальну функцію того самого файлу,
-//    яка сама їх викликає (наприклад, editorContext() редактора шаблону);
+//    яка сама їх викликає (наприклад, editorContext() редактора шаблону), — і ДО першого запису (insert, update,
+//    upsert, delete, rpc);
 //    виняток — дії, що сесію створюють чи завершують (вхід і вихід, src/app/login/actions.ts). Експорт, тіла якого
 //    правило не бачить (re-export з іншого модуля, не async-функція у файлі з "use server"), — теж порушення;
 // 2) жодного getSession() у коді src/ (коментарі не рахуються) — він не перевіряє підпис JWT;
@@ -117,6 +118,20 @@ function declarations(code) {
   return out;
 }
 
+// Запис у базу: insert / update / upsert / delete чи функція бази (rpc).
+const WRITE = /\.(insert|update|upsert|delete|rpc)\s*\(/;
+
+/** "ok" — перевірка входу є і стоїть до першого запису, "late" — запис раніше за перевірку, "none" — перевірки немає. */
+function authOrder(body, patterns) {
+  const at = (re) => {
+    const m = new RegExp(re.source).exec(body);
+    return m ? m.index : Infinity;
+  };
+  const auth = Math.min(...patterns.map(at));
+  if (auth === Infinity) return "none";
+  return at(WRITE) < auth ? "late" : "ok";
+}
+
 const problems = [];
 const posix = (p) => p.split(sep).join("/");
 const lineOf = (code, index) => code.slice(0, index).split("\n").length;
@@ -132,15 +147,26 @@ for (const file of walk(join(root, "src"))) {
 
   // 1) Кожна Server Action перевіряє виклик.
   const useServer = /^\s*["']use server["']/m.test(code);
-  const isActions = basename(file) === "actions.ts" || useServer;
-  if (!rel.startsWith("src/app/") || !isActions) continue;
+  // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
+  if (!useServer && !(rel.startsWith("src/app/") && basename(file) === "actions.ts")) continue;
   const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
   const decls = declarations(code);
   // Локальні (не експортовані) функції файлу, які самі перевіряють вхід: виклик такої функції — теж перевірка.
-  const guards = decls.filter((d) => !d.exported && d.fn && AUTH_CALL.test(d.body)).map((d) => d.name);
-  const guarded = guards.length ? new RegExp(`\\b(${guards.join("|")})\\s*\\(`) : null;
-  const checks = (body) => AUTH_CALL.test(body) || Boolean(guarded && guarded.test(body));
+  // Транзитивно: move() → editorContext() → requireAdmin() — теж перевірка.
+  const guards = new Set();
+  const guardRe = () => (guards.size ? new RegExp(`\\b(${[...guards].join("|")})\\s*\\(`) : null);
+  const checks = (body) => authOrder(body, [AUTH_CALL, guardRe()].filter(Boolean));
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const d of decls) {
+      if (!d.exported && d.fn && !guards.has(d.name) && checks(d.body) === "ok") {
+        guards.add(d.name);
+        grew = true;
+      }
+    }
+  }
   const fail = (index, name, why) => problems.push(`${rel}:${lineOf(code, index)}  Server Action ${name}() ${why}`);
+  const WRITE_FIRST = "пише до перевірки входу: getClaims() / requireViewer() / requireAdmin() — першим кроком, до будь-якого запису";
   const NO_AUTH = "не перевіряє вхід: getClaims() прямо або через requireViewer() / requireAdmin() — першим кроком, до будь-якого запису";
 
   /** Перевірка однієї дії (експортованої функції) файлу. */
@@ -151,7 +177,9 @@ for (const file of walk(join(root, "src"))) {
       if (useServer) fail(index, exportedAs, "— не async-функція: правило не може перевірити такий експорт");
       return;
     }
-    if (!checks(decl.body)) fail(index, exportedAs, NO_AUTH);
+    const order = checks(decl.body);
+    if (order === "none") fail(index, exportedAs, NO_AUTH);
+    else if (order === "late") fail(index, exportedAs, WRITE_FIRST);
   };
 
   for (const d of decls.filter((x) => x.exported)) verify(d, d.isDefault && d.name === "default" ? "default" : d.name, d.index);

@@ -269,6 +269,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; name: string; current_version: number | null; has_unpublished_changes: boolean }[];
       };
+      move_template_item: {
+        Args: { p_direction: string; p_id: string; p_kind: string; p_template_id: string };
+        Returns: undefined;
+      };
       save_template_version: {
         Args: { p_template_id: string };
         Returns: number;

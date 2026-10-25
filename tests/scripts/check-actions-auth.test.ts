@@ -153,6 +153,53 @@ export type Result = { ok: boolean };
     expect(out).not.toContain("Result");
   });
 
+  it("ловить запис до перевірки входу — прямо й через локальний хелпер; транзитивна перевірка (move → editorContext) — OK", () => {
+    const { code, out } = project({
+      "src/app/(app)/templates/[id]/edit/actions.ts": `"use server";
+async function editorContext(fd: FormData) {
+  const { supabase } = await requireAdmin();
+  return { supabase, id: String(fd.get("template_id")) };
+}
+async function move(fd: FormData, kind: string) {
+  const { supabase, id } = await editorContext(fd);
+  return supabase.rpc("move_template_item", { p_template_id: id, p_kind: kind });
+}
+async function writeThenCheck(fd: FormData) {
+  await createClient().from("templates").insert({ name: String(fd.get("name")) });
+  return editorContext(fd);
+}
+export async function moveSection(fd: FormData) {
+  return move(fd, "section");
+}
+export async function createTemplate(fd: FormData) {
+  await createClient().from("templates").insert({ name: String(fd.get("name")) });
+  await requireAdmin();
+}
+export async function viaLateHelper(fd: FormData) {
+  return writeThenCheck(fd);
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("createTemplate() пише до перевірки входу");
+    expect(out).toContain("viaLateHelper() не перевіряє вхід");
+    expect(out).not.toContain("moveSection()");
+  });
+
+  it("перевіряє файл з \"use server\" і поза src/app (src/lib), але не звичайний модуль src/lib", () => {
+    const { code, out } = project({
+      "src/lib/operations.ts": `"use server";
+export async function update(fd: FormData) {
+  await createClient().from("templates").update({ name: String(fd.get("name")) });
+}
+`,
+      "src/lib/templates/actions.ts": "export async function helper() { return 1; }\n",
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("src/lib/operations.ts:2  Server Action update() не перевіряє вхід");
+    expect(out).not.toContain("helper()");
+  });
+
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {
     const { code, out } = project({
       "src/lib/supabase/viewer.ts": `// getSession() для авторизації не використовуємо

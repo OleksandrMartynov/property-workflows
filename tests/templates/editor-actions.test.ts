@@ -71,6 +71,7 @@ describe("Дії редактора: менеджер напряму", () => {
       ["addTask", { section_id: SECTION, name: "Sign handover act" }],
       ["renameTemplate", { name: "x" }],
       ["removeTask", { task_id: "30000000-0000-0000-0000-000000000111" }],
+      ["moveSection", { section_id: SECTION, direction: "up" }],
       ["saveVersion", {}],
     ] as const) {
       const result = await run((actions as Record<string, (fd: FormData) => Promise<void>>)[name](form(fields)));

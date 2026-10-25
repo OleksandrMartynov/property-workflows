@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { dbErrorCode } from "@/lib/runs/messages";
 import { requireAdmin } from "@/lib/supabase/viewer";
-import { cleanName, nextPosition, swapWithNeighbour } from "@/lib/templates/editor";
+import { cleanName, nextPosition } from "@/lib/templates/editor";
 
 // Дії редактора шаблону (зріз 2, задача 2): кожна — публічний POST-ендпойнт, тож першим кроком requireAdmin()
 // (getClaims() + роль admin із profiles) до будь-якого запису (AC-EDITOR-08, AC-DSYS-02). Запис — клієнтом
@@ -78,14 +78,21 @@ export async function renameSection(formData: FormData) {
   back();
 }
 
-export async function moveSection(formData: FormData) {
+/** Вгору чи вниз: обмін позицій із сусідом — функцією бази, в одній транзакції (роль admin перевіряє й вона). */
+async function move(formData: FormData, kind: "section" | "task", idField: string) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const moves = swapWithNeighbour(await sectionsOf(supabase, templateId), field(formData, "section_id"), field(formData, "direction") === "up" ? "up" : "down");
-  for (const m of moves) {
-    const { error } = await supabase.from("template_sections").update({ position: m.position }).eq("id", m.id).eq("template_id", templateId);
-    if (error) return fail(error);
-  }
+  const { error } = await supabase.rpc("move_template_item", {
+    p_template_id: templateId,
+    p_kind: kind,
+    p_id: field(formData, idField),
+    p_direction: field(formData, "direction") === "up" ? "up" : "down",
+  });
+  if (error) return dbErrorCode(error) === "NOT_ALLOWED" ? back("?error=NOT_ALLOWED_TEMPLATES") : fail(error);
   back();
+}
+
+export async function moveSection(formData: FormData) {
+  return move(formData, "section", "section_id");
 }
 
 export async function removeSection(formData: FormData) {
@@ -130,19 +137,9 @@ export async function updateTask(formData: FormData) {
 }
 
 export async function moveTask(formData: FormData) {
-  const { supabase, templateId, back, fail } = await editorContext(formData);
-  const task = await taskOfTemplate(supabase, templateId, field(formData, "task_id"));
-  if (!task) return back("?error=DB_ERROR");
-  const { data: siblings, error: siblingsError } = await supabase.from("template_tasks").select("id, position").eq("section_id", task.section_id);
-  if (siblingsError) return fail(siblingsError);
-  for (const m of swapWithNeighbour(siblings ?? [], task.id, field(formData, "direction") === "up" ? "up" : "down")) {
-    const { error } = await supabase.from("template_tasks").update({ position: m.position }).eq("id", m.id);
-    if (error) return fail(error);
-  }
-  back();
+  return move(formData, "task", "task_id");
 }
 
-/** Перенесення задачі в іншу секцію того самого шаблону — у кінець (робоче припущення QB). */
 export async function moveTaskToSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const task = await taskOfTemplate(supabase, templateId, field(formData, "task_id"));

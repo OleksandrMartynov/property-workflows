@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanName, formatSavedAt, nextPosition, swapWithNeighbour, versionList } from "@/lib/templates/editor";
+import { cleanName, formatSavedAt, nextPosition, versionList } from "@/lib/templates/editor";
 
 describe("Список версій", () => {
   it("AC-EDITOR-05: версія 2 (12.10.2026 14:05, адміністратор C) першою, версія 1 (05.10.2026 09:30, адміністратор A) другою", () => {
@@ -38,13 +38,7 @@ describe("Редактор: порядок і назви", () => {
     { id: "c", position: 3 },
   ];
 
-  it("AC-EDITOR-01: переміщення вгору міняє задачу місцями із сусідньою; на краю нічого не змінює", () => {
-    expect(swapWithNeighbour(items, "b", "up")).toEqual([
-      { id: "b", position: 1 },
-      { id: "a", position: 2 },
-    ]);
-    expect(swapWithNeighbour(items, "a", "up")).toEqual([]);
-    expect(swapWithNeighbour(items, "c", "down")).toEqual([]);
+  it("AC-EDITOR-01: нова секція чи задача стає в кінець списку (обмін позицій — функція бази, tests/db)", () => {
     expect(nextPosition(items)).toBe(4);
     expect(nextPosition([])).toBe(1);
   });

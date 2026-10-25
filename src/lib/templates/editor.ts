@@ -40,26 +40,6 @@ export function versionList(rows: readonly VersionRow[], emailOf: ReadonlyMap<st
     }));
 }
 
-export interface Positioned {
-  id: string;
-  position: number;
-}
-
-/**
- * Переміщення вгору чи вниз: нові позиції двох сусідів (обмін місцями). На краю — порожньо, нічого не змінюємо.
- * Порядок секцій і задач — частина версії (AC-RUN-12, AC-TASK-12).
- */
-export function swapWithNeighbour(items: readonly Positioned[], id: string, direction: "up" | "down"): Positioned[] {
-  const ordered = [...items].sort((a, b) => a.position - b.position);
-  const i = ordered.findIndex((x) => x.id === id);
-  const j = direction === "up" ? i - 1 : i + 1;
-  if (i < 0 || j < 0 || j >= ordered.length) return [];
-  return [
-    { id: ordered[i].id, position: ordered[j].position },
-    { id: ordered[j].id, position: ordered[i].position },
-  ];
-}
-
 /** Наступна позиція в кінці списку. */
 export const nextPosition = (items: readonly { position: number }[]) => items.reduce((max, x) => Math.max(max, x.position), 0) + 1;
 

@@ -144,6 +144,44 @@ describe("База: незбережені зміни шаблону", () => {
   });
 });
 
+describe("База: переміщення секцій і задач (move_template_item)", () => {
+  const order = (sql: string, id: string) => t.asService<{ name: string; position: number }>(sql, [id]);
+  const sectionsOf = (templateId: string) =>
+    order("select name, position from public.template_sections where template_id = $1 order by position", templateId);
+  const tasksOf = (sectionId: string) => order("select name, position from public.template_tasks where section_id = $1 order by position", sectionId);
+  const move = (by: string, templateId: string, kind: string, id: string, direction: string) =>
+    t.asUser(by, "select public.move_template_item($1, $2, $3, $4)", [templateId, kind, id, direction]);
+
+  it("AC-EDITOR-01: секцію й задачу переміщено вгору — обмін із сусідом одним update, позиції різні, «Unpublished changes»", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (move)");
+    await move(ADMIN, tpl.id, "section", tpl.sections[1], "up");
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Move-in day", "Before move-in"]);
+    await move(ADMIN, tpl.id, "task", tpl.tasks[1], "up");
+    const tasks = await tasksOf(tpl.sections[0]);
+    expect(tasks.map((x) => x.name)).toEqual(["Inspect the apartment", "Sign the lease agreement", "Order cleaning"]);
+    expect(new Set(tasks.map((x) => x.position)).size).toBe(3);
+    expect((await state(tpl.id)).has_unpublished_changes).toBe(true);
+  });
+
+  it("AC-EDITOR-01: на краю списку переміщення нічого не змінює; чужий шаблон — помилка без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (move edge)");
+    const other = await tenantMoveInV1("Tenant move-in (move other)");
+    await move(ADMIN, tpl.id, "section", tpl.sections[0], "up");
+    await move(ADMIN, tpl.id, "task", tpl.tasks[4], "down");
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Before move-in", "Move-in day"]);
+    expect((await state(tpl.id)).has_unpublished_changes).toBe(false);
+    expect(await errorOf(move(ADMIN, other.id, "task", tpl.tasks[1], "up"))).toContain("DB_ERROR");
+    expect((await tasksOf(tpl.sections[0])).map((x) => x.name)[0]).toBe("Sign the lease agreement");
+  });
+
+  it("AC-EDITOR-08: менеджер викликає переміщення напряму — NOT_ALLOWED, порядок без змін", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (move by manager)");
+    expect(await errorOf(move(MANAGER_A, tpl.id, "section", tpl.sections[1], "up"))).toContain("NOT_ALLOWED");
+    expect((await sectionsOf(tpl.id)).map((s) => s.name)).toEqual(["Before move-in", "Move-in day"]);
+    expect((await state(tpl.id)).has_unpublished_changes).toBe(false);
+  });
+});
+
 describe("База: менеджер бачить лише поточну версію", () => {
   it("AC-EDITOR-02: незбережену назву шаблону менеджер не читає — лише опубліковану назву поточної версії", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (published name)");
