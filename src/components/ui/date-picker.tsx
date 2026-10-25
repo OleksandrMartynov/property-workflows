@@ -115,7 +115,8 @@ function Calendar({ mode, months = 1, today, min, max, value = "", onSelect, sta
 
   const choose = (key: string) => {
     if (outOfRange(key, min, max)) return;
-    setFocusDate(key);
+    // День сусіднього місяця: moveFocus перегортає вид, щоб вибрана дата була в сітці й мала tabIndex=0.
+    moveFocus(key);
     if (mode === "single") {
       setPopped(key);
       setLive(formatLong(key));
@@ -582,6 +583,7 @@ export function DateRangePicker({
   showTimezone,
   size = "md",
   disabled,
+  readOnly,
   required,
   className,
   ...aria
@@ -614,12 +616,17 @@ export function DateRangePicker({
   const commit = (which: "start" | "end") => {
     const field = which === "start" ? startText : endText;
     const parsed = parseDateInput(field.text, today ?? todayKey());
+    // Хибний ввід скидає цей кінець діапазону, як DatePicker.commitText: у прихованих полях не лишається старе значення.
     if (parsed === null) {
       flag("format");
+      field.markSeen("");
+      setRange({ ...range, [which]: "" });
       return;
     }
     if (parsed && outOfRange(parsed, min, max)) {
       flag("range");
+      field.markSeen("");
+      setRange({ ...range, [which]: "" });
       return;
     }
     if (parsed === range[which] && !problem) {
@@ -640,7 +647,7 @@ export function DateRangePicker({
     if (event.key === "Enter") commit(which);
     else if (event.key === "ArrowDown" && event.altKey) {
       event.preventDefault();
-      if (!disabled) setOpen(true);
+      if (!disabled && !readOnly) setOpen(true);
     }
   };
 
@@ -668,6 +675,7 @@ export function DateRangePicker({
           aria-describedby={aria["aria-describedby"]}
           placeholder={startPlaceholder}
           disabled={disabled}
+          readOnly={readOnly}
           value={startText.text}
           onChange={(event) => startText.setText(event.target.value)}
           onBlur={() => commit("start")}
@@ -682,10 +690,12 @@ export function DateRangePicker({
           type="text"
           autoComplete="off"
           aria-label="End date"
+          aria-required={required || undefined}
           aria-invalid={invalid || undefined}
           aria-describedby={aria["aria-describedby"]}
           placeholder={endPlaceholder}
           disabled={disabled}
+          readOnly={readOnly}
           value={endText.text}
           onChange={(event) => endText.setText(event.target.value)}
           onBlur={() => commit("end")}
@@ -699,7 +709,7 @@ export function DateRangePicker({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls={open ? popId : undefined}
-          disabled={disabled}
+          disabled={disabled || readOnly}
           onClick={() => (open ? close(false) : setOpen(true))}
         >
           <CalendarGlyph />
