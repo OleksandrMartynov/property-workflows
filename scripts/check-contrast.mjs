@@ -97,6 +97,12 @@ const PAIRS = [
   ["status-done-mark", "background", 3, "Іконка «done»"],
   ["status-overdue-mark", "background", 3, "Іконка «overdue»"],
   ["status-progress-mark", "background", 3, "Іконка «in progress»"],
+  ["status-todo-mark", "background", 3, "Іконка «to do» (StatusIcon, TaskCheck)"],
+  ["status-due-soon-mark", "background", 3, "Іконка «due soon»"],
+  ["ai-mark", "background", 3, "Кінець смуги навігації, позначка AI"],
+  ["variable-mark", "background", 3, "Позначка змінної"],
+  ["accent-foreground", "accent", 4.5, "Підсвічений пункт меню й списку"],
+  ["sidebar-primary-foreground", "sidebar-primary", 4.5, "Активний пункт сайдбара"],
 ];
 
 const rows = [];

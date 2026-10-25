@@ -80,6 +80,12 @@
 | `status-done-mark` → `background` | Іконка «done» | ≥ 3:1 | 3.33:1 | 8.68:1 |
 | `status-overdue-mark` → `background` | Іконка «overdue» | ≥ 3:1 | 3.89:1 | 7.68:1 |
 | `status-progress-mark` → `background` | Іконка «in progress» | ≥ 3:1 | 3.62:1 | 8.08:1 |
+| `status-todo-mark` → `background` | Іконка «to do» (StatusIcon, TaskCheck) | ≥ 3:1 | 3.55:1 | 8.18:1 |
+| `status-due-soon-mark` → `background` | Іконка «due soon» | ≥ 3:1 | 3.63:1 | 8.02:1 |
+| `ai-mark` → `background` | Кінець смуги навігації, позначка AI | ≥ 3:1 | 5.24:1 | 7.62:1 |
+| `variable-mark` → `background` | Позначка змінної | ≥ 3:1 | 3.67:1 | 8.58:1 |
+| `accent-foreground` → `accent` | Підсвічений пункт меню й списку | ≥ 4.5:1 | 15.41:1 | 14.01:1 |
+| `sidebar-primary-foreground` → `sidebar-primary` | Активний пункт сайдбара | ≥ 4.5:1 | 5.88:1 | 7.77:1 |
 
 `prefers-contrast: more` темнить `muted-foreground` і `border`, робить кільце фокусу 3 px і скло суцільним; `forced-colors` переходить на системну палітру.
 
