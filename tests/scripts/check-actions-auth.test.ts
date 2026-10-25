@@ -224,6 +224,35 @@ export default function Page() {
     expect(code).toBe(0);
   });
 
+  it("ловить вбудовану дію сторінки (\"use server\" у тілі) без перевірки входу — стрілку й function", () => {
+    const { code, out } = project({
+      "src/app/(app)/templates/page.tsx": `export const metadata = { title: "Templates" };
+export default function Page() {
+  async function removeAll(fd: FormData) {
+    "use server";
+    await createClient().from("templates").delete().eq("id", String(fd.get("id")));
+  }
+  const rename = async (fd: FormData) => {
+    "use server";
+    await createClient().from("templates").update({ name: String(fd.get("name")) });
+  };
+  async function guarded(fd: FormData) {
+    "use server";
+    const { supabase } = await requireAdmin();
+    await supabase.from("templates").update({ name: String(fd.get("name")) });
+  }
+  return [removeAll, rename, guarded];
+}
+`,
+    });
+    expect(code).toBe(1);
+    expect(out).toContain("page.tsx:3  Server Action removeAll() не перевіряє вхід");
+    expect(out).toContain("page.tsx:7  Server Action rename() не перевіряє вхід");
+    expect(out).not.toContain("guarded()");
+    expect(out).not.toContain("metadata");
+    expect(out).not.toContain("Page()");
+  });
+
   it("ловить getSession() у коді (але не в коментарі) і middleware.ts", () => {
     const { code, out } = project({
       "src/lib/supabase/viewer.ts": `// getSession() для авторизації не використовуємо

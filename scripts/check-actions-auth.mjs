@@ -5,7 +5,7 @@
 //    async (…) => …`, `export default async function`, `export { local as name }`) — викликає getClaims() — прямо,
 //    через requireViewer() / requireAdmin() з src/lib/supabase/viewer.ts або через локальну функцію того самого файлу,
 //    яка сама їх викликає (наприклад, editorContext() редактора шаблону), — і ДО першого запису (insert, update,
-//    upsert, delete, rpc);
+//    upsert, delete, rpc). Так само — вбудована дія: функція з "use server" на початку тіла (у page.tsx тощо);
 //    виняток — дії, що сесію створюють чи завершують (вхід і вихід, src/app/login/actions.ts). Експорт, тіла якого
 //    правило не бачить (re-export з іншого модуля, не async-функція у файлі з "use server"), — теж порушення;
 // 2) жодного getSession() у коді src/ (коментарі не рахуються) — він не перевіряє підпис JWT;
@@ -150,10 +150,13 @@ for (const file of walk(join(root, "src"))) {
   // Директива модуля — лише на початку файлу (коментарі вже замінено пробілами); "use server" у тілі функції — вбудована
   // дія сторінки, а не модуль дій.
   const useServer = /^\s*["']use server["']/.test(code);
-  // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
-  if (!useServer && !(rel.startsWith("src/app/") && basename(file) === "actions.ts")) continue;
-  const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
   const decls = declarations(code);
+  // Вбудована дія: функція, чиє тіло починається з "use server" (наприклад, усередині page.tsx), — теж публічний POST.
+  const inlineActions = decls.filter((d) => d.fn && !d.exported && /^\{\s*["']use server["']/.test(d.body));
+  // Файл з "use server" — будь-де в src/ (його експорти — дії, щойно клієнт їх імпортує); actions.ts — у src/app/.
+  const actionsModule = useServer || (rel.startsWith("src/app/") && basename(file) === "actions.ts");
+  if (!actionsModule && inlineActions.length === 0) continue;
+  const allowed = SESSION_ACTIONS.get(rel) ?? new Set();
   // Локальні (не експортовані) функції файлу, які самі перевіряють вхід: виклик такої функції — теж перевірка.
   // Транзитивно: move() → editorContext() → requireAdmin() — теж перевірка.
   const guards = new Set();
@@ -185,6 +188,8 @@ for (const file of walk(join(root, "src"))) {
     else if (order === "late") fail(index, exportedAs, WRITE_FIRST);
   };
 
+  for (const d of inlineActions) verify(d, d.name, d.index);
+  if (!actionsModule) continue; // у звичайному модулі (сторінка) експорти — не дії
   for (const d of decls.filter((x) => x.exported)) verify(d, d.isDefault && d.name === "default" ? "default" : d.name, d.index);
 
   // export { a, b as c } — розгортаємо до оголошень цього файлу; export … from — тіла не видно.
