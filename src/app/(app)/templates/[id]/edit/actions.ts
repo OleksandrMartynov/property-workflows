@@ -37,7 +37,9 @@ async function editorContext(formData: FormData) {
 export async function createTemplate(formData: FormData) {
   const { supabase } = await requireAdmin("/templates/new");
   const name = cleanName(formData.get("name"));
-  if (!name) redirect("/templates/new?error=NAME_REQUIRED");
+  // AC-EDITOR-19: порожня назва чи лише з пробілів — шаблон не створено. AC-EDITOR-23: збіг з назвою іншого шаблону
+  // (без регістру й пробілів на краях) відхиляє база тригером створення (TEMPLATE_NAME_TAKEN, ADR 0007).
+  if (!name) redirect("/templates/new?error=TEMPLATE_NAME_REQUIRED");
   const { data, error } = await supabase.from("templates").insert({ name }).select("id").single();
   if (error || !data) redirect(`/templates/new?error=${dbErrorCode(error)}`);
   revalidatePath("/templates");
@@ -46,8 +48,9 @@ export async function createTemplate(formData: FormData) {
 
 export async function renameTemplate(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const name = cleanName(formData.get("name"));
-  if (!name) return back("?error=NAME_REQUIRED");
+  // AC-EDITOR-20, AC-EDITOR-24: стерта чи збігна з чужою назва лишається в незбережених змінах; відмову дає збереження
+  // версії (save_template_version), а не перейменування (ADR 0007).
+  const name = cleanName(formData.get("name")) ?? "";
   const { error } = await supabase.from("templates").update({ name }).eq("id", templateId);
   if (error) return fail(error);
   back();
@@ -65,8 +68,8 @@ export async function addSection(formData: FormData) {
 
 export async function renameSection(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const name = cleanName(formData.get("name"));
-  if (!name) return back("?error=NAME_REQUIRED");
+  // AC-EDITOR-20: стерта назва секції лишається в незбережених змін; відмову дає збереження версії.
+  const name = cleanName(formData.get("name")) ?? "";
   const { error } = await supabase.rpc("rename_template_section", {
     p_template_id: templateId,
     p_section_id: field(formData, "section_id"),
@@ -117,8 +120,8 @@ export async function addTask(formData: FormData) {
 /** Задача цього шаблону: id з форми перевіряє функція бази (через секції шаблону). */
 export async function updateTask(formData: FormData) {
   const { supabase, templateId, back, fail } = await editorContext(formData);
-  const name = cleanName(formData.get("name"));
-  if (!name) return back("?error=NAME_REQUIRED");
+  // AC-EDITOR-20: стерта назва задачі лишається в незбережених змін; відмову дає збереження версії.
+  const name = cleanName(formData.get("name")) ?? "";
   const { error } = await supabase.rpc("update_template_task", {
     p_template_id: templateId,
     p_task_id: field(formData, "task_id"),

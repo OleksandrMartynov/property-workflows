@@ -25,11 +25,11 @@
 
 ## 3. Правила назв
 
-- [ ] 3.1 Міграція: унікальність назви шаблону без урахування регістру й пробілів на краях; перевірка при створенні й
+- [x] 3.1 Міграція: унікальність назви шаблону без урахування регістру й пробілів на краях; перевірка при створенні й
   при збереженні перейменованого шаблону; порожні назви секцій і задач у незбережених змінах — відмова при збереженні.
-- [ ] 3.2 Дії й повідомлення «Enter a template name», «A template with this name already exists», «Every section and
+- [x] 3.2 Дії й повідомлення «Enter a template name», «A template with this name already exists», «Every section and
   task needs a name»; тести бази й дій; мутаційна перевірка.
-- [ ] 3.3 Регресія: нові перевірки `save_template_version` не ламають відмову AC-EDITOR-04 («A template needs at least
+- [x] 3.3 Регресія: нові перевірки `save_template_version` не ламають відмову AC-EDITOR-04 («A template needs at least
   one required task», версії немає, незбережені зміни лишаються) — наявні тести AC-EDITOR-04 зелені, порядок відмов —
   як у `design.md`.
   Done when: AC-EDITOR-19, AC-EDITOR-20, AC-EDITOR-23, AC-EDITOR-24 (і AC-EDITOR-04 без регресії).

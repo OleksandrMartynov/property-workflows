@@ -20,6 +20,10 @@ export const MESSAGES = {
   SECTION_WITHOUT_TASKS: "Every section needs at least one task",
   NO_UNPUBLISHED_CHANGES: "There are no unpublished changes to save",
   NAME_REQUIRED: "Enter a name",
+  // AC-EDITOR-19, AC-EDITOR-20, AC-EDITOR-23, AC-EDITOR-24: тексти PM дослівно (ADR 0007).
+  TEMPLATE_NAME_REQUIRED: "Enter a template name",
+  ITEM_NAME_REQUIRED: "Every section and task needs a name",
+  TEMPLATE_NAME_TAKEN: "A template with this name already exists",
   // AC-EDITOR-10, AC-EDITOR-11: шаблон без збереженої версії не запускає ніхто; примітка — дослівно з AC.
   TEMPLATE_NOT_PUBLISHED: "Save the template to launch it",
   TASK_NOT_FOUND: "Task not found",

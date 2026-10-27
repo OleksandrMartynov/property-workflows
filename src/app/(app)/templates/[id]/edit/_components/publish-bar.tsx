@@ -27,7 +27,7 @@ export function PublishBar({ templateId, lines }: { templateId: string; lines: s
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
         const active = document.activeElement;
-        if (active instanceof HTMLInputElement && active.dataset.inlineCommit && active.form !== form.current && active.value.trim() && active.value !== active.defaultValue) {
+        if (active instanceof HTMLInputElement && active.dataset.inlineCommit && active.form !== form.current && (active.value.trim() || active.dataset.inlineEmpty) && active.value !== active.defaultValue) {
           if (active.dataset.inlineCommit === "blur") active.blur();
           else active.form?.requestSubmit();
           return;

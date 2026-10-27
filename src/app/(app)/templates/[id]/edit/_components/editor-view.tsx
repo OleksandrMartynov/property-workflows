@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { shownName } from "@/lib/templates/display-name";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -103,7 +104,7 @@ export function EditorView({
 
   return (
     <PageShell
-      title={template.name}
+      title={shownName(template.name, "template")}
       titleSlot={
         <div className="flex max-w-2xl items-center gap-2">
           <span
@@ -119,6 +120,8 @@ export function EditorView({
               size="title"
               defaultValue={template.name}
               aria-label="Template name"
+              placeholder="Template name"
+              allowEmpty
             />
           </form>
         </div>
@@ -200,10 +203,10 @@ export function EditorView({
                   aria-labelledby={`section-${section.id}`}
                 >
                   <h2 id={`section-${section.id}`} className="sr-only">
-                    {section.name}
+                    {shownName(section.name, "section")}
                   </h2>
                   <CollapsibleSection
-                    name={section.name}
+                    name={shownName(section.name, "section")}
                     header={
                       <>
                     <form
@@ -221,6 +224,8 @@ export function EditorView({
                         size="heading"
                         defaultValue={section.name}
                         aria-label="Section name"
+                        placeholder="Section name"
+                        allowEmpty
                       />
                     </form>
                     {sectionChange ? (
@@ -236,7 +241,7 @@ export function EditorView({
                       templateId={id}
                       kind="section"
                       id={section.id}
-                      name={section.name}
+                      name={shownName(section.name, "section")}
                       canMoveUp={si > 0}
                       canMoveDown={si < sections.length - 1}
                     />
@@ -273,6 +278,8 @@ export function EditorView({
                                 name="name"
                                 defaultValue={task.name}
                                 aria-label="Task name"
+                                placeholder="Task name"
+                                allowEmpty
                                 containerClassName="basis-44"
                               />
                               <span className="flex items-center gap-2">
@@ -290,7 +297,7 @@ export function EditorView({
                                   submitOnChange
                                   onLabel={requiredLabel(true)}
                                   offLabel={requiredLabel(false)}
-                                  aria-label={`Required: ${task.name}`}
+                                  aria-label={`Required: ${shownName(task.name, "task")}`}
                                 />
                               </span>
                             </form>
@@ -298,7 +305,7 @@ export function EditorView({
                               templateId={id}
                               kind="task"
                               id={task.id}
-                              name={task.name}
+                              name={shownName(task.name, "task")}
                               canMoveUp={ti > 0}
                               canMoveDown={ti < own.length - 1}
                               moveTargets={others}
@@ -328,7 +335,7 @@ export function EditorView({
                             commit="enter"
                             tone="accent"
                             placeholder="Add a task"
-                            aria-label={`New task in ${section.name}`}
+                            aria-label={`New task in ${shownName(section.name, "section")}`}
                             containerClassName="basis-44"
                           />
                           <span className="flex items-center gap-2 transition-ui md:opacity-0 md:group-hover/add:opacity-100 md:group-focus-within/add:opacity-100">
