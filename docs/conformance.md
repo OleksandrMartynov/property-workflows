@@ -72,7 +72,31 @@
 | AC-EDITOR-07 | менеджер за посиланням на список версій — «Not enough rights», версій немає | `src/app/(app)/templates/[id]/versions/page.tsx`, `src/app/_components/forbidden.tsx`, `supabase/migrations/20261025151836_template_versions.sql` (template_versions_select) | `tests/templates/forbidden.test.tsx` | реалізовано |
 | AC-EDITOR-08 | прямий запит менеджера не змінює шаблон і не створює версію | `supabase/migrations/20261025151836_template_versions.sql` (save_template_version, політики admin, column grants), `src/app/(app)/templates/[id]/edit/actions.ts` (editorContext → requireAdmin до запису), `src/lib/supabase/viewer.ts` (requireAdmin), `supabase/migrations/20261025163654_template_editor_functions.sql`, `supabase/migrations/20261025191404_template_editor_remove_rename_functions.sql` (функції редактора — роль admin) | `tests/db/template-versions-db.test.ts`, `tests/templates/editor-actions.test.ts` | реалізовано |
 | AC-EDITOR-09 | відвідувач без входу за посиланням на редактор — сторінка входу, без вмісту | `src/lib/supabase/public-paths.ts` (isPublicPath), `src/lib/supabase/proxy.ts`, revoke функцій редактора від anon | `tests/auth/public-paths.test.ts`, `tests/db/template-versions-db.test.ts` | реалізовано |
+| AC-EDITOR-10 | шаблон без версії у формі запуску адміністратора — недоступний, «Save the template to launch it» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-11 | прямий запуск шаблону без версії — запуску немає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-12 | збереження без незбережених змін — версії 3 немає, поточна лишається 2 | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-13 | видалення секції й «Cancel» на підтвердженні («Move-in day», «This cannot be undone») — секція лишається | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-14 | підтверджене видалення секції — зникає з незбережених змін, версія 1 без змін | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-15 | секція без задач — «Every section needs at least one task», версії немає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-16 | менеджер за посиланням на шаблон без версії — «Template not found» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-17 | менеджер без збережених шаблонів — «No templates yet. An administrator creates them.» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-18 | список версій шаблону без версії — «No versions yet. Save the template to create version 1.» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-19 | порожня назва нового шаблону — «Enter a template name» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-20 | задача зі стертою назвою — «Every section and task needs a name», версії немає | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-21 | перейменування й збереження — версія 2 з новою назвою, менеджер бачить її | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-22 | список запусків — назва шаблону з версії запуску | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-23 | новий шаблон з наявною назвою (регістр, пробіли) — «A template with this name already exists» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-24 | перейменування на наявну назву й збереження — та сама відмова, зміни лишаються | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-25 | зміну не збережено — «Your last change was not kept. Try again.» у тому самому місці | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-26 | відвідувач без входу змінює шаблон напряму — відмова, сторінка входу, шаблон без змін | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-27 | запуск до появи версій — «Template version 1» | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-28 | перенесення задачі між секціями — нова версія 3 і 2 задачі | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-29 | менеджер напряму запитує старі версії, список версій чи незбережені зміни — лише поточна версія | — | — | відкладено (чекає реалізації) |
 | AC-DSYS-01 | статуси «in progress» синій і «completed» зелений, слово поруч із кольором, у списку й на сторінках | `src/lib/runs/labels.ts` (runStatusTone), `src/app/(app)/runs/_components/runs-list.tsx`, `src/app/(app)/runs/[id]/page.tsx` | `tests/runs/statuses.test.tsx` | реалізовано |
 | AC-DSYS-02 | менеджер у редакторі — «Not enough rights» і «Back to templates» у спільному макеті, шаблон без змін | `src/app/(app)/templates/[id]/edit/page.tsx`, `src/app/_components/forbidden.tsx`, `src/lib/supabase/viewer.ts` (requireAdmin) | `tests/templates/forbidden.test.tsx` | реалізовано |
 | AC-DSYS-03 | відвідувач без входу за посиланням на запуск — сторінка входу, без даних запуску | `src/lib/supabase/public-paths.ts` (isPublicPath), `src/lib/supabase/proxy.ts` | `tests/auth/public-paths.test.ts` | реалізовано |
 | AC-DSYS-04 | менеджер без запусків — «No runs yet. Launch a template to start one.» і «Launch a template» | `src/app/(app)/runs/_components/runs-list.tsx`, `src/lib/runs/labels.ts` (NO_RUNS_TITLE) | `tests/runs/statuses.test.tsx` | реалізовано |
+| AC-DSYS-05 | тема за замовчуванням «System» — темна, коли пристрій темний | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-06 | вибір «Light» зберігається на пристрої після перезапуску браузера | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-07 | статуси в темній темі синій і зелений, контраст тексту ≥ 4.5:1 | — | — | відкладено (чекає реалізації) |
+| AC-DSYS-08 | після входу з прямого посилання — сторінка, на яку вело посилання | — | — | відкладено (чекає реалізації) |
