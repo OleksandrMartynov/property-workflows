@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/ui/app-shell";
 import { createClient } from "@/lib/supabase/server";
+import { loginRedirectPath } from "@/lib/supabase/viewer";
 import { signOut } from "../login/actions";
 
 // Спільний каркас сторінок після входу: AppShell (сайдбар, акаунт, ⌘K) монтується один раз на сегмент і не
@@ -11,7 +12,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  if (!claims) redirect("/login");
+  if (!claims) redirect(await loginRedirectPath());
 
   // RLS: користувач бачить власний профіль.
   const { data: profile } = await supabase.from("profiles").select("email, role").eq("id", claims.sub).maybeSingle();

@@ -3,8 +3,11 @@
 /* ==========================================================================
    Property Workflows — токени дизайн-системи (джерело правил — DESIGN.md)
    --------------------------------------------------------------------------
-   Один спосіб теми: prefers-color-scheme. Варіант Tailwind `dark:` за замовчуванням теж іде за системою,
-   тож `@custom-variant dark` не потрібен. У сторінках і компонентах — лише семантичні утиліти
+   Тема — вибір «System / Light / Dark» (AC-DSYS-05…07): «System» слідує за prefers-color-scheme, «Light» і «Dark»
+   задає атрибут `data-theme` на <html> (src/lib/theme.ts; без атрибута — System). Тому кожен блок dark нижче записано
+   двічі з однаковим тілом: у media-запиті для :root:not([data-theme="light"]) і явно для :root[data-theme="dark"];
+   тест tests/design/theme.test.tsx стежить, щоб копії не розійшлися. Варіант Tailwind `dark:` у компонентах не
+   вживаємо (лише токени). У сторінках і компонентах — лише семантичні утиліти
    (bg-primary, text-muted-foreground, border-input …), жодних hex і сирих палітр.
    Новий токен: DESIGN.md → :root і блок dark нижче → --color-<назва> у @theme inline.
    ========================================================================== */
@@ -158,11 +161,18 @@
   --weight-body: 400;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* --------------------------------------------------------------------------
    3. Темна тема — спроєктована, не інвертована. Підйом = світліша поверхня.
    -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: oklch(0.178 0.004 80);
     --foreground: oklch(0.945 0.004 80);
     --card: oklch(0.200 0.005 80);
@@ -243,6 +253,87 @@
     --stage-glow-3: oklch(0.60 0.12 192);
   }
 }
+:root[data-theme="dark"] {
+  --background: oklch(0.178 0.004 80);
+  --foreground: oklch(0.945 0.004 80);
+  --card: oklch(0.200 0.005 80);
+  --card-foreground: oklch(0.945 0.004 80);
+  --popover: oklch(0.228 0.005 80);
+  --popover-foreground: oklch(0.945 0.004 80);
+
+  --primary: oklch(0.74 0.12 268);
+  --primary-foreground: oklch(0.20 0.035 268);
+  --secondary: oklch(0.235 0.005 80);
+  --secondary-foreground: oklch(0.945 0.004 80);
+  --muted: oklch(0.235 0.005 80);
+  --muted-foreground: oklch(0.705 0.008 80);
+  --accent: oklch(0.240 0.005 80);
+  --accent-foreground: oklch(0.945 0.004 80);
+  --destructive: oklch(0.66 0.18 25);
+  --destructive-foreground: oklch(0.18 0.02 25);
+
+  --border: oklch(0.275 0.005 80);
+  --border-strong: oklch(0.54 0.008 80);
+  --input: oklch(0.54 0.008 80);
+  --field: oklch(0.198 0.005 80);
+  --ring: oklch(0.74 0.12 268);
+
+  --sidebar: oklch(0.158 0.004 80);
+  --sidebar-foreground: oklch(0.86 0.005 80);
+  --sidebar-primary: oklch(0.74 0.12 268);
+  --sidebar-primary-foreground: oklch(0.20 0.035 268);
+  --sidebar-accent: oklch(0.225 0.005 80);
+  --sidebar-accent-foreground: oklch(0.945 0.004 80);
+  --sidebar-border: oklch(0.245 0.005 80);
+  --sidebar-ring: oklch(0.74 0.12 268);
+
+  --overlay: oklch(0.08 0.004 80 / 0.56);
+  --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3), 0 2px 6px -1px oklch(0 0 0 / 0.3);
+  --elevation-2: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 2px 4px -1px oklch(0 0 0 / 0.3), 0 12px 32px -8px oklch(0 0 0 / 0.55);
+  --elevation-3: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 4px 8px -2px oklch(0 0 0 / 0.35), 0 28px 64px -12px oklch(0 0 0 / 0.65);
+
+  --status-todo: oklch(0.26 0.005 80);
+  --status-todo-foreground: oklch(0.82 0.008 80);
+  --status-todo-mark: oklch(0.74 0.01 80);
+  --status-progress: oklch(0.27 0.05 268);
+  --status-progress-foreground: oklch(0.82 0.08 268);
+  --status-progress-mark: oklch(0.74 0.12 268);
+  --status-done: oklch(0.27 0.05 150);
+  --status-done-foreground: oklch(0.82 0.12 150);
+  --status-done-mark: oklch(0.74 0.15 150);
+  --status-overdue: oklch(0.27 0.06 25);
+  --status-overdue-foreground: oklch(0.82 0.10 25);
+  --status-overdue-mark: oklch(0.74 0.15 25);
+  --status-due-soon: oklch(0.27 0.05 75);
+  --status-due-soon-foreground: oklch(0.82 0.12 75);
+  --status-due-soon-mark: oklch(0.74 0.14 75);
+
+  --ai: oklch(0.27 0.07 325);
+  --ai-foreground: oklch(0.82 0.12 325);
+  --ai-mark: oklch(0.74 0.16 325);
+  --variable: oklch(0.27 0.04 192);
+  --variable-foreground: oklch(0.82 0.09 192);
+  --variable-mark: oklch(0.74 0.11 192);
+
+  --chart-1: oklch(0.70 0.13 268);
+  --chart-2: oklch(0.74 0.10 192);
+  --chart-3: oklch(0.80 0.13 75);
+  --chart-4: oklch(0.72 0.15 150);
+  --chart-5: oklch(0.62 0.03 80);
+
+
+  --weight-body: 420;
+  --stage: oklch(0.145 0.035 268);
+  --stage-foreground: oklch(0.97 0.008 268);
+  --stage-muted: oklch(0.80 0.02 268);
+  --stage-card: oklch(0.24 0.035 268 / 0.55);
+  --stage-border: oklch(1 0 0 / 0.14);
+  --stage-accent: oklch(0.78 0.12 268);
+  --stage-glow-1: oklch(0.52 0.18 268);
+  --stage-glow-2: oklch(0.50 0.20 325);
+  --stage-glow-3: oklch(0.60 0.12 192);
+  }
+
 
 /* Широка гама: лише мітки (крапки, іконки, AI, змінні). Текстові токени лишаються в sRGB, щоб контраст був чесним. */
 @media (color-gamut: p3) {
@@ -256,7 +347,7 @@
   }
 }
 @media (color-gamut: p3) and (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --status-done-mark: oklch(0.74 0.19 150);
     --status-overdue-mark: oklch(0.74 0.17 25);
     --status-due-soon-mark: oklch(0.74 0.16 75);
@@ -265,6 +356,17 @@
     --variable-mark: oklch(0.74 0.13 192);
   }
 }
+@media (color-gamut: p3) {
+  :root[data-theme="dark"] {
+    --status-done-mark: oklch(0.74 0.19 150);
+    --status-overdue-mark: oklch(0.74 0.17 25);
+    --status-due-soon-mark: oklch(0.74 0.16 75);
+    --status-progress-mark: oklch(0.74 0.14 268);
+    --ai-mark: oklch(0.74 0.19 325);
+    --variable-mark: oklch(0.74 0.13 192);
+  }
+}
+
 
 /* --------------------------------------------------------------------------
    4. Похідні токени: стани як альфа-шар поверх будь-якого фону
@@ -322,14 +424,22 @@
   }
 }
 @media (prefers-contrast: more) and (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    --muted-foreground: oklch(0.80 0.006 80);
+    --border: oklch(0.62 0.008 80);
+  }
+}
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] {
     --muted-foreground: oklch(0.80 0.006 80);
     --border: oklch(0.62 0.008 80);
   }
 }
 
+
 @media (forced-colors: active) {
-  :root {
+  /* :root:root — вища специфічність, ніж у темних блоків `:root[data-theme]`, інакше вони перекрили б системні кольори */
+  :root:root {
     --glass-alpha: 100%;
     --glass-blur: 0px;
     --glass-bg: Canvas;
