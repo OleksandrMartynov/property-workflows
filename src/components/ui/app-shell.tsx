@@ -294,7 +294,7 @@ function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collaps
   };
 
   return (
-    <Dialog open={open} onClose={close} labelledBy={`${listId}-label`} className="mt-[14vh] max-w-xl overflow-hidden">
+    <Dialog open={open} onClose={close} closable={false} size="lg" labelledBy={`${listId}-label`} className="mt-[14vh] overflow-hidden">
       <h2 id={`${listId}-label`} className="sr-only">
         Command palette
       </h2>

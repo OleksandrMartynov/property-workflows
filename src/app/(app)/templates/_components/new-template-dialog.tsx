@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { PlusIcon, TemplateIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
@@ -45,25 +45,17 @@ export function NewTemplateDialog({ label = "New template" }: { label?: string }
             }
           }}
         >
-          <div className="flex flex-col gap-5 p-5">
-            <div className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-state-selected text-primary" aria-hidden="true">
-                <TemplateIcon />
-              </span>
-              <h2 id={`${id}-title`} className="text-title">
-                New template
-              </h2>
-            </div>
+          <DialogHeader icon={<TemplateIcon />} title="New template" titleId={`${id}-title`}>
             <Field id={`${id}-name`} label="Template name" error={error}>
               <Input name="name" size="lg" autoFocus autoComplete="off" onChange={() => setError(undefined)} />
             </Field>
-          </div>
-          <div className="flex justify-end gap-2 border-t border-border bg-muted/40 px-5 py-3">
+          </DialogHeader>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <SubmitButton pendingText="Creating…">Create</SubmitButton>
-          </div>
+          </DialogFooter>
         </form>
       </Dialog>
     </>
