@@ -36,6 +36,6 @@
 
 ## 4. Стан змін у редакторі
 
-- [ ] 4.1 Фіксоване місце стану («All changes kept» / «Saving…» / «Your last change was not kept. Try again.»), дії з
+- [x] 4.1 Фіксоване місце стану («All changes kept» / «Saving…» / «Your last change was not kept. Try again.»), дії з
   клієнта в `try/catch`, введений текст лишається; тести логіки стану й компонента.
   Done when: AC-EDITOR-25.
