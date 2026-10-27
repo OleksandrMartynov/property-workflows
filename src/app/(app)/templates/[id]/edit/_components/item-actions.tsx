@@ -98,6 +98,8 @@ export function ItemActions({
 
       <ConfirmDialog
         open={confirming}
+        tone="destructive"
+        confirmLabel="Remove"
         title={name}
         description={CANNOT_BE_UNDONE}
         onCancel={() => setConfirming(false)}
