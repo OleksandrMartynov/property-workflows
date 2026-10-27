@@ -64,6 +64,22 @@ beforeEach(() => {
   rpc.mockClear();
 });
 
+describe("Дії редактора: виклик з клієнта (client=1)", () => {
+  it("AC-EDITOR-25: збій запису з клієнта — результат «не збережено» без redirect (error.tsx не показується), успіх — { ok: true }", async () => {
+    role = "admin";
+    const fields = { section_id: SECTION, name: "Sign handover act", client: "1" };
+    expect(await actions.addTask(form(fields))).toEqual({ ok: true });
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "connection lost" } } as never);
+    expect(await actions.addTask(form(fields))).toEqual({ ok: false, code: "DB_ERROR" });
+  });
+
+  it("AC-EDITOR-08: менеджер напряму з client=1 — усе одно відмова redirect-ом і жодного запису", async () => {
+    role = "manager";
+    expect(await run(actions.addTask(form({ section_id: SECTION, name: "x", client: "1" })))).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit`);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+});
+
 describe("Дії редактора: менеджер напряму", () => {
   it("AC-EDITOR-08: менеджер додає задачу чи зберігає версію напряму — жодного запису, шаблон без змін", async () => {
     role = "manager";
@@ -74,7 +90,7 @@ describe("Дії редактора: менеджер напряму", () => {
       ["moveSection", { section_id: SECTION, direction: "up" }],
       ["saveVersion", {}],
     ] as const) {
-      const result = await run((actions as Record<string, (fd: FormData) => Promise<void>>)[name](form(fields)));
+      const result = await run((actions as Record<string, (fd: FormData) => Promise<unknown>>)[name](form(fields)));
       expect(result, name).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit`);
     }
     // Лише читання власного профілю (роль) — жодної таблиці шаблону й жодної функції збереження.
@@ -111,7 +127,7 @@ describe("Дії редактора: менеджер напряму", () => {
       ["updateTask", { task_id: TASK, name: "Clean", required: "on" }, "update_template_task", { p_template_id: TEMPLATE, p_task_id: TASK, p_name: "Clean", p_required: true }],
     ] as const) {
       rpc.mockClear();
-      const result = await run((actions as Record<string, (fd: FormData) => Promise<void>>)[name](form(fields)));
+      const result = await run((actions as Record<string, (fd: FormData) => Promise<unknown>>)[name](form(fields)));
       expect(result, name).toBe(`NEXT_REDIRECT /templates/${TEMPLATE}/edit`);
       expect(rpc, name).toHaveBeenCalledWith(fn, args);
     }

@@ -12,6 +12,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
 
 const { TemplatesList } = await import("@/app/(app)/templates/_components/templates-list");
 const { EditorView } = await import("@/app/(app)/templates/[id]/edit/_components/editor-view");
+const { createSaveStore } = await import("@/lib/templates/save-state");
 
 const T = "10000000-0000-0000-0000-000000000001";
 const templates = [
@@ -110,5 +111,54 @@ describe("Редактор шаблону", () => {
     expect(html).toContain('data-testid="editor-preview"');
     expect(html).toContain("Sign handover act");
     expect(html).not.toContain("Add a task");
+  });
+});
+
+describe("Редактор шаблону: стан збереження (AC-EDITOR-25)", () => {
+  const render = (store: ReturnType<typeof createSaveStore>) =>
+    renderToStaticMarkup(
+      <EditorView
+        template={{ id: T, name: "Tenant move-in", current_version: 1, has_unpublished_changes: true }}
+        sections={[{ id: "s2", name: "Move-in day" }]}
+        tasks={[{ id: "t4", section_id: "s2", name: "Hand over the keys", required: true }]}
+        current={{ number: 1 }}
+        versionTasks={null}
+        latest={null}
+        authorEmail={null}
+        savedNumber={null}
+        saveStore={store}
+      />,
+    );
+  const statusOf = (html: string) => html.match(/<p role="status"[^>]*>.*?<\/p>/)?.[0] ?? "";
+
+  it("AC-EDITOR-25: у фіксованому місці — «All changes kept», доки змін, що не збереглись, немає", () => {
+    const html = render(createSaveStore());
+    expect(statusOf(html)).toContain("All changes kept");
+    expect(statusOf(html)).toContain('aria-live="polite"');
+    expect(html).not.toContain("Your last change was not kept");
+    expect(html).not.toContain('data-testid="unkept-item"');
+  });
+
+  it("AC-EDITOR-25: додавання задачі відхилене (з'єднання втрачено) — у тому самому місці повідомлення кольором помилки, «Sign handover act» лишається на екрані з «Try again»", async () => {
+    const store = createSaveStore();
+    await store.run({ scope: "s2", name: "Sign handover act", required: true }, async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    const html = render(store);
+    const status = statusOf(html);
+    expect(status).toContain("Your last change was not kept. Try again.");
+    expect(status).toContain("text-destructive");
+    expect(status).not.toContain("All changes kept");
+    // Задача — у своїй секції після наявних, із можливістю повторити.
+    expect(html.indexOf("Hand over the keys")).toBeLessThan(html.indexOf("Sign handover act"));
+    expect(html).toMatch(/data-testid="unkept-item" data-state="failed".*Sign handover act.*Try again/);
+  });
+
+  it("AC-EDITOR-25: поки запис триває — «Saving…» у тому самому місці, задача вже видима", () => {
+    const store = createSaveStore();
+    void store.run({ scope: "s2", name: "Sign handover act", required: true }, () => new Promise(() => {}));
+    const html = render(store);
+    expect(statusOf(html)).toContain("Saving…");
+    expect(html).toMatch(/data-testid="unkept-item" data-state="pending".*Sign handover act/);
   });
 });

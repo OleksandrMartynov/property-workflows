@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { ArrowDownIcon, ArrowUpIcon, MoveToIcon, TrashIcon } from "@/components/ui/icons";
 import { CANNOT_BE_UNDONE } from "@/lib/runs/confirmation";
+import { TrackedForm } from "./editor-save";
 import { moveSection, moveTask, moveTaskToSection, removeSection, removeTask } from "../actions";
 
 /**
@@ -68,23 +69,23 @@ export function ItemActions({
 
   return (
     <div className="flex shrink-0 items-center gap-0.5">
-      <form ref={up} id={`${uid}-up`} action={move} hidden>
+      <TrackedForm ref={up} id={`${uid}-up`} action={move} hidden>
         {hidden}
         <input type="hidden" name="direction" value="up" />
-      </form>
-      <form ref={down} id={`${uid}-down`} action={move} hidden>
+      </TrackedForm>
+      <TrackedForm ref={down} id={`${uid}-down`} action={move} hidden>
         {hidden}
         <input type="hidden" name="direction" value="down" />
-      </form>
+      </TrackedForm>
       {kind === "task" && moveTargets.length ? (
-        <form ref={moveTo} action={moveTaskToSection} hidden>
+        <TrackedForm ref={moveTo} action={moveTaskToSection} hidden>
           {hidden}
           <input ref={target} type="hidden" name="target_section_id" defaultValue="" />
-        </form>
+        </TrackedForm>
       ) : null}
-      <form ref={remove} action={kind === "section" ? removeSection : removeTask} hidden>
+      <TrackedForm ref={remove} action={kind === "section" ? removeSection : removeTask} hidden>
         {hidden}
-      </form>
+      </TrackedForm>
 
       <span className="hidden items-center gap-0.5 opacity-0 transition-ui group-hover/item:opacity-100 group-focus-within/item:opacity-100 md:flex">
         <Button type="submit" form={`${uid}-up`} variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" disabled={!canMoveUp} aria-label={`Move ${noun} ${name} up`}>

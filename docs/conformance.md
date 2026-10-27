@@ -87,7 +87,7 @@
 | AC-EDITOR-22 | список запусків — назва шаблону з версії запуску | — | — | відкладено (чекає реалізації) |
 | AC-EDITOR-23 | новий шаблон з наявною назвою (регістр, пробіли) — «A template with this name already exists» | — | — | відкладено (чекає реалізації) |
 | AC-EDITOR-24 | перейменування на наявну назву й збереження — та сама відмова, зміни лишаються | — | — | відкладено (чекає реалізації) |
-| AC-EDITOR-25 | зміну не збережено — «Your last change was not kept. Try again.» у тому самому місці | — | — | відкладено (чекає реалізації) |
+| AC-EDITOR-25 | зміну не збережено — «Your last change was not kept. Try again.» у тому самому місці | `src/lib/templates/save-state.ts` (стан і сховище), `src/app/(app)/templates/[id]/edit/_components/editor-save.tsx` (SaveStatus, TrackedForm, UnkeptItems), `src/app/(app)/templates/[id]/edit/actions.ts` (client=1 — результат замість redirect) | `tests/templates/save-state.test.ts`, `tests/templates/editor-view.test.tsx`, `tests/templates/editor-actions.test.ts` | реалізовано |
 | AC-EDITOR-26 | відвідувач без входу змінює шаблон напряму — відмова, сторінка входу, шаблон без змін | — | — | відкладено (чекає реалізації) |
 | AC-EDITOR-27 | запуск до появи версій — «Template version 1» | — | — | відкладено (чекає реалізації) |
 | AC-EDITOR-28 | перенесення задачі між секціями — нова версія 3 і 2 задачі | — | — | відкладено (чекає реалізації) |
