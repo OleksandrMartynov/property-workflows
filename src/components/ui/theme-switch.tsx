@@ -31,8 +31,11 @@ const subscribe = (notify: () => void) => {
   const onStorage = (event: StorageEvent) => {
     // Інша вкладка змінила тему: перемикач і сторінка підхоплюють її без перезавантаження.
     if (event.key === THEME_KEY || event.key === null) {
+      // Збережене значення з іншої вкладки головніше за запасний вибір цієї. THEME_EVENT (а не прямий notify) оновлює і
+      // перемикач (підписка нижче), і шейдер входу.
+      fallbackChoice = null;
       applyTheme(document.documentElement, parseTheme(event.newValue));
-      notify();
+      window.dispatchEvent(new Event(THEME_EVENT));
     }
   };
   window.addEventListener(THEME_EVENT, notify);
