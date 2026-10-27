@@ -1,6 +1,8 @@
 // Хто відкрив сторінку: id з JWT (getClaims), роль з profiles (не з user_metadata).
 // Лише для серверу (Server Components і Server Actions).
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { NEXT_PATH_HEADER, loginPath } from "@/lib/auth/safe-next";
 import { createClient } from "./server";
 
 export type AppRole = "manager" | "admin";
@@ -13,14 +15,19 @@ export interface Viewer {
 const ROLES: readonly AppRole[] = ["manager", "admin"];
 const isRole = (value: unknown): value is AppRole => ROLES.includes(value as AppRole);
 
-/** Для сторінок і дій застосунку: без входу — на /login, без ролі manager/admin — на головну. */
+/** Адреса входу з поверненням на поточну сторінку (шлях передає proxy; safeNext у loginPath відсіює чуже). */
+export async function loginRedirectPath() {
+  return loginPath((await headers()).get(NEXT_PATH_HEADER));
+}
+
+/** Для сторінок і дій застосунку: без входу — на /login?next=…, без ролі manager/admin — на головну. */
 export async function requireViewer() {
   const supabase = await createClient();
 
   // getClaims() перевіряє підпис JWT. getSession() для авторизації на сервері не використовуємо.
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  if (!claims) redirect("/login");
+  if (!claims) redirect(await loginRedirectPath());
 
   // RLS: користувач бачить власний профіль.
   const { data: profile } = await supabase

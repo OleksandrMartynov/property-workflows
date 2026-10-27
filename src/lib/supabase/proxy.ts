@@ -4,10 +4,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
+import { NEXT_PATH_HEADER, loginPath, returnPath } from "@/lib/auth/safe-next";
 import { isPublicPath } from "./public-paths";
 
 
 export async function updateSession(request: NextRequest) {
+  // Куди вело посилання: для redirect на вхід тут і в серверних компонентах (requireViewer, AC-DSYS-08). Заголовок
+  // завжди перезаписуємо: значення від клієнта не довіряємо (а читач ще й проганяє його через safeNext).
+  const target = returnPath(request.nextUrl.pathname, request.nextUrl.search);
+  request.headers.set(NEXT_PATH_HEADER, target);
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -43,9 +49,8 @@ export async function updateSession(request: NextRequest) {
   const isPublic = isPublicPath(request.nextUrl.pathname);
 
   if (!claims && !isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    // Вхід повертає на сторінку, на яку вело посилання (AC-DSYS-08): /login?next=<шлях і query>.
+    return NextResponse.redirect(new URL(loginPath(target), request.url));
   }
 
   // Повертаємо саме supabaseResponse: у ньому оновлені cookie сесії.
