@@ -20,10 +20,10 @@ export function TemplateView({ tasks }: { tasks: TemplateViewTask[] }) {
   const groups = groupBySection(tasks);
   return (
     <div className="flex flex-col gap-6" data-testid="template-view">
-      {groups.map((group) => (
-        <section key={group.key} className="flex flex-col gap-2" aria-labelledby={`section-${group.key}`}>
+      {groups.map((group, index) => (
+        <section key={group.key} className="flex flex-col gap-2" aria-labelledby={`section-${index}`}>
           <div className="flex items-center justify-between gap-3 px-1">
-            <h2 id={`section-${group.key}`} className="text-heading break-words">
+            <h2 id={`section-${index}`} className="text-heading break-words">
               {group.name}
             </h2>
             <span className="tabular text-meta text-muted-foreground">{group.tasks.length}</span>
