@@ -1,6 +1,6 @@
 // Стан збереження змін редактора (AC-EDITOR-25): текст у фіксованому місці й поведінка сховища при збої, успіху й повторі.
 import { describe, expect, it } from "vitest";
-import { createSaveStore, isNotKept, isRedirectError, saveStatusText } from "@/lib/templates/save-state";
+import { createSaveStore, isNotKept, isRedirectError, keepTypedValues, saveStatusText, withOutcome, type ActionOutcome } from "@/lib/templates/save-state";
 
 const TASK = { scope: "s2", name: "Sign handover act", required: true };
 
@@ -70,5 +70,34 @@ describe("Сховище стану збереження", () => {
     expect(isRedirectError(redirect)).toBe(true);
     await expect(store.run(TASK, async () => Promise.reject(redirect))).rejects.toBe(redirect);
     expect(store.getSnapshot()).toEqual({ status: "kept", items: [] });
+  });
+});
+
+describe("повтор і введені значення", () => {
+  it("AC-EDITOR-25: відмова з поясненням під час «Try again» не зникає мовчки — обробник результату виконується і для повтору", async () => {
+    const seen: string[] = [];
+    const results: ActionOutcome[] = [{ ok: false, code: "DB_ERROR" }, { ok: false, code: "NOT_ALLOWED_TEMPLATES" }];
+    const store = createSaveStore();
+    const perform = withOutcome(async () => results.shift() as ActionOutcome, (o) => seen.push(o.ok ? "ok" : o.code));
+
+    await store.run({ scope: "sections", name: "Move-in day", required: false }, perform);
+    expect(store.getSnapshot().status).toBe("failed");
+    await store.retry(store.getSnapshot().items[0].id);
+
+    expect(seen).toEqual(["DB_ERROR", "NOT_ALLOWED_TEMPLATES"]);
+    expect(store.getSnapshot()).toMatchObject({ status: "kept", items: [] });
+  });
+
+  it("AC-EDITOR-25: після збою введена назва лишається в полі — defaultValue стає надісланим значенням, чужі поля не чіпаємо", () => {
+    const sent = new FormData();
+    sent.set("name", "  Inspection day ");
+    sent.set("template_id", "t1");
+    const fields = [
+      { name: "name", type: "text", defaultValue: "Old name" },
+      { name: "template_id", type: "hidden", defaultValue: "t1" },
+      { name: "other", type: "text", defaultValue: "kept" },
+    ];
+    keepTypedValues(fields, sent);
+    expect(fields.map((f) => f.defaultValue)).toEqual(["  Inspection day ", "t1", "kept"]);
   });
 });

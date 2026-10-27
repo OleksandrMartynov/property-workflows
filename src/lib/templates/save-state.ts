@@ -43,6 +43,29 @@ export interface UnkeptItem {
   state: "pending" | "failed";
 }
 
+/**
+ * Дія з обробкою результату: обробник виконується після кожної спроби — і першої, і «Try again» (повтор бере саме цю
+ * функцію зі сховища), тож відмова з поясненням при повторі не зникає мовчки.
+ */
+export function withOutcome(action: Perform, onOutcome: (outcome: ActionOutcome) => void): Perform {
+  return async () => {
+    const outcome = await action();
+    onOutcome(outcome);
+    return outcome;
+  };
+}
+
+/**
+ * Після збою React скидає неконтрольовані поля форми до `defaultValue`. Щоб введена назва не зникла, `defaultValue`
+ * текстових полів стає надісланим значенням (скидання тоді повертає саме його); успішне збереження цього не робить.
+ */
+export function keepTypedValues(fields: Iterable<{ name: string; type: string; defaultValue: string }>, sent: FormData): void {
+  for (const field of fields) {
+    if (field.type !== "text" || !field.name || !sent.has(field.name)) continue;
+    field.defaultValue = String(sent.get(field.name));
+  }
+}
+
 export interface SaveSnapshot {
   status: SaveStatus;
   items: readonly UnkeptItem[];

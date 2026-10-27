@@ -1,13 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, useSyncExternalStore, type ComponentProps, type ReactNode } from "react";
+import { createContext, useContext, useRef, useState, useSyncExternalStore, type ComponentProps, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Spinner } from "@/components/ui/button";
 import { StatusBadge, StatusIcon } from "@/components/ui/status-badge";
 import { requiredLabel } from "@/lib/runs/labels";
 import {
   createSaveStore,
+  keepTypedValues,
   saveStatusText,
+  withOutcome,
   type ActionOutcome,
   type SaveSnapshot,
   type SaveStore,
@@ -119,6 +121,8 @@ export function TrackedForm({
   const router = useRouter();
   const pathname = usePathname();
 
+  const form = useRef<HTMLFormElement>(null);
+
   const submit = async (formData: FormData) => {
     // Копія з client=1: повторна спроба надсилає те саме, а форма за цей час уже скинута.
     const copy = new FormData();
@@ -126,13 +130,20 @@ export function TrackedForm({
     copy.set("client", "1");
     const name = String(copy.get("name") ?? "").trim();
     const item = track && name ? { scope: track.scope, name, required: track.required ? copy.get("required") === "on" : false } : null;
-    const outcome = await store.run(item, () => action(copy));
-    if (outcome.ok) {
-      if (/[?&](error|saved)=/.test(window.location.search)) router.replace(pathname, { scroll: false });
-    } else if (outcome.code !== "DB_ERROR") {
-      router.replace(`${pathname}?error=${outcome.code}`, { scroll: false });
+    // Результат обробляється всередині спроби: так само для першої та для кожної повторної («Try again»).
+    const perform = withOutcome(() => action(copy), (outcome) => {
+      if (outcome.ok) {
+        if (/[?&](error|saved)=/.test(window.location.search)) router.replace(pathname, { scroll: false });
+      } else if (outcome.code !== "DB_ERROR") {
+        router.replace(`${pathname}?error=${outcome.code}`, { scroll: false });
+      }
+    });
+    const outcome = await store.run(item, perform);
+    // Збій без пояснення: введена назва лишається в полі (рядок «Not kept» є лише в нових задач і секцій, `track`).
+    if (!outcome.ok && outcome.code === "DB_ERROR" && !item && form.current) {
+      keepTypedValues(Array.from(form.current.elements) as HTMLInputElement[], copy);
     }
   };
 
-  return <form action={submit} {...props} />;
+  return <form ref={form} action={submit} {...props} />;
 }
