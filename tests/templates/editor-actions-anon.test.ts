@@ -69,7 +69,7 @@ describe("Дії редактора: відвідувач без входу", ()
     expect(attempts.map(([name]) => name).sort()).toEqual(Object.keys(actions).sort());
 
     for (const [name, fields] of attempts) {
-      const result = await outcome((actions as Record<string, (fd: FormData) => Promise<void>>)[name](form(fields)));
+      const result = await outcome((actions as unknown as Record<string, (fd: FormData) => Promise<unknown>>)[name](form(fields)));
       expect(result, name).toBe("NEXT_REDIRECT /login");
     }
     // Нічого не прочитано й не записано: шаблон лишається на версії 1 без незбережених змін.
