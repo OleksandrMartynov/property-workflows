@@ -133,7 +133,7 @@ export function DialogFooter({ children, className }: { children: ReactNode; cla
   return (
     <div
       className={cn(
-        "flex flex-col-reverse gap-2 border-t border-border bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto",
+        "flex flex-col gap-2 border-t border-border bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto",
         className,
       )}
     >

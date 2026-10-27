@@ -795,6 +795,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .ui-dialog[open] .ui-dialog-icon { animation: none; }
+  /* Нижній аркуш без зсуву: лише проявлення. */
+  .ui-dialog, .ui-dialog[open] { transform: none; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
