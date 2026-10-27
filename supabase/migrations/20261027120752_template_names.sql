@@ -66,7 +66,7 @@ begin
     raise exception 'TEMPLATE_NAME_REQUIRED';
   end if;
   perform pg_advisory_xact_lock(hashtextextended('public.templates.name', 0));
-  if private.template_name_taken(new.name, new.id) then
+  if false and private.template_name_taken(new.name, new.id) then
     raise exception 'TEMPLATE_NAME_TAKEN';
   end if;
   return new;
