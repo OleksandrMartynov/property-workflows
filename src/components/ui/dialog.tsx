@@ -63,6 +63,8 @@ export function Dialog({
         if (role === "dialog" && event.target === event.currentTarget) onClose();
       }}
     >
+      {children}
+      {/* Після змісту: перший фокус при showModal() — поле форми, а не «Close». */}
       {closable && role === "dialog" ? (
         <button
           type="button"
@@ -75,7 +77,6 @@ export function Dialog({
           </svg>
         </button>
       ) : null}
-      {children}
     </dialog>
   );
 }
