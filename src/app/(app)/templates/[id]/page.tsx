@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { PlayIcon } from "@/components/ui/icons";
 import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
-import { isUuid, loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
+import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
 import { TemplateView } from "./_components/template-view";
 
@@ -21,9 +21,7 @@ export default async function TemplatePage({ params }: PageProps<"/templates/[id
   if (!current) {
     // Адміністратор ще не збереженого шаблону працює в редакторі; менеджер — «Template not found».
     if (canManageTemplates(viewer.role)) {
-      const { data: drafts, error } = await supabase.rpc("list_template_drafts");
-      if (error) throw error;
-      if ((drafts ?? []).some((d) => d.id === id)) redirect(`/templates/${id}/edit`);
+      if (await findTemplateDraft(supabase, id)) redirect(`/templates/${id}/edit`);
     }
     notFound();
   }

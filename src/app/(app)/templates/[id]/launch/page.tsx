@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
 import { errorMessage, MESSAGES } from "@/lib/runs/messages";
-import { isUuid, loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
+import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
 import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { launchRun } from "../../../runs/actions";
@@ -20,9 +20,7 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
   if (!template) {
     if (canManageTemplates(viewer.role)) {
       // Лише адміністратор бачить незбережений шаблон (функція бази перевіряє роль сама).
-      const { data: drafts, error: draftsError } = await supabase.rpc("list_template_drafts");
-      if (draftsError) throw draftsError;
-      const draft = (drafts ?? []).find((d) => d.id === id);
+      const draft = await findTemplateDraft(supabase, id);
       if (draft) {
         return (
           <PageShell title={`Launch “${draft.name}”`} back={{ href: "/templates", label: "Templates" }}>

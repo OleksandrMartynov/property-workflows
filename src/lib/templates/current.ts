@@ -93,3 +93,10 @@ export async function loadVersionTasks(supabase: Supabase, versionIds: string[])
   if (error) throw error;
   return data ?? [];
 }
+
+/** Незбережений шаблон за id — лише для адміністратора (`list_template_drafts` відмовляє менеджеру). Одна точка для всіх сторінок шаблону. */
+export async function findTemplateDraft(supabase: Supabase, id: string) {
+  const { data, error } = await supabase.rpc("list_template_drafts");
+  if (error) throw error;
+  return (data ?? []).find((d) => d.id === id) ?? null;
+}

@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PencilIcon } from "@/components/ui/icons";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
+import { findTemplateDraft } from "@/lib/templates/current";
 import { versionList } from "@/lib/templates/editor";
 import { Forbidden } from "@/app/_components/forbidden";
 import { PageShell } from "@/app/_components/ui";
@@ -20,9 +21,7 @@ export default async function TemplateVersionsPage({ params }: PageProps<"/templ
   const [{ id }, { supabase, viewer }] = await Promise.all([params, requireViewer()]);
   if (!canManageTemplates(viewer.role)) return <Forbidden title="Versions" />;
 
-  const { data: drafts, error: draftsError } = await supabase.rpc("list_template_drafts");
-  if (draftsError) throw draftsError;
-  const template = (drafts ?? []).find((d) => d.id === id);
+  const template = await findTemplateDraft(supabase, id);
   if (!template) notFound();
 
   const { data: versions, error } = await supabase.from("template_versions").select("number, saved_at, saved_by").eq("template_id", id);
