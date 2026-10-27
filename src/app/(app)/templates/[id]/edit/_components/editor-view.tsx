@@ -16,6 +16,7 @@ import {
   type ItemChange,
 } from "@/lib/templates/changes";
 import type { VersionTask } from "@/lib/templates/current";
+import type { SaveStore } from "@/lib/templates/save-state";
 import { formatSavedAt, versionAuthor } from "@/lib/templates/editor";
 import { SubmitButton } from "@/app/_components/submit-button";
 import { Notice, PageShell } from "@/app/_components/ui";
@@ -27,6 +28,7 @@ import {
   updateTask,
 } from "../actions";
 import { CollapsibleSection } from "./collapsible-section";
+import { EditorSaveProvider, SaveStatus, TrackedForm, UnkeptItems } from "./editor-save";
 import { EditorPreview } from "./editor-preview";
 import { ItemActions } from "./item-actions";
 import { ModeSwitch } from "./mode-switch";
@@ -73,6 +75,7 @@ export function EditorView({
   message,
   savedNumber,
   mode = "edit",
+  saveStore,
 }: {
   template: EditorTemplate;
   sections: EditorSection[];
@@ -85,6 +88,8 @@ export function EditorView({
   savedNumber: string | null;
   /** «Preview» — чекліст, який отримає запуск після збереження версії; «Edit» — редагування. */
   mode?: "edit" | "preview";
+  /** Готове сховище стану збереження — лише для тестів; зазвичай створюється в EditorSaveProvider. */
+  saveStore?: SaveStore;
 }) {
   const id = template.id;
   const changes = draftChanges(sections, tasks, versionTasks);
@@ -102,6 +107,7 @@ export function EditorView({
   );
 
   return (
+    <EditorSaveProvider store={saveStore}>
     <PageShell
       title={template.name}
       titleSlot={
@@ -112,7 +118,7 @@ export function EditorView({
           >
             <TemplateIcon />
           </span>
-          <form action={renameTemplate} className="flex min-w-0 flex-1">
+          <TrackedForm action={renameTemplate} className="flex min-w-0 flex-1">
             {hidden}
             <InlineInput
               name="name"
@@ -122,7 +128,7 @@ export function EditorView({
               placeholder="Template name"
               allowEmpty
             />
-          </form>
+          </TrackedForm>
         </div>
       }
       back={{ href: "/templates", label: "Templates" }}
@@ -142,6 +148,7 @@ export function EditorView({
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <SaveStatus />
           <ModeSwitch mode={mode} />
           <Link
             href={`/templates/${id}/versions`}
@@ -164,11 +171,14 @@ export function EditorView({
         ) : (
           <div className="flex min-w-0 flex-col gap-6">
             {sections.length === 0 ? (
+              <>
+              <UnkeptItems scope="sections" as="div" />
               <EmptyState
                 title="No sections yet."
                 action={
-                  <form
+                  <TrackedForm
                     action={addSection}
+                    track={{ scope: "sections" }}
                     className="flex w-full max-w-sm items-center gap-2"
                   >
                     {hidden}
@@ -182,9 +192,10 @@ export function EditorView({
                       <PlusIcon className="size-3.5" />
                       Add section
                     </SubmitButton>
-                  </form>
+                  </TrackedForm>
                 }
               />
+              </>
             ) : null}
 
             {sections.map((section, si) => {
@@ -208,7 +219,7 @@ export function EditorView({
                     name={section.name}
                     header={
                       <>
-                    <form
+                    <TrackedForm
                       action={renameSection}
                       className="flex min-w-0 flex-1"
                     >
@@ -226,7 +237,7 @@ export function EditorView({
                         placeholder="Section name"
                         allowEmpty
                       />
-                    </form>
+                    </TrackedForm>
                     {sectionChange ? (
                       <Badge variant="changed" data-testid="section-change">
                         {CHANGE_LABEL[sectionChange]}
@@ -263,7 +274,7 @@ export function EditorView({
                             >
                               {numberOf.get(task.id)}
                             </span>
-                            <form
+                            <TrackedForm
                               action={updateTask}
                               className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1"
                             >
@@ -299,7 +310,7 @@ export function EditorView({
                                   aria-label={`Required: ${task.name}`}
                                 />
                               </span>
-                            </form>
+                            </TrackedForm>
                             <ItemActions
                               templateId={id}
                               kind="task"
@@ -312,9 +323,11 @@ export function EditorView({
                           </li>
                         );
                       })}
+                      <UnkeptItems scope={section.id} />
                       <li className="group/add bg-muted/30 py-1 pr-2 pl-3">
-                        <form
+                        <TrackedForm
                           action={addTask}
+                          track={{ scope: section.id, required: true }}
                           className="flex flex-wrap items-center gap-x-2 gap-y-1"
                         >
                           {hidden}
@@ -352,7 +365,7 @@ export function EditorView({
                               Add task
                             </SubmitButton>
                           </span>
-                        </form>
+                        </TrackedForm>
                       </li>
                     </ol>
                   </Card>
@@ -361,9 +374,11 @@ export function EditorView({
               );
             })}
 
+            {sections.length ? <UnkeptItems scope="sections" as="div" /> : null}
             {sections.length ? (
-              <form
+              <TrackedForm
                 action={addSection}
+                track={{ scope: "sections" }}
                 className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-primary/40 py-1.5 pr-2 pl-3 transition-ui focus-within:border-ring focus-within:bg-card hover:border-primary/70 hover:bg-state-selected"
               >
                 {hidden}
@@ -386,7 +401,7 @@ export function EditorView({
                   <PlusIcon className="size-3.5" />
                   Add section
                 </SubmitButton>
-              </form>
+              </TrackedForm>
             ) : null}
           </div>
         )}
@@ -469,5 +484,6 @@ export function EditorView({
         />
       ) : null}
     </PageShell>
+    </EditorSaveProvider>
   );
 }
