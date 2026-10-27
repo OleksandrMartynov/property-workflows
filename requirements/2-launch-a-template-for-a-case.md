@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-25T13:21:10Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-27T10:09:18Z
 
 # Requirement: Launch a template for a case
 
@@ -56,6 +56,7 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - The interface is in English: messages, statuses and the progress record are shown exactly as written in the acceptance criteria and in the glossary.
 - All dates and times in the application are shown in Kyiv time; this slice has no time-dependent rules.
 - The data is for training: object names and users are fictional (`*@example.test`).
+- A template that has never been saved as a version is not offered for launching to managers, and administrators see it in the launch form as unavailable (see "Requirement: Edit a template with version control"). The template name of a run is the name of the version it was launched from.
 
 ### Відкриті питання
 
@@ -68,3 +69,4 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - 2026-10-20 — AC-RUN-10 (emails in the assignee picker), AC-RUN-11 (spaces around the case name), AC-RUN-12 (sections kept at launch) added; the line "Section order in a template is not required and not checked" removed; assumptions added on the moment of launch, a second run for the same case, flags fixed at launch and the interface language — https://github.com/solomchaak/property-workflows-spec/issues/5, https://github.com/solomchaak/property-workflows-spec/issues/6, https://github.com/solomchaak/property-workflows-spec/issues/7, https://github.com/solomchaak/property-workflows-spec/issues/8, https://github.com/solomchaak/property-workflows-spec/issues/9, https://github.com/solomchaak/property-workflows-spec/issues/13, https://github.com/solomchaak/property-workflows-spec/issues/16
 - 2026-10-20 — AC-RUN-12 made concrete (the number of tasks in each section) — own PM decision (self-check against the checklist)
 - 2026-10-25 — assumption about templates updated (templates are created and saved as versions in the editor); assumption added that a change to a template means saving a new version and never affects a run already launched; out-of-scope item about creating templates replaced by a reference — own PM decision, after the new requirement https://github.com/solomchaak/property-workflows-spec/issues/20
+- 2026-10-27 — assumption added about templates that have never been saved as a version and about the template name of a run — own PM decision, after the questions https://github.com/solomchaak/property-workflows-spec/issues/21 and https://github.com/solomchaak/property-workflows-spec/issues/29
