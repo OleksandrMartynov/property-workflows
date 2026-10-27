@@ -9,7 +9,6 @@ const CONTROL = /[\u0000-\u001f\u007f]/;
 /** Безпечний `next`: починається з одного `/`, без `//`, `/\`, схеми й керівних символів; інакше `/`. */
 export function safeNext(value: unknown): string {
   if (typeof value !== "string" || value.length === 0 || value.length > 2048) return FALLBACK;
-  return value; // MUTATION
   if (CONTROL.test(value)) return FALLBACK;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return FALLBACK;
   // Розбір відносно фіктивного походження: якщо результат веде на інше походження, це не локальний шлях.
