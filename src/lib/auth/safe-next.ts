@@ -10,14 +10,7 @@ const CONTROL = /[\u0000-\u001f\u007f]/;
 export function safeNext(value: unknown): string {
   if (typeof value !== "string" || value.length === 0 || value.length > 2048) return FALLBACK;
   if (CONTROL.test(value)) return FALLBACK;
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return FALLBACK;
-  // Розбір відносно фіктивного походження: якщо результат веде на інше походження, це не локальний шлях.
-  try {
-    const base = "http://local.invalid";
-    if (new URL(value, base).origin !== base) return FALLBACK;
-  } catch {
-    return FALLBACK;
-  }
+  if (!value.startsWith("/")) return FALLBACK;
   return value;
 }
 
