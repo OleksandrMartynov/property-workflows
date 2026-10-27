@@ -49,7 +49,8 @@ describe("База: роль у profiles не змінює сам користу
   });
 
   it("відвідувач без входу (anon) не змінює профілі — permission denied, роль та сама", async () => {
-    await expect(t.asAnon("update public.profiles set role = 'admin' where id = $1", [MANAGER_B])).rejects.toThrow("permission denied");
+    // Без where: інакше відмову дало б уже право select на id, а не відсутність update.
+    await expect(t.asAnon("update public.profiles set role = 'admin'")).rejects.toThrow("permission denied");
     expect((await profile(MANAGER_B)).role).toBe("manager");
   });
 });
