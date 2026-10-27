@@ -22,6 +22,11 @@ export interface VersionTask {
   required: boolean;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Адреса сторінки з не-uuid замість id — «Template not found», а не помилка Postgres (AC-EDITOR-16). */
+export const isUuid = (value: string) => UUID.test(value);
+
 /** Для кожного шаблону — лише його поточна версія; шаблони без збереженої версії відкинуто. */
 export function pickCurrent(
   templates: readonly { id: string; current_version: number | null }[],
@@ -87,4 +92,11 @@ export async function loadVersionTasks(supabase: Supabase, versionIds: string[])
     .in("version_id", versionIds);
   if (error) throw error;
   return data ?? [];
+}
+
+/** Незбережений шаблон за id — лише для адміністратора (`list_template_drafts` відмовляє менеджеру). Одна точка для всіх сторінок шаблону. */
+export async function findTemplateDraft(supabase: Supabase, id: string) {
+  const { data, error } = await supabase.rpc("list_template_drafts");
+  if (error) throw error;
+  return (data ?? []).find((d) => d.id === id) ?? null;
 }

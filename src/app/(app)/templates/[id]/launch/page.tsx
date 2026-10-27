@@ -1,20 +1,36 @@
 import { notFound } from "next/navigation";
-import { errorMessage } from "@/lib/runs/messages";
-import { loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
-import { requireViewer } from "@/lib/supabase/viewer";
+import { Alert } from "@/components/ui/alert";
+import { errorMessage, MESSAGES } from "@/lib/runs/messages";
+import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
+import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { launchRun } from "../../../runs/actions";
 import { LaunchForm } from "./_components/launch-form";
 
 // AC-RUN-01, AC-RUN-03, AC-RUN-04, AC-RUN-07…09: назва випадку і виконавець кожної задачі
-// (за замовчуванням — той, хто запускає; він же менеджер запуску).
+// (за замовчуванням — той, хто запускає; він же менеджер запуску). Шаблон без збереженої версії: адміністратор бачить
+// примітку замість форми (AC-EDITOR-10), менеджер — «Template not found» (AC-EDITOR-16); запуску з нього немає ні в кого.
 export default async function LaunchTemplatePage({ params, searchParams }: PageProps<"/templates/[id]/launch">) {
   const [{ id }, { error, case_name }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
+  if (!isUuid(id)) notFound();
 
   // Запускаємо лише поточну версію (AC-EDITOR-06): назва, секції й задачі — зі знімка версії, не з незбережених змін.
   const [template] = await loadCurrentVersions(supabase, [id]);
-  if (!template) notFound();
+  if (!template) {
+    if (canManageTemplates(viewer.role)) {
+      // Лише адміністратор бачить незбережений шаблон (функція бази перевіряє роль сама).
+      const draft = await findTemplateDraft(supabase, id);
+      if (draft) {
+        return (
+          <PageShell title={`Launch “${draft.name}”`} back={{ href: "/templates", label: "Templates" }}>
+            <Alert variant="info">{MESSAGES.TEMPLATE_NOT_PUBLISHED}</Alert>
+          </PageShell>
+        );
+      }
+    }
+    notFound();
+  }
 
   const [versionTasks, { data: users }] = await Promise.all([
     loadVersionTasks(supabase, [template.versionId]),
