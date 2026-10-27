@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { THEME_EVENT } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 // Шовковий «сатин»-шейдер для hero на сторінці входу. Чистий WebGL без залежностей.
@@ -223,14 +224,17 @@ export function HeroShader({ playing, speed = 1, className }: { playing: boolean
     const probe = document.createElement("canvas");
     probe.width = probe.height = 1;
     const ctx = probe.getContext("2d", { willReadFrequently: true });
-    if (ctx) {
+    // Токени сцени читаємо з CSS: після зміни теми (вибір «Theme», вигляд пристрою) читаємо знову й малюємо кадр.
+    const applyTokens = () => {
+      if (!ctx) return;
       const base = readToken("--stage", ctx);
       gl.uniform1f(u("uLight"), 0.2126 * base[0] + 0.7152 * base[1] + 0.0722 * base[2] > 0.5 ? 1 : 0);
       gl.uniform3fv(u("uBase"), base);
       gl.uniform3fv(u("uA"), readToken("--stage-glow-1", ctx));
       gl.uniform3fv(u("uB"), readToken("--stage-glow-2", ctx));
       gl.uniform3fv(u("uC"), readToken("--stage-glow-3", ctx));
-    }
+    };
+    applyTokens();
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let time = 6; // старт із виразного кадру
@@ -337,6 +341,13 @@ export function HeroShader({ playing, speed = 1, className }: { playing: boolean
     window.addEventListener("pointerdown", onDown, { passive: true });
     const onResize = () => draw();
     window.addEventListener("resize", onResize);
+    const onTheme = () => {
+      applyTokens();
+      draw();
+    };
+    const deviceTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    window.addEventListener(THEME_EVENT, onTheme);
+    deviceTheme.addEventListener("change", onTheme);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
@@ -345,6 +356,8 @@ export function HeroShader({ playing, speed = 1, className }: { playing: boolean
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener(THEME_EVENT, onTheme);
+      deviceTheme.removeEventListener("change", onTheme);
       controlRef.current = null;
       // Контекст не «губимо» примусово: у dev-режимі React запускає ефект двічі на тому самому канвасі.
       gl.deleteProgram(program);

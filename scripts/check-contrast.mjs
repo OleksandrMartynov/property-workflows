@@ -3,65 +3,9 @@
 // кільце фокусу й іконки-стани ≥ 3:1. Значення OKLCH → sRGB → відносна яскравість. Код виходу 1, якщо пара нижче норми.
 // Використання: node scripts/check-contrast.mjs [--md]   (--md друкує таблицю для DESIGN.md)
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { loadThemes, ratio } from "./lib/contrast.mjs";
 
-// Коментарі прибираємо одразу: у них трапляються дужки.
-const css = readFileSync(join(process.cwd(), "src", "app", "globals.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-
-/** Тіло блоку, що починається на позиції `open` ('{'), і позиція його кінця. */
-function body(text, open) {
-  let depth = 0;
-  for (let i = open; i < text.length; i++) {
-    if (text[i] === "{") depth++;
-    else if (text[i] === "}" && --depth === 0) return { text: text.slice(open + 1, i), end: i };
-  }
-  throw new Error("globals.css: незбалансовані дужки");
-}
-
-const declarations = (text) => {
-  const out = {};
-  for (const m of text.matchAll(/--([a-z0-9-]+):\s*oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+%?)?\s*\)/g)) {
-    out[m[1]] = [m[2].endsWith("%") ? parseFloat(m[2]) / 100 : parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4])];
-  }
-  return out;
-};
-
-// Лише верхній рівень: усі `:root { … }` — світла тема (разом із токенами сцени); `@media (prefers-color-scheme: dark) { :root { … } }` — темна.
-// Інші @media (p3, prefers-contrast, forced-colors) навмисно пропускаємо: це опційні надбудови над базовою парою.
-const light = {};
-const dark = {};
-let pos = 0;
-while (pos < css.length) {
-  const open = css.indexOf("{", pos);
-  if (open < 0) break;
-  // Умова правила — текст після останнього `;` (так відсікаються `@import …;`).
-  const prelude = css.slice(pos, open).split(";").pop().trim();
-  const block = body(css, open);
-  if (prelude === ":root") Object.assign(light, declarations(block.text));
-  else if (/^@media\s*\(prefers-color-scheme:\s*dark\)$/.test(prelude)) {
-    const inner = block.text.match(/:root\s*\{/);
-    if (inner) Object.assign(dark, declarations(body(block.text, inner.index + inner[0].length - 1).text));
-  }
-  pos = block.end + 1;
-}
-const themes = { light, dark: { ...light, ...dark } };
-
-const toRGB = ([L, C, H]) => {
-  const h = (H * Math.PI) / 180;
-  const a = C * Math.cos(h);
-  const b = C * Math.sin(h);
-  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map((x) => Math.min(1, Math.max(0, x)));
-};
-// toRGB віддає лінійний sRGB; яскравість рахуємо з нього напряму.
-const luminance = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
-const ratio = (a, b) => {
-  const [x, y] = [luminance(toRGB(a)), luminance(toRGB(b))];
-  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
-};
+const { themes, darkMedia, darkExplicit } = loadThemes();
 
 // [токен, тло, мінімум, де]
 const PAIRS = [
@@ -108,6 +52,14 @@ const PAIRS = [
 
 const rows = [];
 let failures = 0;
+// Дві копії темного блоку (media для «System» і явна для «Dark») мають збігатися токен у токен.
+for (const name of new Set([...Object.keys(darkMedia), ...Object.keys(darkExplicit)])) {
+  const [x, y] = [darkMedia[name], darkExplicit[name]];
+  if (!x || !y || x.some((v, i) => v !== y[i])) {
+    failures++;
+    console.error(`Темні блоки розійшлися: --${name} (media: ${x ?? "немає"}, data-theme=dark: ${y ?? "немає"})`);
+  }
+}
 for (const [fg, bg, min, where] of PAIRS) {
   const cells = ["light", "dark"].map((theme) => {
     const a = themes[theme][fg];

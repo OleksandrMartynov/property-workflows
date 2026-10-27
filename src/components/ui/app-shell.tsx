@@ -9,6 +9,8 @@ import { Button } from "./button";
 import { Dialog } from "./dialog";
 import { ChevronsUpDownIcon, LogOutIcon, PanelLeftIcon } from "./icons";
 import { Popover } from "./popover";
+import { ThemeSwitch, chooseTheme } from "./theme-switch";
+import { THEME_CHOICES, THEME_LABELS } from "@/lib/theme";
 import "./shell.css";
 import { Logo } from "./logo";
 
@@ -104,6 +106,9 @@ function AccountMenu({ email, role, collapsed }: { email: string; role?: string;
               </dd>
             </dl>
           ) : null}
+          <div className="border-t border-border pt-3">
+            <ThemeSwitch />
+          </div>
         </div>
       </Popover>
     </>
@@ -265,6 +270,12 @@ function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collaps
     { id: "runs", label: "Go to Runs", hint: "Navigate", run: go("/runs") },
     { id: "launch", label: "Launch a template", hint: "Action", run: go("/templates") },
     { id: "sidebar", label: collapsed ? "Expand sidebar" : "Collapse sidebar", hint: "[", run: onToggleSidebar },
+    ...THEME_CHOICES.map((choice): Command => ({
+      id: `theme-${choice}`,
+      label: `Theme: ${THEME_LABELS[choice]}`,
+      hint: "Appearance",
+      run: () => chooseTheme(choice),
+    })),
     { id: "signout", label: "Sign out", hint: "Account", run: () => void signOutAction() },
   ];
   const needle = query.trim().toLowerCase();

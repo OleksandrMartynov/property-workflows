@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
+import { ThemeSync } from "@/components/ui/theme-switch";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 // Inter з віссю optical size: на великих розмірах дає «display»-форми (щільніші), на 14 px — текстові. Один шрифт на весь інтерфейс.
 const inter = Inter({
@@ -30,11 +32,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // suppressHydrationWarning: вбудований скрипт нижче ставить data-theme до гідратації (AC-DSYS-06, без спалаху теми).
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
+        <ThemeSync />
         <InteractionFeedback />
         {children}
       </body>

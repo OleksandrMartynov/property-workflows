@@ -69,7 +69,7 @@ function Fields({ errors, validate, serverError, notice }: { errors: Errors; val
 }
 
 /** Вхід: перевірка на blur і на submit (не на кожен символ), помилка сервера над кнопкою, без вбудованих підказок браузера. */
-export function LoginForm({ action, serverError }: { action: (formData: FormData) => Promise<void>; serverError?: string }) {
+export function LoginForm({ action, serverError, next }: { action: (formData: FormData) => Promise<void>; serverError?: string; next?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Errors>({});
 
@@ -91,6 +91,7 @@ export function LoginForm({ action, serverError }: { action: (formData: FormData
 
   return (
     <form ref={formRef} action={action} noValidate onSubmit={onSubmit} className="flex flex-col gap-4">
+      {next && next !== "/" ? <input type="hidden" name="next" value={next} /> : null}
       <Fields
         errors={errors}
         validate={validate}

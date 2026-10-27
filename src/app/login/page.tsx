@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import { HeroStage } from "@/components/ui/hero-stage";
+import { safeNext } from "@/lib/auth/safe-next";
 import { Logo, LogoMark } from "@/components/ui/logo";
+import { ThemeSwitch } from "@/components/ui/theme-switch";
 import { login } from "./actions";
 import { LoginForm } from "./login-form";
 
@@ -12,8 +14,10 @@ const ERRORS: Record<string, string> = {
 export const metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
   const message = typeof error === "string" ? ERRORS[error] : undefined;
+  // Куди повернути після входу (AC-DSYS-08): у форму йде лише безпечний шлях цього сайту.
+  const returnTo = safeNext(next);
 
   return (
     <main className="grid min-h-dvh flex-1 lg:grid-cols-[minmax(28rem,0.82fr)_minmax(0,1.18fr)]">
@@ -47,10 +51,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             className="animate-ui-reveal flex flex-col gap-9 rounded-2xl border border-border bg-card/85 p-10 shadow-lg backdrop-blur-sm"
           >
             <h1 className="text-[2rem] font-semibold leading-9 tracking-[-0.03em]">Sign in</h1>
-            <LoginForm action={login} serverError={message} />
+            <LoginForm action={login} serverError={message} next={returnTo} />
           </div>
         </div>
 
+        <ThemeSwitch compact />
       </section>
 
       <aside className="hidden lg:block">
