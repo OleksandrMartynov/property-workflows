@@ -15,7 +15,7 @@ import { createTemplate } from "../[id]/edit/actions";
  * без версії й відкриває редактор (дія та сама, що й на /templates/new — сторінка лишається для прямих посилань і
  * помилок сервера). Порожню назву ловимо одразу — та сама відмова, що й на сервері («Enter a name»).
  */
-export function NewTemplateDialog() {
+export function NewTemplateDialog({ label = "New template" }: { label?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const id = useId();
@@ -24,7 +24,7 @@ export function NewTemplateDialog() {
     <>
       <Button onClick={() => setOpen(true)} aria-haspopup="dialog">
         <PlusIcon />
-        New template
+        {label}
       </Button>
       <Dialog
         open={open}

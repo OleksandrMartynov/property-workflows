@@ -22,6 +22,11 @@ export interface VersionTask {
   required: boolean;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Адреса сторінки з не-uuid замість id — «Template not found», а не помилка Postgres (AC-EDITOR-16). */
+export const isUuid = (value: string) => UUID.test(value);
+
 /** Для кожного шаблону — лише його поточна версія; шаблони без збереженої версії відкинуто. */
 export function pickCurrent(
   templates: readonly { id: string; current_version: number | null }[],

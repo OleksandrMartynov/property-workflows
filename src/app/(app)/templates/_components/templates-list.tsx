@@ -1,11 +1,13 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HistoryIcon, PencilIcon, PlayIcon, TemplateIcon } from "@/components/ui/icons";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { MESSAGES } from "@/lib/runs/messages";
+import { NewTemplateDialog } from "./new-template-dialog";
 
 export interface TemplateRow {
   id: string;
@@ -28,8 +30,9 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 /**
  * Галерея шаблонів: картка — назва, склад поточної версії й перелік її секцій, стан і дії. Назва — посилання на всю
- * картку (адміністратору — у редактор, менеджеру — у форму запуску). Менеджер бачить лише збережені шаблони й
- * «Launch»; адміністратор — ще «Unpublished changes», «Edit» і «Versions». Склад і секції — завжди з поточної версії,
+ * картку (адміністратору — у редактор, менеджеру — на сторінку шаблону лише для читання, AC-EDITOR-02). Менеджер
+ * бачить лише збережені шаблони й «Launch»; ще не збережений шаблон адміністратор бачить із вимкненим «Launch» і
+ * приміткою «Save the template to launch it» (AC-EDITOR-10); адміністратор — ще «Unpublished changes», «Edit» і «Versions». Склад і секції — завжди з поточної версії,
  * а не з незбережених змін (AC-EDITOR-02).
  */
 export function TemplatesList({
@@ -43,15 +46,21 @@ export function TemplatesList({
   outlines?: Record<string, TemplateOutline>;
   canManage?: boolean;
 }) {
+  // AC-EDITOR-17: менеджер — без таблиці й без дії; адміністратор — «Create a template» (той самий діалог, що й «New template»).
   if (!templates.length) {
-    return <EmptyState title="No templates yet." />;
+    return canManage ? (
+      <EmptyState title="No templates yet. Create a template to start." action={<NewTemplateDialog label="Create a template" />} />
+    ) : (
+      <EmptyState title="No templates yet. An administrator creates them." />
+    );
   }
   return (
     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {templates.map((t, index) => {
         const c = counts[t.id];
         const outline = outlines[t.id] ?? [];
-        const href = canManage ? `/templates/${t.id}/edit` : t.currentVersion !== null ? `/templates/${t.id}/launch` : null;
+        const href = canManage ? `/templates/${t.id}/edit` : t.currentVersion !== null ? `/templates/${t.id}` : null;
+        const noteId = `${t.id}-launch-note`;
         return (
           <li key={t.id} className="animate-ui-rise" style={{ "--i": Math.min(index, 8) } as CSSProperties} data-testid="template-card">
             <Card className="group relative flex h-full flex-col transition-ui hover:border-border-strong hover:shadow-md has-focus-visible:border-ring">
@@ -86,6 +95,11 @@ export function TemplatesList({
                       ? "No saved version"
                       : `${plural(c?.sections ?? 0, "section", "sections")} · ${plural(c?.total ?? 0, "task", "tasks")} · ${c?.required ?? 0} required`}
                   </p>
+                  {canManage && t.currentVersion === null ? (
+                    <p id={noteId} className="text-meta text-muted-foreground">
+                      {MESSAGES.TEMPLATE_NOT_PUBLISHED}
+                    </p>
+                  ) : null}
                 </div>
                 {outline.length ? (
                   <ol className="flex flex-col gap-1 border-t border-border pt-3 text-label font-normal">
@@ -123,6 +137,11 @@ export function TemplatesList({
                     <PlayIcon className="size-3.5" />
                     Launch
                   </Link>
+                ) : canManage ? (
+                  <Button variant="soft" size="sm" disabled aria-describedby={noteId}>
+                    <PlayIcon className="size-3.5" />
+                    Launch
+                  </Button>
                 ) : null}
               </div>
             </Card>
