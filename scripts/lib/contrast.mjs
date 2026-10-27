@@ -1,4 +1,4 @@
-// Спільне для перевірки контрасту (scripts/check-contrast.mjs) і тестів теми (tests/design/theme.test.ts):
+// Спільне для перевірки контрасту (scripts/check-contrast.mjs) і тестів теми (tests/design/theme.test.tsx):
 // розбір токенів світлої й темної теми з src/app/globals.css, OKLCH → sRGB, відношення яскравості WCAG 2.x.
 
 import { readFileSync } from "node:fs";

@@ -6,7 +6,7 @@
    Тема — вибір «System / Light / Dark» (AC-DSYS-05…07): «System» слідує за prefers-color-scheme, «Light» і «Dark»
    задає атрибут `data-theme` на <html> (src/lib/theme.ts; без атрибута — System). Тому кожен блок dark нижче записано
    двічі з однаковим тілом: у media-запиті для :root:not([data-theme="light"]) і явно для :root[data-theme="dark"];
-   тест tests/design/theme.test.ts стежить, щоб копії не розійшлися. Варіант Tailwind `dark:` у компонентах не
+   тест tests/design/theme.test.tsx стежить, щоб копії не розійшлися. Варіант Tailwind `dark:` у компонентах не
    вживаємо (лише токени). У сторінках і компонентах — лише семантичні утиліти
    (bg-primary, text-muted-foreground, border-input …), жодних hex і сирих палітр.
    Новий токен: DESIGN.md → :root і блок dark нижче → --color-<назва> у @theme inline.
