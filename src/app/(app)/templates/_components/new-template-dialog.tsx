@@ -13,7 +13,7 @@ import { createTemplate } from "../[id]/edit/actions";
 /**
  * «New template» у галереї шаблонів: діалог із назвою замість переходу на окрему сторінку. «Create» створює шаблон
  * без версії й відкриває редактор (дія та сама, що й на /templates/new — сторінка лишається для прямих посилань і
- * помилок сервера). Порожню назву ловимо одразу — та сама відмова, що й на сервері («Enter a name»).
+ * помилок сервера). Порожню назву ловимо одразу — та сама відмова, що й на сервері («Enter a template name», AC-EDITOR-19).
  */
 export function NewTemplateDialog() {
   const [open, setOpen] = useState(false);
@@ -41,7 +41,7 @@ export function NewTemplateDialog() {
             const name = String(new FormData(event.currentTarget).get("name") ?? "").trim();
             if (!name) {
               event.preventDefault();
-              setError(MESSAGES.NAME_REQUIRED);
+              setError(MESSAGES.TEMPLATE_NAME_REQUIRED);
             }
           }}
         >
