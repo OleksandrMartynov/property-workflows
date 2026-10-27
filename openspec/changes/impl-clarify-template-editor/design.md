@@ -17,7 +17,9 @@
 - **Недоступний шаблон** (AC-EDITOR-10): у формі запуску й на картці адміністратора — вимкнений «Launch» і примітка
   «Save the template to launch it»; обрати його не можна.
 - **Порожні стани** (AC-EDITOR-17, 18): менеджер — «No templates yet. An administrator creates them.»; адміністратор
-  (припущення PM) — «No templates yet. Create a template to start.» і «Create a template»; список версій —
+  (припущення PM у `requirements/20-edit-a-template-with-version-control.md`, рішення
+  https://github.com/solomchaak/property-workflows-spec/issues/27) — «No templates yet. Create a template to start.» і
+  «Create a template»; список версій —
   «No versions yet. Save the template to create version 1.». Без порожніх таблиць (`EmptyState`).
 - **Підтвердження видалення** (AC-EDITOR-13, 14): `ConfirmDialog` з `tone="destructive"` — назва секції чи задачі й
   «This cannot be undone»; «Cancel» нічого не змінює.
