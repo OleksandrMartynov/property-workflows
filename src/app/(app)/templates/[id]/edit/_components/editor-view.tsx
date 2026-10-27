@@ -119,6 +119,8 @@ export function EditorView({
               size="title"
               defaultValue={template.name}
               aria-label="Template name"
+              placeholder="Template name"
+              allowEmpty
             />
           </form>
         </div>
@@ -221,6 +223,8 @@ export function EditorView({
                         size="heading"
                         defaultValue={section.name}
                         aria-label="Section name"
+                        placeholder="Section name"
+                        allowEmpty
                       />
                     </form>
                     {sectionChange ? (
@@ -273,6 +277,8 @@ export function EditorView({
                                 name="name"
                                 defaultValue={task.name}
                                 aria-label="Task name"
+                                placeholder="Task name"
+                                allowEmpty
                                 containerClassName="basis-44"
                               />
                               <span className="flex items-center gap-2">
