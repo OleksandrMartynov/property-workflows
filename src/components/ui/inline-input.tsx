@@ -14,13 +14,16 @@ const sizes = {
 /**
  * Поле, що виглядає як текст: назва шаблону, секції чи задачі редагується на місці. Межа й тло з'являються під
  * курсором і у фокусі (межа `ring`, як у `Input`). Enter або втрата фокусу надсилають форму, якщо текст змінився;
- * Esc повертає збережене значення; порожнє значення не надсилається — повертається попереднє. З `commit="enter"`
+ * Esc повертає збережене значення; порожнє значення не надсилається — повертається попереднє, крім `allowEmpty`
+ * (назва шаблону, секції чи задачі: стерту назву зберігаємо в незбережених змінах, а відмову дає збереження версії,
+ * AC-EDITOR-20). З `commit="enter"`
  * (рядок «Add a task») форма йде лише за Enter, а втрата фокусу нічого не надсилає. Поки форма надсилається —
  * спінер справа й `aria-busy`.
  */
 export function InlineInput({
   size = "body",
   commit = "blur",
+  allowEmpty = false,
   className,
   containerClassName,
   tone = "default",
@@ -33,6 +36,8 @@ export function InlineInput({
   size?: keyof typeof sizes;
   /** "blur" — зберегти за Enter і втратою фокусу; "enter" — лише за Enter (поле нового елемента). */
   commit?: "blur" | "enter";
+  /** Стерте значення теж надсилається (а не повертається попереднє). */
+  allowEmpty?: boolean;
   /** Класи обгортки (ширина в рядку: `basis-48`), `className` — самого поля. */
   containerClassName?: string;
   /** "accent" — плейсхолдер кольору `primary` (рядок «Add a task»: місце дії видно одразу). */
@@ -50,7 +55,7 @@ export function InlineInput({
 
   const submitIfChanged = (el: HTMLInputElement) => {
     const value = el.value.trim();
-    if (!value) {
+    if (!value && !allowEmpty) {
       el.value = saved;
       return false;
     }
@@ -82,6 +87,7 @@ export function InlineInput({
         autoComplete="off"
         aria-busy={pending || undefined}
         data-inline-commit={commit}
+        data-inline-empty={allowEmpty ? "ok" : undefined}
         className={cn(
           "w-full min-w-0 rounded-sm border border-transparent bg-transparent px-2 text-foreground caret-primary transition-ui hover:border-input hover:bg-field focus-visible:border-ring focus-visible:bg-field focus-visible:-outline-offset-1",
           sizes[size],

@@ -258,7 +258,7 @@ describe("База: видалення й перейменування секц�
     expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
   });
 
-  it("AC-EDITOR-01: секція чи задача іншого шаблону й порожня назва — помилка без змін", async () => {
+  it("AC-EDITOR-01: секція чи задача іншого шаблону — помилка без змін (стерту назву функції приймають: AC-EDITOR-20)", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (remove guard)");
     const other = await tenantMoveInV1("Tenant move-in (remove other)");
     for (const [sql, params, code] of [
@@ -266,8 +266,6 @@ describe("База: видалення й перейменування секц�
       ["select public.remove_template_task($1, $2)", [tpl.id, other.tasks[0]], "DB_ERROR"],
       ["select public.rename_template_section($1, $2, 'x')", [tpl.id, other.sections[0]], "DB_ERROR"],
       ["select public.update_template_task($1, $2, 'x', false)", [tpl.id, other.tasks[0]], "DB_ERROR"],
-      ["select public.rename_template_section($1, $2, '   ')", [tpl.id, tpl.sections[0]], "NAME_REQUIRED"],
-      ["select public.update_template_task($1, $2, '', true)", [tpl.id, tpl.tasks[0]], "NAME_REQUIRED"],
     ] as const) {
       expect(await errorOf(t.asUser(ADMIN, sql, [...params])), sql).toContain(code);
     }
