@@ -46,7 +46,8 @@ export default async function TemplatesPage() {
   return (
     <PageShell
       title="Templates"
-      actions={canManage ? <NewTemplateDialog /> : undefined}
+      // Порожній список: «Create a template» уже в самому списку (AC-EDITOR-17) — друга кнопка зайва.
+      actions={canManage && templates.length ? <NewTemplateDialog /> : undefined}
     >
       <TemplatesGallery templates={templates} counts={Object.fromEntries(counts)} outlines={Object.fromEntries(outlines)} canManage={canManage} />
     </PageShell>
