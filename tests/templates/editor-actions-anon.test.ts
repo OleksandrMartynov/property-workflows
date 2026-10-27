@@ -28,6 +28,8 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+// requireViewer() бере шлях повернення з заголовка proxy (AC-DSYS-08); у прямому запиті без proxy заголовка немає.
+vi.mock("next/headers", () => ({ headers: async () => ({ get: () => null }) }));
 
 const actions = await import("@/app/(app)/templates/[id]/edit/actions");
 const { launchRun } = await import("@/app/(app)/runs/actions");
