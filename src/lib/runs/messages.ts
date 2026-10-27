@@ -20,8 +20,8 @@ export const MESSAGES = {
   SECTION_WITHOUT_TASKS: "Every section needs at least one task",
   NO_UNPUBLISHED_CHANGES: "There are no unpublished changes to save",
   NAME_REQUIRED: "Enter a name",
-  // Робоче припущення (solomchaak/property-workflows-spec#21): шаблон без збереженої версії не запускає ніхто.
-  TEMPLATE_NOT_PUBLISHED: "Save the template as a version to launch it",
+  // AC-EDITOR-10, AC-EDITOR-11: шаблон без збереженої версії не запускає ніхто; примітка — дослівно з AC.
+  TEMPLATE_NOT_PUBLISHED: "Save the template to launch it",
   TASK_NOT_FOUND: "Task not found",
   // AC-TASK-10
   RUN_NOT_FOUND: "Run not found",

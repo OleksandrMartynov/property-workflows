@@ -16,7 +16,7 @@ interface DemoUser {
 }
 
 /** Емуляція того, що в Supabase вже є до наших міграцій: ролі, схема auth, auth.uid(). */
-const SUPABASE_SHIM = `
+export const SUPABASE_SHIM = `
   create role anon nologin;
   create role authenticated nologin;
   create role service_role nologin bypassrls;
