@@ -63,7 +63,7 @@ export function Dialog({
         if (role === "dialog" && event.target === event.currentTarget) onClose();
       }}
     >
-      {closable ? (
+      {closable && role === "dialog" ? (
         <button
           type="button"
           aria-label="Close"
