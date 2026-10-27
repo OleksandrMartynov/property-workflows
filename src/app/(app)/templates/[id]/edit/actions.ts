@@ -5,11 +5,14 @@ import { redirect } from "next/navigation";
 import { dbErrorCode } from "@/lib/runs/messages";
 import { requireAdmin } from "@/lib/supabase/viewer";
 import { cleanName } from "@/lib/templates/editor";
+import type { ActionOutcome } from "@/lib/templates/save-state";
 
 // Дії редактора шаблону (зріз 2, задача 2): кожна — публічний POST-ендпойнт, тож першим кроком requireAdmin()
 // (getClaims() + роль admin із profiles) до будь-якого запису (AC-EDITOR-08, AC-DSYS-02). Запис — клієнтом
 // користувача: діють RLS (лише admin змінює незбережені зміни) і column grants. Зміни секцій і задач — лише функціями
 // бази, які першим кроком блокують рядок шаблону: однаковий порядок блокувань (шаблон → секція / задача), без deadlock.
+// З клієнта (поле client=1, AC-EDITOR-25) дії повертають результат замість redirect: збій не веде на error.tsx, а
+// редактор показує «Your last change was not kept. Try again.» і лишає зміну на екрані. Без client=1 — redirect, як раніше.
 // Кожна зміна зберігається одразу — незбережені зміни шаблону (AC-EDITOR-01); тригери бази ставлять «Unpublished changes».
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -21,17 +24,27 @@ async function editorContext(formData: FormData) {
   const editPath = UUID.test(templateId) ? `/templates/${templateId}/edit` : "/templates";
   const { supabase, viewer } = await requireAdmin(editPath);
   if (!UUID.test(templateId)) redirect("/templates");
-  const back = (query = "") => {
+  const client = field(formData, "client") === "1";
+  const refresh = () => {
     revalidatePath(editPath);
     revalidatePath("/templates");
+  };
+  const back = (query = ""): ActionOutcome => {
+    refresh();
+    if (client) return { ok: true };
     redirect(`${editPath}${query}`);
+  };
+  /** Відмова з кодом повідомлення: redirect на ?error=… або, з клієнта, результат із кодом. */
+  const reject = (code: string): ActionOutcome => {
+    if (client) return { ok: false, code };
+    return back(`?error=${code}`);
   };
   // NOT_ALLOWED функції бази — та сама відмова, що й на сторінці: «Not enough rights».
   const fail = (error: { message?: string } | null | undefined) => {
     const code = dbErrorCode(error);
-    return back(`?error=${code === "NOT_ALLOWED" ? "NOT_ALLOWED_TEMPLATES" : code}`);
+    return reject(code === "NOT_ALLOWED" ? "NOT_ALLOWED_TEMPLATES" : code);
   };
-  return { supabase, viewer, templateId, back, fail };
+  return { supabase, viewer, templateId, back, reject, fail };
 }
 
 export async function createTemplate(formData: FormData) {
@@ -46,27 +59,27 @@ export async function createTemplate(formData: FormData) {
   redirect(`/templates/${data.id}/edit`);
 }
 
-export async function renameTemplate(formData: FormData) {
+export async function renameTemplate(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   // AC-EDITOR-20, AC-EDITOR-24: стерта чи збігна з чужою назва лишається в незбережених змінах; відмову дає збереження
   // версії (save_template_version), а не перейменування (ADR 0007).
   const name = cleanName(formData.get("name")) ?? "";
   const { error } = await supabase.from("templates").update({ name }).eq("id", templateId);
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function addSection(formData: FormData) {
-  const { supabase, templateId, back, fail } = await editorContext(formData);
+export async function addSection(formData: FormData): Promise<ActionOutcome> {
+  const { supabase, templateId, back, reject, fail } = await editorContext(formData);
   const name = cleanName(formData.get("name"));
-  if (!name) return back("?error=NAME_REQUIRED");
+  if (!name) return reject("NAME_REQUIRED");
   // Позицію в кінці рахує функція бази під блокуванням шаблону: паралельні додавання не дадуть однакову позицію.
   const { error } = await supabase.rpc("add_template_section", { p_template_id: templateId, p_name: name });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function renameSection(formData: FormData) {
+export async function renameSection(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   // AC-EDITOR-20: стерта назва секції лишається в незбережених змін; відмову дає збереження версії.
   const name = cleanName(formData.get("name")) ?? "";
@@ -76,11 +89,11 @@ export async function renameSection(formData: FormData) {
     p_name: name,
   });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
 /** Вгору чи вниз: обмін позицій із сусідом — функцією бази, в одній транзакції (роль admin перевіряє й вона). */
-async function move(formData: FormData, kind: "section" | "task", idField: string) {
+async function move(formData: FormData, kind: "section" | "task", idField: string): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const { error } = await supabase.rpc("move_template_item", {
     p_template_id: templateId,
@@ -89,24 +102,24 @@ async function move(formData: FormData, kind: "section" | "task", idField: strin
     p_direction: field(formData, "direction") === "up" ? "up" : "down",
   });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function moveSection(formData: FormData) {
+export async function moveSection(formData: FormData): Promise<ActionOutcome> {
   return move(formData, "section", "section_id");
 }
 
-export async function removeSection(formData: FormData) {
+export async function removeSection(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const { error } = await supabase.rpc("remove_template_section", { p_template_id: templateId, p_section_id: field(formData, "section_id") });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function addTask(formData: FormData) {
-  const { supabase, templateId, back, fail } = await editorContext(formData);
+export async function addTask(formData: FormData): Promise<ActionOutcome> {
+  const { supabase, templateId, back, reject, fail } = await editorContext(formData);
   const name = cleanName(formData.get("name"));
-  if (!name) return back("?error=NAME_REQUIRED");
+  if (!name) return reject("NAME_REQUIRED");
   const { error } = await supabase.rpc("add_template_task", {
     p_template_id: templateId,
     p_section_id: field(formData, "section_id"),
@@ -114,11 +127,11 @@ export async function addTask(formData: FormData) {
     p_required: formData.get("required") === "on",
   });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
 /** Задача цього шаблону: id з форми перевіряє функція бази (через секції шаблону). */
-export async function updateTask(formData: FormData) {
+export async function updateTask(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   // AC-EDITOR-20: стерта назва задачі лишається в незбережених змін; відмову дає збереження версії.
   const name = cleanName(formData.get("name")) ?? "";
@@ -129,14 +142,14 @@ export async function updateTask(formData: FormData) {
     p_required: formData.get("required") === "on",
   });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function moveTask(formData: FormData) {
+export async function moveTask(formData: FormData): Promise<ActionOutcome> {
   return move(formData, "task", "task_id");
 }
 
-export async function moveTaskToSection(formData: FormData) {
+export async function moveTaskToSection(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const { error } = await supabase.rpc("move_template_task_to_section", {
     p_template_id: templateId,
@@ -144,20 +157,23 @@ export async function moveTaskToSection(formData: FormData) {
     p_section_id: field(formData, "target_section_id"),
   });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
-export async function removeTask(formData: FormData) {
+export async function removeTask(formData: FormData): Promise<ActionOutcome> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const { error } = await supabase.rpc("remove_template_task", { p_template_id: templateId, p_task_id: field(formData, "task_id") });
   if (error) return fail(error);
-  back();
+  return back();
 }
 
 /** AC-EDITOR-03, AC-EDITOR-04: збереження версії — функцією бази (роль перевіряє й вона, AC-EDITOR-08). */
-export async function saveVersion(formData: FormData) {
+export async function saveVersion(formData: FormData): Promise<void> {
   const { supabase, templateId, back, fail } = await editorContext(formData);
   const { data: number, error } = await supabase.rpc("save_template_version", { p_template_id: templateId });
-  if (error || !number) return fail(error);
+  if (error || !number) {
+    fail(error);
+    return;
+  }
   back(`?saved=${number}`);
 }
