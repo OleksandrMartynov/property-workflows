@@ -171,7 +171,7 @@ begin
     join public.template_sections as s on s.id = tt.section_id
     where s.template_id = p_template_id and char_length(btrim(tt.name)) = 0
   ) then
-    null; -- raise exception 'ITEM_NAME_REQUIRED';
+    raise exception 'ITEM_NAME_REQUIRED';
   end if;
 
   -- AC-EDITOR-24: назва не збігається з назвою іншого шаблону (без регістру й пробілів на краях). Lock — спільний зі
