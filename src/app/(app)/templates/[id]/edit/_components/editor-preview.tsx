@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { shownName } from "@/lib/templates/display-name";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TaskCheck } from "@/components/ui/task-check";
@@ -18,7 +19,7 @@ export function EditorPreview({ sections, tasks }: { sections: EditorSection[]; 
         <section key={section.id} className="flex flex-col gap-2" aria-labelledby={`preview-${section.id}`}>
           <div className="flex items-center justify-between px-1">
             <h2 id={`preview-${section.id}`} className="text-heading">
-              {section.name}
+              {shownName(section.name, "section")}
             </h2>
             <span className="tabular text-meta text-muted-foreground">{own.length}</span>
           </div>
@@ -28,7 +29,7 @@ export function EditorPreview({ sections, tasks }: { sections: EditorSection[]; 
                 <li key={task.id} className="flex items-center gap-3 px-4 py-2.5">
                   <TaskCheck done={false} />
                   <span className="min-w-0 flex-1 break-words">
-                    {task.name}
+                    {shownName(task.name, "task")}
                     <Badge variant="outline" className="ml-2 align-middle">
                       {requiredLabel(task.required)}
                     </Badge>

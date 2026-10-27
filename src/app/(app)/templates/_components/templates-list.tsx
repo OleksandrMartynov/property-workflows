@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { shownName } from "@/lib/templates/display-name";
 import type { CSSProperties } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -84,10 +85,10 @@ export function TemplatesList({
                         href={href}
                         className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-md after:content-['']"
                       >
-                        {t.name}
+                        {shownName(t.name, "template")}
                       </Link>
                     ) : (
-                      t.name
+                      shownName(t.name, "template")
                     )}
                   </h2>
                   <p className="tabular text-meta text-muted-foreground">
@@ -106,7 +107,7 @@ export function TemplatesList({
                     {outline.slice(0, OUTLINE_MAX).map((s, i) => (
                       <li key={`${i}-${s.name}`} className="flex items-baseline gap-2">
                         <span className="w-4 shrink-0 tabular text-meta text-muted-foreground">{i + 1}</span>
-                        <span className="min-w-0 flex-1 break-words">{s.name}</span>
+                        <span className="min-w-0 flex-1 break-words">{shownName(s.name, "section")}</span>
                         <span className="tabular text-meta text-muted-foreground">{s.tasks}</span>
                       </li>
                     ))}
