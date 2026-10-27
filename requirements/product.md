@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/1 · оновлено 2026-10-25T13:18:10Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/1 · оновлено 2026-10-27T10:09:12Z
 
 # Product
 
@@ -48,6 +48,8 @@ A user is always created together with exactly one role, chosen by the administr
 | Mark a task as done | only tasks where they are the assignee, and all tasks of their own runs | all tasks in all runs |
 
 A visitor who is not signed in sees only the sign-in page, because the application is internal and shows nothing without signing in.
+
+Every limit in this matrix is enforced where the data lives, not only on the pages: an action or data that a role is not allowed cannot be reached in any other way, including a request sent directly, not through the pages of the application. Such a request is refused, nothing is changed and nothing about the data is disclosed.
 
 Decisions about roles:
 - Only an administrator assigns and changes roles, and only for another user.
@@ -111,6 +113,8 @@ Colours, by meaning:
 - Dangerous or irreversible actions get a clearly different warning colour and always ask for confirmation, with the notice "This cannot be undone".
 - Statuses: "to do" neutral grey, "in progress" blue, "done" and "completed" green, "Unpublished changes" warm yellow, errors red.
 - A status is never shown by colour alone: the status text is always next to it.
+
+Themes: the application has a light and a dark theme. The user chooses System (default, follows the device), Light or Dark. Statuses keep their words and colours by meaning in both themes, with high contrast.
 
 Density: tables are dense, because a manager scans many runs at once, but stay readable on a phone. The case name, status and progress come first; secondary columns can move below on a narrow screen.
 
