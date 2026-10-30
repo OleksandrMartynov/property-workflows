@@ -52,6 +52,11 @@ describe("База: підрядник як виконавець", () => {
     for (const row of rows) expect(Object.keys(row).sort()).toEqual(["email", "id"]);
   });
 
+  it("AC-VENDOR-04: прямий select профілів підрядником — лише власний рядок, без email інших", async () => {
+    const rows = await t.asUser<{ id: string; email: string }>(VENDOR_V, "select id, email from public.profiles");
+    expect(rows).toEqual([{ id: VENDOR_V, email: "vendor.v@example.test" }]);
+  });
+
   it("AC-VENDOR-02: підрядник не отримує email інших користувачів через вибір виконавця", async () => {
     expect(await t.asUser(VENDOR_V, "select * from public.list_assignable_users()")).toEqual([]);
   });
