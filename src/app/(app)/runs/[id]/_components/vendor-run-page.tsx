@@ -3,7 +3,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import type { requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
-import { Notice, PageShell } from "@/app/_components/ui";
+import { PageShell } from "@/app/_components/ui";
+import { FlashNotice } from "@/components/ui/flash-notice";
+import { DoneTaskNotice } from "./done-task-notice";
 import { completeTask } from "../../actions";
 import { VendorRunDetail } from "./vendor-run-detail";
 
@@ -14,7 +16,13 @@ type ViewerSession = Awaited<ReturnType<typeof requireViewer>>;
  * випадку й статус — із vendor_runs (рядка runs із шаблоном і версією база йому не віддає); запуск без його задач —
  * 0 рядків → notFound() і «Run not found».
  */
-export async function VendorRunPage({ id, message, supabase, viewer }: { id: string; message?: string | null } & ViewerSession) {
+export async function VendorRunPage({
+  id,
+  message,
+  doneTaskId,
+  supabase,
+  viewer,
+}: { id: string; message?: string | null; doneTaskId?: string | null } & ViewerSession) {
   // Адреса не uuid — такого запуску немає (без звернення до бази); збій бази — помилка, а не «Run not found».
   if (!isUuid(id)) notFound();
   const [mine, taskRows, last] = await Promise.all([
@@ -40,7 +48,12 @@ export async function VendorRunPage({ id, message, supabase, viewer }: { id: str
       back={{ href: "/runs", label: "Runs" }}
       actions={<StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>}
     >
-      {message ? <Notice kind="error">{message}</Notice> : null}
+      <DoneTaskNotice tasks={tasks ?? []} done={doneTaskId ? "task" : undefined} task={doneTaskId ?? undefined} />
+      {message ? (
+        <FlashNotice kind="error" clear={["error"]}>
+          {message}
+        </FlashNotice>
+      ) : null}
       <VendorRunDetail run={run} tasks={tasks ?? []} lastRequiredTaskId={lastRequired ?? null} viewer={viewer} completeTask={completeTask} />
     </PageShell>
   );

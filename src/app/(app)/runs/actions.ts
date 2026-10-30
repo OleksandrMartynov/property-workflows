@@ -70,5 +70,6 @@ export async function completeTask(formData: FormData) {
 
   revalidatePath("/runs");
   revalidatePath(`/runs/${runId}`);
-  redirect(`/runs/${encodeURIComponent(runId)}`);
+  // Відгук для скрінрідера на сторінці запуску: «<назва задачі>: done» (FlashNotice, параметри знімаються з адреси).
+  redirect(`/runs/${encodeURIComponent(runId)}?done=task&task=${encodeURIComponent(taskId)}`);
 }

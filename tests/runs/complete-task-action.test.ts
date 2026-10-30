@@ -38,8 +38,8 @@ describe("Дія completeTask", () => {
   it("AC-TASK-04: база ще без p_confirmed (PGRST202, ADR 0003) — підтверджену позначку повторено старою сигнатурою", async () => {
     rpc.mockResolvedValueOnce({ error: { code: "PGRST202", message: "Could not find the function public.complete_task" } });
     rpc.mockResolvedValueOnce({ error: null });
-    // Точний redirect успіху (без ?error=…): повтор справді позначив задачу.
-    await expect(completeTask(form("yes"))).rejects.toThrow(new RegExp(`^NEXT_REDIRECT /runs/${RUN}$`));
+    // Точний redirect успіху (без ?error=…, з відгуком «<задача>: done» для скрінрідера): повтор справді позначив задачу.
+    await expect(completeTask(form("yes"))).rejects.toThrow(new RegExp(`^NEXT_REDIRECT /runs/${RUN}\\?done=task&task=${TASK}$`));
     expect(rpc).toHaveBeenNthCalledWith(1, "complete_task", { p_task_id: TASK, p_confirmed: true });
     expect(rpc).toHaveBeenNthCalledWith(2, "complete_task", { p_task_id: TASK });
   });
