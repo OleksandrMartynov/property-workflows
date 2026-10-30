@@ -26,3 +26,9 @@ export const ilikePattern = (query: string) => `%${query.replace(/[\\%_]/g, (c) 
 export const isFiltered = (view: RunView, query: string) => view !== "all" || query !== "";
 
 export const NO_RUNS_FOUND = "No runs found.";
+
+/** Параметри адреси для вигляду й пошуку (без значень за замовчуванням) — для пагінації й перенаправлень. */
+export const runViewParams = (view: RunView, query: string): Record<string, string> => ({
+  ...(view === "all" ? {} : { view }),
+  ...(query ? { q: query } : {}),
+});

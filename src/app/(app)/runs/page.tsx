@@ -1,5 +1,5 @@
 import { FilterBar } from "@/components/ui/filter-bar";
-import { isFiltered, parseRunQuery, parseRunView, RUN_VIEWS } from "@/lib/runs/views";
+import { isFiltered, parseRunQuery, parseRunView, RUN_VIEWS, runViewParams } from "@/lib/runs/views";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { PageShell } from "@/app/_components/ui";
 import { RunsList } from "./_components/runs-list";
@@ -31,7 +31,7 @@ export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
     runs.map((r) => r.id),
   );
   const managerOf = (run: { run_manager_id: string }) => (run.run_manager_id === session.viewer.id ? "me" : (emailOf.get(run.run_manager_id) ?? "—"));
-  const params = { ...(view === "all" ? {} : { view }), ...(query ? { q: query } : {}) };
+  const params = runViewParams(view, query);
 
   return (
     <PageShell title="Runs">

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { RunsList } from "@/app/(app)/runs/_components/runs-list";
 import { RunsPager } from "@/app/(app)/runs/_components/runs-pager";
-import { ilikePattern, isFiltered, parseRunQuery, parseRunView, RUN_VIEWS } from "@/lib/runs/views";
+import { ilikePattern, isFiltered, parseRunQuery, parseRunView, RUN_VIEWS, runViewParams } from "@/lib/runs/views";
 
 describe("Вигляди списку запусків", () => {
   it("вигляди — All, Mine, In progress, Completed; невідомий чи відсутній — All", () => {
@@ -28,6 +28,11 @@ describe("Вигляди списку запусків", () => {
     expect(isFiltered("all", "")).toBe(false);
     expect(isFiltered("mine", "")).toBe(true);
     expect(isFiltered("all", "Apartment")).toBe(true);
+  });
+
+  it("параметри адреси — без значень за замовчуванням", () => {
+    expect(runViewParams("all", "")).toEqual({});
+    expect(runViewParams("mine", "Apartment")).toEqual({ view: "mine", q: "Apartment" });
   });
 });
 
