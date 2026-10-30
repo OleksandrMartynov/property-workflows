@@ -183,6 +183,8 @@ describe("База: підрядник не запускає шаблонів і
     expect(await t.asUser(VENDOR_V, "select id from public.templates")).toEqual([]);
     expect(await t.asUser(VENDOR_V, "select id from public.template_versions")).toEqual([]);
     expect(await t.asUser(VENDOR_V, "select id from public.template_tasks")).toEqual([]);
+    expect(await t.asUser(VENDOR_V, "select version_id from public.template_version_tasks")).toEqual([]);
+    expect(await t.asUser(VENDOR_V, "select id from public.template_sections")).toEqual([]);
   });
 
   it("AC-VENDOR-01: підрядник ніколи не менеджер запуску й не змінює собі роль", async () => {
