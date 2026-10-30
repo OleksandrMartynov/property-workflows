@@ -42,7 +42,12 @@ jobs:
       - name: fallow audit (лише нове відносно бази)
         run: |
           set -o pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="origin/${{ github.base_ref }}"; else BASE="HEAD~1"; fi
+          # push: база — стан main до цього push (github.event.before), а не HEAD~1: push із кількох комітів інакше
+          # перевірив би лише останній. Нульовий before (перший push гілки) — HEAD~1.
+          BEFORE="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="origin/${{ github.base_ref }}"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then BASE="$BEFORE"
+          else BASE="HEAD~1"; fi
           npx fallow audit --base "$BASE" --format github-summary | tee -a "$GITHUB_STEP_SUMMARY"
 
   coverage:

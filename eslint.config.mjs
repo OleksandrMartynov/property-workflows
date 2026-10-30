@@ -14,6 +14,8 @@ const AC = String.raw`AC-[A-Z]+-\d+`;
 // (@/lib/…, @/app/…) або відносним шляхом (../../src/lib/…). У регулярному виразі esquery не може бути «/», тому
 // роздільник — «.».
 const OWN_MODULE = String.raw`/^(@|.*src).(lib.(?!supabase([^A-Za-z0-9_-]|$))[A-Za-z0-9_-]|app([^A-Za-z0-9_-]|$))/`;
+// Відносний імпорт, що не веде в адаптери Supabase (…/supabase/…).
+const RELATIVE_OWN = String.raw`/^\.\.?.(?!(.*.)?supabase.)/`;
 const NO_OWN_MOCK =
   "Не мокайте власні модулі (src/lib/**, src/app/**) — тестуйте справжній код: SQL/RLS на PGlite, " +
   "введення-виведення — через передані залежності. Мок клієнта Supabase (@/lib/supabase/*) дозволено.";
@@ -48,6 +50,11 @@ const eslintConfig = defineConfig([
         "error",
         {
           selector: `CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/][arguments.0.value=${OWN_MODULE}]`,
+          message: NO_OWN_MOCK,
+        },
+        {
+          // Відносний шлях (./x, ../app/x) у тестах поруч із кодом у src/** — теж власний модуль; адаптери Supabase — ні.
+          selector: `CallExpression[callee.object.name='vi'][callee.property.name=/^(mock|doMock)$/][arguments.0.value=${RELATIVE_OWN}]`,
           message: NO_OWN_MOCK,
         },
         {
