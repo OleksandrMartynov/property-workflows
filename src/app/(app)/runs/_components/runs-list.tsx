@@ -8,6 +8,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, rowLinkClass } from "@/components/ui/table";
 import { NO_RUNS_ACTION, NO_RUNS_TITLE, runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import { formatProgress } from "@/lib/runs/progress";
+import { NO_RUNS_FOUND } from "@/lib/runs/views";
+
+// На вузькому екрані першими лишаються назва випадку, прогрес і статус («Вигляд і тон» PM); решта — з md.
+const SECONDARY = "hidden md:table-cell";
 
 export interface RunRow {
   id: string;
@@ -27,7 +31,19 @@ export interface RunSummary {
 }
 
 /** Таблиця запусків (щільні рядки): прогрес кільцем і словами, наступна задача, виконавці, статус пілюлею зі значком. */
-export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary: Record<string, RunSummary>; managerOf: (run: RunRow) => string }) {
+export function RunsList({
+  runs,
+  summary,
+  managerOf,
+  filtered = false,
+}: {
+  runs: RunRow[];
+  summary: Record<string, RunSummary>;
+  managerOf: (run: RunRow) => string;
+  /** Список звужено виглядом чи пошуком: порожній результат — «No runs found.» без запуску шаблону. */
+  filtered?: boolean;
+}) {
+  if (!runs.length && filtered) return <EmptyState title={NO_RUNS_FOUND} />;
   if (!runs.length) {
     return (
       <EmptyState
@@ -46,10 +62,10 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
       <TableHeader>
         <TableRow>
           <TableHead>Run</TableHead>
-          <TableHead>Run manager</TableHead>
+          <TableHead className={SECONDARY}>Run manager</TableHead>
           <TableHead>Progress</TableHead>
-          <TableHead>Next task</TableHead>
-          <TableHead>Assignees</TableHead>
+          <TableHead className={SECONDARY}>Next task</TableHead>
+          <TableHead className={SECONDARY}>Assignees</TableHead>
           <TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
@@ -66,7 +82,7 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
                   <span className="text-meta text-muted-foreground">{run.template_name}</span>
                 </div>
               </TableCell>
-              <TableCell className="text-muted-foreground">{managerOf(run)}</TableCell>
+              <TableCell className={`${SECONDARY} text-muted-foreground`}>{managerOf(run)}</TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-2">
                   <ProgressRing done={s.done} total={s.total} />
@@ -75,8 +91,8 @@ export function RunsList({ runs, summary, managerOf }: { runs: RunRow[]; summary
                   </span>
                 </span>
               </TableCell>
-              <TableCell className="max-w-72 whitespace-normal text-muted-foreground">{s.nextTask ?? "—"}</TableCell>
-              <TableCell>
+              <TableCell className={`${SECONDARY} max-w-72 whitespace-normal text-muted-foreground`}>{s.nextTask ?? "—"}</TableCell>
+              <TableCell className={SECONDARY}>
                 <AvatarStack emails={s.assignees} />
               </TableCell>
               <TableCell>
