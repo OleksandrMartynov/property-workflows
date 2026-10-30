@@ -21,6 +21,13 @@ describe("Сторінки без входу (proxy)", () => {
     expect(isPublicPath("/auth/settings")).toBe(false);
   });
 
+  it("AC-EDITOR-09: збіг за цілим сегментом від початку шляху — підшлях публічної сторінки публічний, редактор — ні", () => {
+    // Сторінка підтвердження з токеном у шляху лишається доступною без входу, а редактор, що лише містить «/login/»
+    // наприкінці шляху, — ні: публічність визначає початок шляху.
+    expect(isPublicPath("/auth/confirm/callback")).toBe(true);
+    expect(isPublicPath("/templates/10000000-0000-0000-0000-000000000001/edit/login/")).toBe(false);
+  });
+
   it("D0: /api/health публічний (перевірка проду без входу), решта /api — ні", () => {
     expect(isPublicPath("/api/health")).toBe(true);
     expect(isPublicPath("/api/healthz")).toBe(false);

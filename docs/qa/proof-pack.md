@@ -48,24 +48,39 @@
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-…-NN | <!-- політика / функція бази / TS-модуль / сторінка --> | <!-- unit / база (PGlite) / e2e --> | … | <!-- …/blob/<sha>/tests/…#L<N> --> |
+| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden`; дані: політика `template_versions_select` (`supabase/migrations/20261025151836_template_versions.sql`) | база (PGlite) + unit сторінки + e2e (заплановано, розділ C) | відмову даних тримає RLS — її доводить лише тест на справжньому Postgres (мок `rpc` нічого не доводить); сторінку — рендер справжньої сторінки з заглушкою клієнта; видимий «Тоді» — e2e на проді | `tests/db/template-versions-db.test.ts:459`, `tests/templates/forbidden.test.tsx:48`, `:71` |
+| AC-EDITOR-09 | proxy: `isPublicPath` (`src/lib/supabase/public-paths.ts`) → `/login`; дані: RLS для `anon` | unit + база (PGlite) + e2e (заплановано, розділ C) | правило «що публічне» — чиста функція (unit і Stryker); що відвідувач нічого не читає — RLS (PGlite); сторінку входу видно лише в браузері — e2e | `tests/auth/public-paths.test.ts:5`, `:24`, `tests/db/template-versions-db.test.ts:501` |
+| AC-DSYS-04 | сторінка: `RunsList` (`src/app/(app)/runs/_components/runs-list.tsx`), тексти — `src/lib/runs/labels.ts` | unit компонента + e2e (заплановано, розділ C) | порожній стан — гілка компонента без даних: рендер у Vitest; що в менеджера справді немає запусків і таблиці не видно — e2e на проді | `tests/runs/statuses.test.tsx:43` |
 
 ### Покриття
 
 | Файл за AC | Рядки | Гілки | Чим доведено, якщо 0 % |
 |---|---|---|---|
-| <!-- src/lib/<модуль>.ts --> | … % | … % | — |
-| <!-- src/app/<сторінка>/page.tsx --> | 0 % | 0 % | <!-- e2e: tests/e2e/….spec.ts --> |
+| `src/lib/supabase/public-paths.ts` (AC-EDITOR-09) | 100 % | 100 % | — |
+| `src/lib/supabase/viewer.ts` (AC-EDITOR-07, `canManageTemplates`) | 100 % | 70 % | гілки `requireViewer` (немає профілю, email) — не рядки AC |
+| `src/lib/runs/labels.ts` (AC-DSYS-04) | 100 % | 80 % | — |
+| `src/app/_components/forbidden.tsx` (AC-EDITOR-07) | 100 % | 100 % | — |
+| `src/app/(app)/templates/[id]/versions/page.tsx` (AC-EDITOR-07) | 100 % | 54,5 % | гілки адміністратора; гілку менеджера доводить `tests/templates/forbidden.test.tsx:71` |
+| `src/app/(app)/runs/_components/runs-list.tsx` (AC-DSYS-04) | 100 % | 100 % | — |
+| `src/app/(app)/runs/page.tsx` (AC-DSYS-04) | 0 % | 0 % | заплановано e2e на проді (`tests/e2e/runs-empty.spec.ts`, розділ C) — прогону ще немає, доказом не рахуємо до звіту UAT; зараз — рендер `RunsList` (`tests/runs/statuses.test.tsx:43`) |
+| `src/lib/supabase/proxy.ts` (AC-EDITOR-09) | 55,6 % | 100 % | заплановано e2e на проді (`tests/e2e/editor-visitor.spec.ts`, розділ C) — до звіту UAT не доказ; зараз — `isPublicPath` (unit + Stryker) і RLS для `anon` (PGlite) |
 
 ### Доказ мутацією
 
 | Мутант (файл:рядок, що змінено) | AC під загрозою | До | Тест, посилений з тексту AC | Після |
 |---|---|---|---|---|
-| <!-- src/lib/…/x.ts:14 `<=` → `<` --> | AC-…-NN | вижив | <!-- …/blob/<sha>/tests/…#L<N>: межа «…» з AC --> | убитий |
+| `src/lib/runs/labels.ts:21` `NO_RUNS_ACTION = "Launch a template"` → `""` | AC-DSYS-04 | вижив (тест порівнював розмітку з константою коду) | `tests/runs/statuses.test.tsx:43`: посилання дослівно «Launch a template» на `/templates` з «Тоді» AC | убитий |
+| `src/lib/supabase/public-paths.ts:7` `startsWith` → `endsWith` | AC-EDITOR-09 (правило «за цілим сегментом від початку шляху») | вижив (еквівалентний для самого AC-EDITOR-09: редактор не публічний і з мутантом) | `tests/auth/public-paths.test.ts:24`: підшлях публічної сторінки публічний, шлях редактора з «/login/» наприкінці — ні | убитий |
 
-- Stryker: <!-- score до → після, посилання на PR з виводом -->
-- SQL-мутації (`npm run mutation:sql`): <!-- таблиця з npm run mutation:sql -- --markdown (KILLED / SURVIVED / ERROR) з PR або «немає PGlite-гарнесу» -->
-- Еквівалентні мутанти: <!-- який і чому (рядок міграції чи коду, що робить його еквівалентним) або «немає» -->
+- Stryker (`npm run mutation:ts -- --mutate src/lib/supabase/public-paths.ts,src/lib/runs/labels.ts`): 94,44 % (34 з 36) → 100 % (36 з 36). `src/lib/supabase/viewer.ts`: мутанти `canManageTemplates` (рядок AC-EDITOR-07) убиті; вижили 5 у `requireViewer` (порожній `select`, `if (false) redirect`, `?.`, email) — не рядки наших 3 AC, кандидати для наступного посилення.
+- SQL-мутації (`npm run mutation:sql`): 3 з 3 вбито (100 %).
+
+| Мутант | AC | Що зламано | Вердикт | Який тест упав |
+|---|---|---|---|---|
+| P1 | (перевірка гарнесу) | колонковий grant: користувач може змінити собі role | KILLED | `tests/db/profiles-role-db.test.ts` (3 тести) |
+| E7a | AC-EDITOR-07 | `template_versions_select`: менеджер бачить усі версії, а не лише поточну | KILLED | AC-EDITOR-07: менеджер B не бачить старих версій — лише поточну |
+| E7b | AC-EDITOR-07 | `template_versions_select` послаблено до `true` | KILLED | AC-EDITOR-07: менеджер B не бачить старих версій — лише поточну |
+- Еквівалентні мутанти: `public-paths.ts:7` `startsWith` → `endsWith` — еквівалентний для самого AC-EDITOR-09 (шлях редактора не публічний і з мутантом), але ламає правило «за цілим сегментом», тож його вбито окремим тестом, а не позначено `survive`.
 
 ## C. UAT на проді
 
