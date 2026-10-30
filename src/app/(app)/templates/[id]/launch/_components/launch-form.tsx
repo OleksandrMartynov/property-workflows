@@ -197,11 +197,6 @@ export function LaunchForm({
           })}
         </section>
 
-        <div className="lg:hidden">
-          <SubmitButton pendingText="Launching…" size="lg" className="w-full">
-            Launch
-          </SubmitButton>
-        </div>
       </div>
 
       <Card className="flex flex-col gap-4 p-4 lg:sticky lg:top-6">
@@ -225,7 +220,7 @@ export function LaunchForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-label font-medium">Who does what</p>
+          <p className="text-label font-medium">Assignees</p>
           <ul className="flex flex-col gap-2">
             {perPerson.map(({ person, count }) => (
               <li key={person.id} className="animate-ui-rise flex flex-col gap-1">
@@ -246,7 +241,8 @@ export function LaunchForm({
           </ul>
         </div>
 
-        <div className="hidden flex-col gap-2 lg:flex">
+        {/* Одна кнопка запуску: на широкому екрані — у липкій картці прев'ю, на вузькому картка йде після полів. */}
+        <div className="flex flex-col gap-2">
           <SubmitButton pendingText="Launching…" size="lg" className="w-full">
             Launch
           </SubmitButton>
