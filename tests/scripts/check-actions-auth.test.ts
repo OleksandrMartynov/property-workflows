@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
-import { repoRoot, runScript } from "./run-script";
+import { repoRoot, runScript, SCRIPT_TEST_TIMEOUT } from "./run-script";
 
 const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -25,7 +25,7 @@ export async function login(formData: FormData) { await signIn(formData); }
 export async function signOut() { await supabase.auth.signOut(); }
 `;
 
-describe("scripts/check-actions-auth.mjs", () => {
+describe("scripts/check-actions-auth.mjs", { timeout: SCRIPT_TEST_TIMEOUT }, () => {
   it("пропускає дії з requireAdmin(), requireViewer() чи getClaims() і дії входу без перевірки", () => {
     const { code, out } = project({
       "src/app/login/actions.ts": LOGIN,

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
-import { repoRoot, runScript } from "./run-script";
+import { repoRoot, runScript, SCRIPT_TEST_TIMEOUT } from "./run-script";
 
 const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
@@ -30,7 +30,7 @@ function project(files: Record<string, string>, relativeRoot = false) {
   return { code: result.status, out: `${result.stdout}${result.stderr}` };
 }
 
-describe("scripts/check-server-boundary.mjs", () => {
+describe("scripts/check-server-boundary.mjs", { timeout: SCRIPT_TEST_TIMEOUT }, () => {
   it("пропускає admin-клієнт у actions.ts і route.ts та чужий ./admin у src/app/admin/", () => {
     const { code, out } = project({
       "src/app/(app)/users/actions.ts": `"use server";\nimport { createAdminClient } from "@/lib/supabase/admin";\n`,
