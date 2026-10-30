@@ -141,6 +141,11 @@ describe("Сторінка запуску для підрядника", () => {
     expect(html).not.toContain('name="task_id" value="t3"');
   });
 
+  it("AC-VENDOR-06: адреса не uuid — «Run not found» без звернення до бази", async () => {
+    expect(await errorOf(RunPage({ params: Promise.resolve({ id: "not-a-run" }), searchParams: Promise.resolve({}) } as never))).toBe("NEXT_NOT_FOUND");
+    expect(state.touched.filter((t) => t !== "from profiles")).toEqual([]);
+  });
+
   it("AC-VENDOR-06: запуск без задач V за прямим посиланням — «Run not found» (notFound) без задач", async () => {
     state.tasks = [];
     expect(await errorOf(RunPage({ params: Promise.resolve({ id: RUN_12 }), searchParams: Promise.resolve({}) } as never))).toBe(
@@ -156,6 +161,14 @@ describe("Шаблони для підрядника", () => {
     expect(html).toMatch(/href="\/runs"[^>]*>Back to runs</);
     expect(html).not.toContain("Tenant move-in");
     expect(state.touched).toEqual(["from profiles"]);
+  });
+
+  it("AC-VENDOR-09: форма запуску шаблону для V — «Not enough rights», жодного поля чи кнопки запуску й запитів шаблону", async () => {
+    const html = renderToStaticMarkup(await LaunchTemplatePage({ params: Promise.resolve({ id: TEMPLATE }), searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("Not enough rights");
+    expect(html).not.toContain("Case name");
+    expect(html).not.toMatch(/>Launch</);
+    expect(state.touched.filter((t) => t !== "from profiles")).toEqual([]);
   });
 
   it("AC-VENDOR-08: сторінка шаблону й форма запуску для V — та сама відмова, без даних шаблону", async () => {

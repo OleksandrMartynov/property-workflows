@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import type { requireViewer } from "@/lib/supabase/viewer";
+import { isUuid } from "@/lib/templates/current";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { completeTask } from "../../actions";
 import { VendorRunDetail } from "./vendor-run-detail";
@@ -14,7 +15,9 @@ type ViewerSession = Awaited<ReturnType<typeof requireViewer>>;
  * 0 рядків → notFound() і «Run not found».
  */
 export async function VendorRunPage({ id, message, supabase, viewer }: { id: string; message?: string | null } & ViewerSession) {
-  const [{ data: mine }, { data: tasks }, { data: lastRequired }] = await Promise.all([
+  // Адреса не uuid — такого запуску немає (без звернення до бази); збій бази — помилка, а не «Run not found».
+  if (!isUuid(id)) notFound();
+  const [mine, taskRows, last] = await Promise.all([
     supabase.rpc("vendor_runs", { p_run_id: id }),
     supabase
       .from("run_tasks")
@@ -24,7 +27,11 @@ export async function VendorRunPage({ id, message, supabase, viewer }: { id: str
       .order("position"),
     supabase.rpc("run_last_required_task", { p_run_id: id }),
   ]);
-  const run = mine?.[0];
+  const failed = [mine, taskRows, last].find((result) => result.error);
+  if (failed?.error) throw failed.error;
+  const run = mine.data?.[0];
+  const tasks = taskRows.data;
+  const lastRequired = last.data;
   if (!run) notFound();
 
   return (
