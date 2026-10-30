@@ -5,27 +5,37 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = { role: "manager", touched: [] as string[] };
 
+// Ланцюжок запиту: ilike справді фільтрує рядки (як база), решта методів лише повертає ланцюжок.
+const query = (rows: unknown) => {
+  let data = rows;
+  const chain: Record<string, unknown> = {};
+  for (const m of ["select", "eq", "in", "not", "order", "limit", "maybeSingle"]) chain[m] = () => chain;
+  chain.ilike = (column: string, pattern: string) => {
+    const needle = pattern.replace(/^%|%$/g, "").replace(/\\(.)/g, "$1").toLowerCase();
+    data = (data as Record<string, string>[]).filter((row) => String(row[column]).toLowerCase().includes(needle));
+    return chain;
+  };
+  chain.then = (resolve: (r: unknown) => unknown) => resolve({ data, error: null });
+  return chain;
+};
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: { getClaims: async () => ({ data: { claims: { sub: "u1", email: "u1@example.test" } } }) },
     from: (table: string) => {
       state.touched.push(`from ${table}`);
-      const chain: Record<string, unknown> = {};
-      for (const m of ["select", "eq", "in", "not", "ilike", "order", "limit", "maybeSingle"]) chain[m] = () => chain;
       const rows: Record<string, unknown> = {
         profiles: { email: "u1@example.test", role: state.role },
         runs: [{ id: "r12", case_name: "Apartment 12, move-in", template_name: "Tenant move-in", status: "in_progress" }],
-        templates: [{ id: "t1", current_version: 1 }],
-        template_versions: [{ id: "v1", template_id: "t1", number: 1, name: "Tenant move-in" }],
+        template_versions: [{ template_id: "t1", number: 1, name: "Tenant move-in" }],
       };
-      chain.then = (resolve: (r: unknown) => unknown) => resolve({ data: rows[table] ?? [], error: null });
-      return chain;
+      return query(rows[table] ?? []);
     },
-    rpc: async (fn: string) => {
+    rpc: (fn: string) => {
       state.touched.push(`rpc ${fn}`);
-      if (fn === "vendor_runs") return { data: [{ id: "r12", case_name: "Apartment 12, move-in", status: "in_progress", created_at: "", done: 0, total: 2 }], error: null };
-      if (fn === "list_template_drafts") return { data: [{ id: "t2", name: "Apartment repair", current_version: null, has_unpublished_changes: true }], error: null };
-      return { data: [], error: null };
+      if (fn === "vendor_runs") return query([{ id: "r12", case_name: "Apartment 12, move-in", status: "in_progress", created_at: "", done: 0, total: 2 }]);
+      if (fn === "list_template_drafts") return query([{ id: "t2", name: "Apartment repair", current_version: null, has_unpublished_changes: true }]);
+      return query([]);
     },
   }),
 }));
@@ -87,7 +97,11 @@ describe("Нагадування біля «Runs»", () => {
   it("показує число моїх відкритих задач з повним підписом для скрінрідера", () => {
     const html = shell(3);
     expect(html).toContain('data-testid="open-tasks"');
-    expect(html).toContain("3<span class=\"sr-only\"> open tasks assigned to you</span>");
+    expect(html).toContain('<span aria-hidden="true">3</span><span class="sr-only">3 open tasks assigned to you</span>');
+  });
+
+  it("понад 99 — видно «99+», а скрінрідер чує повне число", () => {
+    expect(shell(120)).toContain('<span aria-hidden="true">99+</span><span class="sr-only">120 open tasks assigned to you</span>');
   });
 
   it("нуль — без бейджа", () => {

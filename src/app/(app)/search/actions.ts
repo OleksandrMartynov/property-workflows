@@ -3,12 +3,10 @@
 import { ilikePattern, parseRunQuery } from "@/lib/runs/views";
 import { runStatusLabel } from "@/lib/runs/labels";
 import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
-import { loadCurrentVersions } from "@/lib/templates/current";
 
 export type WorkspaceHit = { id: string; label: string; detail: string; href: string; group: "Run" | "Template" };
 
 const LIMIT = 6;
-const matches = (text: string, query: string) => text.toLowerCase().includes(query.toLowerCase());
 
 /**
  * Пошук у ⌘K (docs/ux/ux-plan.md, партія 5): запуски за назвою випадку й шаблони за назвою. Лише читання й лише через
@@ -21,12 +19,9 @@ export async function searchWorkspace(raw: string): Promise<WorkspaceHit[]> {
   if (query.length < 2) return [];
 
   if (isVendor(viewer.role)) {
-    const { data, error } = await supabase.rpc("vendor_runs");
+    const { data, error } = await supabase.rpc("vendor_runs").ilike("case_name", ilikePattern(query)).limit(LIMIT);
     if (error) throw error;
-    return (data ?? [])
-      .filter((run) => matches(run.case_name, query))
-      .slice(0, LIMIT)
-      .map((run) => ({ id: run.id, label: run.case_name, detail: runStatusLabel(run.status), href: `/runs/${run.id}`, group: "Run" }));
+    return (data ?? []).map((run) => ({ id: run.id, label: run.case_name, detail: runStatusLabel(run.status), href: `/runs/${run.id}`, group: "Run" }));
   }
 
   const [runs, templates] = await Promise.all([
@@ -40,17 +35,15 @@ export async function searchWorkspace(raw: string): Promise<WorkspaceHit[]> {
   ];
 }
 
+// Фільтр і ліміт — у самому запиті (ilike + limit), а не після відповіді: відповідь PostgREST обмежена (1000 рядків).
 async function searchTemplates(supabase: Awaited<ReturnType<typeof requireViewer>>["supabase"], role: Parameters<typeof canManageTemplates>[0], query: string): Promise<WorkspaceHit[]> {
   if (canManageTemplates(role)) {
-    const { data, error } = await supabase.rpc("list_template_drafts");
+    const { data, error } = await supabase.rpc("list_template_drafts").ilike("name", ilikePattern(query)).limit(LIMIT);
     if (error) throw error;
-    return (data ?? [])
-      .filter((t) => matches(t.name, query))
-      .slice(0, LIMIT)
-      .map((t) => ({ id: t.id, label: t.name, detail: t.current_version ? `Version ${t.current_version}` : "Unpublished changes", href: `/templates/${t.id}/edit`, group: "Template" }));
+    return (data ?? []).map((t) => ({ id: t.id, label: t.name, detail: t.current_version ? `Version ${t.current_version}` : "Unpublished changes", href: `/templates/${t.id}/edit`, group: "Template" }));
   }
-  return (await loadCurrentVersions(supabase))
-    .filter((t) => matches(t.name, query))
-    .slice(0, LIMIT)
-    .map((t) => ({ id: t.templateId, label: t.name, detail: `Version ${t.number}`, href: `/templates/${t.templateId}`, group: "Template" }));
+  // Менеджер: RLS template_versions_select віддає лише поточні версії (AC-EDITOR-29) — збіг за назвою поточної версії.
+  const { data, error } = await supabase.from("template_versions").select("template_id, number, name").ilike("name", ilikePattern(query)).limit(LIMIT);
+  if (error) throw error;
+  return (data ?? []).map((v) => ({ id: v.template_id, label: v.name, detail: `Version ${v.number}`, href: `/templates/${v.template_id}`, group: "Template" }));
 }

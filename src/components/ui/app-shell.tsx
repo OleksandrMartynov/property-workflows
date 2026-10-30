@@ -48,8 +48,8 @@ function NavBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
         collapsed && "absolute right-1 top-1 ml-0 h-3.5 min-w-3.5 px-0.5 text-[10px]",
       )}
     >
-      {count > 99 ? "99+" : count}
-      <span className="sr-only"> open tasks assigned to you</span>
+      <span aria-hidden="true">{count > 99 ? "99+" : count}</span>
+      <span className="sr-only">{`${count} open tasks assigned to you`}</span>
     </span>
   );
 }
@@ -350,16 +350,19 @@ type Command = { id: string; label: string; hint: string; run: () => void };
 export type PaletteHit = { id: string; label: string; detail: string; href: string; group: string };
 export type PaletteSearch = (query: string) => Promise<PaletteHit[]>;
 
-/** Пошук із затримкою 200 мс; лише від 2 символів; застарілі відповіді відкидаються. */
+/**
+ * Пошук із затримкою 200 мс; лише від 2 символів; застарілі відповіді відкидаються. Результати показуються лише для
+ * того запиту, яким їх отримано: поки нова відповідь іде, старих немає (Enter не відкриє запис зі старого запиту).
+ */
 function usePaletteSearch(search: PaletteSearch | undefined, query: string) {
-  const [hits, setHits] = useState<PaletteHit[]>([]);
+  const [result, setResult] = useState<{ query: string; hits: PaletteHit[] }>({ query: "", hits: [] });
   useEffect(() => {
     if (!search || query.length < 2) return;
     let alive = true;
     const timer = setTimeout(() => {
       search(query).then(
-        (found) => alive && setHits(found),
-        () => alive && setHits([]),
+        (found) => alive && setResult({ query, hits: found }),
+        () => alive && setResult({ query, hits: [] }),
       );
     }, 200);
     return () => {
@@ -367,7 +370,7 @@ function usePaletteSearch(search: PaletteSearch | undefined, query: string) {
       clearTimeout(timer);
     };
   }, [search, query]);
-  return search && query.length >= 2 ? hits : [];
+  return search && query.length >= 2 && result.query === query ? result.hits : [];
 }
 
 /** Палітра ⌘K: фільтр за словом, ↑ ↓ для вибору, Enter — виконати, Esc — закрити. */
