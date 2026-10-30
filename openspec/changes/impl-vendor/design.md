@@ -17,10 +17,13 @@
   проєкті — `supabase/demo-users.json` і `npm run users:demo` з service_role), як і для інших ролей.
 - **Лише свої задачі** (AC-VENDOR-04): `alter policy run_tasks_select_visible` — до `can_see_run(run_id)` додається
   умова «роль не `vendor` або `assignee_id = auth.uid()`». Підрядник не отримує рядків чужих задач ні сторінкою, ні
-  прямим запитом. `runs_select_visible` без змін: підрядник бачить запуск, лише коли він виконавець (AC-VENDOR-03,
-  AC-VENDOR-06 — інакше 0 рядків → «Run not found»).
-- **«Your tasks: N of K done»** (AC-VENDOR-03, 05): `run_progress` — `security_invoker`-view над `run_tasks`, тож для
-  підрядника вона сама рахує лише його задачі (N — його «done», K — усі його задачі запуску). Для менеджера й
+  прямим запитом. - **Рядок запуску без шаблону й версії** (AC-VENDOR-03, AC-VENDOR-06; матриця прав «See which template version a run
+  follows» — «—» для `vendor`): `runs` містить назву шаблону й номер версії, а RLS не ховає колонок, тож
+  `runs_select_visible` підрядника не пускає (`can_see_run` лишається в умові), а свої запуски він отримує функцією
+  `public.vendor_runs(p_run_id)` (`security definer` у `private`): назва випадку, статус, час запуску, N і K його
+  задач; лише запуски, де він виконавець, від новіших. Запуск без його задач — 0 рядків → «Run not found».
+- **«Your tasks: N of K done»** (AC-VENDOR-03, 05): `vendor_runs()` рахує N і K лише з його задач; `run_progress`
+  (`security_invoker`-view над `run_tasks`) для підрядника теж дає лише його задачі. Для менеджера й
   адміністратора — без змін («N of M done», AC-TASK-05, 09, 17).
 - **Призначення підрядника** (AC-VENDOR-01): нова версія `private.launch_run` (копія з
   `20261025151836_template_versions.sql`) — перевірка виконавця `role in ('manager', 'admin', 'vendor')`; перевірка
