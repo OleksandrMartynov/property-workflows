@@ -114,7 +114,7 @@ describe("Редактор шаблону", () => {
   });
 });
 
-describe("Редактор шаблону: стан збереження (AC-EDITOR-25)", () => {
+describe("Редактор шаблону: стан збереження", () => {
   const render = (store: ReturnType<typeof createSaveStore>) =>
     renderToStaticMarkup(
       <EditorView
