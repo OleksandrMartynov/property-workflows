@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "./avatar";
@@ -23,6 +24,23 @@ import { StatusIcon } from "./status-badge";
 // Hero сторінки входу: шейдер-тло, «ехо» даху з логотипу, заголовок із серифним акцентом, чипи можливостей і скляна
 // картка, в якій чекліст «Tenant move-in» спершу виконується сам, а далі — за кліком користувача.
 // Рух лише тут; поважає prefers-reduced-motion (статичний кадр «3 з 4»), має кнопку Pause (WCAG 2.2.2).
+// Головний образ — 3D «креслення, що оживає» (blueprint-scene.tsx, Three.js): вантажиться ліниво й лише в браузері;
+// поки вантажиться або без WebGL — та сама картка-чекліст StoryCard.
+const BlueprintScene = dynamic(() => import("./blueprint-scene"), { ssr: false, loading: () => null });
+
+function useWebGL() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => {
+      try {
+        return Boolean(document.createElement("canvas").getContext("webgl2"));
+      } catch {
+        return false;
+      }
+    },
+    () => false,
+  );
+}
 
 const TASKS: { name: string; who: string; Icon: (p: { className?: string }) => ReactNode }[] = [
   { name: "Inspect the apartment", who: "ana@example.test", Icon: ClipboardCheckIcon },
@@ -246,6 +264,27 @@ function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean })
 
 const reveal = (i: number, delay = 150) => ({ "--i": i, "--reveal-delay": `${delay}ms` }) as CSSProperties;
 
+/** Головний образ hero: 3D-креслення, а без WebGL — картка-чекліст StoryCard. */
+function HeroVisual({ playing, reduced }: { playing: boolean; reduced: boolean }) {
+  if (!useWebGL()) {
+    return (
+      <div className="animate-ui-float">
+        <StoryCard playing={playing} reduced={reduced} />
+      </div>
+    );
+  }
+  return (
+    <div className="relative -mx-10 aspect-[4/3.3] w-[calc(100%+5rem)]" aria-hidden="true">
+      <BlueprintScene playing={playing} reduced={reduced} />
+    </div>
+  );
+}
+
+/** «Ехо» дахів — лише без 3D-сцени: поруч із кресленням лінії дахів змагались би з ним. */
+function HeroRoofs({ playing, reduced }: { playing: boolean; reduced: boolean }) {
+  return useWebGL() ? null : <EchoRoofs playing={playing} reduced={reduced} />;
+}
+
 export function HeroStage() {
   const reduced = useReducedMotion();
   const [paused, setPaused] = useState(false);
@@ -281,7 +320,7 @@ export function HeroStage() {
       }}
     >
       <HeroShader playing={playing} speed={calm ? 0.25 : 1} />
-      <EchoRoofs playing={playing} reduced={reduced} />
+      <HeroRoofs playing={playing} reduced={reduced} />
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full opacity-[0.14] mix-blend-soft-light">
         <filter id={grainId}>
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />
@@ -334,9 +373,7 @@ export function HeroStage() {
         </div>
 
         <div className="w-full max-w-md transition-transform duration-500 ease-standard" style={{ transform: "translate(calc(var(--px, 0) * 8px), calc(var(--py, 0) * 6px))" }}>
-          <div className="animate-ui-float">
-            <StoryCard playing={playing} reduced={reduced} />
-          </div>
+          <HeroVisual playing={playing} reduced={reduced} />
         </div>
       </div>
 
