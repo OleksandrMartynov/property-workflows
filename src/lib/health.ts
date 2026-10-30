@@ -14,6 +14,8 @@ export type DbHealth = { db: "ok" | "down"; reason: string };
 export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   if (status === SUPABASE_PAUSED) return { db: "down", reason: "paused" };
   const code = error?.code ?? "";
+  // Мережа (0) і 5xx — база недоступна, навіть якщо в тілі є SQLSTATE (53300 — вичерпано з'єднання).
+  if (status === 0 || status >= 500) return { db: "down", reason: `status-${status}${code ? `-${code}` : ""}` };
   if (!error || SQLSTATE.test(code) || (code.startsWith("PGRST") && !PGRST_DB_DOWN.test(code))) {
     return { db: "ok", reason: "" };
   }

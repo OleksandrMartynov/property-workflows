@@ -30,4 +30,12 @@ describe("classifyDbProbe (/api/health)", () => {
     });
     expect(classifyDbProbe({ status: 0, error: { message: "fetch failed" } })).toEqual({ db: "down", reason: "status-0" });
   });
+
+  it("рахує базу недоступною на 5xx навіть із кодом Postgres (53300 — вичерпано з'єднання)", () => {
+    expect(classifyDbProbe({ status: 503, error: { code: "53300", message: "too many connections" } })).toEqual({
+      db: "down",
+      reason: "status-503-53300",
+    });
+    expect(classifyDbProbe({ status: 500, error: { code: "XX000", message: "internal" } }).db).toBe("down");
+  });
 });

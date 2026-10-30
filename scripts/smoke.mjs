@@ -34,6 +34,15 @@ async function main() {
   else if (root.status >= 400) {
     const hint = root.vercelError === "MIDDLEWARE_INVOCATION_FAILED" ? " — у Vercel бракує NEXT_PUBLIC_SUPABASE_*?" : "";
     fail.push(`"/": HTTP ${root.status} ${root.vercelError}${hint}`.trim());
+  } else if (root.status >= 300) {
+    // Без входу "/" веде лише на сторінку входу свого ж сайту (proxy), інший Location — збій.
+    let target = null;
+    try {
+      target = new URL(root.location, base);
+    } catch {}
+    if (!target || target.origin !== new URL(base).origin || target.pathname !== "/login") {
+      fail.push(`"/": HTTP ${root.status} → ${root.location || "(без Location)"} — очікували перенаправлення на /login`);
+    }
   }
 
   const login = await get("/login");
