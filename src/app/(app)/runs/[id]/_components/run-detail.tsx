@@ -55,7 +55,40 @@ export function RunDetail({
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-      <div className="flex flex-col gap-6">
+      {/* «Details» із прогресом — першою і в розмітці (скрінрідер на телефоні чує прогрес до задач), на широкому екрані — праворуч. */}
+      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
+      <Card className="flex flex-col gap-4 p-4">
+        <h2 className="text-heading">Details</h2>
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <ProgressRing done={progress.done} total={progress.total} className="size-6" />
+            <span data-testid="run-progress" className="tabular text-heading">
+              {formatProgress(progress)}
+            </span>
+          </div>
+          <ProgressBar done={progress.done} total={progress.total} />
+        </div>
+        <dl className="flex flex-col text-body [&>dd]:mb-3.5 [&>dd:last-child]:mb-0">
+          <dt className="mb-1 text-meta text-muted-foreground">Template</dt>
+          <dd className="min-w-0 break-words">{run.template_name}</dd>
+          {/* AC-EDITOR-06: версія шаблону, з якої запущено, — «Template version N». */}
+          <dt className="mb-1 text-meta text-muted-foreground">Version</dt>
+          <dd data-testid="run-template-version">{templateVersionLabel(run.template_version)}</dd>
+          <dt className="mb-1 text-meta text-muted-foreground">Run manager</dt>
+          <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
+            {managerEmail ? <Avatar email={managerEmail} /> : null}
+            <span className="min-w-0 break-words">{managerEmail ?? "—"}</span>
+          </dd>
+          <dt className="mb-1 text-meta text-muted-foreground">Status</dt>
+          <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>
+          <dt className="mb-1 text-meta text-muted-foreground">Assignees</dt>
+          <dd>
+            <AvatarStack emails={assignees} max={4} />
+          </dd>
+        </dl>
+      </Card>
+      </CompletionGlow>
+      <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
         {sections.map((section) => {
           const doneInSection = section.tasks.filter((t) => t.status === "done").length;
           return (
@@ -100,39 +133,6 @@ export function RunDetail({
         })}
       </div>
 
-      {/* На вузькому екрані «Details» із прогресом — над задачами (та сама розмітка, лише порядок), на широкому — праворуч. */}
-      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="order-first lg:sticky lg:top-6 lg:order-none">
-      <Card className="flex flex-col gap-4 p-4">
-        <h2 className="text-heading">Details</h2>
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-2.5">
-            <ProgressRing done={progress.done} total={progress.total} className="size-6" />
-            <span data-testid="run-progress" className="tabular text-heading">
-              {formatProgress(progress)}
-            </span>
-          </div>
-          <ProgressBar done={progress.done} total={progress.total} />
-        </div>
-        <dl className="flex flex-col text-body [&>dd]:mb-3.5 [&>dd:last-child]:mb-0">
-          <dt className="mb-1 text-meta text-muted-foreground">Template</dt>
-          <dd className="min-w-0 break-words">{run.template_name}</dd>
-          {/* AC-EDITOR-06: версія шаблону, з якої запущено, — «Template version N». */}
-          <dt className="mb-1 text-meta text-muted-foreground">Version</dt>
-          <dd data-testid="run-template-version">{templateVersionLabel(run.template_version)}</dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Run manager</dt>
-          <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
-            {managerEmail ? <Avatar email={managerEmail} /> : null}
-            <span className="min-w-0 break-words">{managerEmail ?? "—"}</span>
-          </dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Status</dt>
-          <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Assignees</dt>
-          <dd>
-            <AvatarStack emails={assignees} max={4} />
-          </dd>
-        </dl>
-      </Card>
-      </CompletionGlow>
     </div>
   );
 }

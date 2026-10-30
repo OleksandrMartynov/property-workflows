@@ -33,22 +33,31 @@ const html = renderToStaticMarkup(
   />,
 );
 
+// Рядки задач (li data-testid="run-task") — щоб перевірки стосувались саме рядка, а не всієї сторінки.
+const rows = [...html.matchAll(/<li[^>]*data-testid="run-task"[^>]*>[\s\S]*?<\/li>/g)].map((m) => m[0]);
+const rowOf = (name: string) => rows.find((row) => row.includes(name)) ?? "";
+
 describe("Сторінка запуску: секції, свої задачі, порядок панелі", () => {
-  it("лічильник секції — «1 of 2 done» і «0 of 1 done», а не «1/2»", () => {
+  it("AC-TASK-12: лічильник секції — «1 of 2 done» і «0 of 1 done», а не «1/2»", () => {
     expect(html).toContain("1 of 2 done");
     expect(html).toContain("0 of 1 done");
     expect(html).not.toMatch(/>1\/2</);
   });
 
-  it("AC-TASK-11: своя задача позначена, а email виконавця біля кожної задачі лишається", () => {
-    expect(html.match(/data-mine="true"/g)).toHaveLength(1);
-    expect(html).toContain("(assigned to you)");
-    expect(html).toContain("manager.a@example.test");
-    expect(html).toContain("manager.b@example.test");
+  it("AC-TASK-11: своя задача (t2) позначена, а email виконавця — у кожному рядку задачі", () => {
+    expect(rows).toHaveLength(3);
+    expect(rowOf("Task t2")).toContain('data-mine="true"');
+    expect(rowOf("Task t2")).toContain("(assigned to you)");
+    expect(rowOf("Task t2")).toContain("manager.b@example.test");
+    for (const name of ["Task t1", "Task t3"]) {
+      expect(rowOf(name)).not.toContain("data-mine");
+      expect(rowOf(name)).toContain("manager.a@example.test");
+    }
   });
 
-  it("панель «Details» із прогресом на вузькому екрані йде першою (order-first), на широкому — праворуч", () => {
-    expect(html).toMatch(/order-first[^"]*lg:order-none/);
+  it("AC-TASK-05: прогрес «Details» — першим у розмітці (скрінрідер на телефоні чує його до задач), на широкому екрані — праворуч", () => {
     expect(html.match(/data-testid="run-progress"/g)).toHaveLength(1);
+    expect(html.indexOf('data-testid="run-progress"')).toBeLessThan(html.indexOf('data-testid="run-section"'));
+    expect(html).toMatch(/class="[^"]*lg:col-start-2 lg:row-start-1[^"]*"/);
   });
 });
