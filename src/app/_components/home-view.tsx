@@ -38,13 +38,13 @@ export function HomeView({
     <>
       <ul className="grid gap-3 sm:grid-cols-3">
         <li>
-          <Stat href="/runs" label="Active runs" value={active} />
+          <Stat href="/runs?view=in_progress" label="Active runs" value={active} />
         </li>
         <li>
-          <Stat href="/runs" label="Your open tasks" value={mine} />
+          <Stat href="/runs?view=mine" label="Your open tasks" value={mine} />
         </li>
         <li>
-          <Stat href="/runs" label="Completed runs" value={completed} />
+          <Stat href="/runs?view=completed" label="Completed runs" value={completed} />
         </li>
       </ul>
       <section className="flex flex-col gap-3" aria-labelledby="recent-runs">
