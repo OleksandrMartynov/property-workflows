@@ -11,7 +11,7 @@
 - [ ] 1.2 `AppRole` з `vendor`, `requireViewer()` пускає підрядника; `INVALID_ASSIGNEE` з підрядником.
 - [ ] 1.3 Тести бази з AC ID: призначення, вибір виконавця, лише свої задачі, позначка своєї й відмова для чужої,
   чужий запуск, прямий запуск шаблону; кожна відмова перевіряє і відмову, і незмінні дані.
-  Done when: AC-VENDOR-01, AC-VENDOR-02, AC-VENDOR-06, AC-VENDOR-07, AC-VENDOR-09.
+  Done when: AC-VENDOR-01, AC-VENDOR-02, AC-VENDOR-07, AC-VENDOR-09.
 
 ## 2. Сторінки підрядника
 
@@ -21,9 +21,10 @@
   підтвердженням останньої обов'язкової задачі.
 - [ ] 2.3 Шаблони для підрядника — «Not enough rights» і «Back to runs»; навігація без Templates.
 - [ ] 2.4 Тести компонентів і сторінок з AC ID.
-  Done when: AC-VENDOR-03, AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-08, AC-VENDOR-10.
+  Done when: AC-VENDOR-03, AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06, AC-VENDOR-08, AC-VENDOR-10.
 
 ## 3. Акаунт підрядника на проді
 
 - [ ] 3.1 `pm-vendor@example.test` у `supabase/demo-users.json` (у кінці списку), `npm run users:demo` на проді,
-  оновлений `accounts.zip`.
+  оновлений `accounts.zip`; PM і UAT входять під підрядником.
+  Done when: AC-VENDOR-03, AC-VENDOR-10 відтворюються на проді під акаунтом підрядника.
