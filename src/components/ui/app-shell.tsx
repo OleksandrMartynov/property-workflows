@@ -37,6 +37,23 @@ export const navigationCommands = (role?: string) => [
   ...(role === "vendor" ? [] : [{ id: "launch", label: "Launch a template", href: "/templates" }]),
 ];
 
+/** Число моїх відкритих задач біля «Runs»: нуль — нічого не показуємо; для скрінрідера — повний підпис. */
+function NavBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      data-testid="open-tasks"
+      className={cn(
+        "tabular ml-1 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-meta font-medium text-primary-foreground",
+        collapsed && "absolute right-1 top-1 ml-0 h-3.5 min-w-3.5 px-0.5 text-[10px]",
+      )}
+    >
+      {count > 99 ? "99+" : count}
+      <span className="sr-only"> open tasks assigned to you</span>
+    </span>
+  );
+}
+
 const isActive = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
 const SIDEBAR_KEY = "pw.sidebar";
@@ -172,11 +189,17 @@ export function AppShell({
   email,
   role,
   signOutAction,
+  search,
+  openTasks = 0,
   children,
 }: {
   email?: string | null;
   role?: string;
   signOutAction: () => Promise<void>;
+  /** Пошук запусків і шаблонів у ⌘K (серверна дія застосунку). */
+  search?: PaletteSearch;
+  /** Нагадування в застосунку замість листів: скільки моїх задач «to do» — число біля «Runs». */
+  openTasks?: number;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -260,10 +283,11 @@ export function AppShell({
               href={item.href}
               aria-current={isActive(pathname, item.href) ? "page" : undefined}
               data-tip={item.label}
-              className="rail-tip flex h-8 items-center gap-2 rounded-sm px-2 text-label text-sidebar-foreground transition-ui hover:bg-state-hover aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-semibold aria-[current=page]:text-sidebar-accent-foreground group-data-[collapsed=true]/side:justify-center"
+              className="rail-tip relative flex h-8 items-center gap-2 rounded-sm px-2 text-label text-sidebar-foreground transition-ui hover:bg-state-hover aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-semibold aria-[current=page]:text-sidebar-accent-foreground group-data-[collapsed=true]/side:justify-center"
             >
               <NavIcon d={item.icon} />
-              <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
+              <span className={collapsed ? "sr-only" : "flex-1"}>{item.label}</span>
+              {item.href === "/runs" ? <NavBadge count={openTasks} collapsed={collapsed} /> : null}
             </Link>
           ))}
         </nav>
@@ -293,6 +317,7 @@ export function AppShell({
                 className="flex h-7 items-center rounded-sm px-2 text-label text-muted-foreground transition-ui aria-[current=page]:bg-accent aria-[current=page]:font-semibold aria-[current=page]:text-foreground"
               >
                 {item.label}
+                {item.href === "/runs" ? <NavBadge count={openTasks} collapsed={false} /> : null}
               </Link>
             ))}
           </nav>
@@ -314,15 +339,55 @@ export function AppShell({
         <main id="content" tabIndex={-1} className="animate-ui-page mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} signOutAction={signOutAction} onToggleSidebar={toggleSidebar} collapsed={collapsed} role={role} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} signOutAction={signOutAction} onToggleSidebar={toggleSidebar} collapsed={collapsed} role={role} search={search} />
     </div>
   );
 }
 
 type Command = { id: string; label: string; hint: string; run: () => void };
 
+/** Результат пошуку в ⌘K (запуск чи шаблон), який дає застосунок (серверна дія під RLS того, хто шукає). */
+export type PaletteHit = { id: string; label: string; detail: string; href: string; group: string };
+export type PaletteSearch = (query: string) => Promise<PaletteHit[]>;
+
+/** Пошук із затримкою 200 мс; лише від 2 символів; застарілі відповіді відкидаються. */
+function usePaletteSearch(search: PaletteSearch | undefined, query: string) {
+  const [hits, setHits] = useState<PaletteHit[]>([]);
+  useEffect(() => {
+    if (!search || query.length < 2) return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      search(query).then(
+        (found) => alive && setHits(found),
+        () => alive && setHits([]),
+      );
+    }, 200);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [search, query]);
+  return search && query.length >= 2 ? hits : [];
+}
+
 /** Палітра ⌘K: фільтр за словом, ↑ ↓ для вибору, Enter — виконати, Esc — закрити. */
-function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collapsed, role }: { open: boolean; onClose: () => void; signOutAction: () => Promise<void>; onToggleSidebar: () => void; collapsed: boolean; role?: string }) {
+function CommandPalette({
+  open,
+  onClose,
+  signOutAction,
+  onToggleSidebar,
+  collapsed,
+  role,
+  search,
+}: {
+  open: boolean;
+  onClose: () => void;
+  signOutAction: () => Promise<void>;
+  onToggleSidebar: () => void;
+  collapsed: boolean;
+  role?: string;
+  search?: PaletteSearch;
+}) {
   const router = useRouter();
   const listId = useId();
   const [query, setQuery] = useState("");
@@ -341,7 +406,11 @@ function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collaps
     { id: "signout", label: "Sign out", hint: "Account", run: () => void signOutAction() },
   ];
   const needle = query.trim().toLowerCase();
-  const shown = needle ? commands.filter((c) => c.label.toLowerCase().includes(needle)) : commands;
+  const hits = usePaletteSearch(search, needle);
+  const shown = [
+    ...(needle ? commands.filter((c) => c.label.toLowerCase().includes(needle)) : commands),
+    ...hits.map((hit): Command => ({ id: `hit-${hit.group}-${hit.id}`, label: hit.label, hint: `${hit.group} · ${hit.detail}`, run: go(hit.href) })),
+  ];
   const current = Math.min(active, Math.max(shown.length - 1, 0));
 
   const close = () => {
@@ -370,7 +439,7 @@ function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collaps
           aria-expanded="true"
           aria-controls={listId}
           aria-activedescendant={shown[current] ? `${listId}-${shown[current].id}` : undefined}
-          aria-label="Search commands"
+          aria-label="Search commands, runs and templates"
           autoComplete="off"
           value={query}
           placeholder="Type a command or search…"
