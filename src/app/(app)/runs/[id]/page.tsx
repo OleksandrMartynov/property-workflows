@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
-import { requireViewer } from "@/lib/supabase/viewer";
+import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { completeTask } from "../actions";
 import { RunDetail } from "./_components/run-detail";
+import { VendorRunPage } from "./_components/vendor-run-page";
 
 // Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
 // виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
@@ -14,6 +15,11 @@ import { RunDetail } from "./_components/run-detail";
 export default async function RunPage({ params, searchParams }: PageProps<"/runs/[id]">) {
   const [{ id }, { error, done }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
+  const message = errorMessage(error);
+
+  // AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06: сторінка запуску очима підрядника — окремий компонент.
+  // Серверний компонент без хуків — викликаємо як функцію: сторінка повертає вже готове дерево.
+  if (isVendor(viewer.role)) return await VendorRunPage({ id, message, supabase, viewer });
 
   const { data: run } = await supabase
     .from("runs")
@@ -32,7 +38,6 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
     supabase.rpc("list_assignable_users"),
   ]);
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
-  const message = errorMessage(error);
 
   return (
     <PageShell

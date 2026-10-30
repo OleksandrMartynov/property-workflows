@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
 import { errorMessage, MESSAGES } from "@/lib/runs/messages";
 import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
-import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
+import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
+import { Forbidden } from "@/app/_components/forbidden";
 import { Notice, PageShell } from "@/app/_components/ui";
 import { launchRun } from "../../../runs/actions";
 import { LaunchForm } from "./_components/launch-form";
@@ -13,6 +14,8 @@ import { LaunchForm } from "./_components/launch-form";
 export default async function LaunchTemplatePage({ params, searchParams }: PageProps<"/templates/[id]/launch">) {
   const [{ id }, { error, case_name }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
+  // Q12 (add-vendor), AC-VENDOR-09: підрядник не запускає шаблон — форми запуску не показуємо.
+  if (isVendor(viewer.role)) return <Forbidden title="Launch a template" role={viewer.role} />;
   if (!isUuid(id)) notFound();
 
   // Запускаємо лише поточну версію (AC-EDITOR-06): назва, секції й задачі — зі знімка версії, не з незбережених змін.

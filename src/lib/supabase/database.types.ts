@@ -273,6 +273,14 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; email: string }[];
       };
+      vendor_runs: {
+        Args: { p_run_id?: string };
+        Returns: { id: string; case_name: string; status: string; created_at: string; done: number; total: number }[];
+      };
+      run_last_required_task: {
+        Args: { p_run_id: string };
+        Returns: string | null;
+      };
       list_template_drafts: {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; name: string; current_version: number | null; has_unpublished_changes: boolean }[];

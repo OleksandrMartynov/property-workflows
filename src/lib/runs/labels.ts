@@ -19,3 +19,6 @@ export const runStatusTone = (status: string) => (status === "completed" ? "done
 // AC-DSYS-04: порожній список запусків — дослівно з AC.
 export const NO_RUNS_TITLE = "No runs yet. Launch a template to start one.";
 export const NO_RUNS_ACTION = "Launch a template";
+
+// AC-VENDOR-10: підрядник без задач — дослівно з AC, без порожньої таблиці й без «Launch a template».
+export const NO_VENDOR_TASKS = "No tasks assigned to you yet.";

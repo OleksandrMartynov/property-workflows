@@ -15,7 +15,7 @@ export default async function EditTemplatePage({ params, searchParams }: PagePro
   const [{ id }, { error, saved, view }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
   // Перевірка ролі — до будь-якого запиту незбережених змін.
-  if (!canManageTemplates(viewer.role)) return <Forbidden title="Edit template" />;
+  if (!canManageTemplates(viewer.role)) return <Forbidden title="Edit template" role={viewer.role} />;
 
   const { data: drafts, error: draftsError } = await supabase.rpc("list_template_drafts");
   if (draftsError) throw draftsError;

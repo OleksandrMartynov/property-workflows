@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { PlayIcon } from "@/components/ui/icons";
-import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
+import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
+import { Forbidden } from "@/app/_components/forbidden";
 import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
 import { TemplateView } from "./_components/template-view";
@@ -15,6 +16,8 @@ export const metadata = { title: "Template" };
 
 export default async function TemplatePage({ params }: PageProps<"/templates/[id]">) {
   const [{ id }, { supabase, viewer }] = await Promise.all([params, requireViewer()]);
+  // Q12 (add-vendor): шаблону підрядник не бачить (матриця прав «See templates» — «—»), як і списку (AC-VENDOR-08).
+  if (isVendor(viewer.role)) return <Forbidden title="Template" role={viewer.role} />;
   if (!isUuid(id)) notFound();
 
   const [current] = await loadCurrentVersions(supabase, [id]);

@@ -19,7 +19,7 @@ export const metadata = { title: "Versions" };
 
 export default async function TemplateVersionsPage({ params }: PageProps<"/templates/[id]/versions">) {
   const [{ id }, { supabase, viewer }] = await Promise.all([params, requireViewer()]);
-  if (!canManageTemplates(viewer.role)) return <Forbidden title="Versions" />;
+  if (!canManageTemplates(viewer.role)) return <Forbidden title="Versions" role={viewer.role} />;
 
   const template = await findTemplateDraft(supabase, id);
   if (!template) notFound();

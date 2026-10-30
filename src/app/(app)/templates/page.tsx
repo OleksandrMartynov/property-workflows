@@ -1,4 +1,5 @@
-import { canManageTemplates, requireViewer } from "@/lib/supabase/viewer";
+import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
+import { Forbidden } from "@/app/_components/forbidden";
 import { countVersion, loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
 import { NewTemplateDialog } from "./_components/new-template-dialog";
@@ -11,6 +12,8 @@ export const metadata = { title: "Templates" };
 
 export default async function TemplatesPage() {
   const { supabase, viewer } = await requireViewer();
+  // AC-VENDOR-08: підрядник — «Not enough rights» і жодного шаблону; даних шаблонів сторінка не читає.
+  if (isVendor(viewer.role)) return <Forbidden title="Templates" role={viewer.role} />;
   const canManage = canManageTemplates(viewer.role);
 
   // Поточна версія кожного шаблону: назва й склад — зі знімка версії, а не з незбережених змін.

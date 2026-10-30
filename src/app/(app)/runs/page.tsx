@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
-import { requireViewer } from "@/lib/supabase/viewer";
+import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { PageShell } from "@/app/_components/ui";
 import { RunsList } from "./_components/runs-list";
+import { VendorRunsPage } from "./_components/vendor-runs-page";
 import { loadRunSummaries } from "./_lib/summaries";
 
 export const metadata = { title: "Runs" };
@@ -18,6 +19,9 @@ export default async function RunsPage({ searchParams }: PageProps<"/runs">) {
   const page = Math.max(1, Number.parseInt(typeof rawPage === "string" ? rawPage : "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const { supabase, viewer } = await requireViewer();
+
+  // AC-VENDOR-03, AC-VENDOR-10: підрядник — окремий список (vendor_runs).
+  if (isVendor(viewer.role)) return await VendorRunsPage({ supabase });
 
   const { data: runs, error: runsError, count } = await supabase
     .from("runs")

@@ -26,6 +26,9 @@ export default async function Home() {
     .eq("id", claims.sub)
     .maybeSingle();
 
+  // Підрядник не бачить запусків агенції й шаблонів: його головна — список запусків зі своїми задачами (AC-VENDOR-03).
+  if (profile?.role === "vendor") redirect("/runs");
+
   const count = { count: "exact", head: true } as const;
   const [active, completed, mine, recent] = await Promise.all([
     supabase.from("runs").select("id", count).eq("status", "in_progress"),
