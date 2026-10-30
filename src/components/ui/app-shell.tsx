@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Avatar } from "./avatar";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
-import { ChevronsUpDownIcon, LogOutIcon, PanelLeftIcon } from "./icons";
+import { ChevronsUpDownIcon, LogOutIcon, PanelLeftIcon, SearchIcon } from "./icons";
 import { Popover } from "./popover";
 import { ThemeSwitch, chooseTheme } from "./theme-switch";
 import { THEME_CHOICES, THEME_LABELS } from "@/lib/theme";
@@ -67,7 +67,20 @@ const writeCollapsed = (value: boolean) => {
  * Акаунт у футері сайдбара: кнопка (аватар + повний email) відкриває вікно з email і роллю. Роль не висить бейджем у
  * панелі: це довідка про акаунт, а не навігація. Esc і клік поза вікном закривають його, фокус повертається на кнопку.
  */
-function AccountMenu({ email, role, collapsed }: { email: string; role?: string; collapsed: boolean }) {
+function AccountMenu({
+  email,
+  role,
+  collapsed,
+  compact = false,
+  signOutAction,
+}: {
+  email: string;
+  role?: string;
+  collapsed: boolean;
+  /** Мобільна смуга: кнопка — лише аватар, а «Sign out» — у вікні (місця в смузі немає). */
+  compact?: boolean;
+  signOutAction?: () => Promise<void>;
+}) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -85,6 +98,20 @@ function AccountMenu({ email, role, collapsed }: { email: string; role?: string;
 
   return (
     <>
+      {compact ? (
+        <button
+          ref={anchor}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={`${id}-account`}
+          aria-label="Account"
+          onClick={() => setOpen((value) => !value)}
+          className="flex size-8 items-center justify-center rounded-full transition-ui hover:bg-state-hover aria-expanded:bg-state-hover"
+        >
+          <Avatar email={email} />
+        </button>
+      ) : (
       <button
         ref={anchor}
         type="button"
@@ -101,6 +128,7 @@ function AccountMenu({ email, role, collapsed }: { email: string; role?: string;
         </span>
         <ChevronsUpDownIcon className="size-3.5 shrink-0 text-muted-foreground group-data-[collapsed=true]/side:hidden" />
       </button>
+      )}
       <Popover open={open} onDismiss={() => setOpen(false)} anchorRef={anchor} width={256} id={`${id}-account`} role="dialog" aria-label="Account">
         <div className="flex flex-col gap-3 p-3">
           <div className="flex items-start gap-2.5">
@@ -118,6 +146,14 @@ function AccountMenu({ email, role, collapsed }: { email: string; role?: string;
           <div className="border-t border-border pt-3">
             <ThemeSwitch />
           </div>
+          {signOutAction ? (
+            <form action={signOutAction}>
+              <Button type="submit" variant="outline" className="w-full justify-start gap-2 text-foreground">
+                <LogOutIcon className="size-4 shrink-0 text-muted-foreground" />
+                Sign out
+              </Button>
+            </form>
+          ) : null}
         </div>
       </Popover>
     </>
@@ -148,9 +184,14 @@ export function AppShell({
         setPaletteOpen((open) => !open);
         return;
       }
-      // «[» згортає й розгортає панель, але не під час набору тексту.
+      // «[» згортає й розгортає панель, «/» відкриває пошук — але не під час набору тексту.
       const target = event.target as HTMLElement | null;
       const typing = target?.closest("input, textarea, select, [contenteditable=true]");
+      if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing) {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
       if (event.key === "[" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing) {
         event.preventDefault();
         toggleSidebar();
@@ -248,12 +289,20 @@ export function AppShell({
               </Link>
             ))}
           </nav>
-          <form action={signOutAction}>
-            <Button type="submit" variant="outline" size="sm" className="gap-1.5 text-foreground">
-              <LogOutIcon className="size-3.5 text-muted-foreground" />
-              Sign out
-            </Button>
-          </form>
+          {/* Пошук і акаунт (email, роль, тема, «Sign out») — і на телефоні, як у бічній панелі. */}
+          <Button type="button" variant="ghost" size="icon" aria-label="Search" onClick={() => setPaletteOpen(true)} className="text-muted-foreground">
+            <SearchIcon className="size-4" />
+          </Button>
+          {email ? (
+            <AccountMenu email={email} role={role} collapsed={false} compact signOutAction={signOutAction} />
+          ) : (
+            <form action={signOutAction}>
+              <Button type="submit" variant="outline" size="sm" className="gap-1.5 text-foreground">
+                <LogOutIcon className="size-3.5 text-muted-foreground" />
+                Sign out
+              </Button>
+            </form>
+          )}
         </header>
         <main id="content" tabIndex={-1} className="animate-ui-page mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>

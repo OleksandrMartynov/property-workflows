@@ -45,9 +45,7 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
   const message = errorMessage(error);
 
   return (
-    <PageShell
-      title={`Launch “${template.name}”`}
-    >
+    <PageShell title={`Launch “${template.name}”`} back={{ href: `/templates/${template.templateId}`, label: template.name }}>
       {message ? <Notice kind="error">{message}</Notice> : null}
       <LaunchForm
         templateId={template.templateId}
