@@ -2,7 +2,7 @@
 // випадку — під самим полем, з aria-invalid і фокусом. Тексти помилок — дослівно з AC.
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { DoneTaskNotice } from "@/app/(app)/runs/[id]/_components/done-task-notice";
+import { DoneTaskNotice, doneAnnouncement } from "@/app/(app)/runs/[id]/_components/done-task-notice";
 import { LaunchForm } from "@/app/(app)/templates/[id]/launch/_components/launch-form";
 import { errorMessage } from "@/lib/runs/messages";
 
@@ -13,15 +13,16 @@ const tasks = [
 
 describe("Відгук після «Mark as done»", () => {
   it("оголошує «<назва задачі>: done» лише для скрінрідера (видимий відгук дає сам рядок)", () => {
+    expect(doneAnnouncement(tasks, "task", "t4")).toBe("Hand over the keys: done");
+    // Область live region з'являється порожньою, текст додається після монтування — так скрінрідер помічає зміну.
     const html = renderToStaticMarkup(<DoneTaskNotice tasks={tasks} done="task" task="t4" />);
-    expect(html).toContain('role="status"');
-    expect(html).toContain("sr-only");
-    expect(html).toContain("Hand over the keys: done");
+    expect(html).toBe('<p role="status" aria-live="polite" class="sr-only"></p>');
   });
 
   it("мовчить без параметра done=task або для задачі, якої немає на сторінці", () => {
+    expect(doneAnnouncement(tasks, undefined, "t4")).toBeNull();
+    expect(doneAnnouncement(tasks, "task", "other")).toBeNull();
     expect(renderToStaticMarkup(<DoneTaskNotice tasks={tasks} task="t4" />)).toBe("");
-    expect(renderToStaticMarkup(<DoneTaskNotice tasks={tasks} done="task" task="other" />)).toBe("");
   });
 });
 

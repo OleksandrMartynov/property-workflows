@@ -5,7 +5,7 @@ import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks, toLau
 import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { Forbidden } from "@/app/_components/forbidden";
 import { PageShell } from "@/app/_components/ui";
-import { FlashNotice } from "@/components/ui/flash-notice";
+import { ClearSearchParams, FlashNotice } from "@/components/ui/flash-notice";
 import { launchRun } from "../../../runs/actions";
 import { LaunchForm } from "./_components/launch-form";
 
@@ -49,6 +49,8 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
 
   return (
     <PageShell title={`Launch “${template.name}”`} back={{ href: `/templates/${template.templateId}`, label: template.name }}>
+      {/* Помилку поля показує сама форма; параметр із адреси прибираємо так само, щоб не поверталась після перезавантаження. */}
+      {fieldError ? <ClearSearchParams names={["error"]} /> : null}
       {message ? (
         <FlashNotice kind="error" clear={["error"]}>
           {message}
