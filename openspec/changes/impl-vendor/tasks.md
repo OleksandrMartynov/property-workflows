@@ -15,12 +15,12 @@
 
 ## 2. Сторінки підрядника
 
-- [ ] 2.1 `/runs` для підрядника — `VendorRunsList` («Your tasks: N of K done», статус, назва випадку) і порожній стан
+- [x] 2.1 `/runs` для підрядника — `VendorRunsList` («Your tasks: N of K done», статус, назва випадку) і порожній стан
   «No tasks assigned to you yet.»; `/` веде на `/runs`.
-- [ ] 2.2 `/runs/[id]` для підрядника — лише свої задачі без email і прогресу запуску, «Mark as done» з
+- [x] 2.2 `/runs/[id]` для підрядника — лише свої задачі без email і прогресу запуску, «Mark as done» з
   підтвердженням останньої обов'язкової задачі.
-- [ ] 2.3 Шаблони для підрядника — «Not enough rights» і «Back to runs»; навігація без Templates.
-- [ ] 2.4 Тести компонентів і сторінок з AC ID.
+- [x] 2.3 Шаблони для підрядника — «Not enough rights» і «Back to runs»; навігація без Templates.
+- [x] 2.4 Тести компонентів і сторінок з AC ID.
   Done when: AC-VENDOR-03, AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06, AC-VENDOR-08, AC-VENDOR-10.
 
 ## 3. Акаунт підрядника на проді

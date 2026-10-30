@@ -11,3 +11,7 @@ export function countProgress(tasks: readonly TaskLike[]) {
 }
 
 export const formatProgress = ({ done, total }: { done: number; total: number }) => `${done} of ${total} done`;
+
+// AC-VENDOR-03, AC-VENDOR-05: лічильник підрядника — лише його задачі запуску (K — їхня кількість, N — «done»), дослівно
+// «Your tasks: N of K done» (припущення PM у вимозі #39). Прогресу всього запуску підрядник не бачить (AC-VENDOR-04).
+export const formatVendorProgress = ({ done, total }: { done: number; total: number }) => `Your tasks: ${done} of ${total} done`;

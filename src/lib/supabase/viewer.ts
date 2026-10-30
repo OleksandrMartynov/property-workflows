@@ -42,6 +42,9 @@ export async function requireViewer() {
   return { supabase, viewer };
 }
 
+/** Підрядник (vendor) бачить лише свої задачі й запуски з ними; шаблонів, версій і email інших не бачить (зріз 3). */
+export const isVendor = (role: AppRole) => role === "vendor";
+
 /** Шаблони створює, редагує й зберігає як версію лише admin (матриця прав «Create a template, edit it and save it…»). */
 export const canManageTemplates = (role: AppRole) => role === "admin";
 

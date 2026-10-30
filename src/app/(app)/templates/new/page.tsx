@@ -17,7 +17,7 @@ export const metadata = { title: "New template" };
 
 export default async function NewTemplatePage({ searchParams }: PageProps<"/templates/new">) {
   const [{ viewer }, { error }] = await Promise.all([requireViewer(), searchParams]);
-  if (!canManageTemplates(viewer.role)) return <Forbidden title="New template" />;
+  if (!canManageTemplates(viewer.role)) return <Forbidden title="New template" role={viewer.role} />;
   const message = errorMessage(error);
 
   return (

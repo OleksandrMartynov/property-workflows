@@ -28,6 +28,15 @@ function NavIcon({ d }: { d: string }) {
   );
 }
 
+/** Підрядник (vendor) працює лише зі своїми задачами: у навігації — лише Runs (шаблонів і головної агенції не бачить). */
+export const navFor = (role?: string) => (role === "vendor" ? NAV.filter((item) => item.href === "/runs") : NAV);
+
+/** Команди переходу в ⌘K — ті самі сторінки, що й навігація; «Launch a template» — лише тим, хто запускає шаблони. */
+export const navigationCommands = (role?: string) => [
+  ...navFor(role).map((item) => ({ id: item.href === "/" ? "home" : item.href.slice(1), label: `Go to ${item.label}`, href: item.href })),
+  ...(role === "vendor" ? [] : [{ id: "launch", label: "Launch a template", href: "/templates" }]),
+];
+
 const isActive = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
 const SIDEBAR_KEY = "pw.sidebar";
@@ -197,7 +206,7 @@ export function AppShell({
         </button>
 
         <nav aria-label="Main" className="flex flex-col gap-0.5">
-          {NAV.map((item) => (
+          {navFor(role).map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -228,7 +237,7 @@ export function AppShell({
             <Logo showName={false} className="text-primary" />
           </Link>
           <nav aria-label="Main" className="flex flex-1 items-center gap-0.5">
-            {NAV.map((item) => (
+            {navFor(role).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -249,7 +258,7 @@ export function AppShell({
         <main id="content" tabIndex={-1} className="animate-ui-page mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} signOutAction={signOutAction} onToggleSidebar={toggleSidebar} collapsed={collapsed} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} signOutAction={signOutAction} onToggleSidebar={toggleSidebar} collapsed={collapsed} role={role} />
     </div>
   );
 }
@@ -257,7 +266,7 @@ export function AppShell({
 type Command = { id: string; label: string; hint: string; run: () => void };
 
 /** Палітра ⌘K: фільтр за словом, ↑ ↓ для вибору, Enter — виконати, Esc — закрити. */
-function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collapsed }: { open: boolean; onClose: () => void; signOutAction: () => Promise<void>; onToggleSidebar: () => void; collapsed: boolean }) {
+function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collapsed, role }: { open: boolean; onClose: () => void; signOutAction: () => Promise<void>; onToggleSidebar: () => void; collapsed: boolean; role?: string }) {
   const router = useRouter();
   const listId = useId();
   const [query, setQuery] = useState("");
@@ -265,10 +274,7 @@ function CommandPalette({ open, onClose, signOutAction, onToggleSidebar, collaps
 
   const go = (href: string) => () => router.push(href);
   const commands: Command[] = [
-    { id: "home", label: "Go to Home", hint: "Navigate", run: go("/") },
-    { id: "templates", label: "Go to Templates", hint: "Navigate", run: go("/templates") },
-    { id: "runs", label: "Go to Runs", hint: "Navigate", run: go("/runs") },
-    { id: "launch", label: "Launch a template", hint: "Action", run: go("/templates") },
+    ...navigationCommands(role).map((c): Command => ({ id: c.id, label: c.label, hint: c.id === "launch" ? "Action" : "Navigate", run: go(c.href) })),
     { id: "sidebar", label: collapsed ? "Expand sidebar" : "Collapse sidebar", hint: "[", run: onToggleSidebar },
     ...THEME_CHOICES.map((choice): Command => ({
       id: `theme-${choice}`,

@@ -1,19 +1,18 @@
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarStack } from "@/components/ui/avatar-stack";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CompletionGlow } from "@/components/ui/completion-glow";
-import { TaskCheck } from "@/components/ui/task-check";
 import { canCompleteTask } from "@/lib/runs/access";
 import { isLastRequiredTask } from "@/lib/runs/confirmation";
-import { requiredLabel, runStatusLabel, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
+import { runStatusLabel, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
 import { MarkDoneForm } from "../mark-done-form";
+import { TaskRow } from "./task-row";
 
 export interface RunInfo {
   id: string;
@@ -75,18 +74,7 @@ export function RunDetail({
                     const isDone = task.status === "done";
                     const assignee = emailOf.get(task.assignee_id);
                     return (
-                      <li
-                        key={task.id}
-                        className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 transition-ui first:rounded-t-md last:rounded-b-md hover:bg-state-hover"
-                        data-testid="run-task"
-                      >
-                        <TaskCheck done={isDone} />
-                        <span className={isDone ? "min-w-0 flex-1 text-muted-foreground" : "min-w-0 flex-1"}>
-                          {task.name}
-                          <Badge variant="outline" className="ml-2 align-middle" data-testid="task-required">
-                            {requiredLabel(task.required)}
-                          </Badge>
-                        </span>
+                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone}>
                         <span className="inline-flex items-center gap-1.5 text-label font-normal text-muted-foreground">
                           {assignee ? <Avatar email={assignee} /> : null}
                           {assignee ?? "—"}
@@ -101,7 +89,7 @@ export function RunDetail({
                             needsConfirmation={isLastRequiredTask(task, tasks)}
                           />
                         ) : null}
-                      </li>
+                      </TaskRow>
                     );
                   })}
                 </ul>
