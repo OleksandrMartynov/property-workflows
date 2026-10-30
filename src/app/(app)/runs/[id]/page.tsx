@@ -3,7 +3,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
-import { Notice, PageShell } from "@/app/_components/ui";
+import { PageShell } from "@/app/_components/ui";
+import { FlashNotice } from "@/components/ui/flash-notice";
+import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
@@ -13,13 +15,13 @@ import { VendorRunPage } from "./_components/vendor-run-page";
 // виконаною лише на дозволених задачах), AC-TASK-11 (email виконавця), AC-TASK-12 (групи за секціями), AC-TASK-15
 // («required» / «optional»). Чужий запуск RLS не віддає — notFound() і «Run not found» (AC-TASK-10, not-found.tsx).
 export default async function RunPage({ params, searchParams }: PageProps<"/runs/[id]">) {
-  const [{ id }, { error, done }] = await Promise.all([params, searchParams]);
+  const [{ id }, { error, done, task }] = await Promise.all([params, searchParams]);
   const { supabase, viewer } = await requireViewer();
   const message = errorMessage(error);
 
   // AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06: сторінка запуску очима підрядника — окремий компонент.
   // Серверний компонент без хуків — викликаємо як функцію: сторінка повертає вже готове дерево.
-  if (isVendor(viewer.role)) return await VendorRunPage({ id, message, supabase, viewer });
+  if (isVendor(viewer.role)) return await VendorRunPage({ id, message, doneTaskId: done === "task" && typeof task === "string" ? task : null, supabase, viewer });
 
   const { data: run } = await supabase
     .from("runs")
@@ -46,8 +48,17 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       back={{ href: "/runs", label: "Runs" }}
       actions={<StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>}
     >
-      {done === "launched" ? <Notice kind="success">Run launched.</Notice> : null}
-      {message ? <Notice kind="error">{message}</Notice> : null}
+      {done === "launched" ? (
+        <FlashNotice kind="success" clear={["done"]}>
+          Run launched.
+        </FlashNotice>
+      ) : null}
+      <DoneTaskNotice tasks={tasks ?? []} done={done} task={task} />
+      {message ? (
+        <FlashNotice kind="error" clear={["error"]}>
+          {message}
+        </FlashNotice>
+      ) : null}
       <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} />
     </PageShell>
   );

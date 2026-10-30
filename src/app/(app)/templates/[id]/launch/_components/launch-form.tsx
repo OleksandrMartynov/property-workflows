@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +58,7 @@ export function LaunchForm({
   viewer,
   others,
   caseName: initialName,
+  caseNameError,
   action,
 }: {
   templateId: string;
@@ -67,6 +68,8 @@ export function LaunchForm({
   viewer: { id: string; email: string | null };
   others: Assignee[];
   caseName: string;
+  /** Текст AC-RUN-03 / AC-RUN-07, якщо сервер відхилив назву випадку: показується під полем, фокус — на полі. */
+  caseNameError?: string;
   action: (formData: FormData) => Promise<void>;
 }) {
   const people = useMemo<Person[]>(
@@ -74,6 +77,12 @@ export function LaunchForm({
     [viewer, others],
   );
   const [caseName, setCaseName] = useState(initialName);
+  // AC-RUN-03, AC-RUN-07: після відмови сервера фокус — на полі назви, навіть якщо форма лишилась змонтованою
+  // (autoFocus спрацьовує лише при першому монтуванні).
+  const caseNameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (caseNameError) caseNameRef.current?.focus();
+  }, [caseNameError]);
   const [assignment, setAssignment] = useState<Record<string, string>>(() => Object.fromEntries(tasks.map((t) => [t.id, viewer.id])));
 
   const requiredCount = tasks.filter((t) => t.required).length;
@@ -112,6 +121,7 @@ export function LaunchForm({
             <Field
               id="case_name"
               label="Case name"
+              error={caseNameError}
               hint={
                 <span className={cn("tabular flex justify-end", nameLength > CASE_NAME_MAX_LENGTH && "text-destructive")}>
                   {nameLength}/{CASE_NAME_MAX_LENGTH}
@@ -126,7 +136,9 @@ export function LaunchForm({
                 value={caseName}
                 onChange={(event) => setCaseName(event.target.value)}
                 autoComplete="off"
-                aria-describedby="case_name-hint"
+                ref={caseNameRef}
+                aria-invalid={caseNameError ? true : undefined}
+                aria-describedby={caseNameError ? "case_name-error case_name-hint" : "case_name-hint"}
               />
             </Field>
           </CardContent>

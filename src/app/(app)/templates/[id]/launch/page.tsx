@@ -4,7 +4,8 @@ import { errorMessage, MESSAGES } from "@/lib/runs/messages";
 import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks, toLaunchSections } from "@/lib/templates/current";
 import { canManageTemplates, isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { Forbidden } from "@/app/_components/forbidden";
-import { Notice, PageShell } from "@/app/_components/ui";
+import { PageShell } from "@/app/_components/ui";
+import { ClearSearchParams, FlashNotice } from "@/components/ui/flash-notice";
 import { launchRun } from "../../../runs/actions";
 import { LaunchForm } from "./_components/launch-form";
 
@@ -42,11 +43,19 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
   ]);
   const { sections, tasks } = toLaunchSections(versionTasks);
   const others = (users ?? []).filter((u) => u.id !== viewer.id);
-  const message = errorMessage(error);
+  // AC-RUN-03, AC-RUN-07: помилка назви випадку — під самим полем (з фокусом), решта — повідомленням над формою.
+  const fieldError = error === "CASE_NAME_REQUIRED" || error === "CASE_NAME_TOO_LONG" ? errorMessage(error) : undefined;
+  const message = fieldError ? undefined : errorMessage(error);
 
   return (
     <PageShell title={`Launch “${template.name}”`} back={{ href: `/templates/${template.templateId}`, label: template.name }}>
-      {message ? <Notice kind="error">{message}</Notice> : null}
+      {/* Помилку поля показує сама форма; параметр із адреси прибираємо так само, щоб не поверталась після перезавантаження. */}
+      {fieldError ? <ClearSearchParams names={["error"]} /> : null}
+      {message ? (
+        <FlashNotice kind="error" clear={["error"]}>
+          {message}
+        </FlashNotice>
+      ) : null}
       <LaunchForm
         templateId={template.templateId}
         templateName={template.name}
@@ -55,6 +64,7 @@ export default async function LaunchTemplatePage({ params, searchParams }: PageP
         viewer={viewer}
         others={others}
         caseName={typeof case_name === "string" ? case_name : ""}
+        caseNameError={fieldError}
         action={launchRun}
       />
     </PageShell>
