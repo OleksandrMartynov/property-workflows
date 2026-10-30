@@ -59,3 +59,11 @@ describe("Сторінки списку запусків", () => {
     expect(renderToStaticMarkup(<RunsPager page={1} total={10} pageSize={50} params={{}} />)).toBe("");
   });
 });
+
+describe("Адреса рядка фільтрів", () => {
+  it("будує адресу з чернеток вигляду й пошуку, скидає сторінку й лишає інші параметри", async () => {
+    const { filterHref } = await import("@/components/ui/filter-bar");
+    expect(filterHref("/runs", "view=mine&q=old&page=3&x=1", { view: "completed", q: "Apartment" }, "all")).toBe("/runs?x=1&view=completed&q=Apartment");
+    expect(filterHref("/runs", "view=mine&page=2", { view: "all", q: "" }, "all")).toBe("/runs");
+  });
+});

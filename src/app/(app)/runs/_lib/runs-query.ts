@@ -8,22 +8,20 @@ export const PAGE_SIZE = 50;
 
 /**
  * Сторінка списку запусків з виглядом і пошуком. Видимість — RLS (AC-TASK-06), порядок — від новіших (AC-TASK-14).
- * «Mine» — запуски, де в мене є задача «to do» (id з run_tasks, теж під RLS).
+ * «Mine» — запуски, де в мене є задача «to do»: умова — у тому самому запиті (inner join run_tasks під RLS), тож
+ * пагінація й кількість рахуються вже по відфільтрованих запусках, без окремого списку id.
  */
 export async function loadRunsPage({ supabase, viewer }: Session, { view, query, page }: { view: RunView; query: string; page: number }) {
   const from = (page - 1) * PAGE_SIZE;
+  const columns = "id, case_name, template_name, status, run_manager_id, created_at";
   let request = supabase
     .from("runs")
-    .select("id, case_name, template_name, status, run_manager_id, created_at", { count: "exact" })
+    .select(view === "mine" ? `${columns}, run_tasks!inner(id)` : columns, { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id");
 
   if (view === "in_progress" || view === "completed") request = request.eq("status", view);
-  if (view === "mine") {
-    const { data: mine, error } = await supabase.from("run_tasks").select("run_id").eq("assignee_id", viewer.id).eq("status", "to_do");
-    if (error) throw error;
-    request = request.in("id", [...new Set((mine ?? []).map((t) => t.run_id))]);
-  }
+  if (view === "mine") request = request.eq("run_tasks.assignee_id", viewer.id).eq("run_tasks.status", "to_do");
   if (query) request = request.ilike("case_name", ilikePattern(query));
 
   const { data, error, count } = await request.range(from, from + PAGE_SIZE - 1);
@@ -32,5 +30,6 @@ export async function loadRunsPage({ supabase, viewer }: Session, { view, query,
     if (error.code === "PGRST103") redirect("/runs");
     throw error;
   }
-  return { runs: data ?? [], total: count ?? 0 };
+  type RunRow = { id: string; case_name: string; template_name: string; status: string; run_manager_id: string; created_at: string };
+  return { runs: ((data ?? []) as unknown as RunRow[]).map(({ id, case_name, template_name, status, run_manager_id, created_at }) => ({ id, case_name, template_name, status, run_manager_id, created_at })), total: count ?? 0 };
 }
