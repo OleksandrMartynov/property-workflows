@@ -55,51 +55,8 @@ export function RunDetail({
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-      <div className="flex flex-col gap-6">
-        {sections.map((section) => {
-          const doneInSection = section.tasks.filter((t) => t.status === "done").length;
-          return (
-            <section key={section.key} className="flex flex-col gap-2" data-testid="run-section" aria-labelledby={`s-${section.key}`}>
-              <div className="flex items-center justify-between px-1">
-                <h2 id={`s-${section.key}`} className="text-heading">
-                  {section.name}
-                </h2>
-                <span className="tabular text-meta text-muted-foreground">
-                  {doneInSection}/{section.tasks.length}
-                </span>
-              </div>
-              <Card>
-                <ul className="flex flex-col divide-y divide-border">
-                  {section.tasks.map((task) => {
-                    const isDone = task.status === "done";
-                    const assignee = emailOf.get(task.assignee_id);
-                    return (
-                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone}>
-                        <span className="inline-flex items-center gap-1.5 text-label font-normal text-muted-foreground">
-                          {assignee ? <Avatar email={assignee} /> : null}
-                          {assignee ?? "—"}
-                        </span>
-                        <StatusBadge status={isDone ? "done" : "todo"}>{taskStatusLabel(task.status)}</StatusBadge>
-                        {canCompleteTask(viewer, task, run) ? (
-                          <MarkDoneForm
-                            action={completeTask}
-                            runId={run.id}
-                            taskId={task.id}
-                            taskName={task.name}
-                            needsConfirmation={isLastRequiredTask(task, tasks)}
-                          />
-                        ) : null}
-                      </TaskRow>
-                    );
-                  })}
-                </ul>
-              </Card>
-            </section>
-          );
-        })}
-      </div>
-
-      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="lg:sticky lg:top-6">
+      {/* «Details» із прогресом — першою і в розмітці (скрінрідер на телефоні чує прогрес до задач), на широкому екрані — праворуч. */}
+      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
       <Card className="flex flex-col gap-4 p-4">
         <h2 className="text-heading">Details</h2>
         <div className="flex flex-col gap-2.5">
@@ -131,6 +88,51 @@ export function RunDetail({
         </dl>
       </Card>
       </CompletionGlow>
+      <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
+        {sections.map((section) => {
+          const doneInSection = section.tasks.filter((t) => t.status === "done").length;
+          return (
+            <section key={section.key} className="flex flex-col gap-2" data-testid="run-section" aria-labelledby={`s-${section.key}`}>
+              <div className="flex items-center justify-between px-1">
+                <h2 id={`s-${section.key}`} className="text-heading">
+                  {section.name}
+                </h2>
+                {/* Лічильник секції — тим самим записом, що й прогрес запуску (глосарій PM: «N of M done»). */}
+                <span className="tabular text-meta text-muted-foreground">
+                  {formatProgress({ done: doneInSection, total: section.tasks.length })}
+                </span>
+              </div>
+              <Card>
+                <ul className="flex flex-col divide-y divide-border">
+                  {section.tasks.map((task) => {
+                    const isDone = task.status === "done";
+                    const assignee = emailOf.get(task.assignee_id);
+                    return (
+                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone} mine={task.assignee_id === viewer.id}>
+                        <span className="inline-flex items-center gap-1.5 text-label font-normal text-muted-foreground">
+                          {assignee ? <Avatar email={assignee} /> : null}
+                          {assignee ?? "—"}
+                        </span>
+                        <StatusBadge status={isDone ? "done" : "todo"}>{taskStatusLabel(task.status)}</StatusBadge>
+                        {canCompleteTask(viewer, task, run) ? (
+                          <MarkDoneForm
+                            action={completeTask}
+                            runId={run.id}
+                            taskId={task.id}
+                            taskName={task.name}
+                            needsConfirmation={isLastRequiredTask(task, tasks)}
+                          />
+                        ) : null}
+                      </TaskRow>
+                    );
+                  })}
+                </ul>
+              </Card>
+            </section>
+          );
+        })}
+      </div>
+
     </div>
   );
 }
