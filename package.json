@@ -19,7 +19,8 @@
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:copy": "node scripts/check-ui-copy.mjs",
     "check:boundary": "node scripts/check-server-boundary.mjs",
-    "check:actions": "node scripts/check-actions-auth.mjs"
+    "check:actions": "node scripts/check-actions-auth.mjs",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
