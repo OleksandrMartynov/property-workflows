@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { RunsList } from "@/app/(app)/runs/_components/runs-list";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { NO_RUNS_ACTION, NO_RUNS_TITLE, runStatusLabel, runStatusTone } from "@/lib/runs/labels";
+import { NO_RUNS_TITLE, runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 
 const badge = (status: string) =>
   renderToStaticMarkup(<StatusBadge status={runStatusTone(status)}>{runStatusLabel(status)}</StatusBadge>);
@@ -44,8 +44,8 @@ describe("Порожній список запусків", () => {
     const html = renderToStaticMarkup(<RunsList runs={[]} summary={{}} managerOf={() => "me"} />);
     expect(NO_RUNS_TITLE).toBe("No runs yet. Launch a template to start one.");
     expect(html).toContain(NO_RUNS_TITLE);
-    expect(html).toContain(`href="/templates"`);
-    expect(html).toContain(`>${NO_RUNS_ACTION}<`);
+    // Очікування — дослівно з «Тоді» AC-DSYS-04 (link "Launch a template"), а не константа коду під тестом.
+    expect(html).toMatch(/<a [^>]*href="\/templates"[^>]*>Launch a template<\/a>/);
     expect(html).not.toContain("<table");
   });
 });
