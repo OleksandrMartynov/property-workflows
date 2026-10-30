@@ -5,10 +5,7 @@ export default function RunsLoading() {
   return (
     <div role="status" className="flex flex-col gap-6">
       <span className="sr-only">Loading runs…</span>
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-4 w-56" />
-      </div>
+      <Skeleton className="h-7 w-20" />
       <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
         <div className="h-8 border-b border-border bg-muted/50" />
         {Array.from({ length: 6 }, (_, i) => (
