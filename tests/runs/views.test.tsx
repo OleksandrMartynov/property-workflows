@@ -39,9 +39,10 @@ describe("Порожній список запусків", () => {
     expect(html).not.toContain("<table");
   });
 
-  it("звужений список без результатів — «No runs found.», без «Launch a template» і без таблиці", () => {
+  it("звужений список без результатів — «No runs found.» і «Clear filters», без «Launch a template» і без таблиці", () => {
     const html = renderToStaticMarkup(<RunsList runs={[]} summary={{}} managerOf={() => "me"} filtered />);
     expect(html).toContain("No runs found.");
+    expect(html).toMatch(/<a [^>]*href="\/runs"[^>]*>Clear filters<\/a>/);
     expect(html).not.toContain("Launch a template");
     expect(html).not.toContain("<table");
   });

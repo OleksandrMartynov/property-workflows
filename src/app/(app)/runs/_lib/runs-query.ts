@@ -27,7 +27,11 @@ export async function loadRunsPage({ supabase, viewer }: Session, { view, query,
   const { data, error, count } = await request.range(from, from + PAGE_SIZE - 1);
   if (error) {
     // Сторінка за межами результатів (?page=999): PostgREST з count=exact відповідає 416 PGRST103.
-    if (error.code === "PGRST103") redirect("/runs");
+    if (error.code === "PGRST103") {
+      // Сторінка за межами звуженого результату — перша сторінка з тими самими виглядом і пошуком.
+      const keep = new URLSearchParams({ ...(view === "all" ? {} : { view }), ...(query ? { q: query } : {}) }).toString();
+      redirect(keep ? `/runs?${keep}` : "/runs");
+    }
     throw error;
   }
   type RunRow = { id: string; case_name: string; template_name: string; status: string; run_manager_id: string; created_at: string };

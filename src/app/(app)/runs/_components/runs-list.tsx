@@ -43,7 +43,18 @@ export function RunsList({
   /** Список звужено виглядом чи пошуком: порожній результат — «No runs found.» без запуску шаблону. */
   filtered?: boolean;
 }) {
-  if (!runs.length && filtered) return <EmptyState title={NO_RUNS_FOUND} />;
+  if (!runs.length && filtered) {
+    return (
+      <EmptyState
+        title={NO_RUNS_FOUND}
+        action={
+          <Link href="/runs" className={buttonVariants({ variant: "outline" })}>
+            Clear filters
+          </Link>
+        }
+      />
+    );
+  }
   if (!runs.length) {
     return (
       <EmptyState
