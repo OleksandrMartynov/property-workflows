@@ -64,8 +64,9 @@ export function RunDetail({
                 <h2 id={`s-${section.key}`} className="text-heading">
                   {section.name}
                 </h2>
+                {/* Лічильник секції — тим самим записом, що й прогрес запуску (глосарій PM: «N of M done»). */}
                 <span className="tabular text-meta text-muted-foreground">
-                  {doneInSection}/{section.tasks.length}
+                  {formatProgress({ done: doneInSection, total: section.tasks.length })}
                 </span>
               </div>
               <Card>
@@ -74,7 +75,7 @@ export function RunDetail({
                     const isDone = task.status === "done";
                     const assignee = emailOf.get(task.assignee_id);
                     return (
-                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone}>
+                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone} mine={task.assignee_id === viewer.id}>
                         <span className="inline-flex items-center gap-1.5 text-label font-normal text-muted-foreground">
                           {assignee ? <Avatar email={assignee} /> : null}
                           {assignee ?? "—"}
@@ -99,7 +100,8 @@ export function RunDetail({
         })}
       </div>
 
-      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="lg:sticky lg:top-6">
+      {/* На вузькому екрані «Details» із прогресом — над задачами (та сама розмітка, лише порядок), на широкому — праворуч. */}
+      <CompletionGlow complete={run.status === "completed"} burst burstOrigin="left-8 top-[3.6rem]" className="order-first lg:sticky lg:top-6 lg:order-none">
       <Card className="flex flex-col gap-4 p-4">
         <h2 className="text-heading">Details</h2>
         <div className="flex flex-col gap-2.5">
