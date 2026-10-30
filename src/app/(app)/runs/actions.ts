@@ -43,6 +43,8 @@ export async function launchRun(formData: FormData) {
   if (error || !runId) redirect(back(dbErrorCode(error)));
 
   revalidatePath("/runs");
+  // Число моїх відкритих задач біля «Runs» рахує layout (app)/layout.tsx — оновлюємо і його.
+  revalidatePath("/", "layout");
   redirect(`/runs/${runId}?done=launched`);
 }
 
@@ -69,6 +71,8 @@ export async function completeTask(formData: FormData) {
   if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
 
   revalidatePath("/runs");
+  // Число моїх відкритих задач біля «Runs» рахує layout (app)/layout.tsx — оновлюємо і його.
+  revalidatePath("/", "layout");
   revalidatePath(`/runs/${runId}`);
   // Відгук для скрінрідера на сторінці запуску: «<назва задачі>: done» (FlashNotice, параметри знімаються з адреси).
   redirect(`/runs/${encodeURIComponent(runId)}?done=task&task=${encodeURIComponent(taskId)}`);
