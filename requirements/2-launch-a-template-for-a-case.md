@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-27T10:09:18Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/2 · оновлено 2026-10-30T07:15:09Z
 
 # Requirement: Launch a template for a case
 
@@ -14,7 +14,7 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 ### Основний сценарій
 
 1. A manager (or an administrator) picks a template and enters a case name, for example "Apartment 12, move-in".
-2. If needed, the run manager assigns another user (a manager or an administrator) as the assignee of individual tasks. For the remaining tasks the assignee is the run manager.
+2. If needed, the run manager assigns another user (a manager, an administrator or a vendor) as the assignee of individual tasks. For the remaining tasks the assignee is the run manager.
 3. A run is created with status "in progress": all tasks of the template have status "to do".
 4. Later changes to the template by an administrator do not change this run.
 
@@ -38,7 +38,7 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - Conditional logic: a task is always present in a run and cannot be hidden depending on answers (slice WS7).
 - Changing the assignee of an already launched task: assignees are set only at launch.
 - Deleting and cancelling a run.
-- Vendors as assignees and guest access (slice WS8): the assignee can only be a manager or an administrator.
+- Vendors as assignees: specified in "Requirement: Assign a vendor and let the vendor work on their own tasks", not in this requirement.
 - Task deadlines and reminders.
 - Creating and changing templates: specified in "Requirement: Edit a template with version control", not in this requirement.
 
@@ -70,3 +70,4 @@ The agency's managers run repairs, move-ins and other repeatable processes by ha
 - 2026-10-20 — AC-RUN-12 made concrete (the number of tasks in each section) — own PM decision (self-check against the checklist)
 - 2026-10-25 — assumption about templates updated (templates are created and saved as versions in the editor); assumption added that a change to a template means saving a new version and never affects a run already launched; out-of-scope item about creating templates replaced by a reference — own PM decision, after the new requirement https://github.com/solomchaak/property-workflows-spec/issues/20
 - 2026-10-27 — assumption added about templates that have never been saved as a version and about the template name of a run — own PM decision, after the questions https://github.com/solomchaak/property-workflows-spec/issues/21 and https://github.com/solomchaak/property-workflows-spec/issues/29
+- 2026-10-30 — scenario and out of scope updated: a vendor can also be an assignee, which is specified in "Requirement: Assign a vendor and let the vendor work on their own tasks" — own PM decision, after the new requirement

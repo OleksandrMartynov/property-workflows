@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-10-27T10:09:20Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-10-30T07:15:11Z
 
 # Requirement: Complete tasks and track run progress
 
@@ -8,7 +8,7 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 
 ### Користувачі й ролі
 
-- Assignee (a manager or an administrator a task is assigned to) — marks their own tasks as done, sees the runs where they have tasks.
+- Assignee (a manager, an administrator or a vendor a task is assigned to) — marks their own tasks as done, sees the runs where they have tasks.
 - Run manager (a manager or an administrator who created the run) — sees the progress and the status of every task, and can mark any task of their run as done.
 - Administrator (`admin`) — sees all runs and can mark any task in any run as done.
 - Any other manager who is neither the assignee nor the run manager does not see this run and cannot change it.
@@ -63,7 +63,7 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 - All users and runs are fictional (`*@example.test`); this requirement has no time rules, and the time in the application is Kyiv time.
 - The run manager is the assignee of all tasks that are not assigned to someone else (see "Requirement: Launch a template for a case").
 - An administrator can mark any task in any run as done, regardless of the assignee and the run manager.
-- A user who is the assignee of at least one task of a run sees the statuses of all tasks of that run, not only their own.
+- A user who is the assignee of at least one task of a run sees the statuses of all tasks of that run, not only their own; the exception is a vendor, who sees only their own tasks (see "Requirement: Assign a vendor and let the vendor work on their own tasks").
 - The template name shown for a run is the name of the template version the run was launched from (see "Requirement: Edit a template with version control").
 
 ### Відкриті питання
@@ -77,3 +77,4 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 - 2026-10-20 — AC-TASK-10 to AC-TASK-18 added (run not found, emails next to tasks, tasks grouped by section, completed runs and progress in the list, template name and ordering in the list, required/optional marker, cancel at the confirmation of the last required task, progress for an assignee, the mark-as-done option only on a user's own tasks); assumptions added on the confirmation for the last required task, the administrator's list and the interface language; the run page shows only the status of a task — https://github.com/solomchaak/property-workflows-spec/issues/4, https://github.com/solomchaak/property-workflows-spec/issues/5, https://github.com/solomchaak/property-workflows-spec/issues/7, https://github.com/solomchaak/property-workflows-spec/issues/10, https://github.com/solomchaak/property-workflows-spec/issues/11, https://github.com/solomchaak/property-workflows-spec/issues/12, https://github.com/solomchaak/property-workflows-spec/issues/13, https://github.com/solomchaak/property-workflows-spec/issues/15, https://github.com/solomchaak/property-workflows-spec/issues/17, https://github.com/solomchaak/property-workflows-spec/issues/18
 - 2026-10-20 — AC-TASK-01, AC-TASK-02 and AC-TASK-07: the task is not the last required task of the run, because the confirmation is asked only for the last required task — own PM decision (self-check against the checklist)
 - 2026-10-27 — assumption added: the template name shown for a run is the name of the version it was launched from — https://github.com/solomchaak/property-workflows-spec/issues/29
+- 2026-10-30 — assumption added: a vendor sees only their own tasks of a run; the assignee may also be a vendor — own PM decision, after the new requirement
