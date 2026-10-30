@@ -20,4 +20,11 @@ describe("Сторінки без входу (proxy)", () => {
     expect(isPublicPath("/auth")).toBe(false);
     expect(isPublicPath("/auth/settings")).toBe(false);
   });
+
+  it("D0: /api/health публічний (перевірка проду без входу), решта /api — ні", () => {
+    expect(isPublicPath("/api/health")).toBe(true);
+    expect(isPublicPath("/api/healthz")).toBe(false);
+    expect(isPublicPath("/api")).toBe(false);
+    expect(isPublicPath("/api/runs")).toBe(false);
+  });
 });
