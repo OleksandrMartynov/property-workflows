@@ -27,13 +27,10 @@ vi.mock("react", async (importOriginal) => {
     },
   };
 });
-vi.mock("@/app/(app)/templates/[id]/edit/actions", () => ({
-  moveSection: () => {},
-  moveTask: () => {},
-  moveTaskToSection: () => {},
-  removeSection: () => {},
-  removeTask: () => {},
-}));
+// Справжній модуль дій: компонент лише передає дії у form action, тест їх не викликає. Залежності дій від Next.js —
+// заглушки фреймворку, а не власного коду.
+vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/navigation", () => ({ redirect: () => {}, notFound: () => {} }));
 
 const { ItemActions } = await import("@/app/(app)/templates/[id]/edit/_components/item-actions");
 const { ConfirmDialog } = await import("@/components/ui/dialog");
