@@ -10,7 +10,7 @@ export const MESSAGES = {
   // AC-TASK-03
   NOT_ALLOWED: "Only the task's assignee, the run manager, or an administrator can mark a task as done",
   LAUNCH_NOT_ALLOWED: "Only a manager or an administrator can launch a template",
-  INVALID_ASSIGNEE: "An assignee must be a manager or an administrator",
+  INVALID_ASSIGNEE: "An assignee must be a manager, an administrator or a vendor",
   TEMPLATE_NOT_FOUND: "Template not found",
   TEMPLATE_EMPTY: "The template has no tasks",
   // Зріз 2 (AC-EDITOR-04, AC-EDITOR-07, AC-DSYS-02): тексти PM дослівно.

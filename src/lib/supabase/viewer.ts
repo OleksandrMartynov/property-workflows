@@ -5,14 +5,15 @@ import { redirect } from "next/navigation";
 import { NEXT_PATH_HEADER, loginPath } from "@/lib/auth/safe-next";
 import { createClient } from "./server";
 
-export type AppRole = "manager" | "admin";
+export type AppRole = "manager" | "admin" | "vendor";
 export interface Viewer {
   id: string;
   role: AppRole;
   email: string | null;
 }
 
-const ROLES: readonly AppRole[] = ["manager", "admin"];
+// Ролі застосунку (requirements/product.md): vendor — підрядник із зрізу 3; requireViewer пускає кожну з них.
+const ROLES: readonly AppRole[] = ["manager", "admin", "vendor"];
 const isRole = (value: unknown): value is AppRole => ROLES.includes(value as AppRole);
 
 /** Адреса входу з поверненням на поточну сторінку (шлях передає proxy; safeNext у loginPath відсіює чуже). */
