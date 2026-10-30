@@ -5,11 +5,11 @@
 
 ## 1. Роль vendor у базі
 
-- [ ] 1.1 Міграція `…_vendor_role.sql`: `profiles_role_check` з `vendor`; `run_tasks_select_visible` — підрядник
+- [x] 1.1 Міграція `…_vendor_role.sql`: `profiles_role_check` з `vendor`; `run_tasks_select_visible` — підрядник
   бачить лише свої задачі; `launch_run` приймає підрядника виконавцем; `list_assignable_users` повертає підрядників
   менеджеру й адміністратору; `complete_task` допускає підрядника до своєї задачі; `run_last_required_task`.
-- [ ] 1.2 `AppRole` з `vendor`, `requireViewer()` пускає підрядника; `INVALID_ASSIGNEE` з підрядником.
-- [ ] 1.3 Тести бази з AC ID: призначення, вибір виконавця, лише свої задачі, позначка своєї й відмова для чужої,
+- [x] 1.2 `AppRole` з `vendor`, `requireViewer()` пускає підрядника; `INVALID_ASSIGNEE` з підрядником.
+- [x] 1.3 Тести бази з AC ID: призначення, вибір виконавця, лише свої задачі, позначка своєї й відмова для чужої,
   чужий запуск, прямий запуск шаблону; кожна відмова перевіряє і відмову, і незмінні дані.
   Done when: AC-VENDOR-01, AC-VENDOR-02, AC-VENDOR-07, AC-VENDOR-09.
 

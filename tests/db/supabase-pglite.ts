@@ -12,7 +12,7 @@ const read = (path: string) => readFileSync(new URL(path, root), "utf8");
 interface DemoUser {
   email: string;
   full_name: string;
-  role: "manager" | "admin";
+  role: "manager" | "admin" | "vendor";
 }
 
 /** Емуляція того, що в Supabase вже є до наших міграцій: ролі, схема auth, auth.uid(). */
