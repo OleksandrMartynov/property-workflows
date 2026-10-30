@@ -96,6 +96,13 @@ function AccountMenu({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Компактне меню (мобільна смуга) рендериться в document.body: фокус — одразу на першу дію у вікні, щоб Tab не
+  // проходив через сторінку.
+  useEffect(() => {
+    if (!open || !compact) return;
+    document.getElementById(`${id}-account`)?.querySelector<HTMLElement>("button, [href], input")?.focus();
+  }, [open, compact, id]);
+
   return (
     <>
       {compact ? (
