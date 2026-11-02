@@ -40,7 +40,7 @@ const git = (...a) => {
 async function deployedSha(base) {
   if (!base) return null;
   try {
-    const res = await fetch(`${base}/api/health`, { redirect: "manual" });
+    const res = await fetch(`${base}/api/health`, { redirect: "manual", signal: AbortSignal.timeout(10_000) });
     if (!res.headers.get("content-type")?.includes("json")) return null;
     return (await res.json()).sha ?? null;
   } catch {
@@ -96,4 +96,9 @@ if (!cases.length) {
   const real = rows.filter((r) => !r.negativeControl);
   if (real.some((r) => r.verdict === "FAIL")) process.exitCode = 1;
   if (real.some((r) => r.verdict === "NEEDS-HUMAN")) console.log("Є NEEDS-HUMAN: рішення — за PM (див. звіт).");
+  // Прибирання (teardown) не має анотації ac і в рядки звіту не потрапляє: його збій видно лише з коду Playwright.
+  if (!negativeControls && pw.status !== 0 && !real.some((r) => r.verdict === "FAIL")) {
+    console.error("Playwright завершився з помилкою поза AC (прибирання uat-*@example.test?) — див. вивід вище.");
+    process.exitCode = 1;
+  }
 }

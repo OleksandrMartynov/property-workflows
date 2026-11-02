@@ -26,7 +26,8 @@ export function pack(resultsPath = RESULTS) {
       const ann = (type) => test.annotations.find((a) => a.type === type)?.description;
       const acId = ann("ac");
       if (!acId) continue; // setup, прибирання — не AC
-      const result = test.results.at(-1);
+      // Тест не запускався (впав setup) — результатів немає: у звіт іде як «skipped» → R1, FAIL, а не TypeError.
+      const result = test.results.at(-1) ?? { status: "skipped", attachments: [], steps: [] };
       const caseId = ann("case") ?? acId;
       const dir = path.join(WORK, caseId);
       const agentDir = path.join(dir, "agent");
@@ -78,7 +79,8 @@ export function pack(resultsPath = RESULTS) {
         caseId,
         acId,
         acSource: ac.source,
-        negativeControl: test.tags?.includes("@negative-control") || caseId.startsWith("NC-"),
+        // Playwright JSON: теги — у spec.tags і без «@».
+        negativeControl: [...(spec.tags ?? []), ...(test.tags ?? [])].some((t) => t.replace(/^@/, "") === "negative-control") || caseId.startsWith("NC-"),
         title: spec.title,
         project: test.projectName,
         status: result.status, // passed | failed | timedOut | interrupted | skipped

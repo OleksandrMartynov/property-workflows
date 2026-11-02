@@ -24,6 +24,9 @@ const sec = (ms) => `${(ms / 1000).toFixed(1)} с`;
 const usd = (x) => `$${x.toFixed(4)}`;
 const md = (s = "") => String(s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 
+// Текст агента — дані: «<a>», «</notes>» тощо markdown-рендер сховав би як HTML. У manifest.json він лишається сирим.
+const agentText = (text) => String(text ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 export function report(rows = combine(), { out } = {}) {
   const runFile = path.join(WORK, "run.json");
   const run = existsSync(runFile) ? readJson(runFile) : {};
@@ -119,10 +122,10 @@ export function report(rows = combine(), { out } = {}) {
       `**Кроки:** ${a.steps.map((s) => `${s.ok ? "✔" : "✘"} ${s.title}`).join(" → ")}`,
       "",
       ...(a.error ? ["**Перевірка впала:**", "", "```", a.error, "```", ""] : []),
-      r.agent ? `**Агент (${r.agentModel}, ${r.agent.verdict}):** ${r.agent.notes}` : "**Агент:** вердикту немає",
+      r.agent ? `**Агент (${r.agentModel}, ${r.agent.verdict}):** ${agentText(r.agent.notes)}` : "**Агент:** вердикту немає",
       "",
       ...(r.escalated ? [`Haiku сказав ${r.agentVerdicts[HAIKU] ?? "—"}, тож розбір повторив Sonnet; рішення агента — за Sonnet.`, ""] : []),
-      ...(r.agent?.defects?.length ? ["**Агент бачить вади:**", ...r.agent.defects.map((d) => `- ${d}`), ""] : []),
+      ...(r.agent?.defects?.length ? ["**Агент бачить вади:**", ...r.agent.defects.map((d) => `- ${agentText(d)}`), ""] : []),
       ...(r.quotes.length
         ? ["**Цитати агента, звірені зі сторінкою (aria):**", ...r.quotes.map((q) => `- «${q.quote}» — ${q.onPage ? "є на сторінці" : "НЕМАЄ на сторінці"}`), ""]
         : []),
