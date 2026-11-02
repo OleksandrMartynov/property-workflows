@@ -102,16 +102,17 @@
 
 ## D. Eval рецензента
 
-- PR з вадами (не злитий): <!-- …/pull/N -->
-- Ключ і таблиця: <!-- …/pull/N#issuecomment-M -->
+- PR з вадами (не злитий, закритий): https://github.com/OleksandrMartynov/property-workflows/pull/62; копія для чистого повторного прогону CodeRabbit: https://github.com/OleksandrMartynov/property-workflows/pull/66
+- Ключ і таблиця: https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572058630; вивід `/code-review high` (прогін 1): https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572052602
+- Увесь обов'язковий CI на #62 зелений: кожна вада пройшла ворота. `/code-review high` запускав окремий агент без доступу до ключа.
 
 | # | Вада (ключ) | CodeRabbit | `/code-review high` |
 |---|---|---|---|
-| 1 | <!-- категорія і файл:рядок --> | <!-- знайшов / пропустив + цитата --> | <!-- знайшов / пропустив + цитата --> |
-| 2 | … | … | … |
-| 3 | … | … | … |
-| П | приманка: <!-- що --> | <!-- хибна тривога? цитата --> | <!-- хибна тривога? цитата --> |
+| 1 | права в даних — `supabase/migrations/20261102074158_reassign_task.sql:31`: умова прав скопійована з `complete_task` (`or v_task.assignee_id = v_uid`), підрядник-виконавець передає свою задачу будь-кому | знайшов, Major · CWE-863: «виконавець задачі може сам її перепризначити (обхід авторизації)» | знайшов, rank 1: «lets the task's current assignee reassign it» |
+| 2 | логіка — та сама функція, `:35`: немає перевірки статусу задачі `to_do`, змінюється виконавець виконаної задачі | знайшов, але **Minor**: «Функція бази не перевіряє статус задачі `to_do`» | знайшов, rank 2: «never checks the task's own status, only the run status» |
+| 3 | тести — `tests/db/reassign-db.test.ts:57`: тест «підрядник не передає свою задачу» бере задачу менеджера, а не підрядника — зелений і маскує ваду 1 | знайшов, Minor: «Тест підрядника перевіряє не той випадок» | знайшов, rank 4: «uses TASK_1 (owned by manager A), so it passes for the wrong reason» |
+| П | приманка — `src/lib/runs/access.ts`: `canCompleteTask` через `isOpen` / `managesRun`, поведінка та сама | хибної тривоги немає | хибної тривоги немає |
 
-- Інші знахідки: <!-- слушна / шум, по рядку на кожну -->
-- Правило, що закриває пропуск: <!-- рядок в AGENTS.md чи path instruction, …/commit/<sha> -->
-- Повторний прогін: <!-- хто, результат, цитата, …/pull/N#issuecomment-M -->
+- Інші знахідки: обидва — нова поведінка без вимоги PM і AC ID (слушна); `/code-review` — некерований `Select` після відмови, «Reassign» без зміни вибору, `Select` у кожному рядку, `vendor` у першій перевірці ролі (слушні дрібниці), зайві `revalidatePath` (шум); CodeRabbit у повторному `full review` — «`list_assignable_users` повертає лише manager і admin» (шум: `20261030125515_vendor_role.sql:81` повертає й `vendor`). CodeRabbit на #66 — «Відхиляйте призначення тому самому виконавцю» (Minor, слушна дрібниця; те саме, що `/code-review` про «Reassign» без зміни вибору).
+- Правило, що закриває пропуск: розділ «База даних» `AGENTS.md` — функція бази перевіряє статус рядка перед `UPDATE`; «`UPDATE` рядка без перевірки його статусу — у рецензії рівень «must fix» (Major, цілісність даних)» — https://github.com/OleksandrMartynov/property-workflows/pull/65 (коміт 3191d27)
+- Повторний прогін: https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572536347 — CodeRabbit на чистій копії #66: вада 2 **Minor → Major** з цитатою правила («Based on learnings: «UPDATE рядка без перевірки його статусу — у рецензії рівень «must fix» (Major, цілісність даних)»»); `/code-review high`: вада 2 — «rank 2, high … data integrity». Вади 1, 3 і приманка — без змін.
