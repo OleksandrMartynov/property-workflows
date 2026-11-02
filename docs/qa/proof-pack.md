@@ -10,7 +10,7 @@
 
 - Прод-URL: https://property-workflows-rho.vercel.app
 - Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30
-- `/api/health` на момент UAT: <!-- sha і db, напр. «sha 1a2b3c4, db ok, 01.11.2026» -->
+- `/api/health` на момент UAT: sha `3191d27`, db ok, 02.11.2026
 
 ## 3 AC
 
@@ -22,9 +22,9 @@
 
 ## A. Ворота
 
-- PR воріт: <!-- …/pull/N -->
-- Зелений `quality` на `main`: <!-- …/actions/runs/N -->
-- Обов'язкові перевірки в `solo-main` з <!-- дата -->: <!-- назви jobs -->
+- PR воріт: https://github.com/OleksandrMartynov/property-workflows/pull/48
+- Зелений `quality` на `main`: https://github.com/OleksandrMartynov/property-workflows/actions/runs/41411157485
+- Обов'язкові перевірки в `solo-main`: «Ворота: fallow audit», «Покриття: доменна підлога» — додає власник репо в налаштуваннях ruleset після зеленого прогону вище («Порада: вразливі залежності» — ніколи)
 
 Розбір першого повного прогону `fallow` (той самий — в описі PR воріт):
 
@@ -48,9 +48,9 @@
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden`; дані: політика `template_versions_select` (`supabase/migrations/20261025151836_template_versions.sql`) | база (PGlite) + unit сторінки + e2e (заплановано, розділ C) | відмову даних тримає RLS — її доводить лише тест на справжньому Postgres (мок `rpc` нічого не доводить); сторінку — рендер справжньої сторінки з заглушкою клієнта; видимий «Тоді» — e2e на проді | `tests/db/template-versions-db.test.ts:459`, `tests/templates/forbidden.test.tsx:48`, `:71` |
-| AC-EDITOR-09 | proxy: `isPublicPath` (`src/lib/supabase/public-paths.ts`) → `/login`; дані: RLS для `anon` | unit + база (PGlite) + e2e (заплановано, розділ C) | правило «що публічне» — чиста функція (unit і Stryker); що відвідувач нічого не читає — RLS (PGlite); сторінку входу видно лише в браузері — e2e | `tests/auth/public-paths.test.ts:5`, `:24`, `tests/db/template-versions-db.test.ts:501` |
-| AC-DSYS-04 | сторінка: `RunsList` (`src/app/(app)/runs/_components/runs-list.tsx`), тексти — `src/lib/runs/labels.ts` | unit компонента + e2e (заплановано, розділ C) | порожній стан — гілка компонента без даних: рендер у Vitest; що в менеджера справді немає запусків і таблиці не видно — e2e на проді | `tests/runs/statuses.test.tsx:43` |
+| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden`; дані: політика `template_versions_select` (`supabase/migrations/20261025151836_template_versions.sql`) | база (PGlite) + unit сторінки + e2e (UAT на проді — PASS, розділ C) | відмову даних тримає RLS — її доводить лише тест на справжньому Postgres (мок `rpc` нічого не доводить); сторінку — рендер справжньої сторінки з заглушкою клієнта; видимий «Тоді» — e2e на проді | `tests/db/template-versions-db.test.ts:459`, `tests/templates/forbidden.test.tsx:48`, `:71` |
+| AC-EDITOR-09 | proxy: `isPublicPath` (`src/lib/supabase/public-paths.ts`) → `/login`; дані: RLS для `anon` | unit + база (PGlite) + e2e (UAT на проді — PASS, розділ C) | правило «що публічне» — чиста функція (unit і Stryker); що відвідувач нічого не читає — RLS (PGlite); сторінку входу видно лише в браузері — e2e | `tests/auth/public-paths.test.ts:5`, `:24`, `tests/db/template-versions-db.test.ts:501` |
+| AC-DSYS-04 | сторінка: `RunsList` (`src/app/(app)/runs/_components/runs-list.tsx`), тексти — `src/lib/runs/labels.ts` | unit компонента + e2e (UAT на проді — PASS, розділ C) | порожній стан — гілка компонента без даних: рендер у Vitest; що в менеджера справді немає запусків і таблиці не видно — e2e на проді | `tests/runs/statuses.test.tsx:43` |
 
 ### Покриття
 
@@ -62,8 +62,8 @@
 | `src/app/_components/forbidden.tsx` (AC-EDITOR-07) | 100 % | 100 % | — |
 | `src/app/(app)/templates/[id]/versions/page.tsx` (AC-EDITOR-07) | 100 % | 54,5 % | гілки адміністратора; гілку менеджера доводить `tests/templates/forbidden.test.tsx:71` |
 | `src/app/(app)/runs/_components/runs-list.tsx` (AC-DSYS-04) | 100 % | 100 % | — |
-| `src/app/(app)/runs/page.tsx` (AC-DSYS-04) | 0 % | 0 % | заплановано e2e на проді (`tests/e2e/runs-empty.spec.ts`, розділ C) — прогону ще немає, доказом не рахуємо до звіту UAT; зараз — рендер `RunsList` (`tests/runs/statuses.test.tsx:43`) |
-| `src/lib/supabase/proxy.ts` (AC-EDITOR-09) | 55,6 % | 100 % | заплановано e2e на проді (`tests/e2e/editor-visitor.spec.ts`, розділ C) — до звіту UAT не доказ; зараз — `isPublicPath` (unit + Stryker) і RLS для `anon` (PGlite) |
+| `src/app/(app)/runs/page.tsx` (AC-DSYS-04) | 0 % | 0 % | e2e на проді (`tests/e2e/runs-empty.spec.ts`) — UAT 02.11 PASS, `docs/qa/uat/2026-11-02/report.md` (розділ C); також рендер `RunsList` (`tests/runs/statuses.test.tsx:43`) |
+| `src/lib/supabase/proxy.ts` (AC-EDITOR-09) | 55,6 % | 100 % | e2e на проді (`tests/e2e/editor-visitor.spec.ts`) — UAT 02.11 PASS, `docs/qa/uat/2026-11-02/report.md` (розділ C); також `isPublicPath` (unit + Stryker) і RLS для `anon` (PGlite) |
 
 ### Доказ мутацією
 
@@ -86,13 +86,15 @@
 
 | AC | Специфікація | Тест (твердження) | Агент | Вердикт | Кадр |
 |---|---|---|---|---|---|
-| AC-…-NN | <!-- …/blob/<sha>/tests/e2e/….spec.ts --> | <!-- passed / failed --> | <!-- Haiku: PASS / FAIL / NEEDS-HUMAN (+ Sonnet, якщо була суперечка) --> | <!-- PASS / FAIL / NEEDS-HUMAN і правило (R1–R6) --> | <!-- …/blob/<sha>/docs/qa/uat/<дата>/frames/AC-…-then-1.png --> |
+| AC-EDITOR-07 | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/tests/e2e/template-versions-forbidden.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/docs/qa/uat/2026-11-02/frames/AC-EDITOR-07-then-1.png |
+| AC-EDITOR-09 | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/tests/e2e/editor-visitor.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/docs/qa/uat/2026-11-02/frames/AC-EDITOR-09-then-1.png |
+| AC-DSYS-04 | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/tests/e2e/runs-empty.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/docs/qa/uat/2026-11-02/frames/AC-DSYS-04-then-1.png |
 
-- Звіт: <!-- …/blob/<sha>/docs/qa/uat/<YYYY-MM-DD>/report.md -->
-- Відео: <!-- вкладення в описі PR …/pull/N -->
-- Рецензент: <!-- моделі зі звіту (claude-haiku-5-5; суперечки — claude-sonnet-5-5) і вартість прогону -->
-- Негативний контроль: <!-- NC-… (npm run uat:nc): що навмисно хибне, вердикт (FAIL / NEEDS-HUMAN), …/pull/N -->
-- Дані: <!-- «лише читання» або «@writes: uat-<запуск>@example.test, рядок «Прибирання» зі звіту» -->
+- Звіт: https://github.com/OleksandrMartynov/property-workflows/blob/4821e55d8ed47e8abc8ff37c6ffb546f234c4190/docs/qa/uat/2026-11-02/report.md (кадри — `frames/`, `manifest.json`)
+- Відео: вкладення в описі PR https://github.com/OleksandrMartynov/property-workflows/pull/63
+- Рецензент: `claude-haiku-5-5`, суперечки — `claude-sonnet-5-5`; розбір 3 AC — $0.0061 (ціни API, за підпискою — у межах плану)
+- Негативний контроль (`npm run uat:nc`, рядки звіту — в описі https://github.com/OleksandrMartynov/property-workflows/pull/63): NC-1 (AC-DSYS-04, у тесті очікується інший текст порожнього стану) → **FAIL** (R1: перевірка впала); NC-2 (AC-DSYS-04, «Тоді» у вимозі змінено, тест і застосунок — ні) → тест зелений, але Haiku і Sonnet — FAIL → **NEEDS-HUMAN** (R3). Жодного PASS: UAT уміє падати, і агент ловить розбіжність, яку пропустив тест
+- Дані: лише читання (жодного `@writes`); прибирання — «синтетичних uat-*@example.test видалено 0, лишилось 0»
 
 ### Приймання PM
 
