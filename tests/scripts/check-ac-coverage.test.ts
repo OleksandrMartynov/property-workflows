@@ -1,10 +1,10 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { fixtures, runScript } from "./run-script";
+import { fixtures, runScript, SCRIPT_TEST_TIMEOUT } from "./run-script";
 
 const run = (name: string) => runScript("check-ac-coverage.mjs", path.join(fixtures, "ac-coverage", name));
 
-describe("scripts/check-ac-coverage.mjs", () => {
+describe("scripts/check-ac-coverage.mjs", { timeout: SCRIPT_TEST_TIMEOUT }, () => {
   it("passes when every implemented row has a test and REMOVED/commented rows are ignored", () => {
     const { code, out } = run("ok");
     expect(out).toContain("AC у специфікаціях: 2");

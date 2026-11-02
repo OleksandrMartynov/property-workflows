@@ -1,11 +1,11 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { fixtures, runScript } from "./run-script";
+import { fixtures, runScript, SCRIPT_TEST_TIMEOUT } from "./run-script";
 
 const dir = (name: string) => path.join(fixtures, "check-spec", name);
 const run = (name: string, env?: Record<string, string>) => runScript("check-spec.mjs", dir(name), env);
 
-describe("scripts/check-spec.mjs", () => {
+describe("scripts/check-spec.mjs", { timeout: SCRIPT_TEST_TIMEOUT }, () => {
   it("passes valid specs, ignores archived changes and allows MODIFIED/RENAMED to reuse canonical IDs", () => {
     const { code, out } = run("valid");
     expect(out).toContain("OK");
