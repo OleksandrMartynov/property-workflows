@@ -3,15 +3,21 @@ import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { fixtures, runScript } from "./run-script";
+import { fixtures, runScript, SCRIPT_TEST_TIMEOUT } from "./run-script";
 
 // Кожен випадок — tests/fixtures/migration-order/<випадок>/{main,pr}. Тест збирає тимчасовий git-репозиторій:
 // коміт «main» → ref origin/main (як після fetch у CI) → гілка PR із файлами «pr» у робочій теці.
+// Без змінних GIT_* (GIT_DIR, GIT_INDEX_FILE… у git-хуку): git і скрипт працюють лише з тимчасовим репозиторієм.
+const noGitEnv = Object.fromEntries(
+  Object.keys(process.env)
+    .filter((key) => key.toUpperCase().startsWith("GIT_"))
+    .map((key) => [key, undefined]),
+);
 const git = (cwd: string, ...args: string[]) =>
   execFileSync(
     "git",
     ["-c", "user.name=test", "-c", "user.email=test@example.test", "-c", "commit.gpgsign=false", ...args],
-    { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...noGitEnv } },
   );
 
 const temps: string[] = [];
@@ -45,13 +51,14 @@ function repo(name: string) {
 }
 
 const run = (name: string, env: Record<string, string> = {}) =>
-  runScript("check-migration-order.mjs", repo(name), { MIGRATION_BASE: "", ...env });
+  runScript("check-migration-order.mjs", repo(name), { ...noGitEnv, MIGRATION_BASE: "", ...env });
 
 afterAll(() => {
   for (const dir of temps) rmSync(dir, { recursive: true, force: true });
 });
 
-describe("scripts/check-migration-order.mjs", () => {
+// Кожен випадок — ~10 процесів git на тестовий репозиторій і ще кілька в самому скрипті.
+describe("scripts/check-migration-order.mjs", { timeout: SCRIPT_TEST_TIMEOUT }, () => {
   it("passes when the PR migration is newer than the newest on main", () => {
     const { code, out } = run("newer");
     expect(code).toBe(0);
