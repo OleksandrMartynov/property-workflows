@@ -47,11 +47,12 @@ function hasWebGL2() {
   return webgl2;
 }
 
+// На сервері невідомо (null): картка лишається прихованою й не блимає перед появою сцени.
 function useWebGL() {
-  return useSyncExternalStore(
+  return useSyncExternalStore<boolean | null>(
     () => () => {},
     hasWebGL2,
-    () => false,
+    () => null,
   );
 }
 
@@ -278,8 +279,8 @@ function StoryCard({ playing, reduced, onRestart }: { playing: boolean; reduced:
 }
 
 /**
- * «Ехо» даху з логотипу: контури даху розходяться хвилями з-за картки вгору й згасають. Стоїть позаду головного
- * образу (креслення чи картки), приглушене й з радіальною маскою — краї тануть, а не впираються в заголовок.
+ * «Ехо» даху з логотипу: контури даху розходяться хвилями від нижнього краю панелі вгору й згасають. Стоїть у вільному
+ * просторі праворуч від головного образу, у власній колонці сітки, тож не перетинає ні картку, ні заголовок.
  */
 function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean }) {
   const copies = reduced ? [0] : [0, 1, 2, 3, 4];
@@ -288,8 +289,8 @@ function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean })
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
-      className="pointer-events-none absolute bottom-[14%] left-1/2 -z-10 w-[84%] text-stage-foreground/50 transition-transform duration-700 ease-standard [mask-image:linear-gradient(to_top,transparent,black_35%,black_70%,transparent)]"
-      style={{ transform: "translateX(-50%) translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px))" }}
+      className="pointer-events-none absolute bottom-0 right-[-14%] w-[128%] max-w-[38rem] overflow-visible text-stage-foreground transition-transform duration-700 ease-standard"
+      style={{ transform: "translate(calc(var(--px, 0) * -14px), calc(8.33% + var(--py, 0) * -8px))" }}
     >
       {copies.map((i) => (
         <g
@@ -308,44 +309,47 @@ function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean })
 const reveal = (i: number, delay = 150) => ({ "--i": i, "--reveal-delay": `${delay}ms` }) as CSSProperties;
 
 /**
- * Головний образ hero «шаблон стає запуском»: 3D-креслення складається в картку й передає слово живій картці з тими
- * самими рядками (вона клікабельна); по завершенні чи «Start over» — знову креслення. Без WebGL і за reduced motion —
- * лише жива картка.
+ * Головний образ hero «шаблон стає запуском»: 3D-креслення складається точно в контур живої картки й передає їй слово
+ * плавним переходом (вона клікабельна); по завершенні чи «Start over» — знову креслення. Обидва шари весь час змонтовані:
+ * картка тримає місце в макеті, а сцена не створюється заново. Без WebGL і за reduced motion — лише жива картка.
  */
 function HeroVisual({ playing, reduced }: { playing: boolean; reduced: boolean }) {
   const webgl = useWebGL();
   const [stage, setStage] = useState<"scene" | "card">("scene");
-  const [round, setRound] = useState(0);
-  const toCard = useCallback(() => setStage("card"), []);
+  const [replay, setReplay] = useState(0);
+  const [take, setTake] = useState(0);
+  const toCard = useCallback(() => {
+    setTake((t) => t + 1);
+    setStage("card");
+  }, []);
   const toScene = useCallback(() => {
-    setRound((r) => r + 1);
+    setReplay((r) => r + 1);
     setStage("scene");
   }, []);
 
-  if (!webgl || reduced) {
+  if (webgl === false || reduced) {
     return (
-      <div className="relative isolate">
-        <EchoRoofs playing={playing} reduced={reduced} />
-        <div className="animate-ui-float">
-          <StoryCard playing={playing} reduced={reduced} />
-        </div>
+      <div className="animate-ui-float">
+        <StoryCard playing={playing} reduced={reduced} />
       </div>
     );
   }
+  const showCard = stage === "card";
   return (
-    <div className="relative isolate -mx-10 grid aspect-[4/3.3] w-[calc(100%+5rem)] place-items-center">
-      <EchoRoofs playing={playing} reduced={reduced} />
+    <div className="relative">
+      {/* Центр полотна — центр картки: під нею ще рядок «Start over» (24 px + проміжок 12 px). Висота — та, за якої 4 одиниці сцени = 26rem. */}
       <div
         aria-hidden="true"
-        className={cn("absolute inset-0 transition-[opacity,filter] duration-500 ease-standard", stage === "card" && "opacity-0 blur-[2px]")}
+        className={cn(
+          "pointer-events-none absolute left-1/2 top-[calc(50%-18px)] h-[27.753rem] w-[31rem] -translate-x-1/2 -translate-y-1/2 transition-opacity ease-standard [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]",
+          showCard ? "opacity-0 delay-300 duration-300" : "opacity-100 duration-500",
+        )}
       >
-        <BlueprintScene key={round} playing={playing && stage === "scene"} reduced={reduced} onIntroEnd={toCard} />
+        {webgl ? <BlueprintScene playing={playing && !showCard} replay={replay} onIntroEnd={toCard} /> : null}
       </div>
-      {stage === "card" ? (
-        <div className="animate-ui-fade relative w-full max-w-[26rem]">
-          <StoryCard playing={playing} reduced={reduced} onRestart={toScene} />
-        </div>
-      ) : null}
+      <div inert={!showCard} className={cn("relative transition-opacity duration-500 ease-standard", showCard ? "opacity-100" : "opacity-0")}>
+        <StoryCard key={take} playing={playing && showCard} reduced={reduced} onRestart={toScene} />
+      </div>
     </div>
   );
 }
@@ -393,8 +397,8 @@ export function HeroStage() {
         <rect width="100%" height="100%" filter={`url(#${grainId})`} />
       </svg>
 
-      <div className="relative flex min-h-dvh flex-col justify-center gap-8 px-12 py-14 xl:px-20">
-        <div className="flex flex-col gap-5">
+      <div className="relative grid min-h-dvh grid-cols-[26rem_minmax(0,1fr)] grid-rows-[1fr_auto_auto_1fr] gap-x-10 px-12 py-14 xl:px-16">
+        <div className="col-span-2 row-start-2 mb-8 flex flex-col gap-5">
           <p style={reveal(0)} className="animate-ui-reveal flex items-center gap-2.5 font-mono text-eyebrow uppercase text-stage-muted">
             <span className="relative flex size-1.5">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-status-done-mark opacity-60 motion-reduce:animate-none" />
@@ -436,8 +440,13 @@ export function HeroStage() {
           </ul>
         </div>
 
-        <div className="w-full max-w-md transition-transform duration-500 ease-standard" style={{ transform: "translate(calc(var(--px, 0) * 8px), calc(var(--py, 0) * 6px))" }}>
+        <div className="col-start-1 row-start-3 transition-transform duration-500 ease-standard" style={{ transform: "translate(calc(var(--px, 0) * 6px), calc(var(--py, 0) * 4px))" }}>
           <HeroVisual playing={playing} reduced={reduced} />
+        </div>
+
+        {/* Вільний простір праворуч від картки й під заголовком — місце «ехо»: воно нічого не перекриває; ліворуч і згори тане. */}
+        <div className="relative col-start-2 row-start-3 row-end-5 -mb-14 -mr-12 hidden overflow-clip [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_26%),linear-gradient(to_bottom,transparent,black_18%)] xl:-mr-16 xl:block">
+          <EchoRoofs playing={playing} reduced={reduced} />
         </div>
       </div>
 

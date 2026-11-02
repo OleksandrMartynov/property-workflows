@@ -1,18 +1,16 @@
 "use client";
 
 // 3D-сцена hero сторінки входу — «креслення, що оживає»: аркуш-креслення шаблону з сіткою промальовується лініями,
-// піднімається й складається у скляну картку запуску «Flat 7, handover»; з onIntroEnd у цей момент (INTRO_END)
-// передає слово живій картці HeroStage, без нього задачі виконуються по одній, запуск стає «completed», картка
-// відпливає — і цикл знову (≈12 с). Кольори — з токенів теми (--stage*, --status-done-mark), тож світла й темна теми
-// підхоплюються самі. Рух — лише коли playing; reduced motion — статичний кадр «3 of 5 done».
-// Сцена декоративна (aria-hidden у HeroStage): той самий зміст продукт показує словами в заголовку hero.
+// піднімається й складається у скляну картку запуску «Flat 7, handover». У кінці (INTRO_END) сцена лежить рівно перед
+// глядачем і збігається з живою карткою HeroStage рядок у рядок: одиниці сцени нижче — заміри тієї картки (1 одиниця =
+// 26 px при висоті полотна HERO_SCENE_HEIGHT), тож передача слова не дає стрибка. Кольори — з токенів теми (--stage*),
+// тож світла й темна теми підхоплюються самі. Сцена декоративна (aria-hidden у HeroStage); без WebGL і за reduced motion
+// її немає взагалі.
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-const CYCLE = 12;
-const REDUCED_FRAME = 7.3; // три задачі з п'яти вже «done»
-const INTRO_END = 4.9; // аркуш склався в картку, жодної задачі ще не позначено
+const INTRO_END = 4.9; // аркуш склався в картку
 
 // Назви вигадані, як у картці HeroStage: відвідувач без входу не бачить вмісту шаблонів бази (AC-EDITOR-09).
 const CASE_NAME = "Flat 7, handover";
@@ -23,22 +21,34 @@ const SECTIONS = [
 ];
 const TASK_COUNT = SECTIONS.reduce((n, s) => n + s.tasks.length, 0);
 
-// Розмітка картки в одиницях сцени: ширина 4, висота 3.4.
+// Розмітка живої картки (26rem × ~23rem) в одиницях сцени, від центра картки.
 const W = 4;
-const H = 3.4;
-const LEFT = -W / 2 + 0.22;
-const ROWS: { kind: "section" | "task"; label: string; y: number; index?: number }[] = (() => {
-  const rows: { kind: "section" | "task"; label: string; y: number; index?: number }[] = [];
-  let y = 0.68;
-  let index = 0;
+const H = 3.53;
+const LEFT = -W / 2 + 0.164;
+const RIGHT = W / 2 - 0.164;
+const CHECK_X = -1.606;
+const TEXT_X = -1.215;
+const CASE_Y = 1.505;
+const TEMPLATE_Y = 1.322;
+const COUNTER_Y = 0.995;
+const BAR_Y = 0.832;
+const LIST_PAD = 0.173; // від центра рядка до краю списку
+const SECTION_TO_TASK = 0.298;
+const TASK_STEP = 0.356;
+const SECTION_GAP = 0.336;
+
+type Row = { kind: "section" | "task"; label: string; y: number };
+const ROWS: Row[] = (() => {
+  const rows: Row[] = [];
+  let y = 0.582;
   for (const section of SECTIONS) {
     rows.push({ kind: "section", label: section.name, y });
-    y -= 0.3;
-    for (const task of section.tasks) {
-      rows.push({ kind: "task", label: task, y, index: index++ });
-      y -= 0.32;
-    }
-    y -= 0.02;
+    y -= SECTION_TO_TASK;
+    section.tasks.forEach((task, i) => {
+      rows.push({ kind: "task", label: task, y });
+      if (i < section.tasks.length - 1) y -= TASK_STEP;
+    });
+    y -= SECTION_GAP;
   }
   return rows;
 })();
@@ -50,7 +60,7 @@ const ease = (v: number) => {
 };
 
 // ── Кольори з токенів: CSS-значення (oklch) → sRGB через canvas 2D ─────────────────────────────────────────────────
-type Palette = { ink: THREE.Color; accent: THREE.Color; card: THREE.Color; muted: THREE.Color; done: THREE.Color; doneBg: THREE.Color };
+type Palette = { ink: THREE.Color; accent: THREE.Color; card: THREE.Color; muted: THREE.Color };
 
 function cssColor(name: string, probe: CanvasRenderingContext2D): THREE.Color {
   const root = getComputedStyle(document.documentElement);
@@ -72,8 +82,6 @@ function readPalette(): Palette {
     accent: cssColor("--stage-accent", probe),
     card: cssColor("--stage-card", probe),
     muted: cssColor("--stage-muted", probe),
-    done: cssColor("--status-done-mark", probe),
-    doneBg: cssColor("--status-done", probe),
   };
 }
 
@@ -139,12 +147,12 @@ function inkLines(segments: number[][], color: THREE.Color, opacity: number) {
   return new THREE.LineSegments(geometry, material);
 }
 
-const rect = (x1: number, y1: number, x2: number, y2: number) => [
-  [x1, y1, x2, y1],
-  [x2, y1, x2, y2],
-  [x2, y2, x1, y2],
-  [x1, y2, x1, y1],
-];
+const circle = (x: number, y: number, r: number) =>
+  Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2;
+    const b = ((i + 1) / 16) * Math.PI * 2;
+    return [x + Math.cos(a) * r, y + Math.sin(a) * r, x + Math.cos(b) * r, y + Math.sin(b) * r];
+  });
 
 function roundedRectShape(w: number, h: number, r: number) {
   const s = new THREE.Shape();
@@ -163,15 +171,8 @@ function roundedRectShape(w: number, h: number, r: number) {
 }
 
 /** Стан хореографії в момент t (с) — одна шкала для всіх частин сцени. */
-type Beat = { t: number; draw: number; fold: number; leave: number; done: number; complete: boolean; visible: number };
-
-function beatAt(t: number): Beat {
-  const fold = ease((t - 2.8) / 2);
-  const leave = ease((t - 10.4) / 1.5);
-  let done = 0;
-  for (let i = 0; i < TASK_COUNT; i++) if (t >= 5 + i * 0.8 + 0.45) done++;
-  return { t, draw: clamp01(t / 2.6), fold, leave, done, complete: done === TASK_COUNT, visible: fold * (1 - leave) };
-}
+type Beat = { draw: number; fold: number };
+const beatAt = (t: number): Beat => ({ draw: clamp01(t / 2.6), fold: ease((t - 2.6) / 2.2) });
 
 /** Частина сцени: власні об'єкти й оновлення за ритмом. */
 type Part = { objects: THREE.Object3D[]; update: (beat: Beat) => void };
@@ -181,66 +182,53 @@ const ordered = <T extends THREE.Object3D>(obj: T, order: number) => {
   return obj;
 };
 
-// Порядок прозорих шарів задаємо явно: спалах → сітка → ребро й тіло картки → лінії → тексти → галочки (інакше
-// сортування за відстанню малювало б тіло поверх верхніх написів картки).
+// Порядок прозорих шарів задаємо явно: сітка → тіло картки → лінії → тексти (інакше сортування за відстанню малювало б
+// тіло поверх верхніх написів картки).
 function gridPart(palette: Palette): Part {
   const segments: number[][] = [];
-  for (let x = -3.5; x <= 3.5001; x += 0.25) segments.push([x, -2.6, x, 2.6]);
-  for (let y = -2.6; y <= 2.6001; y += 0.25) segments.push([-3.5, y, 3.5, y]);
-  const grid = ordered(inkLines(segments, palette.accent, 0.16), -1);
+  for (let x = -3.5; x <= 3.5001; x += 0.25) segments.push([x, -2.75, x, 2.75]);
+  for (let y = -2.75; y <= 2.7501; y += 0.25) segments.push([-3.5, y, 3.5, y]);
+  const grid = ordered(inkLines(segments, palette.accent, 0.14), -1);
   grid.position.z = -0.06;
-  return { objects: [grid], update: (b) => void (opacityOf(grid).opacity = 0.16 * (1 - b.fold) * (1 - b.leave)) };
+  return { objects: [grid], update: (b) => void (opacityOf(grid).opacity = 0.14 * b.draw * (1 - b.fold)) };
 }
-
-const COMPLETED_AT = 5 + (TASK_COUNT - 1) * 0.8 + 0.45;
 
 function cardPart(palette: Palette): Part {
   const body = ordered(
-    new THREE.Mesh(
-      new THREE.ExtrudeGeometry(roundedRectShape(W, H, 0.18), { depth: 0.07, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 3, curveSegments: 10 }),
-      new THREE.MeshBasicMaterial({ color: palette.card, transparent: true, opacity: 0 }),
-    ),
+    new THREE.Mesh(new THREE.ShapeGeometry(roundedRectShape(W, H, 0.115)), new THREE.MeshBasicMaterial({ color: palette.card, transparent: true, opacity: 0, depthWrite: false })),
     1,
   );
-  body.position.z = -0.1;
-  // Ребро картки — акцентний відтінок під лицем, щоб на повороті було видно товщину.
-  const edge = ordered(
-    new THREE.Mesh(new THREE.ShapeGeometry(roundedRectShape(W + 0.05, H + 0.05, 0.2)), new THREE.MeshBasicMaterial({ color: palette.accent, transparent: true, opacity: 0, depthWrite: false })),
-    0,
-  );
-  edge.position.z = -0.115;
-  // М'який спалах «completed» по краю картки.
-  const glow = ordered(
-    new THREE.Mesh(new THREE.ShapeGeometry(roundedRectShape(W + 0.3, H + 0.3, 0.3)), new THREE.MeshBasicMaterial({ color: palette.done, transparent: true, opacity: 0, depthWrite: false })),
-    -2,
-  );
-  glow.position.z = -0.14;
-  return {
-    objects: [glow, edge, body],
-    update: (b) => {
-      opacityOf(body).opacity = 0.9 * b.visible;
-      opacityOf(edge).opacity = 0.18 * b.visible;
-      opacityOf(glow).opacity = b.complete ? Math.max(0, 0.35 * Math.exp(-(b.t - COMPLETED_AT) * 1.6)) * (1 - b.leave) : 0;
-    },
-  };
+  body.position.z = -0.01;
+  // Прозорість --stage-card: скло живої картки, щоб передача не міняла світлоту.
+  return { objects: [body], update: (b) => void (opacityOf(body).opacity = 0.62 * b.fold) };
 }
 
-// Каркас (рамка, доріжка прогресу, квадратики задач) лишається на картці; заготовки тексту (лінії на місці назв)
+// Каркас (рамка, доріжка прогресу, списки, кола задач) лишається на картці; заготовки тексту (лінії на місці назв)
 // згасають, коли з'являються самі назви. Малюються одним рухом «пера»: спершу каркас, потім заготовки.
 function blueprintSegments() {
-  const frame: number[][] = [...rect(-W / 2, -H / 2, W / 2, H / 2), [LEFT, 1.0, W / 2 - 0.22, 1.0]];
+  const outline = roundedRectShape(W, H, 0.115).getPoints(6);
+  const frame: number[][] = [...outline.slice(0, -1).map((p, i) => [p.x, p.y, outline[i + 1].x, outline[i + 1].y]), [LEFT, BAR_Y, RIGHT, BAR_Y]];
   const placeholders: number[][] = [
-    [LEFT, 1.42, LEFT + 1.9, 1.42],
-    [LEFT, 1.2, LEFT + 1.1, 1.2],
-    [W / 2 - 0.85, 1.42, W / 2 - 0.22, 1.42],
+    [LEFT, CASE_Y, LEFT + 1.07, CASE_Y],
+    [LEFT, TEMPLATE_Y, LEFT + 0.9, TEMPLATE_Y],
+    [RIGHT - 0.85, CASE_Y, RIGHT, CASE_Y],
+    [LEFT, COUNTER_Y, LEFT + 0.75, COUNTER_Y],
   ];
-  for (const row of ROWS) {
-    if (row.kind === "section") placeholders.push([LEFT, row.y, LEFT + 1.1, row.y]);
-    else {
-      frame.push(...rect(LEFT, row.y - 0.09, LEFT + 0.18, row.y + 0.09));
-      placeholders.push([LEFT + 0.32, row.y, LEFT + 0.32 + 0.9 + ((row.index! * 37) % 10) / 10, row.y]);
+  let task = 0;
+  ROWS.forEach((row, i) => {
+    if (row.kind === "section") {
+      placeholders.push([LEFT, row.y, LEFT + 1, row.y]);
+      return;
     }
-  }
+    const first = ROWS[i - 1].kind === "section";
+    const last = ROWS[i + 1]?.kind !== "task";
+    // Кожен список — рамка з роздільниками, як у живій картці.
+    frame.push([LEFT, row.y - LIST_PAD, RIGHT, row.y - LIST_PAD], [LEFT, row.y - LIST_PAD, LEFT, row.y + LIST_PAD], [RIGHT, row.y - LIST_PAD, RIGHT, row.y + LIST_PAD]);
+    if (first) frame.push([LEFT, row.y + LIST_PAD, RIGHT, row.y + LIST_PAD]);
+    if (last) frame.push([LEFT, row.y - LIST_PAD, RIGHT, row.y - LIST_PAD]);
+    frame.push(...circle(CHECK_X, row.y, 0.072));
+    placeholders.push([TEXT_X, row.y, TEXT_X + 0.95 + ((task++ * 37) % 10) / 12, row.y]);
+  });
   return { frame, placeholders };
 }
 
@@ -254,43 +242,12 @@ function blueprintPart(palette: Palette): Part {
   return {
     objects: [frameLines, placeholderLines],
     update: (b) => {
-      const drawn = b.draw * total;
+      const drawn = ease(b.draw) * total;
       frameLines.geometry.setDrawRange(0, even(Math.min(drawn, frameCount)));
       placeholderLines.geometry.setDrawRange(0, even(Math.max(0, drawn - frameCount)));
-      opacityOf(frameLines).opacity = (0.9 - b.fold * 0.5) * (1 - b.leave);
-      opacityOf(placeholderLines).opacity = 0.9 * (1 - b.fold) * (1 - b.leave);
+      opacityOf(frameLines).opacity = 0.9 - b.fold * 0.72;
+      opacityOf(placeholderLines).opacity = 0.9 * (1 - b.fold);
     },
-  };
-}
-
-// Галочки — окремий буфер на кожну задачу, щоб домальовувати по одній (дві риски: коротка, потім довга).
-function checkLine(palette: Palette, y: number) {
-  const line = ordered(
-    inkLines(
-      [
-        [LEFT + 0.035, y, LEFT + 0.075, y - 0.05],
-        [LEFT + 0.075, y - 0.05, LEFT + 0.15, y + 0.055],
-      ],
-      palette.done,
-      1,
-    ),
-    4,
-  );
-  line.geometry.setDrawRange(0, 0);
-  return line;
-}
-
-function checksPart(palette: Palette): Part {
-  const checks = ROWS.filter((r) => r.kind === "task").map((row) => checkLine(palette, row.y));
-  const segmentsAt = (p: number) => (p <= 0 ? 0 : p < 0.5 ? 2 : 4);
-  return {
-    objects: checks,
-    update: (b) =>
-      checks.forEach((check, i) => {
-        const p = clamp01((b.t - 5 - i * 0.8) / 0.45);
-        check.geometry.setDrawRange(0, segmentsAt(p));
-        opacityOf(check).opacity = p > 0 ? 1 - b.leave : 0;
-      }),
   };
 }
 
@@ -299,50 +256,24 @@ const placeLeft = (mesh: THREE.Mesh, x: number, y: number) => {
   return ordered(mesh, 3);
 };
 const placeRight = (mesh: THREE.Mesh, y: number) => {
-  mesh.position.set(W / 2 - 0.22 - mesh.userData.width / 2, y, 0.012);
+  mesh.position.set(RIGHT - mesh.userData.width / 2, y, 0.012);
   return ordered(mesh, 3);
 };
-const rowLabel = (palette: Palette, row: (typeof ROWS)[number]) =>
+const rowLabel = (palette: Palette, row: Row) =>
   row.kind === "section"
-    ? placeLeft(textPlane(row.label, { size: 0.12, color: palette.muted, weight: 600 }), LEFT, row.y)
-    : placeLeft(textPlane(row.label, { size: 0.125, color: palette.ink }), LEFT + 0.32, row.y);
+    ? placeLeft(textPlane(row.label, { size: 0.115, color: palette.muted, weight: 600 }), LEFT, row.y)
+    : placeLeft(textPlane(row.label, { size: 0.135, color: palette.ink, weight: 400 }), TEXT_X, row.y);
 
-// Тексти картки: назва випадку, шаблон, секції, задачі; статус і лічильник — по варіанту на стан.
+// Тексти картки проявляються під кінець складання — у тих самих місцях, що й у живій картці.
 function labelsPart(palette: Palette): Part {
-  const fixed = [
-    placeLeft(textPlane(CASE_NAME, { size: 0.17, color: palette.ink, weight: 600 }), LEFT, 1.42),
-    placeLeft(textPlane(TEMPLATE_NAME, { size: 0.12, color: palette.muted }), LEFT, 1.2),
+  const labels = [
+    placeLeft(textPlane(CASE_NAME, { size: 0.144, color: palette.ink, weight: 600 }), LEFT, CASE_Y),
+    placeLeft(textPlane(TEMPLATE_NAME, { size: 0.125, color: palette.muted, weight: 400 }), LEFT, TEMPLATE_Y),
+    placeLeft(textPlane(`0 of ${TASK_COUNT} done`, { size: 0.125, color: palette.muted, weight: 400 }), LEFT, COUNTER_Y),
+    placeRight(textPlane("in progress", { size: 0.115, color: palette.ink, pill: palette.ink, pillAlpha: 0.1, padX: 0.09 }), CASE_Y),
     ...ROWS.map((row) => rowLabel(palette, row)),
   ];
-  const inProgress = placeRight(textPlane("in progress", { size: 0.11, color: palette.accent, pill: palette.accent, pillAlpha: 0.14, padX: 0.08 }), 1.42);
-  const completed = placeRight(textPlane("completed", { size: 0.11, color: palette.done, pill: palette.doneBg, padX: 0.08 }), 1.42);
-  const counters = Array.from({ length: TASK_COUNT + 1 }, (_, n) => placeRight(textPlane(`${n} of ${TASK_COUNT} done`, { size: 0.11, color: palette.muted }), 1.16));
-  return {
-    objects: [...fixed, inProgress, completed, ...counters],
-    update: (b) => {
-      fixed.forEach((mesh) => void (opacityOf(mesh).opacity = b.visible));
-      opacityOf(inProgress).opacity = b.complete ? 0 : b.visible;
-      opacityOf(completed).opacity = b.complete ? b.visible : 0;
-      counters.forEach((mesh, n) => void (opacityOf(mesh).opacity = n === b.done ? b.visible : 0));
-    },
-  };
-}
-
-// Заповнення смуги прогресу — з часу, як і галочки: кожна задача додає свою частку за ті ж 0.45 с, тож будь-який
-// кадр (зокрема статичний за reduced motion) показує точну частку.
-function progressPart(palette: Palette): Part {
-  const fill = ordered(new THREE.Mesh(new THREE.PlaneGeometry(W - 0.44, 0.045), new THREE.MeshBasicMaterial({ color: palette.accent, transparent: true })), 3);
-  fill.geometry.translate((W - 0.44) / 2, 0, 0);
-  fill.position.set(LEFT, 1.0, 0.012);
-  return {
-    objects: [fill],
-    update: (b) => {
-      let share = 0;
-      for (let i = 0; i < TASK_COUNT; i++) share += ease((b.t - 5 - i * 0.8) / 0.45) / TASK_COUNT;
-      fill.scale.x = Math.max(share, 0.0001);
-      opacityOf(fill).opacity = b.visible;
-    },
-  };
+  return { objects: labels, update: (b) => labels.forEach((mesh) => void (opacityOf(mesh).opacity = clamp01((b.fold - 0.45) / 0.55))) };
 }
 
 function disposeTree(root: THREE.Object3D) {
@@ -359,25 +290,26 @@ function buildScene(palette: Palette) {
   const root = new THREE.Group();
   const sheet = new THREE.Group(); // аркуш: обертається з «лежить» у «до глядача»
   root.add(sheet);
-  const parts = [gridPart(palette), cardPart(palette), blueprintPart(palette), checksPart(palette), labelsPart(palette), progressPart(palette)];
+  const parts = [gridPart(palette), cardPart(palette), blueprintPart(palette), labelsPart(palette)];
   for (const part of parts) sheet.add(...part.objects);
 
-  /** Стан сцени в момент t (с): усе обчислюється з t, тож пауза й reduced motion — просто незмінний t. */
+  /** Стан сцени в момент t (с): усе обчислюється з t, тож пауза — просто незмінний t. Повертає складання 0…1. */
   const apply = (t: number) => {
     const beat = beatAt(t);
     for (const part of parts) part.update(beat);
-    // Аркуш лежить під кутом, як на столі, потім піднімається до глядача; на виході — відпливає вгору.
-    const { fold, leave } = beat;
-    sheet.rotation.set(THREE.MathUtils.lerp(-1.02, -0.08, fold) + leave * 0.25, THREE.MathUtils.lerp(0, -0.2, fold) - leave * 0.15, THREE.MathUtils.lerp(0.16, 0, fold));
-    sheet.position.set(0, THREE.MathUtils.lerp(-0.25, 0, fold) + leave * 0.7, THREE.MathUtils.lerp(-0.6, 0, fold) - leave * 0.8);
+    // Аркуш лежить під кутом, як на столі, піднімається дугою й завмирає рівно перед глядачем — там, де жива картка.
+    const { fold } = beat;
+    sheet.rotation.set(THREE.MathUtils.lerp(-1.02, 0, fold), Math.sin(fold * Math.PI) * -0.18, THREE.MathUtils.lerp(0.16, 0, fold));
+    sheet.position.set(0, THREE.MathUtils.lerp(-0.25, 0, fold), THREE.MathUtils.lerp(-0.6, 0, fold));
+    return fold;
   };
 
   return { root, apply, dispose: () => disposeTree(root) };
 }
 
-function Story({ palette, playing, reduced, onIntroEnd }: { palette: Palette; playing: boolean; reduced: boolean; onIntroEnd?: () => void }) {
+function Story({ palette, playing, replay, onIntroEnd }: { palette: Palette; playing: boolean; replay: number; onIntroEnd: () => void }) {
   const scene = useMemo(() => buildScene(palette), [palette]);
-  const time = useRef(reduced ? REDUCED_FRAME : 0);
+  const time = useRef(0);
   const pointer = useRef({ x: 0, y: 0 });
   const tilt = useRef({ x: 0, y: 0 });
   const invalidate = useThree((s) => s.invalidate);
@@ -386,37 +318,35 @@ function Story({ palette, playing, reduced, onIntroEnd }: { palette: Palette; pl
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
       pointer.current = { x: (event.clientX / window.innerWidth) * 2 - 1, y: (event.clientY / window.innerHeight) * 2 - 1 };
-      if (!playing) invalidate();
     };
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
-  }, [playing, invalidate]);
+  }, []);
+  // Повтор — та сама сцена з нуля: без нового WebGL-контексту й текстур, тож без ривка на старті.
   useEffect(() => {
-    if (reduced) time.current = REDUCED_FRAME;
+    time.current = 0;
     invalidate();
-  }, [reduced, invalidate, scene]);
+  }, [replay, scene, invalidate]);
 
   useFrame((_, delta) => {
-    // Знімки для дизайн-рев'ю (docs/img): window.__blueprintT = 7.3 зупиняє сцену на цьому моменті циклу.
+    // Знімки для дизайн-рев'ю (docs/img): window.__blueprintT = 3.5 зупиняє сцену на цьому моменті.
     const pinned = (window as { __blueprintT?: unknown }).__blueprintT;
-    if (typeof pinned === "number") time.current = pinned % CYCLE;
-    else if (playing) {
-      const before = time.current;
-      time.current = (time.current + Math.min(delta, 0.25)) % CYCLE;
-      if (onIntroEnd && before < INTRO_END && time.current >= INTRO_END) onIntroEnd();
+    if (typeof pinned === "number") time.current = Math.min(pinned, INTRO_END);
+    else if (playing && time.current < INTRO_END) {
+      time.current = Math.min(time.current + Math.min(delta, 0.05), INTRO_END);
+      if (time.current === INTRO_END) onIntroEnd();
     }
-    scene.apply(time.current);
-    // Курсор злегка нахиляє сцену (без руху за reduced motion).
-    const k = reduced ? 0 : 1;
-    tilt.current.x += (pointer.current.y * 0.12 * k - tilt.current.x) * 0.06;
-    tilt.current.y += (pointer.current.x * 0.22 * k - tilt.current.y) * 0.06;
-    scene.root.rotation.set(tilt.current.x, tilt.current.y, 0);
+    const fold = scene.apply(time.current);
+    // Курсор злегка нахиляє креслення; складена картка стоїть рівно, щоб збігтися з живою.
+    tilt.current.x += (pointer.current.y * 0.1 - tilt.current.x) * 0.06;
+    tilt.current.y += (pointer.current.x * 0.18 - tilt.current.y) * 0.06;
+    scene.root.rotation.set(tilt.current.x * (1 - fold), tilt.current.y * (1 - fold), 0);
   });
 
   return <primitive object={scene.root} />;
 }
 
-export default function BlueprintScene({ playing, reduced, onIntroEnd }: { playing: boolean; reduced: boolean; onIntroEnd?: () => void }) {
+export default function BlueprintScene({ playing, replay, onIntroEnd }: { playing: boolean; replay: number; onIntroEnd: () => void }) {
   const palette = usePalette();
   const [fontsReady, setFontsReady] = useState(false);
   useEffect(() => {
@@ -429,14 +359,8 @@ export default function BlueprintScene({ playing, reduced, onIntroEnd }: { playi
 
   if (!palette || !fontsReady) return null;
   return (
-    <Canvas
-      className="size-full"
-      dpr={[1, 2]}
-      frameloop={playing ? "always" : "demand"}
-      gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-      camera={{ position: [0, 0.15, 6.2], fov: 38 }}
-    >
-      <Story palette={palette} playing={playing} reduced={reduced} onIntroEnd={onIntroEnd} />
+    <Canvas className="size-full" dpr={[1, 2]} frameloop={playing ? "always" : "demand"} gl={{ antialias: true, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 6.2], fov: 38 }}>
+      <Story palette={palette} playing={playing} replay={replay} onIntroEnd={onIntroEnd} />
     </Canvas>
   );
 }
