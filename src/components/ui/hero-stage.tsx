@@ -277,6 +277,10 @@ function StoryCard({ playing, reduced, onRestart }: { playing: boolean; reduced:
   );
 }
 
+/**
+ * «Ехо» даху з логотипу: контури даху розходяться хвилями з-за картки вгору й згасають. Стоїть позаду головного
+ * образу (креслення чи картки), приглушене й з радіальною маскою — краї тануть, а не впираються в заголовок.
+ */
 function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean }) {
   const copies = reduced ? [0] : [0, 1, 2, 3, 4];
   return (
@@ -284,8 +288,8 @@ function EchoRoofs({ playing, reduced }: { playing: boolean; reduced: boolean })
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
-      className="pointer-events-none absolute -bottom-[8%] -right-[10%] w-[82%] text-stage-foreground transition-transform duration-700 ease-standard"
-      style={{ transform: "translate(calc(var(--px, 0) * -22px), calc(var(--py, 0) * -14px))" }}
+      className="pointer-events-none absolute bottom-[14%] left-1/2 -z-10 w-[84%] text-stage-foreground/50 transition-transform duration-700 ease-standard [mask-image:linear-gradient(to_top,transparent,black_35%,black_70%,transparent)]"
+      style={{ transform: "translateX(-50%) translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px))" }}
     >
       {copies.map((i) => (
         <g
@@ -320,13 +324,17 @@ function HeroVisual({ playing, reduced }: { playing: boolean; reduced: boolean }
 
   if (!webgl || reduced) {
     return (
-      <div className="animate-ui-float">
-        <StoryCard playing={playing} reduced={reduced} />
+      <div className="relative isolate">
+        <EchoRoofs playing={playing} reduced={reduced} />
+        <div className="animate-ui-float">
+          <StoryCard playing={playing} reduced={reduced} />
+        </div>
       </div>
     );
   }
   return (
-    <div className="relative -mx-10 grid aspect-[4/3.3] w-[calc(100%+5rem)] place-items-center">
+    <div className="relative isolate -mx-10 grid aspect-[4/3.3] w-[calc(100%+5rem)] place-items-center">
+      <EchoRoofs playing={playing} reduced={reduced} />
       <div
         aria-hidden="true"
         className={cn("absolute inset-0 transition-[opacity,filter] duration-500 ease-standard", stage === "card" && "opacity-0 blur-[2px]")}
@@ -377,7 +385,6 @@ export function HeroStage() {
       }}
     >
       <HeroShader playing={playing} speed={calm ? 0.25 : 1} />
-      <EchoRoofs playing={playing} reduced={reduced} />
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full opacity-[0.14] mix-blend-soft-light">
         <filter id={grainId}>
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />
