@@ -73,8 +73,14 @@ export async function attachRuntimeErrors(page: Page) {
     .filter((m) => m.type() === "error")
     .map((m) => m.text());
   const pageErrors = (await page.pageErrors({ filter: "all" })).map((e) => String(e));
+  // Запит, що ще триває (prefetch Next.js, потік RSC), не чекаємо: response() висить до відповіді, і хук падав би
+  // з тайм-аутом тесту (60 с), хоча перевірки AC пройшли. Такий запит — status -1: не збій і не 5xx.
+  const pendingAfter = (ms: number) => new Promise<number>((resolve) => setTimeout(() => resolve(-1), ms));
   const responses = await Promise.all(
-    (await page.requests()).map(async (r) => ({ r, status: (await r.response())?.status() ?? 0 })),
+    (await page.requests()).map(async (r) => ({
+      r,
+      status: await Promise.race([r.response().then((res) => res?.status() ?? 0), pendingAfter(2_000)]),
+    })),
   );
   const failed = responses
     .filter(({ r, status }) => r.failure() !== null || status >= 500)
