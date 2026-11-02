@@ -326,7 +326,9 @@ function Story({ palette, playing, replay, onIntroEnd }: { palette: Palette; pla
   useEffect(() => {
     time.current = 0;
     invalidate();
-  }, [replay, scene, invalidate]);
+  }, [replay, invalidate]);
+  // Зміна теми дає нову сцену: час той самий, лише перемальовуємо кадр.
+  useEffect(() => invalidate(), [scene, invalidate]);
 
   useFrame((_, delta) => {
     // Знімки для дизайн-рев'ю (docs/img): window.__blueprintT = 3.5 зупиняє сцену на цьому моменті.
