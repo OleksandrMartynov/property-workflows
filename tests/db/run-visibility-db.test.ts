@@ -180,16 +180,16 @@ describe("База: політики RLS", () => {
     }
   };
 
-  it("AC-TASK-06: політики runs і run_tasks — to authenticated, (select auth.uid()) is not null і private.can_see_run", async () => {
+  it("Структура RLS: політики runs і run_tasks — to authenticated, (select auth.uid()) is not null і private.can_see_run", async () => {
     const policies = await policiesOf(["runs", "run_tasks"]);
     expect(policies.map((p) => p.policyname)).toEqual(["run_tasks_select_visible", "runs_select_visible"]);
     expectAuthenticatedWithUid(policies);
     for (const p of policies) expect(p.qual).toContain("can_see_run");
   });
 
-  it("AC-RUN-02: політики шаблонів — to authenticated з (select auth.uid()) is not null; змінює лише admin", async () => {
+  it("Структура RLS: політики шаблонів — to authenticated з (select auth.uid()) is not null; змінює лише admin", async () => {
     const policies = await policiesOf(["templates", "template_sections", "template_tasks"]);
-    expect(policies).toHaveLength(12);
+    expect(policies).toHaveLength(11);
     expectAuthenticatedWithUid(policies);
     for (const p of policies.filter((x) => !x.policyname.includes("_select_"))) {
       expect(p.qual ?? p.with_check, p.policyname).toContain("'admin'");

@@ -135,7 +135,7 @@ describe("База: незбережені зміни шаблону", () => {
     expect((await state(to.id)).has_unpublished_changes).toBe(true);
   });
 
-  it("AC-EDITOR-01: позначку ставить безумовний update — він чекає блокування збереження (for update) і не губиться", async () => {
+  it("ADR-0006 (структура): mark_template_unpublished оновлює шаблон без умови not has_unpublished_changes — чекає блокування збереження й не губить позначку", async () => {
     const [{ def }] = await t.db.query<{ def: string }>(
       "select pg_get_functiondef('private.mark_template_unpublished()'::regprocedure) as def",
     ).then((r) => r.rows);
@@ -362,6 +362,15 @@ describe("База: збереження версії", () => {
     expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
   });
 
+  it("AC-EDITOR-03: адміністратор напряму видаляє шаблон — permission denied, шаблон і версії на місці", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (no delete)");
+    const before = await state(tpl.id);
+    await expect(t.asUser(ADMIN, "delete from public.templates where id = $1", [tpl.id])).rejects.toThrow("permission denied");
+    await expect(t.asService("delete from public.templates where id = $1", [tpl.id])).rejects.toThrow("permission denied");
+    expect(await state(tpl.id)).toEqual(before);
+    expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
+  });
+
   it("AC-EDITOR-03: прямих update і delete версій немає й у service_role — лише select і insert", async () => {
     const tpl = await tenantMoveInV1("Tenant move-in (immutable for service)");
     await expect(t.asService("update public.template_versions set name = 'x' where template_id = $1", [tpl.id])).rejects.toThrow(
@@ -486,6 +495,17 @@ describe("База: відмови менеджеру й відвідувачу"
     await expect(
       t.asUser(MANAGER_B, "insert into public.template_versions (template_id, number, name) values ($1, 2, 'x')", [tpl.id]),
     ).rejects.toThrow("permission denied");
+
+    expect(await state(tpl.id)).toEqual(before);
+  });
+
+  it("AC-EDITOR-08: у шаблоні чернетка адміністратора — менеджер B напряму зберігає версію, відмова, версії 2 немає й чернетка лишається", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (AC-EDITOR-08 draft)");
+    await addSixthTask(tpl.id, tpl.sections[1]);
+    const before = await state(tpl.id);
+    expect(before).toEqual({ current_version: 1, has_unpublished_changes: true, versions: 1, draft_tasks: 6 });
+
+    expect(await errorOf(publish(t, MANAGER_B, tpl.id))).toContain("NOT_ALLOWED");
 
     expect(await state(tpl.id)).toEqual(before);
   });
