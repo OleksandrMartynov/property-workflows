@@ -3,7 +3,7 @@
 // Політика profiles_update_own дозволяє оновити свій рядок, тож роль захищає лише колонковий grant update (full_name).
 // Кожен відмовний тест перевіряє і відмову, і те, що роль у базі та сама (asService — в обхід RLS).
 import { beforeAll, describe, expect, it } from "vitest";
-import { createTestDb, type TestDb } from "./supabase-pglite";
+import { createTestDb, launch, type TestDb } from "./supabase-pglite";
 
 let t: TestDb;
 let ADMIN: string, MANAGER_A: string, MANAGER_B: string;
@@ -52,5 +52,18 @@ describe("База: роль у profiles не змінює сам користу
     // Без where: інакше відмову дало б уже право select на id, а не відсутність update.
     await expect(t.asAnon("update public.profiles set role = 'admin'")).rejects.toThrow("permission denied");
     expect((await profile(MANAGER_B)).role).toBe("manager");
+  });
+
+  it("новий користувач без явної ролі — vendor: не бачить шаблонів і не запускає", async () => {
+    const id = "a0000000-0000-0000-0000-0000000000ab";
+    // Як createUser в Auth: тригер on_auth_user_created вставляє профіль без ролі.
+    await t.db.exec("begin; set local role supabase_auth_admin;");
+    await t.db.query("insert into auth.users (id, email, raw_user_meta_data) values ($1, 'new.user@example.test', '{}')", [id]);
+    await t.db.exec("commit");
+
+    expect((await profile(id)).role).toBe("vendor");
+    expect(await t.asUser(id, "select id from public.templates")).toEqual([]);
+    await expect(launch(t, id, "Apartment 90, move-in")).rejects.toThrow("LAUNCH_NOT_ALLOWED");
+    expect(await t.asService("select id from public.runs where run_manager_id = $1", [id])).toEqual([]);
   });
 });

@@ -107,7 +107,7 @@ describe("База: шаблон без збереженої версії", () =
     const before = await runsCount();
     const stateBefore = await state(repair.id);
 
-    expect(await errorOf(launch(t, MANAGER_A, "Apartment 16", {}, repair.id))).toMatch(/TEMPLATE_NOT_(FOUND|PUBLISHED)/);
+    expect(await errorOf(launch(t, MANAGER_A, "Apartment 16", {}, repair.id))).toContain("TEMPLATE_NOT_FOUND");
     expect(await runsCount()).toBe(before);
     expect(await state(repair.id)).toEqual(stateBefore);
   });

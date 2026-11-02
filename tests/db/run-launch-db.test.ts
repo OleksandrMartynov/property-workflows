@@ -289,22 +289,25 @@ describe("База: запуск із незмінної поточної вер
       await t.db.query<{ def: string }>("select pg_get_functiondef('private.launch_run(uuid, text, jsonb)'::regprocedure) as def")
     ).rows[0].def.toLowerCase();
 
-  it("AC-RUN-01: запуск блокує рядок шаблону for share — збереження нової версії (for update) не змінить поточну посеред запуску", async () => {
+  it("ADR-0006 (структура): запуск блокує рядок шаблону for share — збереження нової версії (for update) не змінить поточну посеред запуску", async () => {
     const def = await launchRunDefinition();
     expect(def).toMatch(/from public\.templates as t where t\.id = p_template_id for share/);
+  });
+
+  it("AC-RUN-01: запуск додає рівно один запуск із 5 задачами", async () => {
     const before = await runsCount();
     const id = await launch(t, MANAGER_A, "Apartment 70, move-in");
     expect(await runsCount()).toBe(before + 1);
     expect(await tasksOf(MANAGER_A, id)).toHaveLength(5);
   });
 
-  it("AC-RUN-02: копія задач — із незмінної поточної версії, а не з незбережених змін шаблону", async () => {
+  it("ADR-0006 (структура): копія задач — із незмінної поточної версії, а не з незбережених змін шаблону", async () => {
     const def = await launchRunDefinition();
     expect(def).toContain("from public.template_version_tasks as vt");
     expect(def).not.toMatch(/insert into public\.run_tasks[\s\S]*from public\.template_tasks/);
   });
 
-  it("AC-RUN-02: блокування стоїть до перевірки призначень і до копії", async () => {
+  it("ADR-0006 (структура): блокування стоїть до перевірки призначень і до копії", async () => {
     const def = await launchRunDefinition();
     const at = (fragment: RegExp | string) => {
       const i = typeof fragment === "string" ? def.indexOf(fragment) : def.search(fragment);
@@ -320,10 +323,13 @@ describe("База: запуск із незмінної поточної вер
     expect(insertRun).toBeLessThan(copyTasks);
   });
 
-  it("AC-RUN-04: копія задач бере виконавців лише з перевірених призначень (v_valid), не з сирого p_assignees", async () => {
+  it("Структура launch_run: копія задач бере виконавців лише з перевірених призначень (v_valid), не з сирого p_assignees", async () => {
     const def = await launchRunDefinition();
     expect(def).toContain("coalesce((v_valid ->> vt.template_task_id::text)::uuid, v_uid)");
     expect(def).not.toContain("v_assignees ->> vt.");
+  });
+
+  it("AC-RUN-04: два призначення й одне застаріле — B виконавець двох задач, решта три на менеджері запуску", async () => {
     const [first, second] = TENANT_MOVE_IN.taskIds;
     const stale = "30000000-0000-0000-0000-000000000999";
     const id = await launch(t, MANAGER_A, "Apartment 71, move-in", { [first]: MANAGER_B, [second]: MANAGER_B, [stale]: MANAGER_B });
