@@ -269,6 +269,10 @@ export type Database = {
         Args: { p_template_id: string; p_case_name: string; p_assignees?: Json };
         Returns: string;
       };
+      reassign_task: {
+        Args: { p_task_id: string; p_assignee_id: string };
+        Returns: string;
+      };
       list_assignable_users: {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; email: string }[];

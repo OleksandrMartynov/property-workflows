@@ -27,6 +27,7 @@ export const MESSAGES = {
   // AC-EDITOR-10, AC-EDITOR-11: шаблон без збереженої версії не запускає ніхто; примітка — дослівно з AC.
   TEMPLATE_NOT_PUBLISHED: "Save the template to launch it",
   TASK_NOT_FOUND: "Task not found",
+  REASSIGN_NOT_ALLOWED: "Only the run manager or an administrator can change the assignee",
   // AC-TASK-10
   RUN_NOT_FOUND: "Run not found",
   RUN_COMPLETED: "The run is already completed",
