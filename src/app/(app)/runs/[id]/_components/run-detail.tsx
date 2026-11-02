@@ -5,13 +5,14 @@ import { ProgressBar } from "@/components/ui/progress";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CompletionGlow } from "@/components/ui/completion-glow";
-import { canCompleteTask } from "@/lib/runs/access";
+import { canCompleteTask, canReassignTask } from "@/lib/runs/access";
 import { isLastRequiredTask } from "@/lib/runs/confirmation";
 import { runStatusLabel, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
 import { MarkDoneForm } from "../mark-done-form";
+import { ReassignForm } from "../reassign-form";
 import { TaskRow } from "./task-row";
 
 export interface RunInfo {
@@ -41,12 +42,16 @@ export function RunDetail({
   emailOf,
   viewer,
   completeTask,
+  reassignTask,
+  users,
 }: {
   run: RunInfo;
   tasks: RunTaskRow[];
   emailOf: Map<string, string | null>;
   viewer: Viewer;
   completeTask: (formData: FormData) => Promise<void>;
+  reassignTask: (formData: FormData) => Promise<void>;
+  users: { id: string; email: string }[];
 }) {
   const sections = groupBySection(tasks);
   const progress = countProgress(tasks);
@@ -122,6 +127,9 @@ export function RunDetail({
                             taskName={task.name}
                             needsConfirmation={isLastRequiredTask(task, tasks)}
                           />
+                        ) : null}
+                        {canReassignTask(viewer, task, run) ? (
+                          <ReassignForm action={reassignTask} runId={run.id} taskId={task.id} taskName={task.name} assigneeId={task.assignee_id} users={users} />
                         ) : null}
                       </TaskRow>
                     );

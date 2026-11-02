@@ -77,3 +77,23 @@ export async function completeTask(formData: FormData) {
   // Відгук для скрінрідера на сторінці запуску: «<назва задачі>: done» (FlashNotice, параметри знімаються з адреси).
   redirect(`/runs/${encodeURIComponent(runId)}?done=task&task=${encodeURIComponent(taskId)}`);
 }
+
+/** Зміна виконавця задачі «to do». Права, статус запуску й роль нового виконавця перевіряє функція reassign_task. */
+export async function reassignTask(formData: FormData) {
+  const { supabase } = await requireViewer();
+  const runId = text(formData, "run_id");
+  const taskId = text(formData, "task_id");
+  const assigneeId = text(formData, "assignee_id");
+  if (!UUID_RE.test(runId)) redirect("/runs");
+  if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
+  if (!UUID_RE.test(assigneeId)) redirect(`/runs/${runId}?error=INVALID_ASSIGNEE`);
+
+  const { error } = await supabase.rpc("reassign_task", { p_task_id: taskId, p_assignee_id: assigneeId });
+  if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
+
+  revalidatePath("/runs");
+  // Число відкритих задач біля «Runs» змінюється і в старого, і в нового виконавця.
+  revalidatePath("/", "layout");
+  revalidatePath(`/runs/${runId}`);
+  redirect(`/runs/${encodeURIComponent(runId)}?done=reassigned`);
+}

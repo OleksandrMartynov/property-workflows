@@ -8,11 +8,17 @@ export interface ViewerLike {
   role: AppRole;
 }
 
-export function canCompleteTask(
-  viewer: ViewerLike,
-  task: { assignee_id: string; status: string },
-  run: { run_manager_id: string; status: string },
-): boolean {
-  if (task.status !== "to_do" || run.status !== "in_progress") return false;
-  return viewer.role === "admin" || task.assignee_id === viewer.id || run.run_manager_id === viewer.id;
+type TaskLike = { assignee_id: string; status: string };
+type RunLike = { run_manager_id: string; status: string };
+
+const isOpen = (task: TaskLike, run: RunLike) => task.status === "to_do" && run.status === "in_progress";
+const managesRun = (viewer: ViewerLike, run: RunLike) => run.run_manager_id === viewer.id || viewer.role === "admin";
+
+export function canCompleteTask(viewer: ViewerLike, task: TaskLike, run: RunLike): boolean {
+  return isOpen(task, run) && (managesRun(viewer, run) || task.assignee_id === viewer.id);
+}
+
+/** Змінити виконавця задачі «to do» може менеджер запуску або адміністратор (остаточно — функція бази reassign_task). */
+export function canReassignTask(viewer: ViewerLike, task: TaskLike, run: RunLike): boolean {
+  return isOpen(task, run) && managesRun(viewer, run);
 }

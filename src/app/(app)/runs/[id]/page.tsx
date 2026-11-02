@@ -6,7 +6,7 @@ import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { PageShell } from "@/app/_components/ui";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
-import { completeTask } from "../actions";
+import { completeTask, reassignTask } from "../actions";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
 
@@ -53,13 +53,18 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
           Run launched.
         </FlashNotice>
       ) : null}
+      {done === "reassigned" ? (
+        <FlashNotice kind="success" clear={["done"]}>
+          Assignee changed.
+        </FlashNotice>
+      ) : null}
       <DoneTaskNotice tasks={tasks ?? []} done={done} task={task} />
       {message ? (
         <FlashNotice kind="error" clear={["error"]}>
           {message}
         </FlashNotice>
       ) : null}
-      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} />
+      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} reassignTask={reassignTask} users={users ?? []} />
     </PageShell>
   );
 }
