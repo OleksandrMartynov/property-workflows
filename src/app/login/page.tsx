@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       >
         <LogoMark className="absolute -bottom-6 -right-4 size-32 text-stage-foreground/15" />
       </div>
-      <section className="relative isolate flex flex-col overflow-hidden px-6 py-8 sm:px-14">
+      <section className="relative isolate flex flex-col overflow-clip px-6 py-8 sm:px-14">
         {/* Фактура панелі: м'яке сяйво primary зверху й точкова сітка, що розчиняється до краю. Лише токени. */}
         <div
           aria-hidden="true"

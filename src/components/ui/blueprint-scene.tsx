@@ -1,9 +1,10 @@
 "use client";
 
 // 3D-сцена hero сторінки входу — «креслення, що оживає»: аркуш-креслення шаблону з сіткою промальовується лініями,
-// піднімається й складається у скляну картку запуску «Flat 7, handover», задачі виконуються по одній, запуск
-// стає «completed», картка відпливає — і цикл знову (≈12 с). Кольори — з токенів теми (--stage*, --status-done-mark),
-// тож світла й темна теми підхоплюються самі. Рух — лише коли playing; reduced motion — статичний кадр «3 of 5 done».
+// піднімається й складається у скляну картку запуску «Flat 7, handover»; з onIntroEnd у цей момент (INTRO_END)
+// передає слово живій картці HeroStage, без нього задачі виконуються по одній, запуск стає «completed», картка
+// відпливає — і цикл знову (≈12 с). Кольори — з токенів теми (--stage*, --status-done-mark), тож світла й темна теми
+// підхоплюються самі. Рух — лише коли playing; reduced motion — статичний кадр «3 of 5 done».
 // Сцена декоративна (aria-hidden у HeroStage): той самий зміст продукт показує словами в заголовку hero.
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import * as THREE from "three";
 
 const CYCLE = 12;
 const REDUCED_FRAME = 7.3; // три задачі з п'яти вже «done»
+const INTRO_END = 4.9; // аркуш склався в картку, жодної задачі ще не позначено
 
 // Назви вигадані, як у картці HeroStage: відвідувач без входу не бачить вмісту шаблонів бази (AC-EDITOR-09).
 const CASE_NAME = "Flat 7, handover";
@@ -373,7 +375,7 @@ function buildScene(palette: Palette) {
   return { root, apply, dispose: () => disposeTree(root) };
 }
 
-function Story({ palette, playing, reduced }: { palette: Palette; playing: boolean; reduced: boolean }) {
+function Story({ palette, playing, reduced, onIntroEnd }: { palette: Palette; playing: boolean; reduced: boolean; onIntroEnd?: () => void }) {
   const scene = useMemo(() => buildScene(palette), [palette]);
   const time = useRef(reduced ? REDUCED_FRAME : 0);
   const pointer = useRef({ x: 0, y: 0 });
@@ -399,7 +401,9 @@ function Story({ palette, playing, reduced }: { palette: Palette; playing: boole
     const pinned = (window as { __blueprintT?: unknown }).__blueprintT;
     if (typeof pinned === "number") time.current = pinned % CYCLE;
     else if (playing) {
+      const before = time.current;
       time.current = (time.current + Math.min(delta, 0.25)) % CYCLE;
+      if (onIntroEnd && before < INTRO_END && time.current >= INTRO_END) onIntroEnd();
     }
     scene.apply(time.current);
     // Курсор злегка нахиляє сцену (без руху за reduced motion).
@@ -412,7 +416,7 @@ function Story({ palette, playing, reduced }: { palette: Palette; playing: boole
   return <primitive object={scene.root} />;
 }
 
-export default function BlueprintScene({ playing, reduced }: { playing: boolean; reduced: boolean }) {
+export default function BlueprintScene({ playing, reduced, onIntroEnd }: { playing: boolean; reduced: boolean; onIntroEnd?: () => void }) {
   const palette = usePalette();
   const [fontsReady, setFontsReady] = useState(false);
   useEffect(() => {
@@ -432,7 +436,7 @@ export default function BlueprintScene({ playing, reduced }: { playing: boolean;
       gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
       camera={{ position: [0, 0.15, 6.2], fov: 38 }}
     >
-      <Story palette={palette} playing={playing} reduced={reduced} />
+      <Story palette={palette} playing={playing} reduced={reduced} onIntroEnd={onIntroEnd} />
     </Canvas>
   );
 }
