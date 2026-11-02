@@ -1,0 +1,133 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-02T09:08:24.157Z",
+  "baseURL": "https://property-workflows-rho.vercel.app",
+  "deployedSha": "3191d27c8bb2ca53289dc4fed76fc4bafe5c5ae8",
+  "testsCommit": "1d3d724007ab7e8bd29d4e15e84db5bf754ac6fd",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-DSYS-04",
+      "proof": "AC-DSYS-04",
+      "title": "AC-DSYS-04: менеджер без запусків відкриває список запусків — «No runs yet. Launch a template to start one.», посилання «Launch a template» і без таблиці",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-DSYS-04-then-1.png",
+      "video": "test-results/artifacts/runs-empty-AC-DSYS-04-мене-14827-h-a-template»-і-без-таблиці-chromium/video.webm",
+      "trace": "test-results/artifacts/runs-empty-AC-DSYS-04-мене-14827-h-a-template»-і-без-таблиці-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі /runs видно точний текст повідомлення «No runs yet. Launch a template to start one.» і напис «Launch a template» на синій кнопці під ним; таблиці в кадрі немає, а сама сторінка показує порожній стан. Кадр не показує, чи це саме посилання (<a>) чи кнопка, що веде на /templates, — це перевіряється не з кадрів, тому тут не оцінюється."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "No runs yet. Launch a template to start one.",
+          "onPage": true
+        },
+        {
+          "quote": "Launch a template",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3254,
+      "reviewCostUsd": 0.00205,
+      "reviewWallMs": 7754
+    },
+    {
+      "id": "AC-EDITOR-07",
+      "proof": "AC-EDITOR-07",
+      "title": "AC-EDITOR-07: менеджер B за прямим посиланням на список версій «Tenant move-in» бачить «Not enough rights» і жодної версії",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-EDITOR-07-then-1.png",
+      "video": "test-results/artifacts/template-versions-forbidde-10b3c-ugh-rights»-і-жодної-версії-chromium/video.webm",
+      "trace": "test-results/artifacts/template-versions-forbidde-10b3c-ugh-rights»-і-жодної-версії-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі сторінки «Versions» видно червоний напис «Not enough rights» з іконкою попередження; текст збігається з критерієм посимвольно. Рядків версій, таблиці чи списку на кадрі немає, але ця частина «Тоді» за правилами не оцінюється з кадрів. Сесія показана як manager.b@example.test.</notes>\n"
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Not enough rights",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 3419,
+      "reviewCostUsd": 0.00177,
+      "reviewWallMs": 5176
+    },
+    {
+      "id": "AC-EDITOR-09",
+      "proof": "AC-EDITOR-09",
+      "title": "AC-EDITOR-09: відвідувач без входу за прямим посиланням на редактор «Tenant move-in» бачить сторінку входу без вмісту шаблону",
+      "screenshot": "docs/qa/uat/2026-11-02/frames/AC-EDITOR-09-then-1.png",
+      "video": "test-results/artifacts/editor-visitor-AC-EDITOR-0-247c7-ку-входу-без-вмісту-шаблону-chromium/video.webm",
+      "trace": "test-results/artifacts/editor-visitor-AC-EDITOR-0-247c7-ку-входу-без-вмісту-шаблону-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно сторінку входу Property Workflows: заголовок «Sign in», поля «Email» і «Password» та кнопку «Sign in». Праворуч є декоративна картка «Flat 7, handover» із чеклістом; це не шаблон «Tenant move-in», але за розділом «Не з кадрів» відсутність вмісту шаблону не оцінюю."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Sign in",
+          "onPage": true
+        },
+        {
+          "quote": "Email",
+          "onPage": true
+        },
+        {
+          "quote": "Password",
+          "onPage": true
+        },
+        {
+          "quote": "Sign in",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 10597,
+      "reviewCostUsd": 0.00226,
+      "reviewWallMs": 9345
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-02T09:08:13.728Z",
+    "deleted": [],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
