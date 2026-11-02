@@ -1,4 +1,4 @@
-Прод: https://property-workflows-rho.vercel.app
+https://property-workflows-rho.vercel.app
 
 # Шаблон проєкту розробника: Next.js + Supabase + OpenSpec
 
