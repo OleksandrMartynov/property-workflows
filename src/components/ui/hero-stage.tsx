@@ -21,14 +21,15 @@ import {
 import { StatusIcon } from "./status-badge";
 
 // Hero сторінки входу: шейдер-тло, «ехо» даху з логотипу, заголовок із серифним акцентом, чипи можливостей і скляна
-// картка, в якій чекліст «Tenant move-in» спершу виконується сам, а далі — за кліком користувача.
+// картка, в якій чекліст «Unit handover» спершу виконується сам, а далі — за кліком користувача. Назви в картці
+// вигадані й не збігаються з шаблонами бази: відвідувач без входу не бачить вмісту шаблонів (AC-EDITOR-09).
 // Рух лише тут; поважає prefers-reduced-motion (статичний кадр «3 з 4»), має кнопку Pause (WCAG 2.2.2).
 
 const TASKS: { name: string; who: string; Icon: (p: { className?: string }) => ReactNode }[] = [
-  { name: "Inspect the apartment", who: "ana@example.test", Icon: ClipboardCheckIcon },
-  { name: "Read the meters", who: "oleh@example.test", Icon: GaugeIcon },
-  { name: "Sign the lease agreement", who: "ana@example.test", Icon: FileSignIcon },
-  { name: "Hand over the keys", who: "ira@example.test", Icon: KeyIcon },
+  { name: "Walk through the unit", who: "ana@example.test", Icon: ClipboardCheckIcon },
+  { name: "Photograph the meters", who: "oleh@example.test", Icon: GaugeIcon },
+  { name: "Sign the handover form", who: "ana@example.test", Icon: FileSignIcon },
+  { name: "Pass on the keys", who: "ira@example.test", Icon: KeyIcon },
 ];
 
 // Лише те, що продукт уже вміє.
@@ -134,7 +135,7 @@ function StoryCard({ playing, reduced }: { playing: boolean; reduced: boolean })
       <CompletionGlow complete={complete} rounded="rounded-xl" burst burstOrigin="right-9 top-6" burstColors={["bg-status-done-mark", "bg-stage-accent", "bg-stage-glow-3"]}>
         <div
           role="group"
-          aria-label="Interactive demo: tenant move-in checklist"
+          aria-label="Interactive demo: unit handover checklist"
           onPointerMove={moveSpotlight}
           className={cn(
             "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl border border-stage-border bg-stage-card p-4 shadow-lg backdrop-blur-xl transition-[opacity,filter] duration-500 ease-standard",
@@ -148,8 +149,8 @@ function StoryCard({ playing, reduced }: { playing: boolean; reduced: boolean })
           />
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-heading text-stage-foreground">Apartment 12, move-in</span>
-              <span className="text-label font-normal text-stage-muted">Tenant move-in</span>
+              <span className="text-heading text-stage-foreground">Flat 7, handover</span>
+              <span className="text-label font-normal text-stage-muted">Unit handover</span>
             </div>
             <span
               className={cn(
