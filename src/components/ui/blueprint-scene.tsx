@@ -1,7 +1,7 @@
 "use client";
 
 // 3D-сцена hero сторінки входу — «креслення, що оживає»: аркуш-креслення шаблону з сіткою промальовується лініями,
-// піднімається й складається у скляну картку запуску «Apartment 12, move-in», задачі виконуються по одній, запуск
+// піднімається й складається у скляну картку запуску «Flat 7, handover», задачі виконуються по одній, запуск
 // стає «completed», картка відпливає — і цикл знову (≈12 с). Кольори — з токенів теми (--stage*, --status-done-mark),
 // тож світла й темна теми підхоплюються самі. Рух — лише коли playing; reduced motion — статичний кадр «3 of 5 done».
 // Сцена декоративна (aria-hidden у HeroStage): той самий зміст продукт показує словами в заголовку hero.
@@ -12,11 +12,12 @@ import * as THREE from "three";
 const CYCLE = 12;
 const REDUCED_FRAME = 7.3; // три задачі з п'яти вже «done»
 
-const CASE_NAME = "Apartment 12, move-in";
-const TEMPLATE_NAME = "Tenant move-in";
+// Назви вигадані, як у картці HeroStage: відвідувач без входу не бачить вмісту шаблонів бази (AC-EDITOR-09).
+const CASE_NAME = "Flat 7, handover";
+const TEMPLATE_NAME = "Unit handover";
 const SECTIONS = [
-  { name: "Before move-in", tasks: ["Sign the lease agreement", "Inspect the apartment", "Order cleaning"] },
-  { name: "Move-in day", tasks: ["Hand over the keys", "Record meter readings"] },
+  { name: "Before handover", tasks: ["Walk through the unit", "Photograph the meters", "Book the cleaners"] },
+  { name: "Handover day", tasks: ["Sign the handover form", "Pass on the keys"] },
 ];
 const TASK_COUNT = SECTIONS.reduce((n, s) => n + s.tasks.length, 0);
 
