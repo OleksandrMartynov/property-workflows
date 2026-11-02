@@ -366,6 +366,7 @@ describe("База: збереження версії", () => {
     const tpl = await tenantMoveInV1("Tenant move-in (no delete)");
     const before = await state(tpl.id);
     await expect(t.asUser(ADMIN, "delete from public.templates where id = $1", [tpl.id])).rejects.toThrow("permission denied");
+    await expect(t.asService("delete from public.templates where id = $1", [tpl.id])).rejects.toThrow("permission denied");
     expect(await state(tpl.id)).toEqual(before);
     expect(await versionTasks(ADMIN, tpl.id, 1)).toHaveLength(5);
   });

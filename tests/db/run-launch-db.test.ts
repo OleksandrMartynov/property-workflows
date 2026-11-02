@@ -111,7 +111,7 @@ describe("База: запуск шаблону", () => {
     const [{ id: templateId }] = await t.asUser<{ id: string }>(ADMIN, "insert into public.templates (name) values ('Tenant move-in (AC-RUN-12)') returning id");
     // Тестовий шаблон прибираємо: інші тести рахують шаблони (запуск лишається, template_id стає null).
     onTestFinished(async () => {
-      await t.asService("delete from public.templates where id = $1", [templateId]);
+      await t.db.query("delete from public.templates where id = $1", [templateId]);
     });
     const section = async (name: string, position: number) =>
       (
