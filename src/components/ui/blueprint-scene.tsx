@@ -51,10 +51,13 @@ const ease = (v: number) => {
 type Palette = { ink: THREE.Color; accent: THREE.Color; card: THREE.Color; muted: THREE.Color; done: THREE.Color; doneBg: THREE.Color };
 
 function cssColor(name: string, probe: CanvasRenderingContext2D): THREE.Color {
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const root = getComputedStyle(document.documentElement);
+  const raw = root.getPropertyValue(name).trim();
+  // Запасний колір — колір тексту кореня (теж з теми), не сталий hex. Перше присвоєння скидає стан полотна:
+  // невалідне значення canvas ігнорує й лишає попередній колір.
   probe.clearRect(0, 0, 1, 1);
-  probe.fillStyle = "#808080";
-  probe.fillStyle = raw || "#808080";
+  probe.fillStyle = root.color;
+  probe.fillStyle = raw || root.color;
   probe.fillRect(0, 0, 1, 1);
   const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
   return new THREE.Color().setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace);

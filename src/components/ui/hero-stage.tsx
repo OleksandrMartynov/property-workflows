@@ -29,16 +29,26 @@ import { StatusIcon } from "./status-badge";
 // поки вантажиться або без WebGL — та сама картка-чекліст StoryCard.
 const BlueprintScene = dynamic(() => import("./blueprint-scene"), { ssr: false, loading: () => null });
 
+// Перевірка WebGL 2 — один раз на сторінку: пробний контекст одразу звільняємо, щоб повторні рендери не плодили
+// контекстів (у Chromium понад ліміт браузер гасить найстаріший — тобто й контекст самої сцени).
+let webgl2: boolean | undefined;
+function hasWebGL2() {
+  if (webgl2 === undefined) {
+    try {
+      const gl = document.createElement("canvas").getContext("webgl2");
+      webgl2 = Boolean(gl);
+      gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch {
+      webgl2 = false;
+    }
+  }
+  return webgl2;
+}
+
 function useWebGL() {
   return useSyncExternalStore(
     () => () => {},
-    () => {
-      try {
-        return Boolean(document.createElement("canvas").getContext("webgl2"));
-      } catch {
-        return false;
-      }
-    },
+    hasWebGL2,
     () => false,
   );
 }
