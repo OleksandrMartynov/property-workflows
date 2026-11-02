@@ -10,7 +10,7 @@
 
 - Прод-URL: https://property-workflows-rho.vercel.app
 - Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30
-- `/api/health` на момент UAT: sha `3191d27`, db ok, 02.11.2026
+- `/api/health` на момент UAT: sha `ac4da80`, db ok, 02.11.2026
 
 ## 3 AC
 
@@ -86,14 +86,14 @@
 
 | AC | Специфікація | Тест (твердження) | Агент | Вердикт | Кадр |
 |---|---|---|---|---|---|
-| AC-EDITOR-07 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/template-versions-forbidden.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/docs/qa/uat/2026-11-02/frames/AC-EDITOR-07-then-1.png |
-| AC-EDITOR-09 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/editor-visitor.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/docs/qa/uat/2026-11-02/frames/AC-EDITOR-09-then-1.png |
-| AC-DSYS-04 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/runs-empty.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/docs/qa/uat/2026-11-02/frames/AC-DSYS-04-then-1.png |
+| AC-EDITOR-07 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/template-versions-forbidden.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-EDITOR-07-then-1.png](uat/2026-11-02/frames/AC-EDITOR-07-then-1.png) |
+| AC-EDITOR-09 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/editor-visitor.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-EDITOR-09-then-1.png](uat/2026-11-02/frames/AC-EDITOR-09-then-1.png) |
+| AC-DSYS-04 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/runs-empty.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-DSYS-04-then-1.png](uat/2026-11-02/frames/AC-DSYS-04-then-1.png) |
 
-- Звіт: https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/docs/qa/uat/2026-11-02/report.md (кадри — `frames/`, `manifest.json`)
-- Відео: вкладення в описі PR https://github.com/OleksandrMartynov/property-workflows/pull/63
-- Рецензент: `claude-haiku-5-5`, суперечки — `claude-sonnet-5-5`; розбір 3 AC — $0.0061 (ціни API, за підпискою — у межах плану)
-- Негативний контроль (`npm run uat:nc`, рядки звіту — в описі https://github.com/OleksandrMartynov/property-workflows/pull/63): NC-1 (AC-DSYS-04, у тесті очікується інший текст порожнього стану) → **FAIL** (R1: перевірка впала); NC-2 (AC-DSYS-04, «Тоді» у вимозі змінено, тест і застосунок — ні) → тест зелений, але Haiku і Sonnet — FAIL → **NEEDS-HUMAN** (R3). Жодного PASS: UAT уміє падати, і агент ловить розбіжність, яку пропустив тест
+- Звіт: [report.md](uat/2026-11-02/report.md) (кадри — `frames/`, `manifest.json`)
+- Відео: вкладення в описі PR https://github.com/OleksandrMartynov/property-workflows/pull/74
+- Рецензент: `claude-haiku-5-5`, суперечки — `claude-sonnet-5-5`; розбір 3 AC — $0.0060 (ціни API, за підпискою — у межах плану)
+- Негативний контроль (`npm run uat:nc`, рядки звіту — в описі https://github.com/OleksandrMartynov/property-workflows/pull/74): NC-1 (AC-DSYS-04, у тесті очікується інший текст порожнього стану) → **FAIL** (R1: перевірка впала); NC-2 (AC-DSYS-04, «Тоді» у вимозі змінено, тест і застосунок — ні) → тест зелений, але Haiku і Sonnet — FAIL → **NEEDS-HUMAN** (R3). Жодного PASS: UAT уміє падати, і агент ловить розбіжність, яку пропустив тест
 - Дані: лише читання (жодного `@writes`); прибирання — «синтетичних uat-*@example.test видалено 0, лишилось 0»
 
 ### Приймання PM

@@ -1,9 +1,9 @@
 {
   "kind": "uat",
-  "generatedAt": "2026-11-02T09:29:18.747Z",
+  "generatedAt": "2026-11-02T11:53:01.787Z",
   "baseURL": "https://property-workflows-rho.vercel.app",
-  "deployedSha": "3191d27c8bb2ca53289dc4fed76fc4bafe5c5ae8",
-  "testsCommit": "1d3d724007ab7e8bd29d4e15e84db5bf754ac6fd",
+  "deployedSha": "ac4da80b632373c75b6443caded23178a56a9640",
+  "testsCommit": "ac4da80b632373c75b6443caded23178a56a9640",
   "reviewer": {
     "model": "claude-haiku-5-5",
     "disputes": "claude-sonnet-5-5"
@@ -21,7 +21,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "На кадрі /runs видно точний текст повідомлення «No runs yet. Launch a template to start one.» і напис «Launch a template» на синій кнопці під ним; таблиці в кадрі немає, а сама сторінка показує порожній стан. Кадр не показує, чи це саме посилання (<a>) чи кнопка, що веде на /templates, — це перевіряється не з кадрів, тому тут не оцінюється."
+        "notes": "На кадрі frame-then-1.png (сторінка Runs) видно повідомлення «No runs yet. Launch a template to start one.» і під ним синю кнопку з написом «Launch a template»; текст збігається з критерієм посимвольно. Кадр не показує, чи це саме посилання (<a>), чи кнопка, що веде на /templates; цей аспект не перевіряється з кадру, тож оцінено лише текст."
       },
       "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
@@ -42,9 +42,9 @@
       "verdict": "PASS",
       "factoryGate": "PASS",
       "rule": "R6: перевірки, агент і цитати збігаються",
-      "playwrightMs": 3254,
-      "reviewCostUsd": 0.00205,
-      "reviewWallMs": 7754
+      "playwrightMs": 3906,
+      "reviewCostUsd": 0.00199,
+      "reviewWallMs": 8481
     },
     {
       "id": "AC-EDITOR-07",
@@ -57,7 +57,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "На кадрі сторінки «Versions» видно червоний напис «Not enough rights» з іконкою попередження; текст збігається з критерієм посимвольно. Рядків версій, таблиці чи списку на кадрі немає, але ця частина «Тоді» за правилами не оцінюється з кадрів. Сесія показана як manager.b@example.test.</notes>\n"
+        "notes": "На кадрі frame-then-1.png сторінки «Versions» видно червоний напис «Not enough rights» з іконкою попередження, текст збігається з критерієм посимвольно. Під ним є кнопка «Back to templates», а список версій на кадрі відсутній; цю частину «Тоді» перевіряють автоматичні тести, я її не оцінював. Сесія показує manager.b@example.test.</notes>\n"
       },
       "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
@@ -74,9 +74,9 @@
       "verdict": "PASS",
       "factoryGate": "PASS",
       "rule": "R6: перевірки, агент і цитати збігаються",
-      "playwrightMs": 3419,
-      "reviewCostUsd": 0.00177,
-      "reviewWallMs": 5176
+      "playwrightMs": 3348,
+      "reviewCostUsd": 0.00185,
+      "reviewWallMs": 7725
     },
     {
       "id": "AC-EDITOR-09",
@@ -89,7 +89,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "На кадрі видно сторінку входу Property Workflows: заголовок «Sign in», поля «Email» і «Password» та кнопку «Sign in». Праворуч є декоративна картка «Flat 7, handover» із чеклістом; це не шаблон «Tenant move-in», але за розділом «Не з кадрів» відсутність вмісту шаблону не оцінюю."
+        "notes": "На кадрі frame-then-1.png видно сторінку входу з заголовком «Sign in», полями «Email» і «Password» та кнопкою «Sign in»; назви шаблону «Tenant move-in» на кадрі немає. У правій частині екрана є декоративна картка «Flat 7, handover» із секціями «Before handover» і «Handover day» та задачами; це не назва шаблону з критерію, тож оцінку «немає вмісту шаблону» не змінює, але варто переконатися, що це статична ілюстрація сторінки входу, а не дані шаблону."
       },
       "agentModel": "claude-haiku-5-5",
       "agentVerdicts": {
@@ -118,14 +118,14 @@
       "verdict": "PASS",
       "factoryGate": "PASS",
       "rule": "R6: перевірки, агент і цитати збігаються",
-      "playwrightMs": 10597,
-      "reviewCostUsd": 0.00226,
-      "reviewWallMs": 9345
+      "playwrightMs": 10887,
+      "reviewCostUsd": 0.00217,
+      "reviewWallMs": 10466
     }
   ],
   "negativeControls": [],
   "cleanup": {
-    "at": "2026-11-02T09:08:13.728Z",
+    "at": "2026-11-02T11:52:50.054Z",
     "deleted": [],
     "remaining": [],
     "leftoverRequests": 0
