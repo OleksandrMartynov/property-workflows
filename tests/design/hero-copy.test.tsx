@@ -15,4 +15,10 @@ describe("Hero сторінки входу", () => {
     const html = renderToStaticMarkup(<HeroStage />).toLowerCase();
     for (const name of seedNames) expect(html).not.toContain(name.toLowerCase());
   });
+
+  it("AC-EDITOR-09: 3D-креслення шаблону на вході не малює назв шаблонів, секцій і задач з бази", () => {
+    const scene = readFileSync(new URL("../../src/components/ui/blueprint-scene.tsx", import.meta.url), "utf8").toLowerCase();
+    expect(scene).toContain("unit handover");
+    for (const name of seedNames) expect(scene).not.toContain(name.toLowerCase());
+  });
 });
