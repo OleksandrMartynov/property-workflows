@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canCompleteTask } from "@/lib/runs/access";
+import { canCompleteTask, canReassignTask } from "@/lib/runs/access";
 import { MESSAGES, dbErrorCode, errorMessage } from "@/lib/runs/messages";
 
 const A = { id: "a", role: "manager" as const };
@@ -33,5 +33,19 @@ describe("Хто бачить кнопку «Mark as done»", () => {
   it("AC-TASK-01: уже «done» задачу чи задачу завершеного запуску кнопка не пропонує", () => {
     expect(canCompleteTask(B, { ...taskOfB, status: "done" }, run)).toBe(false);
     expect(canCompleteTask(B, taskOfB, { ...run, status: "completed" })).toBe(false);
+  });
+});
+
+describe("Хто бачить зміну виконавця", () => {
+  it("менеджер запуску й адміністратор — так; виконавець та інший менеджер — ні", () => {
+    expect(canReassignTask(A, taskOfB, run)).toBe(true);
+    expect(canReassignTask(ADMIN, taskOfB, run)).toBe(true);
+    expect(canReassignTask(B, taskOfB, run)).toBe(false);
+    expect(canReassignTask(C, taskOfB, run)).toBe(false);
+  });
+
+  it("«done» задача чи завершений запуск — ні", () => {
+    expect(canReassignTask(A, { ...taskOfB, status: "done" }, run)).toBe(false);
+    expect(canReassignTask(A, taskOfB, { ...run, status: "completed" })).toBe(false);
   });
 });

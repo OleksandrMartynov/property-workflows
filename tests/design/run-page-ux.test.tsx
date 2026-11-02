@@ -30,6 +30,8 @@ const html = renderToStaticMarkup(
     }
     viewer={{ id: B, role: "manager", email: "manager.b@example.test" }}
     completeTask={async () => {}}
+    reassignTask={async () => {}}
+    users={[]}
   />,
 );
 
