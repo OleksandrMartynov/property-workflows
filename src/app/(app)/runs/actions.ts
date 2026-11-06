@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { collectAssignees } from "@/lib/runs/assignees";
 import { validateCaseName } from "@/lib/runs/case-name";
-import { dbErrorCode, isMissingRpcSignature } from "@/lib/runs/messages";
+import { dbErrorCode } from "@/lib/runs/messages";
 import { loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { requireViewer } from "@/lib/supabase/viewer";
 
@@ -61,12 +61,9 @@ export async function completeTask(formData: FormData) {
   if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
 
   // confirmed=yes додає лише підтверджена дія останньої обов'язкової задачі (withConfirmation у MarkDoneForm).
-  // p_confirmed передаємо лише як true: звичайна позначка не залежить від нового параметра функції бази.
+  // p_confirmed передаємо лише як true: звичайна позначка не залежить від параметра функції бази (default false).
   const confirmed = text(formData, "confirmed") === "yes";
-  let { error } = await supabase.rpc("complete_task", { p_task_id: taskId, ...(confirmed ? { p_confirmed: true } : {}) });
-  // ADR 0003: база ще без p_confirmed (застосунок задеплоєно раніше за міграцію або базу не оновлено) — PostgREST не
-  // знаходить сигнатуру. Користувач уже підтвердив у діалозі, тож повторюємо виклик старою сигнатурою.
-  if (error && confirmed && isMissingRpcSignature(error)) ({ error } = await supabase.rpc("complete_task", { p_task_id: taskId }));
+  const { error } = await supabase.rpc("complete_task", { p_task_id: taskId, ...(confirmed ? { p_confirmed: true } : {}) });
   // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
   if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
 
