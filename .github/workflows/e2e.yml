@@ -60,6 +60,8 @@ jobs:
       - name: «Tenant move-in» за AC (2 і 3 задачі) — нова версія через редактор, як на проді
         # Сид зрізу 1 має 3 і 2 задачі, а AC — 2 і 3; заодно з'являється версія 2 для «Дано» AC-EDITOR-07.
         run: npm run template:ac
+      - name: «Tenant move-in» — повторний прогін нічого не змінює (ідемпотентність, без версії 3)
+        run: npm run template:ac -- --expect-no-changes
       - run: npm run build
       - name: Chromium для Playwright
         run: npx playwright install --with-deps --only-shell chromium
