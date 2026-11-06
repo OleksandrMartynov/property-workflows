@@ -89,75 +89,96 @@ async function order(kind, current, wanted) {
   }
 }
 
-async function main() {
-  // 0. Чужа незбережена робота — не чіпаємо (без --discard-draft нічого не пишемо).
-  const before = await templateRow();
-  if (before.has_unpublished_changes && !DISCARD_DRAFT) {
+// 0. Чужа незбережена робота — не чіпаємо (без --discard-draft нічого не пишемо).
+async function guardDraft() {
+  const { has_unpublished_changes: dirty } = await templateRow();
+  if (dirty && !DISCARD_DRAFT) {
     throw new Error(
       "у шаблоні є незбережені зміни (хтось редагує чернетку). Збережіть їх у редакторі або свідомо відкиньте: npm run template:ac -- --discard-draft",
     );
   }
+}
 
-  // 1. Цільові секції існують.
-  let draft = await load();
-  for (const section of TARGET) {
-    if (!byName(draft, section.name)) await rpc("add_template_section", { p_template_id: TEMPLATE, p_name: section.name });
+// 1. Цільові секції існують.
+async function ensureSections() {
+  const draft = await load();
+  for (const section of TARGET.filter((t) => !byName(draft, t.name))) {
+    await rpc("add_template_section", { p_template_id: TEMPLATE, p_name: section.name });
   }
+}
 
-  // 2. Кожна цільова задача — у своїй секції, з потрібною позначкою required. Якщо задач з такою назвою кілька
-  //    (наприклад, «Order cleaning» із сиду й додана в редакторі), цільовою стає перша в цільовій секції.
-  draft = await load();
-  const allTasks = () => draft.flatMap((s) => s.tasks);
+/** Задача з цією назвою: спершу в цільовій секції, інакше будь-яка (дублікати прибере крок 3). */
+const findTask = (tasks, sectionId, name) =>
+  tasks.find((t) => t.name === name && t.section_id === sectionId) ?? tasks.find((t) => t.name === name);
+
+/** Одна цільова задача: додати, якщо немає; інакше перенести в секцію й виставити required. Повертає id наявної. */
+async function placeTask(tasks, sectionId, name, required) {
+  const task = findTask(tasks, sectionId, name);
+  if (!task) {
+    await rpc("add_template_task", { p_template_id: TEMPLATE, p_section_id: sectionId, p_name: name, p_required: required });
+    return null;
+  }
+  if (task.section_id !== sectionId) await rpc("move_template_task_to_section", { p_template_id: TEMPLATE, p_task_id: task.id, p_section_id: sectionId });
+  if (task.required !== required) await rpc("update_template_task", { p_template_id: TEMPLATE, p_task_id: task.id, p_name: name, p_required: required });
+  return task.id;
+}
+
+// 2. Кожна цільова задача — у своїй секції, з потрібною позначкою required. Якщо задач з такою назвою кілька
+//    (наприклад, «Order cleaning» із сиду й додана в редакторі), цільовою стає перша в цільовій секції.
+async function placeTasks() {
+  const draft = await load();
+  const tasks = draft.flatMap((s) => s.tasks);
   const kept = new Set();
   for (const section of TARGET) {
     const sectionId = byName(draft, section.name).id;
-    for (const [name, required] of section.tasks) {
-      const same = allTasks().filter((t) => t.name === name);
-      const task = same.find((t) => t.section_id === sectionId) ?? same[0];
-      if (!task) {
-        await rpc("add_template_task", { p_template_id: TEMPLATE, p_section_id: sectionId, p_name: name, p_required: required });
-        continue;
-      }
-      kept.add(task.id);
-      if (task.section_id !== sectionId) {
-        await rpc("move_template_task_to_section", { p_template_id: TEMPLATE, p_task_id: task.id, p_section_id: sectionId });
-      }
-      if (task.required !== required) {
-        await rpc("update_template_task", { p_template_id: TEMPLATE, p_task_id: task.id, p_name: name, p_required: required });
-      }
-    }
+    for (const [name, required] of section.tasks) kept.add(await placeTask(tasks, sectionId, name, required));
   }
+  return kept;
+}
 
-  // 3. Зайві задачі (поза AC і дублікати цільових) і секції — прибрати: AC описують рівно 2 секції й 5 задач. Задачі
-  //    з попередніх версій лишаються в історії версій.
-  draft = await load();
+// 3. Зайві задачі (поза AC і дублікати цільових) і секції — прибрати: AC описують рівно 2 секції й 5 задач. Задачі
+//    з попередніх версій лишаються в історії версій.
+async function removeExtras(kept) {
+  const draft = await load();
+  const tasks = draft.flatMap((s) => s.tasks);
+  const keptNames = new Set(tasks.filter((t) => kept.has(t.id)).map((t) => t.name));
   const wantedTasks = new Set(TARGET.flatMap((s) => s.tasks.map(([name]) => name)));
-  for (const task of allTasks()) {
-    const extra = !wantedTasks.has(task.name) || (!kept.has(task.id) && allTasks().some((t) => t.name === task.name && kept.has(t.id)));
-    if (extra) await rpc("remove_template_task", { p_template_id: TEMPLATE, p_task_id: task.id });
-  }
+  // Зайва — поза AC або дублікат назви, для якої вже є цільова задача.
+  const extra = tasks.filter((t) => !wantedTasks.has(t.name) || (!kept.has(t.id) && keptNames.has(t.name)));
+  for (const task of extra) await rpc("remove_template_task", { p_template_id: TEMPLATE, p_task_id: task.id });
   const wantedSections = new Set(TARGET.map((s) => s.name));
-  for (const section of draft) {
-    if (!wantedSections.has(section.name)) await rpc("remove_template_section", { p_template_id: TEMPLATE, p_section_id: section.id });
+  for (const section of draft.filter((x) => !wantedSections.has(x.name))) {
+    await rpc("remove_template_section", { p_template_id: TEMPLATE, p_section_id: section.id });
   }
+}
 
-  // 4. Порядок секцій і задач у кожній секції — як в AC.
-  draft = await load();
-  await order("section", [...draft], TARGET.map((s) => s.name));
-  draft = await load();
+// 4. Порядок секцій і задач у кожній секції — як в AC.
+async function reorder() {
+  await order("section", [...(await load())], TARGET.map((s) => s.name));
+  const draft = await load();
   for (const section of TARGET) {
     await order("task", [...byName(draft, section.name).tasks], section.tasks.map(([name]) => name));
   }
+}
 
-  // 5. Форма — до збереження: не як в AC — версію не зберігаємо. Назву шаблону скрипт не змінює й не публікує чужу:
-  //    незбережених змін на старті не було (крок 0), тож нова версія містить лише зміни цього прогону.
-  draft = await load();
+// 5. Форма — до збереження: не як в AC — версію не зберігаємо. Назву шаблону скрипт не змінює й не публікує чужу:
+//    незбережених змін на старті не було (крок 0), тож нова версія містить лише зміни цього прогону.
+async function saveIfShaped() {
+  const draft = await load();
   const shape = draft.map((s) => `${s.name} (${s.tasks.length})`).join(", ");
   if (shapeOf(draft) !== TARGET_SHAPE) throw new Error(`форма чернетки не збігається з AC: ${shape}; версію не збережено`);
   if ((await templateRow()).has_unpublished_changes) await rpc("save_template_version", { p_template_id: TEMPLATE });
+  return shape;
+}
 
-  const after = await templateRow();
-  console.log(`«Tenant move-in»: поточна версія ${after.current_version}; ${shape}; змін через редактор: ${changed} — форма як в AC`);
+async function main() {
+  await guardDraft();
+  await ensureSections();
+  await removeExtras(await placeTasks());
+  await reorder();
+  const shape = await saveIfShaped();
+  const { current_version: version } = await templateRow();
+  console.log(`«Tenant move-in»: поточна версія ${version}; ${shape}; змін через редактор: ${changed} — форма як в AC`);
   if (EXPECT_NO_CHANGES && changed > 0) throw new Error(`повторний прогін мав нічого не змінити, а змінив ${changed}`);
 }
 
