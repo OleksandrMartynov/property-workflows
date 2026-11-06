@@ -8,6 +8,7 @@ import { Forbidden } from "@/app/_components/forbidden";
 import { findTemplateDraft, isUuid, loadCurrentVersions, loadVersionTasks } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
 import { morphName } from "@/components/ui/motion";
+import { shownName } from "@/lib/templates/display-name";
 import { TemplateView } from "./_components/template-view";
 
 // Сторінка шаблону лише для читання (AC-EDITOR-02): назва, «Version N», секції із задачами («required» / «optional») і
@@ -34,7 +35,7 @@ export default async function TemplatePage({ params }: PageProps<"/templates/[id
 
   return (
     <PageShell
-      title={current.name}
+      title={shownName(current.name, "template")}
       titleMorph={morphName("template", id)}
       back={{ href: "/templates", label: "Templates" }}
       description={
