@@ -11,8 +11,13 @@ import { NO_RUNS_ACTION, NO_RUNS_TITLE, runStatusLabel, runStatusTone } from "@/
 import { formatProgress } from "@/lib/runs/progress";
 import { NO_RUNS_FOUND } from "@/lib/runs/views";
 
-// На вузькому екрані першими лишаються назва випадку, прогрес і статус («Вигляд і тон» PM); решта — з md.
-const SECONDARY = "hidden md:table-cell";
+// Колонки з'являються за шириною самої таблиці (Table — @container), а не вікна: поруч сайдбар. Завжди — назва
+// випадку й прогрес; статус — окремою колонкою з 448 px (на телефоні — під назвою, «Вигляд і тон» PM); далі виконавці
+// (аватари, вузькі), менеджер, наступна задача. Пороги заміряно: на кожній ширині таблиця без прокрутки вбік.
+const STATUS = "hidden @md:table-cell";
+const ASSIGNEES = "hidden @xl:table-cell";
+const MANAGER = "hidden @3xl:table-cell";
+const NEXT_TASK = "hidden @5xl:table-cell";
 
 export interface RunRow {
   id: string;
@@ -74,11 +79,11 @@ export function RunsList({
       <TableHeader>
         <TableRow>
           <TableHead>Run</TableHead>
-          <TableHead className={SECONDARY}>Run manager</TableHead>
+          <TableHead className={MANAGER}>Run manager</TableHead>
           <TableHead>Progress</TableHead>
-          <TableHead className={SECONDARY}>Next task</TableHead>
-          <TableHead className={SECONDARY}>Assignees</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead className={NEXT_TASK}>Next task</TableHead>
+          <TableHead className={ASSIGNEES}>Assignees</TableHead>
+          <TableHead className={STATUS}>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -87,14 +92,20 @@ export function RunsList({
           return (
             <TableRow key={run.id} interactive data-testid="run-row" className="animate-ui-rise" style={{ "--i": index } as CSSProperties}>
               <TableCell>
-                <div className="flex flex-col">
+                {/* wrap-anywhere: довге слово без пробілів (назва з 100 літер) рветься, а не розпирає таблицю вбік. */}
+                <div className="flex min-w-40 flex-col wrap-anywhere">
                   <Link href={`/runs/${run.id}`} className={rowLinkClass}>
                     <SharedTitle name={morphName("run", run.id)}>{run.case_name}</SharedTitle>
                   </Link>
                   <span className="text-meta text-muted-foreground">{run.template_name}</span>
+                  {/* Колонку менеджера сховано — email під назвою (не зникає і не обрізається); так само статус на телефоні. */}
+                  <span className="text-meta text-muted-foreground @3xl:hidden">{managerOf(run)}</span>
+                  <span className="mt-1 @md:hidden">
+                    <StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>
+                  </span>
                 </div>
               </TableCell>
-              <TableCell className={`${SECONDARY} text-muted-foreground`}>{managerOf(run)}</TableCell>
+              <TableCell className={`${MANAGER} text-muted-foreground`}>{managerOf(run)}</TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-2">
                   <ProgressRing done={s.done} total={s.total} />
@@ -103,11 +114,11 @@ export function RunsList({
                   </span>
                 </span>
               </TableCell>
-              <TableCell className={`${SECONDARY} max-w-72 whitespace-normal text-muted-foreground`}>{s.nextTask ?? "—"}</TableCell>
-              <TableCell className={SECONDARY}>
+              <TableCell className={`${NEXT_TASK} max-w-72 whitespace-normal text-muted-foreground`}>{s.nextTask ?? "—"}</TableCell>
+              <TableCell className={ASSIGNEES}>
                 <AvatarStack emails={s.assignees} />
               </TableCell>
-              <TableCell>
+              <TableCell className={STATUS}>
                 <StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>
               </TableCell>
             </TableRow>
