@@ -9,6 +9,8 @@ import { loadRunSummaries } from "./runs/_lib/summaries";
 // Головна: хто увійшов і куди далі. Сторінка читає cookies, тому рендериться динамічно.
 export const metadata = { title: "Home" };
 
+const MY_TASKS_MAX = 5;
+
 export default async function Home() {
   // Claims і профіль — ті самі, що вже прочитав layout (getViewer кешує їх на запит).
   // RLS: користувач бачить лише власний профіль, а запуски й задачі — лише дозволені йому.
@@ -21,7 +23,7 @@ export default async function Home() {
   if (profile?.role === "vendor") redirect("/runs");
 
   const count = { count: "exact", head: true } as const;
-  const [active, completed, mine, recent] = await Promise.all([
+  const [active, completed, mine, recent, open] = await Promise.all([
     supabase.from("runs").select("id", count).eq("status", "in_progress"),
     supabase.from("runs").select("id", count).eq("status", "completed"),
     // Той самий підрахунок, що й нагадування біля «Runs» у layout — без другого запиту.
@@ -32,10 +34,21 @@ export default async function Home() {
       .order("created_at", { ascending: false })
       .order("id")
       .limit(5),
+    // Мої задачі «to do» для блоку «Your tasks» (RLS лишає лише видимі) з назвою запуску — одним запитом.
+    supabase
+      .from("run_tasks")
+      .select("id, name, run_id, runs(case_name)")
+      .eq("assignee_id", claims.sub)
+      .eq("status", "to_do")
+      .order("run_id")
+      .order("section_position")
+      .order("position")
+      .limit(MY_TASKS_MAX),
   ]);
-  const failed = [active, completed, recent].find((result) => result.error);
+  const failed = [active, completed, recent, open].find((result) => result.error);
   if (failed?.error) throw new Error(failed.error.message);
   const runs = recent.data ?? [];
+  const myTasks = (open.data ?? []).map((t) => ({ id: t.id, name: t.name, run_id: t.run_id, run_name: t.runs?.case_name ?? "—" }));
   const { summary, emailOf } = profile ? await loadRunSummaries(supabase, runs.map((r) => r.id)) : { summary: {}, emailOf: new Map<string, string | null>() };
   const managerOf = (run: { run_manager_id: string }) => (run.run_manager_id === claims.sub ? "me" : (emailOf.get(run.run_manager_id) ?? "—"));
 
@@ -55,6 +68,7 @@ export default async function Home() {
           active={active.count ?? 0}
           mine={mine}
           completed={completed.count ?? 0}
+          myTasks={myTasks}
           runs={runs}
           summary={summary}
           managerOf={managerOf}

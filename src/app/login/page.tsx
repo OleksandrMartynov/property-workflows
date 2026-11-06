@@ -19,8 +19,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // Куди повернути після входу (AC-DSYS-08): у форму йде лише безпечний шлях цього сайту.
   const returnTo = safeNext(next);
 
+  // Телефон: смуга hero — за своєю висотою, панель входу — решта екрана (інакше grid ділить вільну висоту між рядками,
+  // і під смугою лишається порожній шов).
   return (
-    <main className="grid min-h-dvh flex-1 lg:grid-cols-[minmax(28rem,0.82fr)_minmax(0,1.18fr)]">
+    <main className="grid min-h-dvh flex-1 grid-rows-[auto_1fr] lg:grid-cols-[minmax(28rem,0.82fr)_minmax(0,1.18fr)] lg:grid-rows-1">
       <div
         aria-hidden="true"
         className="relative h-28 overflow-hidden bg-stage bg-[radial-gradient(70%_120%_at_15%_0%,var(--stage-glow-1),transparent),radial-gradient(60%_110%_at_90%_100%,var(--stage-glow-2),transparent)] lg:hidden"
