@@ -15,7 +15,7 @@
     "ac:coverage": "node scripts/check-ac-coverage.mjs",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
     "users:demo": "node --env-file=.env.local scripts/create-demo-users.mjs",
-    "template:ac": "node --env-file=.env.local scripts/tenant-move-in-to-ac.mjs",
+    "template:ac": "node --env-file-if-exists=.env.local scripts/tenant-move-in-to-ac.mjs",
     "check:design": "node scripts/check-design-tokens.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:copy": "node scripts/check-ui-copy.mjs",
