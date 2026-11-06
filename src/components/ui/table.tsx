@@ -1,10 +1,14 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-/** Щільна таблиця (рядок 36 px). Контейнер прокручується по горизонталі на вузьких екранах. */
+/**
+ * Щільна таблиця (рядок 44 px). Обгортка — контейнер (`@container`): колонки ховаються за шириною самої таблиці
+ * (`@xl:table-cell`…), а не вікна — поруч сайдбар, тож вікно 800 px дає таблиці лише ~660 px. Прокрутка вбік — лише
+ * запасний вихід.
+ */
 export function Table({ className, ...props }: ComponentProps<"table">) {
   return (
-    <div className="w-full overflow-x-auto rounded-md border border-border bg-card shadow-sm">
+    <div className="@container w-full overflow-x-auto rounded-md border border-border bg-card shadow-sm">
       <table className={cn("w-full border-collapse text-left text-body", className)} {...props} />
     </div>
   );

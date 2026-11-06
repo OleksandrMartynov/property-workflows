@@ -108,9 +108,22 @@ describe("Редактор шаблону", () => {
 
   it("AC-RUN-12: «Preview» — чекліст за секціями, як отримає запуск, без полів редагування", () => {
     const html = view({ mode: "preview" });
-    expect(html).toContain('data-testid="editor-preview"');
-    expect(html).toContain("Sign handover act");
-    expect(html).not.toContain("Add a task");
+    // Обидві панелі приходять з сервера одразу (перемикання без запиту); видно лише Preview, редагування — hidden.
+    const pane = (mode: string) => html.match(new RegExp(`<div([^>]*)data-mode="${mode}"`))?.[1] ?? "";
+    expect(pane("preview")).not.toContain("hidden");
+    expect(pane("edit")).toContain("hidden");
+    const preview = html.slice(html.indexOf('data-mode="preview"'), html.indexOf('data-mode="edit"'));
+    expect(preview).toContain('data-testid="editor-preview"');
+    expect(preview).toContain("Sign handover act");
+    expect(preview).not.toContain("Add a task");
+    expect(preview).not.toContain("<input");
+  });
+
+  it("режим Edit за замовчуванням: панель редагування видно, Preview схована", () => {
+    const html = view({});
+    expect(html.match(/<div([^>]*)data-mode="edit"/)?.[1]).not.toContain("hidden");
+    expect(html.match(/<div([^>]*)data-mode="preview"/)?.[1]).toContain("hidden");
+    expect(html).toContain("Add a task");
   });
 });
 

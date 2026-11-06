@@ -61,15 +61,24 @@ export function StatusIcon({ status, className }: { status: Status; className?: 
   }
 }
 
+/**
+ * `bare` — без «таблетки»: кольорова іконка й приглушене слово. Для рядків, де статус повторюється в кожному рядку
+ * (задачі запуску): список не рябіє, а форма іконки й слово лишаються.
+ */
 export function StatusBadge({
   status,
+  bare = false,
   className,
   children,
   ...props
-}: Omit<ComponentProps<"span">, "children"> & { status: Status; children: ReactNode }) {
+}: Omit<ComponentProps<"span">, "children"> & { status: Status; bare?: boolean; children: ReactNode }) {
   return (
     <span
-      className={cn("inline-flex h-5 items-center gap-1.5 rounded-full pl-1.5 pr-2 text-meta font-medium whitespace-nowrap", tones[status], className)}
+      className={cn(
+        "inline-flex h-5 items-center gap-1.5 text-meta font-medium whitespace-nowrap",
+        bare ? "text-muted-foreground" : cn("rounded-full pl-1.5 pr-2", tones[status]),
+        className,
+      )}
       {...props}
     >
       <StatusIcon status={status} />

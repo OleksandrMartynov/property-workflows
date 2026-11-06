@@ -10,6 +10,9 @@ import { ConfirmDialog } from "@/components/ui/dialog";
 import { CANNOT_BE_UNDONE, withConfirmation } from "@/lib/runs/confirmation";
 import { SubmitButton } from "@/app/_components/submit-button";
 
+// Палець — не курсор: на сенсорному екрані кнопка висотою 40 px (WCAG 2.5.8, з запасом), на десктопі — щільні 28 px.
+const TAP = "pointer-coarse:h-10 pointer-coarse:px-3.5";
+
 export function MarkDoneForm({
   action,
   runId,
@@ -38,7 +41,7 @@ export function MarkDoneForm({
     return (
       <form action={action}>
         {hidden}
-        <SubmitButton pendingText="Saving…" variant="outline" size="sm">
+        <SubmitButton pendingText="Saving…" variant="outline" size="sm" className={TAP}>
           Mark as done
         </SubmitButton>
       </form>
@@ -64,7 +67,7 @@ export function MarkDoneForm({
         }}
       >
         {hidden}
-        <Button type="submit" variant="outline" size="sm" loading={pending} aria-disabled={pending}>
+        <Button type="submit" variant="outline" size="sm" className={TAP} loading={pending} aria-disabled={pending}>
           {pending ? "Saving…" : "Mark as done"}
         </Button>
       </form>

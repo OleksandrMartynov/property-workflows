@@ -93,6 +93,9 @@ export function LaunchForm({
   const title = caseName.trim();
 
   const assignAll = (id: string) => id && setAssignment(Object.fromEntries(tasks.map((t) => [t.id, id])));
+  // Секція цілком — одному виконавцю (типово: «Move-in day» — підряднику), решта призначень не змінюється.
+  const assignSection = (sectionId: string, id: string) =>
+    id && setAssignment((prev) => ({ ...prev, ...Object.fromEntries(tasks.filter((t) => t.section_id === sectionId).map((t) => [t.id, id])) }));
   const personOptions = people.map((p) => ({
     value: p.id,
     label: p.name,
@@ -161,11 +164,22 @@ export function LaunchForm({
             const sectionRequired = sectionTasks.filter((t) => t.required).length;
             return (
               <fieldset key={section.id} className="rounded-md border border-border bg-card shadow-sm">
-                <legend className="float-left w-full border-b border-border px-4 py-2.5">
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="text-heading">{section.name}</span>
-                    <span className="tabular text-meta text-muted-foreground">
-                      {sectionTasks.length} tasks · {sectionRequired} required
+                <legend className="float-left w-full border-b border-border px-4 py-2">
+                  <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-heading break-words">{section.name}</span>
+                      <span className="tabular text-meta text-muted-foreground">
+                        {sectionTasks.length} tasks · {sectionRequired} required
+                      </span>
+                    </span>
+                    <span className="w-full sm:w-48">
+                      <Select
+                        value=""
+                        onValueChange={(id) => assignSection(section.id, id)}
+                        placeholder="Assign section to…"
+                        options={personOptions}
+                        aria-label={`Assign all tasks of ${section.name} to`}
+                      />
                     </span>
                   </span>
                 </legend>
@@ -179,7 +193,7 @@ export function LaunchForm({
                           {task.required ? "required" : "optional"}
                         </Badge>
                       </span>
-                      <div className="w-full sm:w-80">
+                      <div className="w-full sm:w-64">
                         <Combobox
                           name={assigneeField(task.id)}
                           value={assignment[task.id]}

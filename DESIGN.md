@@ -19,14 +19,14 @@
 | Токен | Для чого | Світла (тло / текст) | Темна (тло / текст) | Клас |
 |---|---|---|---|---|
 | `background` / `foreground` | тло сторінки й основний текст | `0.991 0.004 85` / `0.21 0.008 80` | `0.178 0.004 80` / `0.945 0.004 80` | `bg-background`, `text-foreground` |
-| `card` / `card-foreground` | картки, панелі, рядки таблиць | `0.998 0.002 85` / `0.21 0.008 80` | `0.200 0.005 80` / `0.945 0.004 80` | `bg-card`, `text-card-foreground` |
+| `card` / `card-foreground` | картки, панелі, рядки таблиць | `0.998 0.002 85` / `0.21 0.008 80` | `0.212 0.005 80` / `0.945 0.004 80` | `bg-card`, `text-card-foreground` |
 | `popover` / `popover-foreground` | меню, діалоги, палітра ⌘K | `1 0 0` / `0.21 0.008 80` | `0.228 0.005 80` / `0.945 0.004 80` | `bg-popover`, `text-popover-foreground` |
 | `primary` / `primary-foreground` | основна дія (одна на екран), посилання, прогрес | `0.50 0.13 268` / `0.985 0.006 268` | `0.74 0.12 268` / `0.20 0.035 268` | `bg-primary`, `text-primary-foreground`, `text-primary` |
 | `secondary` / `secondary-foreground` | другорядна дія, нейтральна мітка | `0.955 0.005 85` / `0.21 0.008 80` | `0.235 0.005 80` / `0.945 0.004 80` | `bg-secondary`, `text-secondary-foreground` |
 | `muted` / `muted-foreground` | приглушене тло, підписи, допоміжний текст | `0.962 0.005 85` / `0.505 0.009 80` | `0.235 0.005 80` / `0.705 0.008 80` | `bg-muted`, `text-muted-foreground` |
 | `accent` / `accent-foreground` | наведення, вибраний рядок меню | `0.952 0.006 85` / `0.21 0.008 80` | `0.240 0.005 80` / `0.945 0.004 80` | `bg-accent`, `text-accent-foreground` |
 | `destructive` / `destructive-foreground` | небезпечна дія, текст помилки поля | `0.55 0.19 25` / `0.99 0.004 25` | `0.66 0.18 25` / `0.18 0.02 25` | `bg-destructive`, `text-destructive` |
-| `border` | розділювачі, межі карток (декоративні) | `0.912 0.006 85` | `0.275 0.005 80` | `border-border` |
+| `border` | розділювачі, межі карток (декоративні) | `0.912 0.006 85` | `0.30 0.005 80` | `border-border` |
 | `border-strong` | межі чекбокса, радіо, перемикача (≥ 3:1) | `0.60 0.01 80` | `0.54 0.008 80` | `border-border-strong` |
 | `input` | межа поля вводу (≥ 3:1) | `0.60 0.01 80` | `0.54 0.008 80` | `border-input` |
 | `field` | тло поля вводу | `0.998 0.002 85` | `0.198 0.005 80` | `bg-field` |
@@ -49,9 +49,9 @@
 | Пара (текст або мітка → тло) | Де | Норма | Світла | Темна |
 |---|---|---|---|---|
 | `foreground` → `background` | Основний текст | ≥ 4.5:1 | 17.27:1 | 16.07:1 |
-| `foreground` → `card` | Текст на картці | ≥ 4.5:1 | 17.62:1 | 15.41:1 |
+| `foreground` → `card` | Текст на картці | ≥ 4.5:1 | 17.62:1 | 15.02:1 |
 | `muted-foreground` → `background` | Допоміжний текст | ≥ 4.5:1 | 5.73:1 | 7.19:1 |
-| `muted-foreground` → `card` | Допоміжний текст на картці | ≥ 4.5:1 | 5.84:1 | 6.90:1 |
+| `muted-foreground` → `card` | Допоміжний текст на картці | ≥ 4.5:1 | 5.84:1 | 6.73:1 |
 | `muted-foreground` → `muted` | Допоміжний текст на приглушеному тлі | ≥ 4.5:1 | 5.26:1 | 6.36:1 |
 | `sidebar-foreground` → `sidebar` | Навігація | ≥ 4.5:1 | 12.43:1 | 12.72:1 |
 | `primary-foreground` → `primary` | Основна кнопка | ≥ 4.5:1 | 5.88:1 | 7.77:1 |
@@ -59,12 +59,12 @@
 | `secondary-foreground` → `secondary` | Другорядна кнопка | ≥ 4.5:1 | 15.55:1 | 14.19:1 |
 | `popover-foreground` → `popover` | Меню, діалоги | ≥ 4.5:1 | 17.72:1 | 14.45:1 |
 | `primary` → `background` | Посилання й акцентний текст | ≥ 4.5:1 | 5.99:1 | 8.08:1 |
-| `destructive` → `card` | Текст помилки поля | ≥ 4.5:1 | 5.32:1 | 5.35:1 |
-| `input` → `card` | Межа поля вводу | ≥ 3:1 | 3.93:1 | 3.58:1 |
+| `destructive` → `card` | Текст помилки поля | ≥ 4.5:1 | 5.32:1 | 5.22:1 |
+| `input` → `card` | Межа поля вводу | ≥ 3:1 | 3.93:1 | 3.48:1 |
 | `input` → `background` | Межа поля на полотні | ≥ 3:1 | 3.85:1 | 3.73:1 |
 | `border-strong` → `background` | Межа чекбокса, радіо, перемикача | ≥ 3:1 | 3.85:1 | 3.73:1 |
 | `ring` → `background` | Кільце фокусу на полотні | ≥ 3:1 | 4.86:1 | 8.08:1 |
-| `ring` → `card` | Кільце фокусу на картці | ≥ 3:1 | 4.96:1 | 7.75:1 |
+| `ring` → `card` | Кільце фокусу на картці | ≥ 3:1 | 4.96:1 | 7.55:1 |
 | `ring` → `sidebar` | Кільце фокусу в сайдбарі | ≥ 3:1 | 4.55:1 | 8.33:1 |
 | `status-todo-foreground` → `status-todo` | Статус «to do» | ≥ 4.5:1 | 6.25:1 | 8.90:1 |
 | `status-progress-foreground` → `status-progress` | Статус «in progress» | ≥ 4.5:1 | 6.14:1 | 8.63:1 |
@@ -131,7 +131,8 @@
 | `Button` / `buttonVariants` | `default`, `soft`, `secondary`, `outline`, `ghost`, `destructive`, `link`; `sm`, `md`, `lg`, `xl`, `icon`; `loading` | `default` — одна основна дія на екран; `soft` (тло `state-selected`, текст `primary`) — акцентна дія в повторюваних елементах (Launch у картці шаблону); `destructive` — лише з підтвердженням; для `Link` — `className={buttonVariants({…})}` |
 | `Input`, `Textarea`, `PasswordInput` | `size` `md` \| `lg` \| `xl`; `leading`, `trailing` | у кожного поля `Label` з `htmlFor`; межа — токен `input` (≥ 3:1); `aria-invalid` сам додає значок помилки; вимкнене — приглушене, лише читання — легка заливка |
 | `SearchInput` | керований або ні | лупа, «очистити», Esc очищає; без вбудованої кнопки браузера |
-| `Combobox`, `MultiSelect` | `options={[{ value, label, description?, avatar?, trailing? }]}`, `clearable`, `loading` | вибір виконавця й тегів; пошук за набором, аватар + email + роль; чипи видаляються Backspace; значення йде у форму прихованими input |
+| `Combobox`, `MultiSelect` | `options={[{ value, label, description?, avatar?, trailing? }]}`, `clearable`, `loading` | вибір виконавця й тегів; пошук за набором, аватар + email + роль; чипи видаляються Backspace; значення йде у форму прихованими input. Форма запуску: «Assign all to…» над списком і «Assign section to…» у шапці кожної секції (`Select` без `name` — у форму не йде), поле виконавця задачі — 256 px |
+| Режим редактора «Edit / Preview» | `EditorModeProvider`, `ModePane`, `ModeSwitch` | клієнтський стан: обидві панелі приходять з сервера, видно одну (`hidden`), перемикання без запиту; режим — в адресі (`?view=preview`) через `history.replaceState` |
 | `DatePicker`, `DateRangePicker`, `TimeField` | `min`, `max`, пресети «Today / Tomorrow / Next week» | дата й час лише київські (мітка «Kyiv time»), у форму — `YYYY-MM-DD` і `HH:MM`; жодних `<input type=date/time>` |
 | `NumberField`, `CurrencyField` | `step`, `min`, `max`, `stepper` `end` | `split` | крок утриманням із прискоренням; гроші `€1,250.00`, tabular; без системних стрілок |
 | `Checkbox`, `RadioGroup`, `Switch`, `Segmented`, `Slider`, `FileDrop` | — | межа `border-border-strong` (≥ 3:1); `Segmented` — «List · Schema · Canvas»; `FileDrop` — «PDF up to 20 MB»; `Switch` — миттєва дія, `Checkbox` — вибір у формі |
@@ -139,13 +140,13 @@
 | `Select` | `<option>` і `<optgroup>` у дітях (діти можуть бути JSX, текст — в атрибуті `label`), `defaultValue` або керований `value`, `placeholder`, `searchable` (авто > 8 варіантів), `aria-invalid` | власний listbox (ARIA select-only combobox), не системний список: ↑ ↓ Home End, Enter, Esc, набір літер; значення йде у форму через прихований input |
 | `Label`, `Field` | — | `Field` додає підказку (`${id}-hint`) і помилку (`${id}-error`, `role="alert"`) |
 | `Card` (+ `CardHeader`, `CardTitle`, `CardContent`, `CardFooter`) | — | рамка один раз; не вкладати картку в картку |
-| `Table` (+ `TableRow interactive`, `rowLinkClass`) | — | рядок клікабельний через посилання в першій комірці; прогрес словами «N of M done» |
+| `Table` (+ `TableRow interactive`, `rowLinkClass`) | — | рядок клікабельний через посилання в першій комірці; прогрес словами «N of M done». Обгортка — `@container`: колонки з'являються за шириною самої таблиці (`@md:` / `@xl:` / `@3xl:` / `@5xl:table-cell`), не вікна (поруч сайдбар) — таблиця без прокрутки вбік на будь-якій ширині; дані схованої колонки (менеджер, статус) — під назвою в першій комірці; довге слово без пробілів — `wrap-anywhere` |
 | `Badge` | `neutral`, `outline`, `primary`, `changed`, `ai`, `variable` | нейтральна мітка («required», роль); `changed` — «New» / «Edited» у редакторі (теплий жовтий, як «Unpublished changes»); статус домену — лише `StatusBadge` |
 | `InlineInput` | `size` `title` \| `heading` \| `body`; `commit` `blur` \| `enter`; `tone` `accent` | назва, що редагується на місці (шаблон, секція, задача): виглядає як текст, межа — під курсором і у фокусі; Enter або втрата фокусу надсилають форму, Esc повертає збережене, порожнє не надсилається; `accent` — плейсхолдер `primary` для рядка «Add a task» |
 | `ToggleChip` | `onLabel`, `offLabel`, `submitOnChange` | позначка-перемикач у рядку списку («required» / «optional»): справжній checkbox, увімкнена — галочка й текст `primary` на `state-selected` (не лише колір) |
 | `ActionMenu` | `items` (`separated`, `destructive`, `disabled`) | меню «⋯» рядка: `role="menu"`, ↑ ↓ Home End, Enter, Esc повертає фокус на кнопку; незворотна дія — `destructive` за розділювачем і лише через `ConfirmDialog` |
 | `SaveBar` | `title`, `detail`, `icon` | плаваюча смуга збереження внизу екрана (патерн «contextual save bar»): лише коли є що зберегти; інверсна поверхня `foreground` / `background` — найпомітніший шар, дія — `default`. Редактор: «Unpublished changes», підсумок змін, «Save» і ⌘S / Ctrl S |
-| `StatusBadge`, `StatusIcon` | `todo`, `progress`, `done`, `overdue`, `due-soon` | статус — завжди іконка (форма) + слово, не лише колір |
+| `StatusBadge`, `StatusIcon` | `todo`, `progress`, `done`, `overdue`, `due-soon`; `bare` | статус — завжди іконка (форма) + слово, не лише колір; `bare` (без «таблетки», слово `muted-foreground`) — у рядках, де статус повторюється (задачі запуску), бейдж — для статусу запуску. Рядок задачі — дворядковий (назва й «required», під нею виконавець; ≥ 44 px), «Mark as done» на сенсорному екрані — 40 px (`pointer-coarse`), під час збереження рядок приглушується (`aria-busy`) |
 | `Alert` | `error`, `success`, `info` | помилка — `role="alert"`, текст дослівно з AC |
 | `ProgressRing`, `ProgressBar` | — | кільце — у списках, смужка — у панелі «Details»; число словами поруч; ширина й заповнення анімуються переходом |
 | `TaskCheck`, `CompletionGlow` | — | статус задачі: коли `done` стає true на сторінці — коло «підстрибує», галочка домальовується; коли запуск завершується — один спалах по краю панелі (≤ 400 мс); при першому показі без руху |
@@ -158,7 +159,7 @@
 | `InteractionFeedback` | — | один на застосунок (у `layout.tsx`): пульс-кільце `data-clicked` (520 мс, токен `ring`) на кожну кнопку, посилання, пункт списку й вкладку; смуга прогресу зверху (`primary` → `ai-mark`), поки йде перехід за внутрішнім посиланням; за `prefers-reduced-motion` — статичний контур |
 | `FilterBar` | `views`, `view`, `query`, `searchLabel` | рядок над списком: вигляди (`Segmented`) і пошук (`SearchInput`); стан — в адресі (`?view=`, `?q=`), тож вигляд можна відкрити посиланням (лічильники головної); пошук із затримкою 300 мс, зміна скидає сторінку. Звужений список без результатів — `EmptyState` «No runs found.», порожній стан з AC — лише без фільтрів |
 | `FlashNotice` | `kind` `success` / `error`; `clear`; `quiet` | відгук на дію з параметра адреси після серверної дії: показується один раз і прибирає параметр з адреси (не повертається після перезавантаження й «назад»); `quiet` — лише для скрінрідера, коли видимий відгук дає сама сторінка («<задача>: done») |
-| Нагадування біля «Runs» | `openTasks` в `AppShell` | замість листів: число моїх задач «to do» на пункті «Runs» (бічна панель і мобільна смуга), для скрінрідера — «N open tasks assigned to you»; нуль — нічого |
+| Нагадування біля «Runs» | `openTasks` в `AppShell` | замість листів: число моїх задач «to do» на пункті «Runs» (бічна панель і мобільна смуга), для скрінрідера — «N open tasks assigned to you»; нуль — нічого. На головній лічильник «Your open tasks» > 0 — акцентом (смужка й число `primary`), під лічильниками блок «Your tasks»: до 5 моїх задач «to do» (назва, під нею запуск) з посиланням на запуск і «View all» → `/runs?view=mine` |
 | `Logo`, `LogoMark` | — | знак «Echo Roof» у `primary`; без жодного кольору поза токенами |
 | `HeroStage`, `HeroShader`, `BlueprintScene` | — | лише вхід: шейдер із кольорами `--stage*`, чипи можливостей (лише назви); `BlueprintScene` — 3D-креслення (Three.js, `@react-three/fiber`), вантажиться ліниво й лише на `/login`, кольори бере з токенів поточної теми (`--stage*`, `--status-done*`), власних кольорів немає; креслення складається в контур живої картки (`StoryCard`, ті самі секції й задачі, розмітка сцени — заміри цієї картки) і передає їй слово, задачі виконуються самі, а за кліком — користувачем («Start over» — знову креслення, та сама сцена без нового WebGL-контексту); «ехо» даху з логотипу — у власній колонці праворуч від картки; без WebGL — лише жива картка |
 | `icons` | `HomeIcon`, `TemplateIcon`, `UsersIcon`, `GaugeIcon`, `KeyIcon`… | лінійні 16 px, штрих 1.5, `currentColor`; лише декор, підпис завжди поруч |

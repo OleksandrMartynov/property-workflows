@@ -33,7 +33,7 @@ import { CollapsibleSection } from "./collapsible-section";
 import { EditorSaveProvider, SaveStatus, TrackedForm, UnkeptItems } from "./editor-save";
 import { EditorPreview } from "./editor-preview";
 import { ItemActions } from "./item-actions";
-import { ModeSwitch } from "./mode-switch";
+import { EditorModeProvider, ModePane, ModeSwitch } from "./mode-switch";
 import { PublishBar } from "./publish-bar";
 
 export interface EditorTemplate {
@@ -110,6 +110,7 @@ export function EditorView({
 
   return (
     <EditorSaveProvider store={saveStore}>
+    <EditorModeProvider initial={mode}>
     <PageShell
       title={shownName(template.name, "template")}
       titleSlot={
@@ -154,7 +155,7 @@ export function EditorView({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SaveStatus />
-          <ModeSwitch mode={mode} />
+          <ModeSwitch />
           <Link
             href={`/templates/${id}/versions`}
             className={buttonVariants({ variant: "ghost" })}
@@ -171,9 +172,11 @@ export function EditorView({
       {message ? <Notice kind="error">{message}</Notice> : null}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        {mode === "preview" ? (
+        {/* Обидві панелі — з сервера одразу; видно одну (ModePane), перемикання без запиту. */}
+        <ModePane mode="preview" className="min-w-0">
           <EditorPreview sections={sections} tasks={tasks} />
-        ) : (
+        </ModePane>
+        <ModePane mode="edit" className="min-w-0">
           <div className="flex min-w-0 flex-col gap-6">
             {sections.length === 0 ? (
               <>
@@ -409,7 +412,7 @@ export function EditorView({
               </TrackedForm>
             ) : null}
           </div>
-        )}
+        </ModePane>
 
         <aside className="lg:sticky lg:top-6">
           <Card
@@ -489,6 +492,7 @@ export function EditorView({
         />
       ) : null}
     </PageShell>
+    </EditorModeProvider>
     </EditorSaveProvider>
   );
 }

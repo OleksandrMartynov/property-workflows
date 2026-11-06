@@ -53,7 +53,9 @@ export function VendorRunDetail({
                 const isDone = task.status === "done";
                 return (
                   <TaskRow key={task.id} name={task.name} required={task.required} done={isDone}>
-                    <StatusBadge status={isDone ? "done" : "todo"}>{taskStatusLabel(task.status)}</StatusBadge>
+                    <StatusBadge status={isDone ? "done" : "todo"} bare>
+                      {taskStatusLabel(task.status)}
+                    </StatusBadge>
                     {canCompleteTask(viewer, task, runForAccess) ? (
                       <MarkDoneForm
                         action={completeTask}
