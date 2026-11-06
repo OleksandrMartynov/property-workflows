@@ -48,7 +48,7 @@
 
 | AC | Де живе правило | Рівень | Чому | Тест |
 |---|---|---|---|---|
-| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden`; дані: політика `template_versions_select` (`supabase/migrations/20261025151836_template_versions.sql`) | база (PGlite) + unit сторінки + e2e (UAT на проді — PASS, розділ C) | відмову даних тримає RLS — її доводить лише тест на справжньому Postgres (мок `rpc` нічого не доводить); сторінку — рендер справжньої сторінки з заглушкою клієнта; видимий «Тоді» — e2e на проді | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/db/template-versions-db.test.ts#L468, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/templates/forbidden.test.tsx#L48, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/templates/forbidden.test.tsx#L71 |
+| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden` ще до будь-якого запиту версій | unit сторінки + Stryker + e2e (UAT на проді — PASS, розділ C) | відмова живе на сторінці: рендер справжньої сторінки з заглушкою клієнта показує «Not enough rights» і що сторінка звернулась лише до `profiles`; правило `canManageTemplates` — Stryker; видимий «Тоді» — e2e на проді. Прямий запит версій — окремий AC-EDITOR-29 (політика `template_versions_select`, SQL-мутанти E29a/E29b) | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/templates/forbidden.test.tsx#L71 |
 | AC-EDITOR-09 | proxy: `isPublicPath` (`src/lib/supabase/public-paths.ts`) → `/login`; дані: RLS для `anon` | unit + база (PGlite) + e2e (UAT на проді — PASS, розділ C) | правило «що публічне» — чиста функція (unit і Stryker); що відвідувач нічого не читає — RLS (PGlite); сторінку входу видно лише в браузері — e2e | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/auth/public-paths.test.ts#L5, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/auth/public-paths.test.ts#L24, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/db/template-versions-db.test.ts#L521 |
 | AC-DSYS-04 | сторінка: `RunsList` (`src/app/(app)/runs/_components/runs-list.tsx`), тексти — `src/lib/runs/labels.ts` | unit компонента + e2e (UAT на проді — PASS, розділ C) | порожній стан — гілка компонента без даних: рендер у Vitest; що в менеджера справді немає запусків і таблиці не видно — e2e на проді | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/runs/statuses.test.tsx#L43 |
 
@@ -57,7 +57,7 @@
 | Файл за AC | Рядки | Гілки | Чим доведено, якщо 0 % |
 |---|---|---|---|
 | `src/lib/supabase/public-paths.ts` (AC-EDITOR-09) | 100 % | 100 % | — |
-| `src/lib/supabase/viewer.ts` (AC-EDITOR-07, `canManageTemplates`) | 100 % | 70 % | гілки `requireViewer` (немає профілю, email) — не рядки AC |
+| `src/lib/supabase/viewer.ts` (AC-EDITOR-07, `canManageTemplates`) | 100 % | 70 % → 100 % (після відгуку WS8: `tests/auth/require-viewer.test.ts`) | — ; файл тепер під підлогою покриття (`FLOORED` у `vitest.coverage.config.mts`), як і `supabase/public-paths` |
 | `src/lib/runs/labels.ts` (AC-DSYS-04) | 100 % | 80 % | — |
 | `src/app/_components/forbidden.tsx` (AC-EDITOR-07) | 100 % | 100 % | — |
 | `src/app/(app)/templates/[id]/versions/page.tsx` (AC-EDITOR-07) | 100 % | 54,5 % | гілки адміністратора; гілку менеджера доводить `tests/templates/forbidden.test.tsx:71` |
@@ -73,13 +73,16 @@
 | `src/lib/supabase/public-paths.ts:7` `startsWith` → `endsWith` | AC-EDITOR-09 (правило «за цілим сегментом від початку шляху») | вижив (еквівалентний для самого AC-EDITOR-09: редактор не публічний і з мутантом) | `tests/auth/public-paths.test.ts:24`: підшлях публічної сторінки публічний, шлях редактора з «/login/» наприкінці — ні | убитий |
 
 - Stryker (`npm run mutation:ts -- --mutate src/lib/supabase/public-paths.ts,src/lib/runs/labels.ts`): 94,44 % (34 з 36) → 100 % (36 з 36). `src/lib/supabase/viewer.ts`: мутанти `canManageTemplates` (рядок AC-EDITOR-07) убиті; вижили 5 у `requireViewer` (порожній `select`, `if (false) redirect`, `?.`, email) — не рядки наших 3 AC, кандидати для наступного посилення.
+- Після відгуку WS8 (другий рубіж за proxy): `npm run mutation:ts -- --mutate src/lib/supabase/viewer.ts` — 92,5 % (37 з 40, вижили `select("")` і `profile?.role` → `profile.role`, без покриття — `requireAdmin` за замовчуванням) → **100 % (40 з 40)**. Тести — `tests/auth/require-viewer.test.ts`: «AC-EDITOR-09: без сесії requireViewer веде на сторінку входу з поверненням, навіть якщо proxy пропустив запит», профіль без ролі, без профілю й з невідомою роллю → «/», роль лише з `profiles.role`, «AC-EDITOR-08: requireAdmin() не пускає менеджера».
 - SQL-мутації (`npm run mutation:sql`): 3 з 3 вбито (100 %).
 
 | Мутант | AC | Що зламано | Вердикт | Який тест упав |
 |---|---|---|---|---|
 | P1 | (перевірка гарнесу) | колонковий grant: користувач може змінити собі role | KILLED | `tests/db/profiles-role-db.test.ts` (3 тести) |
-| E7a | AC-EDITOR-07 | `template_versions_select`: менеджер бачить усі версії, а не лише поточну | KILLED | AC-EDITOR-07: менеджер B не бачить старих версій — лише поточну |
-| E7b | AC-EDITOR-07 | `template_versions_select` послаблено до `true` | KILLED | AC-EDITOR-07: менеджер B не бачить старих версій — лише поточну |
+| E29a (було E7a) | AC-EDITOR-29 | `template_versions_select`: менеджер бачить усі версії, а не лише поточну | KILLED | AC-EDITOR-29: прямим запитом менеджер B отримує лише поточну версію 2, версії 1 — нічого |
+| E29b (було E7b) | AC-EDITOR-29 | `template_versions_select` послаблено до `true` | KILLED | AC-EDITOR-29: прямим запитом менеджер B отримує лише поточну версію 2, версії 1 — нічого |
+
+Після відгуку WS8: SQL-доказ стосується прямого запиту версій, тобто AC-EDITOR-29, а не сторінки AC-EDITOR-07 (вона відмовляє ще до запиту). Мутанти й тест перейменовано; `npm run mutation:sql` → E29a, E29b KILLED.
 - Еквівалентні мутанти: `public-paths.ts:7` `startsWith` → `endsWith` — еквівалентний для самого AC-EDITOR-09 (шлях редактора не публічний і з мутантом), але ламає правило «за цілим сегментом», тож його вбито окремим тестом, а не позначено `survive`.
 
 ## C. UAT на проді

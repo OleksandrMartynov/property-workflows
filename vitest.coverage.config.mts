@@ -22,6 +22,8 @@ const FLOORED: string[] = [
   "runs/messages",
   "runs/progress",
   "runs/sections",
+  "supabase/public-paths",
+  "supabase/viewer",
   "templates/changes",
   "templates/display-name",
   "templates/editor",
