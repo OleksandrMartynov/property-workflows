@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SharedTitle, morphName } from "@/components/ui/motion";
 import type { CSSProperties } from "react";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { buttonVariants } from "@/components/ui/button";
@@ -88,7 +89,7 @@ export function RunsList({
               <TableCell>
                 <div className="flex flex-col">
                   <Link href={`/runs/${run.id}`} className={rowLinkClass}>
-                    {run.case_name}
+                    <SharedTitle name={morphName("run", run.id)}>{run.case_name}</SharedTitle>
                   </Link>
                   <span className="text-meta text-muted-foreground">{run.template_name}</span>
                 </div>

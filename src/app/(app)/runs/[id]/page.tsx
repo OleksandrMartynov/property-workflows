@@ -5,6 +5,7 @@ import { errorMessage } from "@/lib/runs/messages";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
+import { morphName } from "@/components/ui/motion";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
@@ -48,6 +49,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   return (
     <PageShell
       title={run.case_name}
+      titleMorph={morphName("run", run.id)}
       description={run.template_name}
       back={{ href: "/runs", label: "Runs" }}
       actions={<StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>}

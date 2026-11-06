@@ -5,6 +5,7 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, rowLinkClass } from "@/components/ui/table";
 import { NO_VENDOR_TASKS, runStatusLabel, runStatusTone } from "@/lib/runs/labels";
+import { SharedTitle, morphName } from "@/components/ui/motion";
 import { formatVendorProgress } from "@/lib/runs/progress";
 
 export interface VendorRun {
@@ -37,7 +38,7 @@ export function VendorRunsList({ runs }: { runs: VendorRun[] }) {
           <TableRow key={run.id} interactive data-testid="run-row" className="animate-ui-rise" style={{ "--i": index } as CSSProperties}>
             <TableCell>
               <Link href={`/runs/${run.id}`} className={rowLinkClass}>
-                {run.case_name}
+                <SharedTitle name={morphName("run", run.id)}>{run.case_name}</SharedTitle>
               </Link>
             </TableCell>
             <TableCell>
