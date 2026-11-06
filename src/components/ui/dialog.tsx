@@ -9,8 +9,10 @@ const SIZES = { sm: "sm:max-w-sm", md: "sm:max-w-md", lg: "sm:max-w-xl" } as con
 
 /**
  * Модальне вікно на нативному <dialog>: фокус-пастка, Esc і inert-фон дає браузер, вхід і вихід — CSS (.ui-dialog).
- * На вузькому екрані вікно стає нижнім аркушем (притиснуте до низу, на всю ширину). `alertdialog` не закривається
- * кліком повз вікно й не має хрестика: на запитанні, що не має відкату, відповідь — лише кнопкою.
+ * На вузькому екрані вікно стає нижнім аркушем (притиснуте до низу, на всю ширину).
+ * Один формат закриття для всіх вікон: хрестика немає — видимий вихід один, `DialogCancel` у нижній смузі (з
+ * підказкою Esc); Esc працює завжди. Клік повз вікно закриває лише звичайний `dialog`: `alertdialog` (дія без
+ * відкату) відповідає тільки кнопкою.
  */
 export function Dialog({
   open,
@@ -19,7 +21,6 @@ export function Dialog({
   describedBy,
   role = "dialog",
   size = "md",
-  closable = role === "dialog",
   className,
   children,
 }: {
@@ -29,8 +30,6 @@ export function Dialog({
   describedBy?: string;
   role?: "dialog" | "alertdialog";
   size?: keyof typeof SIZES;
-  /** Хрестик у куті. За замовчуванням — у звичайному діалозі; палітра ⌘K і `alertdialog` без нього. */
-  closable?: boolean;
   className?: string;
   children: ReactNode;
 }) {
@@ -64,19 +63,6 @@ export function Dialog({
       }}
     >
       {children}
-      {/* Після змісту: перший фокус при showModal() — поле форми, а не «Close». */}
-      {closable && role === "dialog" ? (
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="absolute right-3 top-3 z-10 grid size-8 place-items-center rounded-sm text-muted-foreground transition-ui hover:bg-state-hover hover:text-foreground press"
-        >
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className="size-4">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-        </button>
-      ) : null}
     </dialog>
   );
 }
@@ -101,7 +87,7 @@ export function DialogHeader({
 }) {
   return (
     <div className="ui-dialog-head flex flex-col gap-4 px-6 pb-5 pt-6">
-      <div className="flex items-start gap-4 pr-8">
+      <div className="flex items-start gap-4">
         {icon ? (
           <span
             aria-hidden="true"
@@ -126,6 +112,16 @@ export function DialogHeader({
       </div>
       {children}
     </div>
+  );
+}
+
+/** «Cancel» у нижній смузі кожного вікна: той самий вигляд, підпис і підказка Esc усюди. */
+export function DialogCancel({ onClick, children = "Cancel" }: { onClick: () => void; children?: ReactNode }) {
+  return (
+    <Button type="button" variant="outline" onClick={onClick} className="gap-2">
+      {children}
+      <kbd className="hidden rounded-xs border border-border bg-muted px-1 font-sans text-[11px] leading-4 text-muted-foreground sm:inline">Esc</kbd>
+    </Button>
   );
 }
 
@@ -184,10 +180,7 @@ export function ConfirmDialog({
         descriptionId={`${id}-desc`}
       />
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel} className="gap-2">
-          {cancelLabel}
-          <kbd className="hidden rounded-xs border border-border bg-muted px-1 font-sans text-[11px] leading-4 text-muted-foreground sm:inline">Esc</kbd>
-        </Button>
+        <DialogCancel onClick={onCancel}>{cancelLabel}</DialogCancel>
         <Button ref={confirm} variant={tone === "destructive" ? "destructive" : "default"} onClick={onConfirm}>
           {confirmLabel}
         </Button>

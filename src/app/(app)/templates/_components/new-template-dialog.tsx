@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogCancel, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { PlusIcon, TemplateIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ export function NewTemplateDialog({ label = "New template" }: { label?: string }
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const id = useId();
+  const close = () => {
+    setOpen(false);
+    setError(undefined);
+  };
 
   return (
     <>
@@ -28,10 +32,7 @@ export function NewTemplateDialog({ label = "New template" }: { label?: string }
       </Button>
       <Dialog
         open={open}
-        onClose={() => {
-          setOpen(false);
-          setError(undefined);
-        }}
+        onClose={close}
         labelledBy={`${id}-title`}
       >
         <form
@@ -51,9 +52,7 @@ export function NewTemplateDialog({ label = "New template" }: { label?: string }
             </Field>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
+            <DialogCancel onClick={close} />
             <SubmitButton pendingText="Creating…">Create</SubmitButton>
           </DialogFooter>
         </form>
