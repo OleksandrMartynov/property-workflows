@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { CompletionGlow } from "@/components/ui/completion-glow";
 import { canCompleteTask } from "@/lib/runs/access";
 import { isLastRequiredTask } from "@/lib/runs/confirmation";
-import { runStatusLabel, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
+import { runStatusLabel, runStatusTone, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
@@ -68,23 +68,39 @@ export function RunDetail({
           </div>
           <ProgressBar done={progress.done} total={progress.total} />
         </div>
-        <dl className="flex flex-col text-body [&>dd]:mb-3.5 [&>dd:last-child]:mb-0">
-          <dt className="mb-1 text-meta text-muted-foreground">Template</dt>
-          <dd className="min-w-0 break-words">{run.template_name}</dd>
+        {/* Підпис над значенням; на телефоні — дві колонки (панель над задачами не з'їдає екран), email менеджера —
+            на всю ширину, щоб не розривався. На широкому екрані — одна колонка вузької панелі. */}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-body lg:grid-cols-1 [&_dt]:mb-1 [&_dt]:text-meta [&_dt]:text-muted-foreground">
+          <div className="min-w-0">
+            <dt>Template</dt>
+            <dd className="break-words">{run.template_name}</dd>
+          </div>
           {/* AC-EDITOR-06: версія шаблону, з якої запущено, — «Template version N». */}
-          <dt className="mb-1 text-meta text-muted-foreground">Version</dt>
-          <dd data-testid="run-template-version">{templateVersionLabel(run.template_version)}</dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Run manager</dt>
-          <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
-            {managerEmail ? <Avatar email={managerEmail} /> : null}
-            <span className="min-w-0 break-words">{managerEmail ?? "—"}</span>
-          </dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Status</dt>
-          <dd data-testid="run-status">{runStatusLabel(run.status)}</dd>
-          <dt className="mb-1 text-meta text-muted-foreground">Assignees</dt>
-          <dd>
-            <AvatarStack emails={assignees} max={4} />
-          </dd>
+          <div>
+            <dt>Version</dt>
+            <dd data-testid="run-template-version">{templateVersionLabel(run.template_version)}</dd>
+          </div>
+          <div className="col-span-2 min-w-0 lg:col-span-1">
+            <dt>Run manager</dt>
+            <dd data-testid="run-manager" className="inline-flex min-w-0 items-center gap-1.5" title={managerEmail ?? undefined}>
+              {managerEmail ? <Avatar email={managerEmail} /> : null}
+              <span className="min-w-0 break-words">{managerEmail ?? "—"}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <StatusBadge status={runStatusTone(run.status)} data-testid="run-status">
+                {runStatusLabel(run.status)}
+              </StatusBadge>
+            </dd>
+          </div>
+          <div>
+            <dt>Assignees</dt>
+            <dd>
+              <AvatarStack emails={assignees} max={4} />
+            </dd>
+          </div>
         </dl>
       </Card>
       </CompletionGlow>
@@ -108,12 +124,22 @@ export function RunDetail({
                     const isDone = task.status === "done";
                     const assignee = emailOf.get(task.assignee_id);
                     return (
-                      <TaskRow key={task.id} name={task.name} required={task.required} done={isDone} mine={task.assignee_id === viewer.id}>
-                        <span className="inline-flex items-center gap-1.5 text-label font-normal text-muted-foreground">
-                          {assignee ? <Avatar email={assignee} /> : null}
-                          {assignee ?? "—"}
-                        </span>
-                        <StatusBadge status={isDone ? "done" : "todo"}>{taskStatusLabel(task.status)}</StatusBadge>
+                      <TaskRow
+                        key={task.id}
+                        name={task.name}
+                        required={task.required}
+                        done={isDone}
+                        mine={task.assignee_id === viewer.id}
+                        meta={
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            {assignee ? <Avatar email={assignee} size="xs" /> : null}
+                            <span className="min-w-0 break-words">{assignee ?? "—"}</span>
+                          </span>
+                        }
+                      >
+                        <StatusBadge status={isDone ? "done" : "todo"} bare>
+                          {taskStatusLabel(task.status)}
+                        </StatusBadge>
                         {canCompleteTask(viewer, task, run) ? (
                           <MarkDoneForm
                             action={completeTask}

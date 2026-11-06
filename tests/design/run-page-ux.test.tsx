@@ -61,3 +61,27 @@ describe("Сторінка запуску: секції, свої задачі, 
     expect(html).toMatch(/class="[^"]*lg:col-start-2 lg:row-start-1[^"]*"/);
   });
 });
+
+describe("Рядок задачі й Details: дворядковий рядок, статус без «таблетки», відгук під час збереження", () => {
+  it("AC-TASK-08: статус кожної задачі — іконка й слово без «таблетки» в рядку; статус запуску в Details — бейдж", () => {
+    for (const row of rows) {
+      expect(row).toMatch(/<svg[^>]*aria-hidden="true"/);
+      expect(row).not.toContain("rounded-full pl-1.5 pr-2");
+    }
+    expect(rowOf("Task t1")).toContain(">done<");
+    expect(rowOf("Task t2")).toContain(">to do<");
+    expect(html).toMatch(/<span[^>]*rounded-full pl-1\.5 pr-2[^>]*data-testid="run-status"[^>]*>[\s\S]*?in progress<\/span>/);
+  });
+
+  it("AC-TASK-11: email виконавця — другим рядком під назвою задачі, не обрізаний", () => {
+    const row = rowOf("Task t3");
+    expect(row.indexOf("Task t3")).toBeLessThan(row.indexOf("manager.a@example.test"));
+    expect(row).toMatch(/text-meta text-muted-foreground[^>]*>[\s\S]*manager\.a@example\.test/);
+    expect(row).not.toContain("truncate");
+  });
+
+  it("AC-TASK-01: «Mark as done» на сенсорному екрані — ціль 40 px, а рядок реагує на збереження (aria-busy)", () => {
+    expect(rowOf("Task t2")).toContain("pointer-coarse:h-10");
+    expect(rowOf("Task t2")).toContain("group-has-[[aria-busy]]/task:opacity-60");
+  });
+});
