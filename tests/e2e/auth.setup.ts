@@ -16,6 +16,8 @@ import { signIn } from "./support/uat";
 const ROLES = {
   manager: "manager.b@example.test",
   managerEmpty: "manager.d@example.test",
+  // Адміністратор — лише щоб перевірити передумову «Дано» (наприклад, версії шаблону для AC-EDITOR-07); нічого не змінює.
+  admin: "admin@example.test",
 } as const;
 
 for (const [role, email] of Object.entries(ROLES)) {
