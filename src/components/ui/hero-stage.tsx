@@ -84,6 +84,33 @@ const FEATURES = [
   { id: "search", label: "Search", Icon: CommandIcon },
 ] as const;
 
+// Hero видно лише від lg (сторінка входу ховає його нижче через hidden lg:block): шейдер і Three.js на телефоні не
+// вантажимо й не крутимо в прихованому блоці. На сервері — false: важкі шари й так лише клієнтські.
+const WIDE = "(min-width: 1024px)";
+function useWide() {
+  return useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia(WIDE);
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
+}
+
+/** 3D-сцена: є WebGL 2 і широкий екран. Поки WebGL невідомий (гідратація) — null: картка не блимає перед сценою. */
+function useSceneWebGL() {
+  const supportsWebGL = useWebGL();
+  const wide = useWide();
+  return supportsWebGL === null ? null : supportsWebGL && wide;
+}
+
+/** Шовкове тло hero — лише там, де hero видно (від lg). */
+function StageShader({ playing, speed }: { playing: boolean; speed: number }) {
+  return useWide() ? <HeroShader playing={playing} speed={speed} /> : null;
+}
+
 const REDUCED = "(prefers-reduced-motion: reduce)";
 function useReducedMotion() {
   return useSyncExternalStore(
@@ -314,7 +341,7 @@ const reveal = (i: number, delay = 150) => ({ "--i": i, "--reveal-delay": `${del
  * картка тримає місце в макеті, а сцена не створюється заново. Без WebGL і за reduced motion — лише жива картка.
  */
 function HeroVisual({ playing, reduced }: { playing: boolean; reduced: boolean }) {
-  const webgl = useWebGL();
+  const webgl = useSceneWebGL();
   const [stage, setStage] = useState<"scene" | "card">("scene");
   const [replay, setReplay] = useState(0);
   const [take, setTake] = useState(0);
@@ -388,7 +415,7 @@ export function HeroStage() {
         root.current.style.setProperty("--py", String(((event.clientY - rect.top) / rect.height) * 2 - 1));
       }}
     >
-      <HeroShader playing={playing} speed={calm ? 0.25 : 1} />
+      <StageShader playing={playing} speed={calm ? 0.25 : 1} />
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full opacity-[0.14] mix-blend-soft-light">
         <filter id={grainId}>
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />

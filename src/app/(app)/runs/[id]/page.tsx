@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import { errorMessage } from "@/lib/runs/messages";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
+import { isUuid } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
@@ -23,14 +24,16 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   // Серверний компонент без хуків — викликаємо як функцію: сторінка повертає вже готове дерево.
   if (isVendor(viewer.role)) return await VendorRunPage({ id, message, doneTaskId: done === "task" && typeof task === "string" ? task : null, supabase, viewer });
 
-  const { data: run } = await supabase
-    .from("runs")
-    .select("id, case_name, template_name, template_version, status, run_manager_id, created_at")
-    .eq("id", id)
-    .maybeSingle();
-  if (!run) notFound();
-
-  const [{ data: tasks }, { data: users }] = await Promise.all([
+  // Некоректний id — одразу «Run not found», без запитів (інакше Postgres дав би загальну помилку).
+  if (!isUuid(id)) notFound();
+  // Запуск, задачі й користувачі — одним кроком: задачі від рядка запуску не залежать (−1 round-trip). Чужий запуск
+  // RLS не віддає ні рядком, ні задачами.
+  const [{ data: run }, { data: tasks }, { data: users }] = await Promise.all([
+    supabase
+      .from("runs")
+      .select("id, case_name, template_name, template_version, status, run_manager_id, created_at")
+      .eq("id", id)
+      .maybeSingle(),
     supabase
       .from("run_tasks")
       .select("id, section_name, section_position, position, name, required, assignee_id, status")
@@ -39,6 +42,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       .order("position"),
     supabase.rpc("list_assignable_users"),
   ]);
+  if (!run) notFound();
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
 
   return (

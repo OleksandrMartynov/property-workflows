@@ -19,9 +19,10 @@ export async function launchRun(formData: FormData) {
   const back = (code: string) =>
     `/templates/${encodeURIComponent(templateId)}/launch?error=${code}&case_name=${encodeURIComponent(rawCaseName.slice(0, 200))}`;
 
-  // AC-RUN-03, AC-RUN-07: при помилці до бази не доходимо — запуску немає.
+  // AC-RUN-03, AC-RUN-07: при помилці до бази не доходимо — запуску немає. Помилки повертають на ту саму форму — replace,
+  // щоб «Назад» не ходив по копіях форми.
   const caseName = validateCaseName(rawCaseName);
-  if (!caseName.ok) redirect(back(caseName.error));
+  if (!caseName.ok) redirect(back(caseName.error), "replace");
 
   // Задачі поточної версії — щоб узяти з форми лише їхні поля виконавців (AC-RUN-04, AC-RUN-08, AC-RUN-09,
   // AC-EDITOR-06). Ключ — template_task_id знімка версії. Помилка цих запитів — не запускаємо: інакше launch_run
@@ -31,7 +32,7 @@ export async function launchRun(formData: FormData) {
     const [current] = await loadCurrentVersions(supabase, [templateId]);
     taskIds = current ? (await loadVersionTasks(supabase, [current.versionId])).map((t) => t.template_task_id) : [];
   } catch (error) {
-    redirect(back(dbErrorCode(error as { message?: string })));
+    redirect(back(dbErrorCode(error as { message?: string })), "replace");
   }
   const assignees = collectAssignees(formData, taskIds, viewer.id);
 
@@ -40,7 +41,7 @@ export async function launchRun(formData: FormData) {
     p_case_name: caseName.value,
     p_assignees: assignees,
   });
-  if (error || !runId) redirect(back(dbErrorCode(error)));
+  if (error || !runId) redirect(back(dbErrorCode(error)), "replace");
 
   revalidatePath("/runs");
   // Число моїх відкритих задач біля «Runs» рахує layout (app)/layout.tsx — оновлюємо і його.
@@ -58,7 +59,7 @@ export async function completeTask(formData: FormData) {
   const taskId = text(formData, "task_id");
   // Некоректні id з форми — до бази не йдемо (інакше Postgres дав би загальну помилку замість TASK_NOT_FOUND).
   if (!UUID_RE.test(runId)) redirect("/runs");
-  if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`);
+  if (!UUID_RE.test(taskId)) redirect(`/runs/${runId}?error=TASK_NOT_FOUND`, "replace");
 
   // confirmed=yes додає лише підтверджена дія останньої обов'язкової задачі (withConfirmation у MarkDoneForm).
   // p_confirmed передаємо лише як true: звичайна позначка не залежить від нового параметра функції бази.
@@ -68,12 +69,13 @@ export async function completeTask(formData: FormData) {
   // знаходить сигнатуру. Користувач уже підтвердив у діалозі, тож повторюємо виклик старою сигнатурою.
   if (error && confirmed && isMissingRpcSignature(error)) ({ error } = await supabase.rpc("complete_task", { p_task_id: taskId }));
   // AC-TASK-03: задача лишається «to do», а користувач бачить текст PM.
-  if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`);
+  if (error) redirect(`/runs/${encodeURIComponent(runId)}?error=${dbErrorCode(error)}`, "replace");
 
   revalidatePath("/runs");
   // Число моїх відкритих задач біля «Runs» рахує layout (app)/layout.tsx — оновлюємо і його.
   revalidatePath("/", "layout");
   revalidatePath(`/runs/${runId}`);
   // Відгук для скрінрідера на сторінці запуску: «<назва задачі>: done» (FlashNotice, параметри знімаються з адреси).
-  redirect(`/runs/${encodeURIComponent(runId)}?done=task&task=${encodeURIComponent(taskId)}`);
+  // Та сама сторінка — replace, а не push (типово для Server Actions): «Назад» веде до списку, а не на цю ж сторінку.
+  redirect(`/runs/${encodeURIComponent(runId)}?done=task&task=${encodeURIComponent(taskId)}`, "replace");
 }

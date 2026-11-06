@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { countMyOpenTasks, getViewer } from "@/lib/supabase/viewer";
 import { PageShell } from "@/app/_components/ui";
 import { HomeView } from "@/app/_components/home-view";
 import { loadRunSummaries } from "./runs/_lib/summaries";
@@ -10,21 +10,12 @@ import { loadRunSummaries } from "./runs/_lib/summaries";
 export const metadata = { title: "Home" };
 
 export default async function Home() {
-  const supabase = await createClient();
-
-  // getClaims() перевіряє JWT. getSession() для авторизації на сервері не використовуємо.
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
+  // Claims і профіль — ті самі, що вже прочитав layout (getViewer кешує їх на запит).
+  // RLS: користувач бачить лише власний профіль, а запуски й задачі — лише дозволені йому.
+  const { supabase, claims, profile } = await getViewer();
   if (!claims) {
     redirect("/login");
   }
-
-  // RLS: користувач бачить лише власний профіль, а запуски й задачі — лише дозволені йому.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("email, full_name, role")
-    .eq("id", claims.sub)
-    .maybeSingle();
 
   // Підрядник не бачить запусків агенції й шаблонів: його головна — список запусків зі своїми задачами (AC-VENDOR-03).
   if (profile?.role === "vendor") redirect("/runs");
@@ -33,7 +24,8 @@ export default async function Home() {
   const [active, completed, mine, recent] = await Promise.all([
     supabase.from("runs").select("id", count).eq("status", "in_progress"),
     supabase.from("runs").select("id", count).eq("status", "completed"),
-    supabase.from("run_tasks").select("id", count).eq("assignee_id", claims.sub).eq("status", "to_do"),
+    // Той самий підрахунок, що й нагадування біля «Runs» у layout — без другого запиту.
+    countMyOpenTasks(claims.sub),
     supabase
       .from("runs")
       .select("id, case_name, template_name, status, run_manager_id")
@@ -41,7 +33,7 @@ export default async function Home() {
       .order("id")
       .limit(5),
   ]);
-  const failed = [active, completed, mine, recent].find((result) => result.error);
+  const failed = [active, completed, recent].find((result) => result.error);
   if (failed?.error) throw new Error(failed.error.message);
   const runs = recent.data ?? [];
   const { summary, emailOf } = profile ? await loadRunSummaries(supabase, runs.map((r) => r.id)) : { summary: {}, emailOf: new Map<string, string | null>() };
@@ -61,7 +53,7 @@ export default async function Home() {
       {profile ? (
         <HomeView
           active={active.count ?? 0}
-          mine={mine.count ?? 0}
+          mine={mine}
           completed={completed.count ?? 0}
           runs={runs}
           summary={summary}
