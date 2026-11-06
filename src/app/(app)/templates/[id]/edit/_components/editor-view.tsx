@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HistoryIcon, LayersIcon, PlusIcon, TemplateIcon } from "@/components/ui/icons";
 import { InlineInput } from "@/components/ui/inline-input";
+import { morphName, SharedTitle } from "@/components/ui/motion";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ToggleChip } from "@/components/ui/toggle-chip";
 import { requiredLabel } from "@/lib/runs/labels";
@@ -121,14 +122,17 @@ export function EditorView({
           </span>
           <TrackedForm action={renameTemplate} className="flex min-w-0 flex-1">
             {hidden}
-            <InlineInput
-              name="name"
-              size="title"
-              defaultValue={template.name}
-              aria-label="Template name"
-              placeholder="Template name"
-              allowEmpty
-            />
+            {/* Видима назва в редакторі — поле: саме його картка галереї морфить у заголовок (h1 тут sr-only). */}
+            <SharedTitle name={morphName("template", id)} className="block min-w-0 flex-1">
+              <InlineInput
+                name="name"
+                size="title"
+                defaultValue={template.name}
+                aria-label="Template name"
+                placeholder="Template name"
+                allowEmpty
+              />
+            </SharedTitle>
           </TrackedForm>
         </div>
       }

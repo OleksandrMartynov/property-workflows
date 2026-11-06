@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { HistoryIcon, PencilIcon, PlayIcon, TemplateIcon } from "@/components/ui/icons";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MESSAGES } from "@/lib/runs/messages";
+import { SharedTitle, morphName } from "@/components/ui/motion";
 import { NewTemplateDialog } from "./new-template-dialog";
 
 export interface TemplateRow {
@@ -85,7 +86,7 @@ export function TemplatesList({
                         href={href}
                         className="text-foreground no-underline outline-none after:absolute after:inset-0 after:rounded-md after:content-['']"
                       >
-                        {shownName(t.name, "template")}
+                        <SharedTitle name={morphName("template", t.id)}>{shownName(t.name, "template")}</SharedTitle>
                       </Link>
                     ) : (
                       shownName(t.name, "template")
