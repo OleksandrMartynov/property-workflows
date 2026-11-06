@@ -465,8 +465,8 @@ describe("База: версія запуску", () => {
 });
 
 describe("База: відмови менеджеру й відвідувачу", () => {
-  it("AC-EDITOR-07: менеджер B не бачить старих версій — лише поточну", async () => {
-    const tpl = await tenantMoveInV1("Tenant move-in (AC-EDITOR-07)");
+  it("AC-EDITOR-29: прямим запитом менеджер B отримує лише поточну версію 2, версії 1 — нічого", async () => {
+    const tpl = await tenantMoveInV1("Tenant move-in (AC-EDITOR-29 versions)");
     await addSixthTask(tpl.id, tpl.sections[1]);
     await publish(t, ADMIN, tpl.id);
     const seen = await t.asUser<{ number: number }>(MANAGER_B, "select number from public.template_versions where template_id = $1", [tpl.id]);

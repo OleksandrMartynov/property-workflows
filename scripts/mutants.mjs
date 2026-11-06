@@ -15,17 +15,17 @@ export const mutants = [
     find: "grant update (full_name) on table public.profiles to authenticated;",
     replace: "grant update (full_name, role) on table public.profiles to authenticated;",
   },
-  // ── AC-EDITOR-07: менеджер за прямим посиланням на список версій — «Not enough rights» і жодної версії ─────────
-  // Сторінку закриває canManageTemplates (TS, Stryker), а дані — політика template_versions_select: менеджер не
-  // отримує жодної версії, крім поточної, навіть прямим запитом.
+  // ── AC-EDITOR-29: прямим запитом менеджер отримує лише поточну версію ──────────────────────────────────────────────
+  // Дані закриває політика template_versions_select. (AC-EDITOR-07 — сторінка: її відмову тримає canManageTemplates у TS
+  // і доводять Stryker та рендер сторінки без жодного запиту версій, tests/templates/forbidden.test.tsx.)
   {
-    id: "E7a", kind: "sql", ac: "AC-EDITOR-07", file: VERSIONS, tests: [VERSIONS_DB],
+    id: "E29a", kind: "sql", ac: "AC-EDITOR-29", file: VERSIONS, tests: [VERSIONS_DB],
     what: "template_versions_select: менеджер бачить усі версії шаблону, а не лише поточну",
     find: "        (select private.current_app_role()) = 'manager'\n        and exists (\n          select 1 from public.templates as t\n          where t.id = template_versions.template_id and t.current_version = template_versions.number\n        )",
     replace: "        (select private.current_app_role()) = 'manager'",
   },
   {
-    id: "E7b", kind: "sql", ac: "AC-EDITOR-07", file: VERSIONS, tests: [VERSIONS_DB],
+    id: "E29b", kind: "sql", ac: "AC-EDITOR-29", file: VERSIONS, tests: [VERSIONS_DB],
     what: "template_versions_select послаблено до true: будь-хто з входом бачить усі версії",
     find: "create policy template_versions_select on public.template_versions\n  for select to authenticated\n  using (\n    (select auth.uid()) is not null\n    and (\n      (select private.current_app_role()) = 'admin'",
     replace: "create policy template_versions_select on public.template_versions\n  for select to authenticated\n  using (\n    true or (\n      (select private.current_app_role()) = 'admin'",

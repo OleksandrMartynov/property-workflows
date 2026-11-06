@@ -45,7 +45,7 @@ beforeEach(() => {
 });
 
 describe("Сторінки адміністратора для менеджера", () => {
-  it("AC-EDITOR-07: менеджер за прямим посиланням на список версій — «Not enough rights» і жодної версії", () => {
+  it("Forbidden: «Not enough rights» без вмісту; canManageTemplates не пускає менеджера (сторінку доводить тест нижче)", () => {
     expect(canManageTemplates("manager")).toBe(false);
     const html = renderToStaticMarkup(<Forbidden title="Versions" />);
     expect(html).toContain("Not enough rights");
