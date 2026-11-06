@@ -1,18 +1,25 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { HeaderSkeleton, PageSkeleton, RunsTableSkeleton } from "./_components/skeletons";
 
-// Завантаження сторінки застосунку (головна, шаблони, форма запуску, версії): заголовок і картка тієї ж форми, що й
-// зміст, — без стрибка макета. Списки запусків мають власний скелет таблиці (runs/loading.tsx).
+// Завантаження головної (і сторінок без власного скелета): шапка з дією, три лічильники й останні запуски — тієї ж
+// форми, що й зміст, без стрибка макета.
 export default function AppLoading() {
   return (
-    <div role="status" className="flex flex-col gap-6">
-      <span className="sr-only">Loading…</span>
-      <Skeleton className="h-7 w-48" />
-      <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4 shadow-sm">
-        <Skeleton className="h-4 w-56" />
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-3.5 w-full max-w-md" />
+    <PageSkeleton label="Loading…">
+      <HeaderSkeleton title="w-24" action />
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex h-[76px] flex-col justify-between rounded-md border border-border bg-card p-4 shadow-sm">
+            <Skeleton className="h-3.5 w-28" />
+            <Skeleton className="h-6 w-10" />
+          </div>
         ))}
       </div>
-    </div>
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <RunsTableSkeleton rows={5} />
+    </PageSkeleton>
   );
 }

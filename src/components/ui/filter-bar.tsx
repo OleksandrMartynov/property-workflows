@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { rememberListUrl } from "@/lib/nav/list-return";
 import { cn } from "@/lib/utils";
 import { SearchInput } from "./search-input";
 import { Segmented } from "./segmented";
@@ -57,6 +58,9 @@ export function FilterBar({
   useEffect(() => {
     draft.current = { view, q: query };
   }, [view, query]);
+  // Остання адреса списку у вкладці (вигляд, пошук, сторінка) — куди веде «← Runs» зі сторінки запуску (BackLink).
+  const search = params.toString();
+  useEffect(() => rememberListUrl(pathname, search, window.sessionStorage), [pathname, search]);
 
   const navigate = (next: Partial<Draft>) => {
     draft.current = { ...draft.current, ...next };

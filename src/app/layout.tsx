@@ -12,9 +12,12 @@ const inter = Inter({
   axes: ["opsz"],
 });
 
+// Mono й серіф потрібні лише hero входу (eyebrow і акцентне слово): без preload браузер завантажує їх лише там, де
+// вони справді вжиті, а не на кожній сторінці застосунку.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Виразний акцент (лише hero входу): курсивний серіф поруч з Inter. Латиниця; в інтерфейсі лише англійські слова.
@@ -23,6 +26,7 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
+  preload: false,
 });
 
 export const metadata: Metadata = {

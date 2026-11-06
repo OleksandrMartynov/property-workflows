@@ -7,6 +7,7 @@ import { PageShell } from "@/app/_components/ui";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./done-task-notice";
 import { completeTask } from "../../actions";
+import { morphName } from "@/components/ui/motion";
 import { VendorRunDetail } from "./vendor-run-detail";
 
 type ViewerSession = Awaited<ReturnType<typeof requireViewer>>;
@@ -45,6 +46,7 @@ export async function VendorRunPage({
   return (
     <PageShell
       title={run.case_name}
+      titleMorph={morphName("run", run.id)}
       back={{ href: "/runs", label: "Runs" }}
       actions={<StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>}
     >

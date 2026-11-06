@@ -792,6 +792,41 @@
 @utility animate-ui-glow { animation: ui-glow var(--duration-celebrate) var(--ease-standard) both; }
 @utility animate-ui-reveal { animation: ui-reveal 760ms var(--ease-emphasized) both; animation-delay: calc(var(--i, 0) * 70ms + var(--reveal-delay, 0ms)); }
 @utility animate-ui-page { animation: ui-page var(--duration-moderate) var(--ease-standard) both; }
+
+/* View Transitions між сторінками (src/components/ui/motion.tsx). Анімують лише названі елементи; решта сторінки
+   міняється миттєво — кореневий кросфейд вимкнено, щоб щільний інтерфейс не «плив» на кожному переході. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+/* «Той самий об'єкт»: назва з рядка списку переходить у заголовок сторінки; легке розмиття ховає інтерполяцію тексту. */
+::view-transition-group(.morph) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-standard);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+@keyframes vt-via-blur {
+  35% { filter: blur(2px); }
+}
+/* Скелет іде швидко й униз, зміст приходить м'якше й угору — асиметрія виходу й появи. */
+::view-transition-old(.skeleton-out) {
+  animation: vt-sink var(--duration-fast) var(--ease-standard) both;
+}
+::view-transition-new(.content-in) {
+  animation: vt-rise var(--duration-moderate) var(--ease-standard) var(--duration-fast) both;
+}
+@keyframes vt-sink { to { opacity: 0; transform: translateY(var(--distance-2, 6px)); } }
+@keyframes vt-rise { from { opacity: 0; transform: translateY(var(--distance-3, 10px)); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-image-pair(*) {
+    animation: none !important;
+  }
+}
 @utility animate-ui-ring { animation: ui-ring var(--duration-slow) var(--ease-in-out-soft) 120ms backwards; }
 @utility animate-ui-grow { animation: ui-grow var(--duration-slow) var(--ease-in-out-soft) 120ms backwards; }
 /* Число «набирається» від нуля: цілий кастомний --count задає кінцеве значення (inline), CSS малює лічильник. */
