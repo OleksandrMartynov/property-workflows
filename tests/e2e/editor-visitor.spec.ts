@@ -1,4 +1,5 @@
 // AC-EDITOR-09 — відмова, яку видно в браузері (не увійшов). Лише читання: безпечно на проді.
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
 
@@ -6,6 +7,10 @@ import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 const TENANT_MOVE_IN = "10000000-0000-0000-0000-000000000001";
+// Назви шаблонів, секцій і задач з insert-ів початкових даних — те саме джерело, що tests/design/hero-copy.test.tsx:
+// новий витік вмісту шаблону (як колись у hero) тест зловить сам.
+const SEED = readFileSync("supabase/migrations/20261019174350_run_launch.sql", "utf8");
+const SEED_NAMES = [...SEED.matchAll(/\('[0-9a-f-]{36}',\s*(?:'[0-9a-f-]{36}',\s*)?'([^']+)'/g)].map((m) => m[1]);
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
@@ -33,8 +38,9 @@ test(
         await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
         await expect(page.getByLabel("Email")).toBeVisible();
         await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
-        for (const text of ["Tenant move-in", "Sign the lease agreement", "Hand over the keys"]) {
-          await expect(page.getByText(text)).toHaveCount(0);
+        expect(SEED_NAMES).toEqual(expect.arrayContaining(["Tenant move-in", "Before move-in", "Move-in day", "Order cleaning"]));
+        for (const text of SEED_NAMES) {
+          await expect(page.getByText(text, { exact: false })).toHaveCount(0);
         }
       },
     );

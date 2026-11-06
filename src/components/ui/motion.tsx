@@ -4,15 +4,19 @@
 // як і раніше (кореневий кросфейд вимкнено в globals.css), тож щільний робочий інтерфейс не «пливе».
 // Усе вимикається за prefers-reduced-motion (globals.css). Браузер без View Transitions — звичайна навігація.
 import { ViewTransition, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /** Ім'я морфа для запуску чи шаблону: однакове в рядку списку й у заголовку його сторінки. */
 export const morphName = (kind: "run" | "template", id: string) => `${kind}-title-${id}`;
 
-/** Назва, що «перетікає» між сторінками (рядок списку ↔ заголовок). Лише рядковий елемент усередині. */
-export function SharedTitle({ name, children }: { name: string; children: ReactNode }) {
+/**
+ * Назва, що «перетікає» між сторінками (рядок списку ↔ заголовок). Усередині — текст або поле назви (редактор);
+ * `className` — для обгортки поля, якій треба розтягнутись у flex-рядку.
+ */
+export function SharedTitle({ name, className, children }: { name: string; className?: string; children: ReactNode }) {
   return (
     <ViewTransition name={name} share="morph" default="none">
-      <span className="inline-block max-w-full">{children}</span>
+      <span className={cn("inline-block max-w-full", className)}>{children}</span>
     </ViewTransition>
   );
 }
