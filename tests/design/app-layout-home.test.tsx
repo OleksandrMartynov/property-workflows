@@ -13,6 +13,7 @@ const counted: string[] = [];
 // Мої задачі «to do» (run_tasks з назвою запуску) і фільтри цього запиту.
 let myTasks: { id: string; name: string; run_id: string; runs: { case_name: string } | null }[] = [];
 const taskFilters: [string, unknown][] = [];
+let tasksError: { message: string } | null = null;
 
 const runsQuery = (table: string) => {
   const chain: Record<string, unknown> = {};
@@ -21,7 +22,7 @@ const runsQuery = (table: string) => {
     if (table === "run_tasks") taskFilters.push([column, value]);
     return chain;
   };
-  chain.then = (resolve: (r: unknown) => unknown) => resolve({ data: table === "run_tasks" ? myTasks : [], count: 2, error: null });
+  chain.then = (resolve: (r: unknown) => unknown) => resolve({ data: table === "run_tasks" ? myTasks : [], count: 2, error: table === "run_tasks" ? tasksError : null });
   return chain;
 };
 
@@ -49,6 +50,7 @@ beforeEach(() => {
   counted.length = 0;
   myTasks = [];
   taskFilters.length = 0;
+  tasksError = null;
   state.claims = { sub: ME, email: "manager.a@example.test" };
   state.profile = { email: "manager.a@example.test", full_name: null, role: "manager" };
 });
@@ -97,6 +99,11 @@ describe("Головна", () => {
     // 4 мої задачі, показано 2 — «View all» веде на вигляд «mine».
     expect(html).toContain('href="/runs?view=mine"');
     expect(html.match(/data-accent="true"/g)).toHaveLength(1);
+  });
+
+  it("помилка бази в запиті моїх задач — помилка сторінки (error.tsx), а не порожній блок", async () => {
+    tasksError = { message: "connection reset" };
+    await expect(Home()).rejects.toThrow("connection reset");
   });
 
   it("моїх задач немає — без блоку «Your tasks»", async () => {

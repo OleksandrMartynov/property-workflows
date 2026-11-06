@@ -3,13 +3,30 @@ import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { countMyOpenTasks, getViewer } from "@/lib/supabase/viewer";
 import { PageShell } from "@/app/_components/ui";
-import { HomeView } from "@/app/_components/home-view";
+import { HomeView, type MyTask } from "@/app/_components/home-view";
 import { loadRunSummaries } from "./runs/_lib/summaries";
 
 // Головна: хто увійшов і куди далі. Сторінка читає cookies, тому рендериться динамічно.
 export const metadata = { title: "Home" };
 
 const MY_TASKS_MAX = 5;
+
+type Supabase = Awaited<ReturnType<typeof getViewer>>["supabase"];
+
+/** Мої задачі «to do» для блоку «Your tasks» (RLS лишає лише видимі) з назвою запуску — одним запитом. */
+async function loadMyTasks(supabase: Supabase, userId: string): Promise<MyTask[]> {
+  const { data, error } = await supabase
+    .from("run_tasks")
+    .select("id, name, run_id, runs(case_name)")
+    .eq("assignee_id", userId)
+    .eq("status", "to_do")
+    .order("run_id")
+    .order("section_position")
+    .order("position")
+    .limit(MY_TASKS_MAX);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((t) => ({ id: t.id, name: t.name, run_id: t.run_id, run_name: t.runs?.case_name ?? "—" }));
+}
 
 export default async function Home() {
   // Claims і профіль — ті самі, що вже прочитав layout (getViewer кешує їх на запит).
@@ -23,7 +40,7 @@ export default async function Home() {
   if (profile?.role === "vendor") redirect("/runs");
 
   const count = { count: "exact", head: true } as const;
-  const [active, completed, mine, recent, open] = await Promise.all([
+  const [active, completed, mine, recent, myTasks] = await Promise.all([
     supabase.from("runs").select("id", count).eq("status", "in_progress"),
     supabase.from("runs").select("id", count).eq("status", "completed"),
     // Той самий підрахунок, що й нагадування біля «Runs» у layout — без другого запиту.
@@ -34,21 +51,11 @@ export default async function Home() {
       .order("created_at", { ascending: false })
       .order("id")
       .limit(5),
-    // Мої задачі «to do» для блоку «Your tasks» (RLS лишає лише видимі) з назвою запуску — одним запитом.
-    supabase
-      .from("run_tasks")
-      .select("id, name, run_id, runs(case_name)")
-      .eq("assignee_id", claims.sub)
-      .eq("status", "to_do")
-      .order("run_id")
-      .order("section_position")
-      .order("position")
-      .limit(MY_TASKS_MAX),
+    loadMyTasks(supabase, claims.sub),
   ]);
-  const failed = [active, completed, recent, open].find((result) => result.error);
+  const failed = [active, completed, recent].find((result) => result.error);
   if (failed?.error) throw new Error(failed.error.message);
   const runs = recent.data ?? [];
-  const myTasks = (open.data ?? []).map((t) => ({ id: t.id, name: t.name, run_id: t.run_id, run_name: t.runs?.case_name ?? "—" }));
   const { summary, emailOf } = profile ? await loadRunSummaries(supabase, runs.map((r) => r.id)) : { summary: {}, emailOf: new Map<string, string | null>() };
   const managerOf = (run: { run_manager_id: string }) => (run.run_manager_id === claims.sub ? "me" : (emailOf.get(run.run_manager_id) ?? "—"));
 
