@@ -104,5 +104,6 @@ export async function signIn(page: Page, email: string, password: string) {
     (el as HTMLInputElement).value = value;
   }, password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL((url) => url.pathname === "/");
+  // Головна підрядника (зріз 3) веде на /runs (AC-VENDOR-03): вхід завершено на будь-якій з двох.
+  await page.waitForURL((url) => url.pathname === "/" || url.pathname === "/runs");
 }
