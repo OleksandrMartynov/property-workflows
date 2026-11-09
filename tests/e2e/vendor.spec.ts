@@ -106,10 +106,13 @@ test.describe("Менеджер A призначає підрядника", () =
         },
         async () => {
           const listbox = page.getByRole("listbox");
-          for (const email of [MANAGER_B, ADMINISTRATOR, emails.vendorLaunch]) {
-            await expect(listbox.getByRole("option").filter({ hasText: email })).toHaveCount(1);
-          }
+          await expect(listbox.getByRole("option").first()).toBeVisible();
           const texts = await listbox.getByRole("option").allInnerTexts();
+          // Точний збіг адреси: «admin@example.test» — підрядок і «pm-admin@example.test».
+          const shownEmails = texts.map((text) => text.match(/[\w.+-]+@example\.test/i)?.[0]);
+          for (const email of [MANAGER_B, ADMINISTRATOR, emails.vendorLaunch]) {
+            expect(shownEmails.filter((shown) => shown === email), email).toHaveLength(1);
+          }
           for (const text of texts) {
             const shown = text.replace(/\s+/g, " ").trim();
             const email = shown.match(/[\w.+-]+@example\.test/i)?.[0];
@@ -334,7 +337,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       await given("підрядник V, який увійшов, і шаблон «Tenant move-in» з поточною версією", async () => {
         await page.goto("/runs");
         await expect(page.getByTestId("user-email")).toHaveText(emails.vendor);
-        before = await page.getByTestId("run-row").allInnerTexts();
+        before = await page.getByTestId("run-row").allTextContents();
       });
 
       await when("V намагається запустити цей шаблон напряму, оминаючи сторінки застосунку", async () => {
@@ -378,8 +381,9 @@ test.describe("Підрядник V позначає свою задачу", () 
         await page.goto(`/runs/${runs.apartment12Done}`);
         await expect(page.getByTestId("user-email")).toHaveText(emails.vendorDone);
         await expect(taskStatus(page, taskName(3), "to do")).toBeVisible();
-        // Не остання обов'язкова: після задачі 3 у шаблоні є ще обов'язкова задача (задача 4 на V чи інша на A).
-        expect(tasks.slice(3).some((task) => task.required)).toBe(true);
+        // Не остання обов'язкова: у цьому свіжому запуску лишаються невиконані обов'язкові задачі менеджера A (крім
+        // задачі 3) — тому «Mark as done» нижче без підтвердження (AC-TASK-16), а задача 3 не завершує запуск.
+        expect(tasks.filter((task, index) => index !== 2 && index !== 3 && task.required).length).toBeGreaterThan(0);
         await expect(page.getByTestId("vendor-progress")).toHaveText("Your tasks: 0 of 2 done");
       });
 
