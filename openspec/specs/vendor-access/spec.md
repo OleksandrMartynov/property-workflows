@@ -14,8 +14,8 @@ WHEN підрядник відкриває список запусків, the sy
 
 - **GIVEN** підрядник V, виконавець 2 задач у запуску «Apartment 12, move-in» і жодної задачі в запуску «Apartment 14, repair»
 - **WHEN** V відкриває список запусків
-- **THEN** V бачить лише запуск «Apartment 12, move-in» з його статусом запуску й «Your tasks: 0 of 2 done»
-- **AND** не бачить запуску «Apartment 14, repair»
+- **THEN** V sees only the run "Apartment 12, move-in" with its run status and "Your tasks: 0 of 2 done"
+- **AND** does not see "Apartment 14, repair".
 
 ### Requirement: Підрядник бачить лише свої задачі запуску
 
@@ -25,8 +25,8 @@ WHEN підрядник відкриває запуск, у якому він в
 
 - **GIVEN** підрядник V, виконавець задач 3 і 4 у запуску «Apartment 12, move-in» з 5 задачами
 - **WHEN** V відкриває цей запуск
-- **THEN** V бачить рівно задачі 3 і 4, кожну з її назвою, секцією, позначкою «required» або «optional» і статусом
-- **AND** не бачить задач 1, 2 і 5, email інших користувачів і прогресу всього запуску
+- **THEN** V sees exactly tasks 3 and 4, each with its name, its section, the mark "required" or "optional" and its status
+- **AND** does not see tasks 1, 2 and 5, the emails of other users or the progress of the whole run.
 
 ### Requirement: Підрядник позначає свою задачу виконаною
 
@@ -36,8 +36,8 @@ WHEN підрядник позначає виконаною свою задач�
 
 - **GIVEN** підрядник V, виконавець задачі 3 зі статусом «to do», яка не є останньою обов'язковою задачею запуску «Apartment 12, move-in»
 - **WHEN** V позначає задачу 3 виконаною
-- **THEN** задача 3 має статус «done»
-- **AND** V бачить «Your tasks: 1 of 2 done»
+- **THEN** task 3 has status "done"
+- **AND** V sees "Your tasks: 1 of 2 done".
 
 ### Requirement: Запуск без задач підрядника за прямим посиланням
 
@@ -47,8 +47,8 @@ IF підрядник відкриває за прямим посиланням 
 
 - **GIVEN** запуск «Apartment 14, repair», у якому підрядник V не має задач
 - **WHEN** V відкриває сторінку цього запуску за прямим посиланням
-- **THEN** V бачить повідомлення «Run not found»
-- **AND** не бачить жодної задачі запуску
+- **THEN** V sees the message "Run not found"
+- **AND** none of the tasks of the run.
 
 ### Requirement: Підрядник не позначає чужу задачу напряму
 
@@ -58,7 +58,7 @@ IF підрядник напряму, оминаючи сторінки заст
 
 - **GIVEN** запуск «Apartment 12, move-in», у якому задача 1 призначена менеджеру A, а задачі 3 і 4 — підряднику V
 - **WHEN** V намагається позначити задачу 1 виконаною напряму, оминаючи сторінки застосунку
-- **THEN** задача 1 лишається «to do»
+- **THEN** task 1 stays "to do".
 
 ### Requirement: Підрядник не бачить шаблонів
 
@@ -68,8 +68,8 @@ IF підрядник відкриває список шаблонів за пр
 
 - **GIVEN** підрядник V, який увійшов
 - **WHEN** V відкриває список шаблонів за прямим посиланням
-- **THEN** V бачить повідомлення «Not enough rights»
-- **AND** не бачить жодного шаблону
+- **THEN** V sees the message "Not enough rights"
+- **AND** no template.
 
 ### Requirement: Підрядник не запускає шаблон напряму
 
@@ -79,8 +79,8 @@ IF підрядник напряму, оминаючи сторінки заст
 
 - **GIVEN** підрядник V, який увійшов, і шаблон «Tenant move-in» з поточною версією 1
 - **WHEN** V намагається запустити цей шаблон напряму, оминаючи сторінки застосунку
-- **THEN** запуск не створено
-- **AND** список запусків не змінився
+- **THEN** no run is created
+- **AND** the list of runs does not change.
 
 ### Requirement: Порожній список запусків підрядника
 
@@ -90,5 +90,5 @@ WHEN підрядник, якому не призначено жодної за�
 
 - **GIVEN** підрядник V, якому не призначено жодної задачі
 - **WHEN** V відкриває список запусків
-- **THEN** V бачить повідомлення «No tasks assigned to you yet.»
-- **AND** не бачить порожньої таблиці
+- **THEN** V sees the message "No tasks assigned to you yet."
+- **AND** no empty table.

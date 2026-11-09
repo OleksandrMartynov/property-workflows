@@ -95,8 +95,8 @@ WHEN менеджер або адміністратор запускає шаб�
 
 - **GIVEN** менеджер A, підрядник V і шаблон «Tenant move-in» з 5 задачами
 - **WHEN** A запускає шаблон для випадку «Apartment 12, move-in» і призначає V виконавцем задач 3 і 4
-- **THEN** виконавець задач 3 і 4 — V
-- **AND** виконавець задач 1, 2 і 5 — A
+- **THEN** tasks 3 and 4 have V as the assignee
+- **AND** tasks 1, 2 and 5 have A.
 
 ### Requirement: Дані інших користувачів під час запуску
 
@@ -113,8 +113,8 @@ WHEN менеджер або адміністратор відкриває ви�
 
 - **GIVEN** менеджери A і B, адміністратор, підрядник V, і A запускає шаблон
 - **WHEN** A відкриває вибір виконавця
-- **THEN** A бачить email B, адміністратора і V
-- **AND** не бачить імен, ролей та інших даних профілю
+- **THEN** A sees the emails of B, of the administrator and of V
+- **AND** no names, roles or other profile data.
 
 ### Requirement: Збереження назви випадку
 
