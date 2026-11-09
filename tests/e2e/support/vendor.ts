@@ -126,6 +126,8 @@ export async function launchTenantMoveIn(client: SupabaseClient, caseName: strin
  * анімації (спінер, пульс) не чекаємо.
  */
 export async function settled(page: Page) {
+  // Прихована (згорнута) сторінка може зупинити анімації — тоді очікування не скінчилося б.
+  await page.bringToFront();
   await page.waitForFunction(() =>
     document
       .getAnimations()

@@ -35,6 +35,16 @@ async function pageAs(browser: Browser, person: Person) {
   return { context, page: await context.newPage() };
 }
 
+/**
+ * Крок «Тоді», де кадр знято після кінця анімацій появи: спершу твердження (вони чекають на вміст), потім
+ * settled(page), і лише тоді thenStep знімає кадр — інакше вміст на кадрі напівпрозорий.
+ */
+const thenSettled: typeof thenStep = (page, spec, assertions) =>
+  thenStep(page, spec, async () => {
+    await assertions();
+    await settled(page);
+  });
+
 const taskRow = (page: Page, name: string) => page.getByTestId("run-task").filter({ hasText: name });
 /** Статус задачі в рядку — точне слово «to do» / «done» (кнопка «Mark as done» не рахується). */
 const taskStatus = (page: Page, name: string, status: "to do" | "done") => taskRow(page, name).getByText(status, { exact: true });
@@ -66,9 +76,7 @@ test.describe("Менеджер A призначає підрядника", () =
         await page.getByRole("button", { name: "Launch", exact: true }).click();
         await page.waitForURL((url) => /^\/runs\/[0-9a-f-]{36}$/.test(url.pathname));
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: "tasks 3 and 4 have V as the assignee, and tasks 1, 2 and 5 have A.",
@@ -115,8 +123,7 @@ test.describe("Менеджер A призначає підрядника", () =
       // Довгі email (свій рядок A — uat-…-manager@…) переносяться на другий рядок, тож B може бути трохи нижче видимої
       // частини: B — у центр списку (і сторінки); адміністратор на кілька рядків вище й лишається видно.
       await option(MANAGER_B).evaluate((el) => el.scrollIntoView({ block: "center" }));
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause,
@@ -151,8 +158,7 @@ test.describe("Менеджер A призначає підрядника", () =
       );
 
       await option(emails.vendorLaunch).evaluate((el) => el.scrollIntoView({ block: "center" }));
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause,
@@ -162,6 +168,11 @@ test.describe("Менеджер A призначає підрядника", () =
         async () => {
           await expect(option(emails.vendorLaunch)).toBeInViewport({ ratio: 1 });
           await expect(option(emails.vendorLaunch)).not.toContainText(/vendor\b(?!-)|Demo-/);
+          // Email V довгий (uat-<run>-vendor-launch@…): не обрізаний і не ширший за свій напис, а список — не ширший за
+          // панель. Повернене truncate (три крапки) чи розширений убік список тут упадуть.
+          const label = option(emails.vendorLaunch).getByText(emails.vendorLaunch, { exact: true });
+          expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth && getComputedStyle(el).textOverflow !== "ellipsis")).toBe(true);
+          expect(await listbox.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
         },
       );
     },
@@ -184,9 +195,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       await when("V відкриває список запусків", async () => {
         await page.goto("/runs");
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause:
@@ -222,8 +231,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       });
 
       const [t3, t4] = [tasks[2], tasks[3]];
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause:
@@ -271,9 +279,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       await when("V відкриває сторінку цього запуску за прямим посиланням", async () => {
         await page.goto(`/runs/${runs.apartment14}`);
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: 'V sees the message "Run not found" and none of the tasks of the run.',
@@ -319,8 +325,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         });
 
         await manager.page.reload();
-        await settled(manager.page);
-        await thenStep(
+        await thenSettled(
           manager.page,
           {
             clause: 'task 1 stays "to do".',
@@ -352,9 +357,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       await when("V відкриває список шаблонів за прямим посиланням", async () => {
         await page.goto("/templates");
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: 'V sees the message "Not enough rights" and no template.',
@@ -395,9 +398,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         refusal = error?.message ?? "";
         await page.reload();
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: "no run is created, and the list of runs does not change.",
@@ -444,9 +445,7 @@ test.describe("Підрядник V позначає свою задачу", () 
         await expect(page.getByRole("alertdialog")).toHaveCount(0);
         await expect(page.getByTestId("vendor-progress")).toHaveText(/1 of 2/);
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: 'task 3 has status "done", and V sees "Your tasks: 1 of 2 done".',
@@ -484,9 +483,7 @@ test.describe("Підрядник V без задач", () => {
       await when("V відкриває список запусків", async () => {
         await page.goto("/runs");
       });
-
-      await settled(page);
-      await thenStep(
+      await thenSettled(
         page,
         {
           clause: 'V sees the message "No tasks assigned to you yet." and no empty table.',
