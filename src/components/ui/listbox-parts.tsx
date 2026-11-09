@@ -192,7 +192,8 @@ function OptionRow({ id, index, item, selected, active, multi, query, onHover, o
       ) : null}
       {item.leading ? <span className="inline-grid shrink-0 place-items-center text-muted-foreground">{item.leading}</span> : null}
       <span className="grid min-w-0 flex-1">
-        <span className="truncate">{typeof item.label === "string" ? <Highlight text={item.label} query={query} /> : item.label}</span>
+        {/* Підпис не обрізаємо (DESIGN.md: email не обрізаємо): довгий email переноситься, а не «uat-…-vendor...» (AC-VENDOR-02). */}
+        <span className="break-words">{typeof item.label === "string" ? <Highlight text={item.label} query={query} /> : item.label}</span>
         {item.description ? (
           <span className="truncate text-meta text-muted-foreground group-data-[active]/opt:text-foreground/70 group-aria-disabled/opt:text-muted-foreground">
             <Highlight text={item.description} query={query} />

@@ -13,6 +13,7 @@ import {
   clientFromState,
   launchTenantMoveIn,
   readFixture,
+  settled,
   statePath,
   type Person,
 } from "./support/vendor";
@@ -66,6 +67,7 @@ test.describe("Менеджер A призначає підрядника", () =
         await page.waitForURL((url) => /^\/runs\/[0-9a-f-]{36}$/.test(url.pathname));
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -110,6 +112,7 @@ test.describe("Менеджер A призначає підрядника", () =
       // Варіант, де є напис рівно з цим email (не «pm-admin@…» для «admin@…»; буква аватара — окремий елемент).
       const option = (email: string) => listbox.getByRole("option").filter({ has: page.getByText(email, { exact: true }) });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -145,6 +148,7 @@ test.describe("Менеджер A призначає підрядника", () =
       );
 
       await option(emails.vendorLaunch).scrollIntoViewIfNeeded();
+      await settled(page);
       await thenStep(
         page,
         {
@@ -178,6 +182,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         await page.goto("/runs");
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -214,6 +219,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       });
 
       const [t3, t4] = [tasks[2], tasks[3]];
+      await settled(page);
       await thenStep(
         page,
         {
@@ -263,6 +269,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         await page.goto(`/runs/${runs.apartment14}`);
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -309,6 +316,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         });
 
         await manager.page.reload();
+        await settled(manager.page);
         await thenStep(
           manager.page,
           {
@@ -342,6 +350,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         await page.goto("/templates");
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -384,6 +393,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         await page.reload();
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -432,6 +442,7 @@ test.describe("Підрядник V позначає свою задачу", () 
         await expect(page.getByTestId("vendor-progress")).toHaveText(/1 of 2/);
       });
 
+      await settled(page);
       await thenStep(
         page,
         {
@@ -471,6 +482,7 @@ test.describe("Підрядник V без задач", () => {
         await page.goto("/runs");
       });
 
+      await settled(page);
       await thenStep(
         page,
         {

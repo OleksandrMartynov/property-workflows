@@ -3,6 +3,7 @@
 // випадковими паролями, які ніде не зберігаються, і запуски-передумови «Дано». Прибирає teardown «cleanup»
 // (tests/e2e/support/admin.ts, OWNED_ROWS: запуски й задачі синтетичних користувачів).
 import { existsSync, readFileSync } from "node:fs";
+import type { Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /** «Tenant move-in» — шаблон із початкових даних (міграція 20261019174350_run_launch.sql), той самий id на проді. */
@@ -117,4 +118,17 @@ export async function launchTenantMoveIn(client: SupabaseClient, caseName: strin
   const { data, error } = await client.rpc("launch_run", { p_template_id: TENANT_MOVE_IN, p_case_name: caseName, p_assignees: assignees });
   if (error) throw new Error(`Запуск «${caseName}» не вдався: ${error.message}`);
   return data as string;
+}
+
+/**
+ * Перед кадром «Тоді» — дочекатися, поки скінчаться анімації появи (сторінка 240 мс, каскад рядків): інакше кадр
+ * знято посеред переходу, вміст напівпрозорий, і рецензент чесно не може сказати, що це кінцевий стан. Нескінченні
+ * анімації (спінер, пульс) не чекаємо.
+ */
+export async function settled(page: Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every((animation) => animation.playState !== "running" || animation.effect?.getComputedTiming().iterations === Infinity),
+  );
 }
