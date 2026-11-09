@@ -122,8 +122,8 @@ test.describe("Менеджер A призначає підрядника", () =
           ],
         },
         async () => {
-          await expect(option(MANAGER_B)).toBeInViewport();
-          await expect(option(ADMINISTRATOR)).toBeInViewport();
+          await expect(option(MANAGER_B)).toBeInViewport({ ratio: 1 });
+          await expect(option(ADMINISTRATOR)).toBeInViewport({ ratio: 1 });
           const texts = await listbox.getByRole("option").allInnerTexts();
           // Точний збіг адреси: «admin@example.test» — підрядок і «pm-admin@example.test».
           const shownEmails = texts.map((text) => text.match(/[\w.+-]+@example\.test/i)?.[0]);
@@ -153,7 +153,7 @@ test.describe("Менеджер A призначає підрядника", () =
           hidden: ["біля email V — жодного імені, ролі («vendor») чи інших даних профілю (перевірено для всіх варіантів на кроці 1)"],
         },
         async () => {
-          await expect(option(emails.vendorLaunch)).toBeInViewport();
+          await expect(option(emails.vendorLaunch)).toBeInViewport({ ratio: 1 });
           await expect(option(emails.vendorLaunch)).not.toContainText(/vendor\b(?!-)|Demo-/);
         },
       );
