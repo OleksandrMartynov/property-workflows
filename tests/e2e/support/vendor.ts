@@ -41,14 +41,15 @@ export interface VendorFixture {
   ids: Record<Person, string>;
   /** Задачі поточної версії «Tenant move-in» у порядку шаблону: task[0] — задача 1, task[2] — задача 3. */
   tasks: TemplateTask[];
-  runs: { apartment12: string; apartment14: string; apartment12Done: string };
+  runs: { apartment12: string; apartment14: string };
 }
 
 export const writeFixturePath = FIXTURE;
 export function readFixture(): VendorFixture {
   // Файл пише setup лише із секретним ключем (.env.local; у CI — ключ локального стеку, e2e.yml). Без нього AC зрізу 3
   // не перевірити — краще чесно впасти з поясненням, ніж мовчки пропустити.
-  if (!existsSync(FIXTURE)) {
+  // Ключ перевіряємо щоразу: старий fixture попереднього прогону вказує на дані, які teardown уже видалив.
+  if (!process.env.SUPABASE_SECRET_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL || !existsSync(FIXTURE)) {
     throw new Error(`Немає ${FIXTURE}: UAT зрізу 3 потребує SUPABASE_SECRET_KEY у .env.local (setup створює синтетичних учасників)`);
   }
   return JSON.parse(readFileSync(FIXTURE, "utf8")) as VendorFixture;

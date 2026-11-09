@@ -6,7 +6,16 @@
 // і крок, який показує на екрані «що не змінилося».
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
-import { ADMINISTRATOR, MANAGER_B, TENANT_MOVE_IN, clientFromState, readFixture, statePath, type Person } from "./support/vendor";
+import {
+  ADMINISTRATOR,
+  MANAGER_B,
+  TENANT_MOVE_IN,
+  clientFromState,
+  launchTenantMoveIn,
+  readFixture,
+  statePath,
+  type Person,
+} from "./support/vendor";
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
@@ -117,8 +126,10 @@ test.describe("Менеджер A призначає підрядника", () =
             const shown = text.replace(/\s+/g, " ").trim();
             const email = shown.match(/[\w.+-]+@example\.test/i)?.[0];
             expect(email, `варіант без email: «${shown}»`).toBeTruthy();
-            // Аватар — одна літера email (src/components/ui/avatar.tsx), не дані профілю.
-            const rest = shown.replace(email!, "").replace(/\brun manager\b/, "").replace(/^[A-Z?]\s*/, "").trim();
+            // Аватар — одна літера email (src/components/ui/avatar.tsx), не дані профілю. «run manager» — лише у варіанті
+            // самого A (його роль у цьому запуску); біля B, адміністратора чи V ця позначка була б порушенням.
+            const own = email === emails.manager;
+            const rest = shown.replace(email!, "").replace(own ? /\brun manager\b/ : /$^/, "").replace(/^[A-Z?]\s*/, "").trim();
             expect(rest, `біля ${email} є інші дані: «${rest}»`).toBe("");
           }
           await expect(listbox).not.toContainText(/Demo-/);
@@ -376,9 +387,14 @@ test.describe("Підрядник V позначає свою задачу", () 
     "AC-VENDOR-05: V позначає свою задачу 3 «done» — задача 3 «done», «Your tasks: 1 of 2 done»",
     { tag: ["@uat", "@writes"], annotation: { type: "ac", description: "AC-VENDOR-05" } },
     async ({ page }) => {
-      const { emails, runs, tasks } = fx();
+      const { emails, ids, tasks } = fx();
+      // Свій запуск на кожне виконання: позначка змінює стан, тож повтор (--repeat-each) не бере вже виконану задачу.
+      const runId = await launchTenantMoveIn(clientFromState("manager"), "Apartment 12, move-in", {
+        [tasks[2].template_task_id]: ids.vendorDone,
+        [tasks[3].template_task_id]: ids.vendorDone,
+      });
       await given("V — виконавець задачі 3 зі статусом «to do», яка не є останньою обов'язковою задачею запуску", async () => {
-        await page.goto(`/runs/${runs.apartment12Done}`);
+        await page.goto(`/runs/${runId}`);
         await expect(page.getByTestId("user-email")).toHaveText(emails.vendorDone);
         await expect(taskStatus(page, taskName(3), "to do")).toBeVisible();
         // Не остання обов'язкова: у цьому свіжому запуску лишаються невиконані обов'язкові задачі менеджера A (крім
@@ -399,13 +415,17 @@ test.describe("Підрядник V позначає свою задачу", () 
         {
           clause: 'task 3 has status "done", and V sees "Your tasks: 1 of 2 done".',
           visible: [`задача «${taskName(3)}» зі статусом «done»`, "«Your tasks: 1 of 2 done»"],
-          hidden: ["задача 4 V лишилась «to do»"],
+          hidden: ["задача 4 V лишилась «to do»", "після перезавантаження сторінки — те саме: «done» і «Your tasks: 1 of 2 done» збережено в базі"],
         },
         async () => {
           await expect(taskStatus(page, taskName(3), "done")).toBeVisible();
           await expect(taskStatus(page, taskName(3), "to do")).toHaveCount(0);
           await expect(page.getByTestId("vendor-progress")).toHaveText("Your tasks: 1 of 2 done");
           await expect(taskStatus(page, taskName(4), "to do")).toBeVisible();
+          // Стан збережено в базі, а не лише на сторінці: після перезавантаження — те саме.
+          await page.reload();
+          await expect(taskStatus(page, taskName(3), "done")).toBeVisible();
+          await expect(page.getByTestId("vendor-progress")).toHaveText("Your tasks: 1 of 2 done");
         },
       );
     },

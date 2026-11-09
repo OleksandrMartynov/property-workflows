@@ -77,13 +77,14 @@ if (hasAdminKey()) {
     // Запуски-передумови від імені менеджера A: задачі 3 і 4 — на підряднику, решта — на A (як у «Дано» PM).
     const managerA = await clientWithPassword(emails.manager, passwords.manager);
     const tasks = await currentTemplateTasks(managerA);
-    expect(tasks.length, "у «Tenant move-in» на проді має бути щонайменше 5 задач").toBeGreaterThanOrEqual(5);
+    // «Дано» AC-VENDOR-01, 04: «Tenant move-in» з 5 задачами (npm run template:ac приводить шаблон до форми з AC).
+    expect(tasks, "у «Tenant move-in» на проді має бути рівно 5 задач").toHaveLength(5);
     const toVendor = (person: Person) => ({ [tasks[2].template_task_id]: ids[person], [tasks[3].template_task_id]: ids[person] });
     const runs = {
       apartment12: await launchTenantMoveIn(managerA, "Apartment 12, move-in", toVendor("vendor")),
       apartment14: await launchTenantMoveIn(managerA, "Apartment 14, repair", {}),
-      apartment12Done: await launchTenantMoveIn(managerA, "Apartment 12, move-in", toVendor("vendorDone")),
     };
+    // AC-VENDOR-05 змінює стан, тож свій запуск створює кожне його виконання (tests/e2e/vendor.spec.ts).
 
     mkdirSync("playwright/.auth", { recursive: true });
     const fixture: VendorFixture = { emails, ids, tasks, runs };

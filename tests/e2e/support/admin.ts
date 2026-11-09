@@ -16,11 +16,16 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * on delete cascade (інакше Auth відповідає «Database error deleting user»). У демо: leave_requests.employee_id.
  * Якщо таких таблиць немає (або всі FK — cascade), лишіть порожнім.
  */
-// Зріз 3 (UAT підрядника): runs.run_manager_id, run_tasks.assignee_id і run_tasks.done_by посилаються на profiles без
-// cascade. Спершу запуски синтетичного менеджера (його задачі видаляє cascade run_tasks.run_id), потім задачі, де
-// синтетичний користувач — виконавець чи той, хто позначив «done».
-const OWNED_ROWS: { table: string; column: string }[] = [
-  { table: "runs", column: "run_manager_id" },
+// Зріз 3 (UAT підрядника): runs.run_manager_id посилається на profiles без cascade — запуски синтетичного менеджера
+// видаляємо (їхні задачі прибирає cascade run_tasks.run_id). Лише запуски, де менеджер — синтетичний користувач.
+const OWNED_ROWS: { table: string; column: string }[] = [{ table: "runs", column: "run_manager_id" }];
+
+/**
+ * Посилання на синтетичного користувача, які прибирання НЕ видаляє: задачі (run_tasks.assignee_id, done_by) мають
+ * лишитися лише в уже видалених запусках синтетичних менеджерів. Знайшлося хоч одне в чужому запуску (менеджер
+ * призначив uat-акаунт у справжній запуск) — прибирання зупиняється з переліком запусків, а не видаляє чужі задачі.
+ */
+const REFERENCED_BY: { table: string; column: string }[] = [
   { table: "run_tasks", column: "assignee_id" },
   { table: "run_tasks", column: "done_by" },
 ];
@@ -84,11 +89,24 @@ export async function deleteUatUsers(onlyEmail?: string): Promise<CleanupResult>
   const supabase = adminClient();
   const targets = (await listUatUsers(supabase)).filter((u) => !onlyEmail || u.email === onlyEmail);
   const deleted: string[] = [];
-  for (const u of targets) {
-    for (const { table, column } of OWNED_ROWS) {
-      const { error: rowsError } = await supabase.from(table).delete().eq(column, u.id);
-      if (rowsError) throw rowsError;
+  const ids = targets.map((u) => u.id);
+  // 1) Рядки, якими володіють синтетичні користувачі (запуски синтетичних менеджерів), — для всіх одразу: задачі
+  //    синтетичного підрядника лежать у запусках синтетичного менеджера, тож порядок користувачів не важливий.
+  for (const { table, column } of ids.length ? OWNED_ROWS : []) {
+    const { error: rowsError } = await supabase.from(table).delete().in(column, ids);
+    if (rowsError) throw rowsError;
+  }
+  // 2) Посилання з чужих рядків — не видаляємо: зупиняємось і кажемо, де вони.
+  for (const { table, column } of ids.length ? REFERENCED_BY : []) {
+    const { data, error: refError } = await supabase.from(table).select("run_id").in(column, ids);
+    if (refError) throw refError;
+    if (data?.length) {
+      const runs = [...new Set(data.map((row: { run_id: string }) => row.run_id))].join(", ");
+      throw new Error(`Синтетичний користувач є в ${table}.${column} чужих запусків (${runs}) — прибирання зупинено, нічого з них не видалено`);
     }
+  }
+  // 3) Користувачі (profiles — on delete cascade з auth.users).
+  for (const u of targets) {
     const { error } = await supabase.auth.admin.deleteUser(u.id);
     if (error) throw error;
     deleted.push(u.email);
