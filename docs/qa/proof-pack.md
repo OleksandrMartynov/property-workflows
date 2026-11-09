@@ -1,125 +1,93 @@
-# QA proof pack: зріз 2 — редактор шаблону з версіями і єдина дизайн-система
+# QA proof pack: зріз 3 — підрядник працює лише зі своїми задачами
 
 <!--
-Шаблон з koldovsky/2026-quitcode-08-quality-hw/materials/templates/proof-pack.template.md.
-Покладіть у docs/qa/proof-pack.md вашого репо й заповнюйте по кроках WS8 (A → B → C → D).
-Посилання — на файли на коміті (…/blob/<sha>/…#L<N>), на PR (…/pull/N) і на прогони (…/actions/runs/N).
+Шаблон з koldovsky/2026-quitcode-09-software-factory-hw/materials/templates/proof-pack.template.md (уперше — у WS8).
+Proof pack WS8 (зріз 2) — docs/qa/proof-pack-ws8.md.
+У WS9 — рядок на КОЖЕН AC зрізу 3. Чого довести не вдалося — у розділ «Не перевірено» з причиною, а не вигаданим доказом.
+Посилання на тести — на коміт 9713849 (main, на якому йшов UAT); звіт і кадри UAT — відносні шляхи в цьому репо.
 Жодних паролів і пароля від accounts.zip. Акаунти — лише адреси *@example.test.
-Цей файл — вхід для конвеєра WS9: на кожен AC видно, чим він доведений.
 -->
 
+Пакет доказів WS8 (зріз 2) — [`proof-pack-ws8.md`](proof-pack-ws8.md).
+
 - Прод-URL: https://property-workflows-rho.vercel.app
-- Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30
-- `/api/health` на момент UAT: sha `ac4da80`, db ok, 02.11.2026
+- Зріз 3: менеджер призначає підрядника (`vendor`) виконавцем задач під час запуску шаблону; підрядник бачить лише запуски й задачі, які йому дали, позначає свої задачі виконаними й не бачить і не змінює нічого іншого — ні на сторінках, ні прямим запитом (roadmap PM, solomchaak/property-workflows-spec#39).
+- Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30 (`/requirements-sync` 2026-11-09 — «Вимоги актуальні»)
+- Спека: [`openspec/specs/vendor-access/spec.md`](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/openspec/specs/vendor-access/spec.md) (AC-VENDOR-03…10), [`openspec/specs/run-launch/spec.md#L94`](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/openspec/specs/run-launch/spec.md#L94) (AC-VENDOR-01, 02) — «Тоді» дослівно з PM
+- `/api/health` на момент UAT: sha `9713849`, db ok, 09.11.2026 15:39 (Київ)
 
-## 3 AC
+## Доказ на кожен AC зрізу 3
 
-| AC | Вид | «Тоді» (дослівно з вимоги PM) |
-|---|---|---|
-| AC-EDITOR-07 | відмова в браузері (заборонена роль: менеджер на списку версій) | Then B sees the message "Not enough rights" and no versions. |
-| AC-EDITOR-09 | відмова в браузері (не увійшов: відвідувач на редакторі) | Then the visitor sees the sign-in page and no content of the template. |
-| AC-DSYS-04 | стан інтерфейсу (порожній список запусків) | Then B sees the message "No runs yet. Launch a template to start one." and the link "Launch a template", and no empty table. |
+Позначення: **база** — тест PGlite на всіх міграціях (`asUser`), **рендер** — тест сторінки чи компонента (Vitest), **e2e** — специфікація Playwright, прогнана на проді (UAT). «Здатен упасти» — SQL-мутант (`npm run mutation:sql`) чи TS-мутант V08t (`scripts/mutation-check.mjs --only …`), усі KILLED, [PR #84](https://github.com/OleksandrMartynov/property-workflows/pull/84). Посилання на тести — коміт `9713849`.
 
-## A. Ворота
+| AC | Вид | Тест (рівень, посилання) | Здатен упасти | Специфікація UAT | Вердикт UAT і кадр | PR і SHA злиття |
+|---|---|---|---|---|---|---|
+| AC-VENDOR-01 | основний сценарій (призначення підрядника) | база: [vendor-db.test.ts#L40](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L40), [#L208](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L208) | — (не відмова) | [vendor.spec.ts#L56](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L56) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-01-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb` |
+| AC-VENDOR-02 | чужі дані (лише email, без імен і ролей) | база: [vendor-db.test.ts#L48](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L48), [#L60](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L60) | — (не відмова; геометрію «email не обрізано» перевіряє e2e) | [vendor.spec.ts#L100](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L100) | PASS (R6), кадри [1](uat/2026-11-09/frames/AC-VENDOR-02-then-1.png) і [2](uat/2026-11-09/frames/AC-VENDOR-02-then-2.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb`; email не обрізається — [#87](https://github.com/OleksandrMartynov/property-workflows/pull/87), `9713849` |
+| AC-VENDOR-03 | основний сценарій (лише свої запуски) | база: [vendor-db.test.ts#L96](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L96); рендер: [vendor-pages.test.tsx#L83](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L83) | V03 KILLED (`vendor_runs` віддає всі запуски) | [vendor.spec.ts#L186](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L186) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-03-then-1.png) | [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83`; тест бази — [#84](https://github.com/OleksandrMartynov/property-workflows/pull/84), `cff6a1f` |
+| AC-VENDOR-04 | чужі дані (лише свої задачі) | база: [vendor-db.test.ts#L66](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L66), [#L77](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L77), [#L87](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L87); рендер: [vendor-pages.test.tsx#L116](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L116) | V04 KILLED (`run_tasks_select_visible` без умови vendor) | [vendor.spec.ts#L219](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L219) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-04-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb`; [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83` |
+| AC-VENDOR-05 | основний сценарій (позначка своєї задачі) | база: [vendor-db.test.ts#L133](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L133); рендер: [vendor-pages.test.tsx#L133](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L133) | — (не відмова) | [vendor.spec.ts#L423](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L423) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-05-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb`; [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83` |
+| AC-VENDOR-06 | відмова (чужий запуск за прямим посиланням) | база: [vendor-db.test.ts#L114](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L114); рендер: [vendor-pages.test.tsx#L149](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L149) | V06 KILLED (`runs_select_visible` пускає підрядника), V03 KILLED | [vendor.spec.ts#L269](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L269) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-06-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb`; [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83` |
+| AC-VENDOR-07 | відмова напряму, оминаючи сторінки | база: [vendor-db.test.ts#L144](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L144), [#L151](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L151), [#L158](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L158) | V07 KILLED (`complete_task` без перевірки виконавця для vendor) | [vendor.spec.ts#L300](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L300) — прямий `complete_task` сесією V → `NOT_ALLOWED`; на сторінці менеджера задача 1 «to do» | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-07-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb` |
+| AC-VENDOR-08 | відмова (заборонена роль) | база: [vendor-db.test.ts#L200](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L200); рендер: [vendor-pages.test.tsx#L158](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L158), [vendor-nav.test.tsx#L18](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-nav.test.tsx#L18) | V08 KILLED (`templates_select_by_role` пускає vendor), V08t KILLED (`isVendor` завжди false) | [vendor.spec.ts#L348](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L348) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-08-then-1.png) | [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83` |
+| AC-VENDOR-09 | відмова напряму, оминаючи сторінки | база: [vendor-db.test.ts#L194](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/db/vendor-db.test.ts#L194); рендер: [vendor-pages.test.tsx#L166](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L166) | V09 KILLED (`launch_run` пускає vendor) | [vendor.spec.ts#L378](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L378) — прямий `launch_run` сесією V → `LAUNCH_NOT_ALLOWED`; список запусків V той самий | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-09-then-1.png) | [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49), `33c7bfb` |
+| AC-VENDOR-10 | стан інтерфейсу (порожній стан) | рендер: [vendor-pages.test.tsx#L96](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L96), [#L103](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/vendor/vendor-pages.test.tsx#L103) | V08t KILLED (той самий рендер падає) | [vendor.spec.ts#L474](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/tests/e2e/vendor.spec.ts#L474) | PASS (R6), [кадр](uat/2026-11-09/frames/AC-VENDOR-10-then-1.png) | [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50), `80eae83` |
 
-- PR воріт: https://github.com/OleksandrMartynov/property-workflows/pull/48
-- Зелений `quality` на `main`: https://github.com/OleksandrMartynov/property-workflows/actions/runs/41411157485
-- Обов'язкові перевірки в `solo-main`: «Ворота: fallow audit», «Покриття: доменна підлога» — додано 02.11.2026 після зеленого прогону вище («Порада: вразливі залежності» — ніколи)
+## Не перевірено
 
-Розбір першого повного прогону `fallow` (той самий — в описі PR воріт):
-
-| Група знахідок | Скільки | Справжня / навмисна / хибна | Дія і причина |
+| AC чи частина | Чому не перевірено | Що зроблено замість | Ризик на проді |
 |---|---|---|---|
-| unused dependency `@tailwindcss/turbopack`, `@vitest/coverage-v8` | 2 | хибна | `ignoreDependencies` (з матеріалів курсу): Tailwind 4 підключено рядком у `next.config.ts`, провайдер покриття Vitest вантажить за назвою з конфігу — fallow цього не бачить |
-| unused files: контролі форм дизайн-системи (`checkbox`, `date-picker` + `date-time.css`, `dt-shared`, `file-drop`, `multi-select`, `number-field`, `radio-group`, `slider`, `switch`, `time-field` у `src/components/ui/`) | 11 | навмисна | `entry` у `.fallowrc.jsonc` з коментарем: публічний API бібліотеки `src/components/ui` для наступних зрізів (DESIGN.md, «Відомі прогалини першої версії»); сторінки зрізів 1–3 їх ще не імпортують |
-| unused file `src/lib/supabase/client.ts` | 1 | справжня | лишено з поясненням: браузерний клієнт шаблону курсу (AGENTS.md, «Структура»); усі запити застосунку серверні, файл знадобиться клієнтським компонентам (напр. realtime). Не Server Action, тож не публічний ендпойнт; `audit` (new-only) на нього не валить |
-| unused export `AC_ID_GLOBAL` (`scripts/lib/spec-lib.mjs`) | 1 | справжня | лишено з поясненням: скрипт перевірок шаблону курсу, який ми не змінюємо (його оновлює PR «Оновлення шаблону») |
-| duplicates: темна тема в `src/app/globals.css` (2 копії) | 3 групи | навмисна | DESIGN.md §9: кожен темний токен у двох копіях — `@media (prefers-color-scheme: dark)` для System і `:root[data-theme="dark"]` для Dark; `tests/design/theme.test.tsx` ловить розбіжність |
-| duplicates: `src/lib/supabase/database.types.ts` | 1 група | хибна | згенерований файл (`npm run db:types`), його не правимо |
-| duplicates: `combobox` / `multi-select` / `select` (клавіатура списку), `progress` / `progress-ring` | 6 груп | справжня | лишено: рефакторинг дизайн-системи окремим PR; поведінку перевірено в браузері (DESIGN.md) |
-| duplicates: `scripts/check-design-tokens.mjs` / `check-server-boundary.mjs`, `(app)/layout.tsx` / `viewer.ts`, `edit/actions.ts` | 4 групи | справжня | лишено: скрипти шаблону курсу; читання профілю в layout і `requireViewer` — різні контракти (layout не перенаправляє) |
-| high complexity: компоненти дизайн-системи (`number-field`, `date-picker`, `time-field`, `combobox`, `select`, `multi-select`, `slider`, …) | ≈80 функцій | справжня | лишено: клавіатурна навігація ARIA (↑ ↓ Home End, Enter, Esc, набір літер) за задумом — велика функція; `audit` (new-only) валить лише нову складність |
-| high complexity: сторінки й дії (`(app)/page.tsx` Home, `runs/page.tsx`, `runs/_lib/summaries.ts`, `templates/[id]/edit/page.tsx`, `templates-list.tsx`) | ≈10 функцій | справжня | лишено як цілі рефакторингу; нові гілки в цих файлах ворота вже ловлять |
-| high complexity: скрипти шаблону (`check-actions-auth.mjs`, `check-spec.mjs`, `check-design-tokens.mjs`) | ≈10 функцій | навмисна | скрипти курсу; складність скриптів курсу WS8 — у `health.ignore` з матеріалів |
+| AC-VENDOR-01…10 — саме ті запуски й підрядник, яких PM називає в «Дано» | UAT на проді пише в спільну базу, тож запуски «Apartment 12, move-in» і «Apartment 14, repair» створює синтетичний менеджер `uat-<run>-manager@example.test` для синтетичних підрядників, а teardown їх прибирає; демо-акаунти PM (`pm-vendor@example.test`) UAT не змінює | ті самі назви випадків і той самий шаблон «Tenant move-in» з поточної версії на проді; прибирання у звіті: видалено 5, лишилось 0 | низький: PM перевіряє на своїх акаунтах у браузері |
+| AC-VENDOR-02, 04 — «no … roles or other profile data» / «the emails of other users» | на кадрі не видно того, чого немає; повний перелік даних профілю не задано у вимозі | автоматичні перевірки: у кожному варіанті списку — лише email (і «run manager» у власному рядку A), жодних «Demo-…» імен; на сторінці запуску V — лише власний email; тест бази: підрядник не читає чужих профілів | низький |
 
-## B. Якість тестів
+Окремо (поза «Тоді»): у полі вибору виконавця (`Combobox`, не в списку варіантів) вибраний довгий email обрізаний, бо це однорядкове поле вводу; повний email видно у списку й у підсумку «Assignees». FAIL і NEEDS-HUMAN у фінальному звіті немає; ранні прогони дня й що в них було — розділ C.
 
-### Рівень для кожного AC
+## A. Вимоги й спека
 
-| AC | Де живе правило | Рівень | Чому | Тест |
+- `/requirements-sync` — PR «Оновлення вимог» зі зрізом 3: [#43](https://github.com/OleksandrMartynov/property-workflows/pull/43) (знімок 2026-10-30); після вікна уточнень PM (до 06.11) — `/requirements-sync 2026-11-09: Вимоги актуальні` (issues #1, #2, #3, #19, #20, #39 з тим самим `updatedAt`, що в знімку).
+- Спека `add-vendor` — PR «Специфікація»: [#46](https://github.com/OleksandrMartynov/property-workflows/pull/46); план `impl-vendor` — [#47](https://github.com/OleksandrMartynov/property-workflows/pull/47) (archive — [#85](https://github.com/OleksandrMartynov/property-workflows/pull/85)).
+- Дослівне «Тоді» PM у сценаріях AC-VENDOR-01…10 — зміна `verbatim-vendor-then`: [#83](https://github.com/OleksandrMartynov/property-workflows/pull/83).
+- Зміна `clarify-vendor` після уточнень: не потрібна — PM AC зрізу 3 не змінював.
+- Питання PM про зріз 3: https://github.com/solomchaak/property-workflows-spec/issues/45, https://github.com/solomchaak/property-workflows-spec/issues/46 (наші; журнал — `docs/spec-reading.md`). На кінець 09.11 PM на питання до зрізу 3 (#41…#50) ще не відповів.
+
+## B. Реалізація
+
+| PR «Реалізація» | Задача з `tasks.md` | AC | Відповіді на знахідки CodeRabbit | `db-deploy` |
 |---|---|---|---|---|
-| AC-EDITOR-07 | сторінка: `canManageTemplates` (`src/lib/supabase/viewer.ts`) → `Forbidden` ще до будь-якого запиту версій | unit сторінки + Stryker + e2e (UAT на проді — PASS, розділ C) | відмова живе на сторінці: рендер справжньої сторінки з заглушкою клієнта показує «Not enough rights» і що сторінка звернулась лише до `profiles`; правило `canManageTemplates` — Stryker; видимий «Тоді» — e2e на проді. Прямий запит версій — окремий AC-EDITOR-29 (політика `template_versions_select`, SQL-мутанти E29a/E29b) | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/templates/forbidden.test.tsx#L71 |
-| AC-EDITOR-09 | proxy: `isPublicPath` (`src/lib/supabase/public-paths.ts`) → `/login`; дані: RLS для `anon` | unit + база (PGlite) + e2e (UAT на проді — PASS, розділ C) | правило «що публічне» — чиста функція (unit і Stryker); що відвідувач нічого не читає — RLS (PGlite); сторінку входу видно лише в браузері — e2e | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/auth/public-paths.test.ts#L5, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/auth/public-paths.test.ts#L24, https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/db/template-versions-db.test.ts#L521 |
-| AC-DSYS-04 | сторінка: `RunsList` (`src/app/(app)/runs/_components/runs-list.tsx`), тексти — `src/lib/runs/labels.ts` | unit компонента + e2e (UAT на проді — PASS, розділ C) | порожній стан — гілка компонента без даних: рендер у Vitest; що в менеджера справді немає запусків і таблиці не видно — e2e на проді | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/runs/statuses.test.tsx#L43 |
+| [#49](https://github.com/OleksandrMartynov/property-workflows/pull/49) | 1. Роль vendor у базі | AC-VENDOR-01, 02, 04, 05, 06, 07, 09 | усі 3: виправлено / аргумент у треді | [41066319478](https://github.com/OleksandrMartynov/property-workflows/actions/runs/41066319478) |
+| [#50](https://github.com/OleksandrMartynov/property-workflows/pull/50) | 2. Сторінки підрядника | AC-VENDOR-03, 04, 05, 06, 08, 10 | усі 2: виправлено / аргумент у треді | [41073776383](https://github.com/OleksandrMartynov/property-workflows/actions/runs/41073776383) |
+| [#59](https://github.com/OleksandrMartynov/property-workflows/pull/59) | 3. Акаунт підрядника на проді | AC-VENDOR-03, 10 (на проді) | — | — (лише `accounts.zip`) |
+| [#84](https://github.com/OleksandrMartynov/property-workflows/pull/84) | доказ, що тести відмов здатні впасти | AC-VENDOR-03, 04, 06, 07, 08, 09 | pre-merge check «межі PR» — аргумент і рядок «Поза межами типу» в описі | [42601978720](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42601978720) |
+| [#85](https://github.com/OleksandrMartynov/property-workflows/pull/85) | UAT-специфікації (C) | AC-VENDOR-01…10 | усі 7: 6 виправлено, 1 аргумент у треді | [42594219223](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42594219223) |
+| [#86](https://github.com/OleksandrMartynov/property-workflows/pull/86) | кадр UAT AC-VENDOR-02 | AC-VENDOR-02 | 1: виправлено | [42612924955](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42612924955) |
+| [#87](https://github.com/OleksandrMartynov/property-workflows/pull/87) | вада, знайдена UAT: email обрізано у списку | AC-VENDOR-02 (і кадри всіх AC) | усі 3: виправлено | [42623178411](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42623178411) |
 
-### Покриття
-
-| Файл за AC | Рядки | Гілки | Чим доведено, якщо 0 % |
-|---|---|---|---|
-| `src/lib/supabase/public-paths.ts` (AC-EDITOR-09) | 100 % | 100 % | — |
-| `src/lib/supabase/viewer.ts` (AC-EDITOR-07, `canManageTemplates`) | 100 % | 70 % → 100 % (після відгуку WS8: `tests/auth/require-viewer.test.ts`) | — ; файл тепер під підлогою покриття (`FLOORED` у `vitest.coverage.config.mts`), як і `supabase/public-paths` |
-| `src/lib/runs/labels.ts` (AC-DSYS-04) | 100 % | 80 % | — |
-| `src/app/_components/forbidden.tsx` (AC-EDITOR-07) | 100 % | 100 % | — |
-| `src/app/(app)/templates/[id]/versions/page.tsx` (AC-EDITOR-07) | 100 % | 54,5 % | гілки адміністратора; гілку менеджера доводить `tests/templates/forbidden.test.tsx:71` |
-| `src/app/(app)/runs/_components/runs-list.tsx` (AC-DSYS-04) | 100 % | 100 % | — |
-| `src/app/(app)/runs/page.tsx` (AC-DSYS-04) | 0 % | 0 % | e2e на проді (`tests/e2e/runs-empty.spec.ts`) — UAT 02.11 PASS, `docs/qa/uat/2026-11-02/report.md` (розділ C); також рендер `RunsList` (`tests/runs/statuses.test.tsx:43`) |
-| `src/lib/supabase/proxy.ts` (AC-EDITOR-09) | 55,6 % | 100 % | e2e на проді (`tests/e2e/editor-visitor.spec.ts`) — UAT 02.11 PASS, `docs/qa/uat/2026-11-02/report.md` (розділ C); також `isPublicPath` (unit + Stryker) і RLS для `anon` (PGlite) |
-
-### Доказ мутацією
-
-| Мутант (файл:рядок, що змінено) | AC під загрозою | До | Тест, посилений з тексту AC | Після |
-|---|---|---|---|---|
-| `src/lib/runs/labels.ts:21` `NO_RUNS_ACTION = "Launch a template"` → `""` | AC-DSYS-04 | вижив (тест порівнював розмітку з константою коду) | `tests/runs/statuses.test.tsx:43`: посилання дослівно «Launch a template» на `/templates` з «Тоді» AC | убитий |
-| `src/lib/supabase/public-paths.ts:7` `startsWith` → `endsWith` | AC-EDITOR-09 (правило «за цілим сегментом від початку шляху») | вижив (еквівалентний для самого AC-EDITOR-09: редактор не публічний і з мутантом) | `tests/auth/public-paths.test.ts:24`: підшлях публічної сторінки публічний, шлях редактора з «/login/» наприкінці — ні | убитий |
-
-- Stryker (`npm run mutation:ts -- --mutate src/lib/supabase/public-paths.ts,src/lib/runs/labels.ts`): 94,44 % (34 з 36) → 100 % (36 з 36). `src/lib/supabase/viewer.ts`: мутанти `canManageTemplates` (рядок AC-EDITOR-07) убиті; вижили 5 у `requireViewer` (порожній `select`, `if (false) redirect`, `?.`, email) — не рядки наших 3 AC, кандидати для наступного посилення.
-- Після відгуку WS8 (другий рубіж за proxy): `npm run mutation:ts -- --mutate src/lib/supabase/viewer.ts` — 92,5 % (37 з 40, вижили `select("")` і `profile?.role` → `profile.role`, без покриття — `requireAdmin` за замовчуванням) → **100 % (40 з 40)**. Тести — `tests/auth/require-viewer.test.ts`: «AC-EDITOR-09: без сесії requireViewer веде на сторінку входу з поверненням, навіть якщо proxy пропустив запит», профіль без ролі, без профілю й з невідомою роллю → «/», роль лише з `profiles.role`, «AC-EDITOR-08: requireAdmin() не пускає менеджера».
-- SQL-мутації (`npm run mutation:sql`): 3 з 3 вбито (100 %).
-
-| Мутант | AC | Що зламано | Вердикт | Який тест упав |
-|---|---|---|---|---|
-| P1 | (перевірка гарнесу) | колонковий grant: користувач може змінити собі role | KILLED | `tests/db/profiles-role-db.test.ts` (3 тести) |
-| E29a (було E7a) | AC-EDITOR-29 | `template_versions_select`: менеджер бачить усі версії, а не лише поточну | KILLED | AC-EDITOR-29: прямим запитом менеджер B отримує лише поточну версію 2, версії 1 — нічого |
-| E29b (було E7b) | AC-EDITOR-29 | `template_versions_select` послаблено до `true` | KILLED | AC-EDITOR-29: прямим запитом менеджер B отримує лише поточну версію 2, версії 1 — нічого |
-
-Після відгуку WS8: SQL-доказ стосується прямого запиту версій, тобто AC-EDITOR-29, а не сторінки AC-EDITOR-07 (вона відмовляє ще до запиту). Мутанти й тест перейменовано; `npm run mutation:sql` → E29a, E29b KILLED.
-- Еквівалентні мутанти: `public-paths.ts:7` `startsWith` → `endsWith` — еквівалентний для самого AC-EDITOR-09 (шлях редактора не публічний і з мутантом), але ламає правило «за цілим сегментом», тож його вбито окремим тестом, а не позначено `survive`.
+- Ворота на `main` (`quality`: «Ворота: fallow audit», «Покриття: доменна підлога») на SHA UAT: [42623178287](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42623178287).
+- Мутації: SQL — `npm run mutation:sql -- --markdown`: 9 з 9 вбито (V03, V04, V06, V07, V08, V09 і наявні P1, E29a, E29b); TS-мутант V08t (`isVendor`) — окремим прогоном `node scripts/mutation-check.mjs --only V03,V04,V06,V07,V08,V08t,V09`: KILLED. Обидві таблиці «мутант → AC → який тест упав» — в описі [#84](https://github.com/OleksandrMartynov/property-workflows/pull/84). Пастку «update own row + колонка role» (зокрема для ролі vendor) тримає `grant update (full_name)` і мутант P1 (`tests/db/profiles-role-db.test.ts`).
 
 ## C. UAT на проді
 
-| AC | Специфікація | Тест (твердження) | Агент | Вердикт | Кадр |
-|---|---|---|---|---|---|
-| AC-EDITOR-07 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/template-versions-forbidden.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-EDITOR-07-then-1.png](uat/2026-11-02/frames/AC-EDITOR-07-then-1.png) |
-| AC-EDITOR-09 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/editor-visitor.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-EDITOR-09-then-1.png](uat/2026-11-02/frames/AC-EDITOR-09-then-1.png) |
-| AC-DSYS-04 | https://github.com/OleksandrMartynov/property-workflows/blob/f252c54aed0f42e5e6b0c24a3d6f4c690d9b5eab/tests/e2e/runs-empty.spec.ts | passed | Haiku: PASS | PASS — R6: перевірки, агент і цитати збігаються | [frames/AC-DSYS-04-then-1.png](uat/2026-11-02/frames/AC-DSYS-04-then-1.png) |
-
-- Звіт: [report.md](uat/2026-11-02/report.md) (кадри — `frames/`, `manifest.json`)
-- Відео: вкладення в описі PR https://github.com/OleksandrMartynov/property-workflows/pull/74
-- Рецензент: `claude-haiku-5-5`, суперечки — `claude-sonnet-5-5`; розбір 3 AC — $0.0060 (ціни API, за підпискою — у межах плану)
-- Негативний контроль (`npm run uat:nc`, рядки звіту — в описі https://github.com/OleksandrMartynov/property-workflows/pull/74): NC-1 (AC-DSYS-04, у тесті очікується інший текст порожнього стану) → **FAIL** (R1: перевірка впала); NC-2 (AC-DSYS-04, «Тоді» у вимозі змінено, тест і застосунок — ні) → тест зелений, але Haiku і Sonnet — FAIL → **NEEDS-HUMAN** (R3). Жодного PASS: UAT уміє падати, і агент ловить розбіжність, яку пропустив тест
-- Дані: лише читання (жодного `@writes`); прибирання — «синтетичних uat-*@example.test видалено 0, лишилось 0»
+- Звіт: [`docs/qa/uat/2026-11-09/report.md`](uat/2026-11-09/report.md) (`manifest.json`, `frames/` поруч) — `main` @ `9713849`, 18/18 тестів зелені, **13 AC — PASS 13** (з них AC-VENDOR-01…10 — усі PASS, R6).
+- Відео: вкладення в описі PR зі звітом (не в git).
+- Рецензент: `claude-haiku-5-5`, суперечки → `claude-sonnet-5-5` (без змін, з `materials/uat`); розбір $0.7692; вердикт — код за R1–R6, руками не правлено.
+- Шлях до PASS того ж дня (усі прогони — на проді, вердикти не правлено): перший повний прогін — 12 PASS + **AC-VENDOR-02 NEEDS-HUMAN** (кадр не вміщав email V) → [#86](https://github.com/OleksandrMartynov/property-workflows/pull/86); наступний — 10 PASS + NEEDS-HUMAN для AC-VENDOR-02 (**email V обрізано трьома крапками — вада продукту**), AC-VENDOR-05 і 09 (кадр посеред анімації — вада доказу) → [#87](https://github.com/OleksandrMartynov/property-workflows/pull/87); фінальний — 13 PASS. Прогони, що впали через відсутній браузер, порожній `.env.local` і обрив мережі, нічого не доводять і не враховані.
+- Негативний контроль (`npm run uat:nc`, `main` @ `9713849`): NC-1 (AC-DSYS-04, у тесті очікується інший текст порожнього стану) → **FAIL** (R1: перевірка впала); NC-2 (AC-DSYS-04, «Тоді» у вимозі змінено, тест і застосунок — ні) → тест зелений, Haiku — NEEDS-HUMAN, Sonnet — FAIL → **NEEDS-HUMAN** (R3). Жодного PASS: UAT уміє падати. Рядки звіту — в описі PR зі звітом.
+- Дані: `@writes` — AC-VENDOR-01 і 05; синтетичні `uat-<run>-{manager,vendor,vendor-launch,vendor-done,vendor-empty}@example.test` і їхні запуски; прибирання (рядок звіту): видалено 5, лишилось 0, їхніх рядків, що лишились: 0. Демо-акаунти PM не змінюються.
 
 ### Приймання PM
 
+<!-- Оцінки 0–3 — у таблиці приймання PM (її адресу сюди не пишемо). Тут — публічні коментарі PM. -->
+
 | AC | Рішення PM | Посилання |
 |---|---|---|
-| AC-EDITOR-07 | очікуємо приймання PM | — |
-| AC-EDITOR-09 | очікуємо приймання PM | — |
-| AC-DSYS-04 | очікуємо приймання PM | — |
+| AC-VENDOR-01…10 | чекає приймання PM (звіт подано 09.11) | — |
 
-## D. Eval рецензента
+## D. Прод і ретро
 
-- PR з вадами (не злитий, закритий): https://github.com/OleksandrMartynov/property-workflows/pull/62; копія для чистого повторного прогону CodeRabbit: https://github.com/OleksandrMartynov/property-workflows/pull/66
-- Ключ і таблиця: https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572058630; вивід `/code-review high` (прогін 1): https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572052602
-- Увесь обов'язковий CI на #62 зелений: кожна вада пройшла ворота. `/code-review high` запускав окремий агент без доступу до ключа.
+- `/api/health` після злиття всіх задач зрізу 3: sha `9713849`, db ok.
+- Нові ролі й акаунти: `vendor` — `pm-vendor@example.test` (для PM), `vendor.v@example.test`; [`accounts.zip`](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/accounts.zip) (AES-256, з #59; пароль — лише в архіві).
+- `docs/conformance.md`: [AC-VENDOR-01…10](https://github.com/OleksandrMartynov/property-workflows/blob/9713849151c727cd8f0d1725bda8260bf9453d2f/docs/conformance.md) — «реалізовано» зі шляхами коду, тестів і `tests/e2e/vendor.spec.ts (UAT)`; `npm run ac:coverage` — OK.
 
-| # | Вада (ключ) | CodeRabbit | `/code-review high` |
-|---|---|---|---|
-| 1 | права в даних — `supabase/migrations/20261102074158_reassign_task.sql:31`: умова прав скопійована з `complete_task` (`or v_task.assignee_id = v_uid`), підрядник-виконавець передає свою задачу будь-кому | знайшов, Major · CWE-863: «виконавець задачі може сам її перепризначити (обхід авторизації)» | знайшов, rank 1: «lets the task's current assignee reassign it» |
-| 2 | логіка — та сама функція, `:35`: немає перевірки статусу задачі `to_do`, змінюється виконавець виконаної задачі | знайшов, але **Minor**: «Функція бази не перевіряє статус задачі `to_do`» | знайшов, rank 2: «never checks the task's own status, only the run status» |
-| 3 | тести — `tests/db/reassign-db.test.ts:57`: тест «підрядник не передає свою задачу» бере задачу менеджера, а не підрядника — зелений і маскує ваду 1 | знайшов, Minor: «Тест підрядника перевіряє не той випадок» | знайшов, rank 4: «uses TASK_1 (owned by manager A), so it passes for the wrong reason» |
-| П | приманка — `src/lib/runs/access.ts`: `canCompleteTask` через `isOpen` / `managesRun`, поведінка та сама | хибної тривоги немає | хибної тривоги немає |
+### Ретро: що б ми взяли з фабрики у свій звичайний процес
 
-- Інші знахідки: обидва — нова поведінка без вимоги PM і AC ID (слушна); `/code-review` — некерований `Select` після відмови, «Reassign» без зміни вибору, `Select` у кожному рядку, `vendor` у першій перевірці ролі (слушні дрібниці), зайві `revalidatePath` (шум); CodeRabbit у повторному `full review` — «`list_assignable_users` повертає лише manager і admin» (шум: `20261030125515_vendor_role.sql:81` повертає й `vendor`). CodeRabbit на #66 — «Відхиляйте призначення тому самому виконавцю» (Minor, слушна дрібниця; те саме, що `/code-review` про «Reassign» без зміни вибору).
-- Правило, що закриває пропуск: розділ «База даних» `AGENTS.md` — функція бази перевіряє статус рядка перед `UPDATE`; «`UPDATE` рядка без перевірки його статусу — у рецензії рівень «must fix» (Major, цілісність даних)» — https://github.com/OleksandrMartynov/property-workflows/pull/65 (коміт 3191d27)
-- Повторний прогін: https://github.com/OleksandrMartynov/property-workflows/pull/62#issuecomment-6572536347 — CodeRabbit на чистій копії #66: вада 2 **Minor → Major** з цитатою правила («Based on learnings: «UPDATE рядка без перевірки його статусу — у рецензії рівень «must fix» (Major, цілісність даних)»»); `/code-review high`: вада 2 — «rank 2, high … data integrity». Вади 1, 3 і приманка — без змін.
+[`docs/qa/retro-ws9.md`](retro-ws9.md) — по станції фабрики на рядок: допуск, захищені тести, приховані сценарії, мутації й повтор, рев'ю-спростування, пакет доказів з «Не перевірено», рівні автономії, бюджети; кожне «візьмемо» — з конкретним файлом.
