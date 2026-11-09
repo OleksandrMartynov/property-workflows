@@ -8,6 +8,8 @@ Proof pack WS8 (зріз 2) — docs/qa/proof-pack-ws8.md.
 Жодних паролів і пароля від accounts.zip. Акаунти — лише адреси *@example.test.
 -->
 
+Пакет доказів WS8 (зріз 2) — [`proof-pack-ws8.md`](proof-pack-ws8.md).
+
 - Прод-URL: https://property-workflows-rho.vercel.app
 - Зріз 3: менеджер призначає підрядника (`vendor`) виконавцем задач під час запуску шаблону; підрядник бачить лише запуски й задачі, які йому дали, позначає свої задачі виконаними й не бачить і не змінює нічого іншого — ні на сторінках, ні прямим запитом (roadmap PM, solomchaak/property-workflows-spec#39).
 - Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30 (`/requirements-sync` 2026-11-09 — «Вимоги актуальні»)
@@ -16,7 +18,7 @@ Proof pack WS8 (зріз 2) — docs/qa/proof-pack-ws8.md.
 
 ## Доказ на кожен AC зрізу 3
 
-Позначення: **база** — тест PGlite на всіх міграціях (`asUser`), **рендер** — тест сторінки чи компонента (Vitest), **e2e** — специфікація Playwright, прогнана на проді (UAT). «Здатен упасти» — SQL- чи TS-мутант з `npm run mutation:sql` (усі KILLED, [PR #84](https://github.com/OleksandrMartynov/property-workflows/pull/84)). Посилання на тести — коміт `9713849`.
+Позначення: **база** — тест PGlite на всіх міграціях (`asUser`), **рендер** — тест сторінки чи компонента (Vitest), **e2e** — специфікація Playwright, прогнана на проді (UAT). «Здатен упасти» — SQL-мутант (`npm run mutation:sql`) чи TS-мутант V08t (`scripts/mutation-check.mjs --only …`), усі KILLED, [PR #84](https://github.com/OleksandrMartynov/property-workflows/pull/84). Посилання на тести — коміт `9713849`.
 
 | AC | Вид | Тест (рівень, посилання) | Здатен упасти | Специфікація UAT | Вердикт UAT і кадр | PR і SHA злиття |
 |---|---|---|---|---|---|---|
@@ -61,7 +63,7 @@ Proof pack WS8 (зріз 2) — docs/qa/proof-pack-ws8.md.
 | [#87](https://github.com/OleksandrMartynov/property-workflows/pull/87) | вада, знайдена UAT: email обрізано у списку | AC-VENDOR-02 (і кадри всіх AC) | усі 3: виправлено | [42623178411](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42623178411) |
 
 - Ворота на `main` (`quality`: «Ворота: fallow audit», «Покриття: доменна підлога») на SHA UAT: [42623178287](https://github.com/OleksandrMartynov/property-workflows/actions/runs/42623178287).
-- Мутації: `npm run mutation:sql -- --markdown` — 9 з 9 вбито (V03, V04, V06, V07, V08, V08t, V09 і наявні P1, E29a, E29b), таблиця «мутант → AC → який тест упав» — в описі [#84](https://github.com/OleksandrMartynov/property-workflows/pull/84). Пастку «update own row + колонка role» (зокрема для ролі vendor) тримає `grant update (full_name)` і мутант P1 (`tests/db/profiles-role-db.test.ts`).
+- Мутації: SQL — `npm run mutation:sql -- --markdown`: 9 з 9 вбито (V03, V04, V06, V07, V08, V09 і наявні P1, E29a, E29b); TS-мутант V08t (`isVendor`) — окремим прогоном `node scripts/mutation-check.mjs --only V03,V04,V06,V07,V08,V08t,V09`: KILLED. Обидві таблиці «мутант → AC → який тест упав» — в описі [#84](https://github.com/OleksandrMartynov/property-workflows/pull/84). Пастку «update own row + колонка role» (зокрема для ролі vendor) тримає `grant update (full_name)` і мутант P1 (`tests/db/profiles-role-db.test.ts`).
 
 ## C. UAT на проді
 
