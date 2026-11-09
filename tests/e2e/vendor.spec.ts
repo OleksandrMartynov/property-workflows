@@ -103,19 +103,27 @@ test.describe("Менеджер A призначає підрядника", () =
         await expect(page.getByRole("listbox")).toBeVisible();
       });
 
+      // Список виконавців прокручується (на проді — понад 8 акаунтів), тож один кадр не вміщує всіх трьох адрес:
+      // кадр 1 — верх списку (B і адміністратор), кадр 2 — після прокрутки до V. «Тоді» в обох — дослівне.
+      const clause = "A sees the emails of B, of the administrator and of V, and no names, roles or other profile data.";
+      const listbox = page.getByRole("listbox");
+      // Варіант, де є напис рівно з цим email (не «pm-admin@…» для «admin@…»; буква аватара — окремий елемент).
+      const option = (email: string) => listbox.getByRole("option").filter({ has: page.getByText(email, { exact: true }) });
+
       await thenStep(
         page,
         {
-          clause: "A sees the emails of B, of the administrator and of V, and no names, roles or other profile data.",
-          visible: [`у списку виконавців — ${MANAGER_B}, ${ADMINISTRATOR} і ${emails.vendorLaunch}`],
+          clause,
+          visible: [`у списку виконавців — ${MANAGER_B} і ${ADMINISTRATOR}`],
           hidden: [
+            `email V (${emails.vendorLaunch}) — нижче в цьому ж списку, на кадрі 2 після прокрутки`,
             "у кожному варіанті списку — лише email (у власному рядку A — ще позначка «run manager», це його роль у запуску, а не дані профілю іншого користувача)",
             "жодного імені з профілів (Demo-…) і жодного слова ролі (manager, admin, vendor) біля чужих email",
           ],
         },
         async () => {
-          const listbox = page.getByRole("listbox");
-          await expect(listbox.getByRole("option").first()).toBeVisible();
+          await expect(option(MANAGER_B)).toBeInViewport({ ratio: 1 });
+          await expect(option(ADMINISTRATOR)).toBeInViewport({ ratio: 1 });
           const texts = await listbox.getByRole("option").allInnerTexts();
           // Точний збіг адреси: «admin@example.test» — підрядок і «pm-admin@example.test».
           const shownEmails = texts.map((text) => text.match(/[\w.+-]+@example\.test/i)?.[0]);
@@ -133,6 +141,20 @@ test.describe("Менеджер A призначає підрядника", () =
             expect(rest, `біля ${email} є інші дані: «${rest}»`).toBe("");
           }
           await expect(listbox).not.toContainText(/Demo-/);
+        },
+      );
+
+      await option(emails.vendorLaunch).scrollIntoViewIfNeeded();
+      await thenStep(
+        page,
+        {
+          clause,
+          visible: [`у тому самому списку виконавців, прокрученому вниз, — ${emails.vendorLaunch}`],
+          hidden: ["біля email V — жодного імені, ролі («vendor») чи інших даних профілю (перевірено для всіх варіантів на кроці 1)"],
+        },
+        async () => {
+          await expect(option(emails.vendorLaunch)).toBeInViewport({ ratio: 1 });
+          await expect(option(emails.vendorLaunch)).not.toContainText(/vendor\b(?!-)|Demo-/);
         },
       );
     },
