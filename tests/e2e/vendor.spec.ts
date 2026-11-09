@@ -113,8 +113,8 @@ test.describe("Менеджер A призначає підрядника", () =
       const option = (email: string) => listbox.getByRole("option").filter({ has: page.getByText(email, { exact: true }) });
 
       // Довгі email (свій рядок A — uat-…-manager@…) переносяться на другий рядок, тож B може бути трохи нижче видимої
-      // частини: мінімальна прокрутка до B; адміністратор — вище у списку й лишається видно.
-      await option(MANAGER_B).scrollIntoViewIfNeeded();
+      // частини: B — у центр списку (і сторінки); адміністратор на кілька рядків вище й лишається видно.
+      await option(MANAGER_B).evaluate((el) => el.scrollIntoView({ block: "center" }));
       await settled(page);
       await thenStep(
         page,
@@ -150,7 +150,7 @@ test.describe("Менеджер A призначає підрядника", () =
         },
       );
 
-      await option(emails.vendorLaunch).scrollIntoViewIfNeeded();
+      await option(emails.vendorLaunch).evaluate((el) => el.scrollIntoView({ block: "center" }));
       await settled(page);
       await thenStep(
         page,
