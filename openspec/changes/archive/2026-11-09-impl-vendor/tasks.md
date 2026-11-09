@@ -25,6 +25,6 @@
 
 ## 3. Акаунт підрядника на проді
 
-- [ ] 3.1 `pm-vendor@example.test` у `supabase/demo-users.json` (у кінці списку), `npm run users:demo` на проді,
+- [x] 3.1 `pm-vendor@example.test` у `supabase/demo-users.json` (у кінці списку), `npm run users:demo` на проді,
   оновлений `accounts.zip`; PM і UAT входять під підрядником.
   Done when: AC-VENDOR-03, AC-VENDOR-10 відтворюються на проді під акаунтом підрядника.
