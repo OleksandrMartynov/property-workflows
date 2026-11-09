@@ -107,7 +107,8 @@ test.describe("Менеджер A призначає підрядника", () =
       // кадр 1 — верх списку (B і адміністратор), кадр 2 — після прокрутки до V. «Тоді» в обох — дослівне.
       const clause = "A sees the emails of B, of the administrator and of V, and no names, roles or other profile data.";
       const listbox = page.getByRole("listbox");
-      const option = (email: string) => listbox.getByRole("option").filter({ hasText: new RegExp(`(^|[^\\w.+-])${email.replace(/[.+]/g, "\\$&")}`) });
+      // Варіант, де є напис рівно з цим email (не «pm-admin@…» для «admin@…»; буква аватара — окремий елемент).
+      const option = (email: string) => listbox.getByRole("option").filter({ has: page.getByText(email, { exact: true }) });
 
       await thenStep(
         page,
