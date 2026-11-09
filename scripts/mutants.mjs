@@ -6,6 +6,11 @@ const PROFILES = "supabase/migrations/20261012000000_profiles_and_roles.sql";
 const PROFILES_DB = "tests/db/profiles-role-db.test.ts";
 const VERSIONS = "supabase/migrations/20261025151836_template_versions.sql";
 const VERSIONS_DB = "tests/db/template-versions-db.test.ts";
+const VENDOR = "supabase/migrations/20261030125515_vendor_role.sql";
+const VENDOR_DB = "tests/db/vendor-db.test.ts";
+const LAUNCH = "supabase/migrations/20261102105500_launch_run_hide_draft.sql";
+const VIEWER = "src/lib/supabase/viewer.ts";
+const VENDOR_PAGES = "tests/vendor/vendor-pages.test.tsx";
 
 export const mutants = [
   // ── Перевірка гарнесу (PGlite) на profiles шаблону ─────────────────────────────────────────────────────────────
@@ -29,5 +34,48 @@ export const mutants = [
     what: "template_versions_select послаблено до true: будь-хто з входом бачить усі версії",
     find: "create policy template_versions_select on public.template_versions\n  for select to authenticated\n  using (\n    (select auth.uid()) is not null\n    and (\n      (select private.current_app_role()) = 'admin'",
     replace: "create policy template_versions_select on public.template_versions\n  for select to authenticated\n  using (\n    true or (\n      (select private.current_app_role()) = 'admin'",
+  },
+  // ── Зріз 3, підрядник (requirements/39-assign-a-vendor-own-tasks.md): кожне правило відмови — окремий мутант ────────
+  {
+    id: "V03", kind: "sql", ac: "AC-VENDOR-03", file: VENDOR, tests: [VENDOR_DB],
+    what: "vendor_runs: підрядник отримує всі запуски, а не лише ті, де він виконавець, і лічильник усіх задач",
+    find: "join public.run_tasks as t on t.run_id = r.id and t.assignee_id = (select auth.uid())",
+    replace: "join public.run_tasks as t on t.run_id = r.id",
+  },
+  {
+    id: "V04", kind: "sql", ac: "AC-VENDOR-04", file: VENDOR, tests: [VENDOR_DB],
+    what: "run_tasks_select_visible: підрядник читає всі задачі запуску, а не лише свої",
+    find: "and ((select private.current_app_role()) is distinct from 'vendor' or assignee_id = (select auth.uid()))",
+    replace: "and (true or assignee_id = (select auth.uid()))",
+  },
+  {
+    id: "V06", kind: "sql", ac: "AC-VENDOR-06", file: VENDOR, tests: [VENDOR_DB],
+    what: "runs_select_visible: рядок запуску (з шаблоном і версією) підряднику відкрито напряму",
+    find: "    and (select private.current_app_role()) is distinct from 'vendor'\n  );",
+    replace: "    and true\n  );",
+  },
+  {
+    id: "V07", kind: "sql", ac: "AC-VENDOR-07", file: VENDOR, tests: [VENDOR_DB],
+    what: "complete_task: підрядник позначає задачу, де він не виконавець (лишається лише перевірка менеджера запуску)",
+    find: "  if v_role = 'vendor' and v_task.assignee_id is distinct from v_uid then",
+    replace: "  if false and v_task.assignee_id is distinct from v_uid then",
+  },
+  {
+    id: "V08", kind: "sql", ac: "AC-VENDOR-08", file: VERSIONS, tests: [VENDOR_DB],
+    what: "templates_select_by_role: підрядник читає опубліковані шаблони, як менеджер",
+    find: "or ((select private.current_app_role()) = 'manager' and current_version is not null)",
+    replace: "or ((select private.current_app_role()) in ('manager', 'vendor') and current_version is not null)",
+  },
+  {
+    id: "V08t", kind: "ts", ac: "AC-VENDOR-08", file: VIEWER, tests: [VENDOR_PAGES],
+    what: "isVendor завжди false: сторінка шаблонів показує підряднику список, а не «Not enough rights»",
+    find: 'export const isVendor = (role: AppRole) => role === "vendor";',
+    replace: "export const isVendor = (role: AppRole) => role !== role;",
+  },
+  {
+    id: "V09", kind: "sql", ac: "AC-VENDOR-09", file: LAUNCH, tests: [VENDOR_DB],
+    what: "launch_run (остання версія): підрядник запускає шаблон",
+    find: "v_role not in ('manager', 'admin') then",
+    replace: "v_role not in ('manager', 'admin', 'vendor') then",
   },
 ];

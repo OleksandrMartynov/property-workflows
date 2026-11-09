@@ -93,6 +93,24 @@ describe("База: що бачить підрядник", () => {
     expect([rows[0].case_name, Number(rows[0].done), Number(rows[0].total)]).toEqual(["Apartment 12, move-in (row)", 0, 2]);
   });
 
+  it("AC-VENDOR-03: список запусків V — лише «Apartment 12, move-in» з «0 of 2», без «Apartment 14, repair»", async () => {
+    const run12 = await runWithVendorTasks("Apartment 12, move-in (03)");
+    const run14 = await launch(t, MANAGER_A, "Apartment 14, repair (03)");
+    const runs = await t.asUser<{ id: string; case_name: string; status: string; done: string; total: string }>(
+      VENDOR_V,
+      "select id, case_name, status, done, total from public.vendor_runs()",
+    );
+    expect(runs.find((r) => r.id === run12)).toMatchObject({ case_name: "Apartment 12, move-in (03)", status: "in_progress" });
+    const mine = runs.find((r) => r.id === run12)!;
+    expect([Number(mine.done), Number(mine.total)]).toEqual([0, 2]);
+    expect(runs.some((r) => r.id === run14)).toBe(false);
+    // Кожен запуск у списку V — лише з його задачами: K не більше, ніж задач V у цьому запуску.
+    for (const r of runs) {
+      const own = (await tasksOf(r.id)).filter((task) => task.assignee_id === VENDOR_V).length;
+      expect(Number(r.total), r.case_name).toBe(own);
+    }
+  });
+
   it("AC-VENDOR-06: запуск без задач V — 0 рядків запуску й задач (сторінка — «Run not found»)", async () => {
     const runId = await launch(t, MANAGER_A, "Apartment 14, repair");
     expect(await t.asUser(VENDOR_V, "select id from public.vendor_runs($1)", [runId])).toEqual([]);
