@@ -112,6 +112,9 @@ test.describe("Менеджер A призначає підрядника", () =
       // Варіант, де є напис рівно з цим email (не «pm-admin@…» для «admin@…»; буква аватара — окремий елемент).
       const option = (email: string) => listbox.getByRole("option").filter({ has: page.getByText(email, { exact: true }) });
 
+      // Довгі email (свій рядок A — uat-…-manager@…) переносяться на другий рядок, тож B може бути трохи нижче видимої
+      // частини: мінімальна прокрутка до B; адміністратор — вище у списку й лишається видно.
+      await option(MANAGER_B).scrollIntoViewIfNeeded();
       await settled(page);
       await thenStep(
         page,
