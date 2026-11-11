@@ -36,6 +36,8 @@ RLS `run_tasks`, `profiles` і `runs` уже не віддають підряд�
   без змін.
 - **AC-VENDOR-14:** форма запуску, сторінка шаблону, список версій і редактор — `Forbidden` з «Back to runs» для
   підрядника (вже так, `requireViewer` → `isVendor` до запитів даних); тести з AC ID на кожну сторінку.
+- **AC-VENDOR-16, AC-TASK-19 (сторінка):** `canCompleteTask` (`src/lib/runs/access.ts`) зараз не пропонує позначку в
+  запуску не «in progress»; дозволяємо й необов'язкову задачу «to do» запуску «completed» — та сама умова, що в базі.
 - **AC-VENDOR-07 (сторінка):** `completeTask` уже показує `MESSAGES.NOT_ALLOWED`; `RUN_NOT_FOUND` → «Run not found» у
   `src/lib/runs/messages.ts`.
 
