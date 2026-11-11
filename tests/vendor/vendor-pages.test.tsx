@@ -57,6 +57,9 @@ const { default: TemplatesPage } = await import("@/app/(app)/templates/page");
 const { default: TemplatePage } = await import("@/app/(app)/templates/[id]/page");
 const { default: LaunchTemplatePage } = await import("@/app/(app)/templates/[id]/launch/page");
 const { default: Home } = await import("@/app/(app)/page");
+const { default: VersionsPage } = await import("@/app/(app)/templates/[id]/versions/page");
+const { default: EditTemplatePage } = await import("@/app/(app)/templates/[id]/edit/page");
+const { default: ProfilePage } = await import("@/app/(app)/profile/page");
 
 const TEMPLATE = "10000000-0000-0000-0000-000000000001";
 const run12 = { id: RUN_12, case_name: "Apartment 12, move-in", status: "in_progress", created_at: "2026-10-30T10:00:00Z", done: 0, total: 2 };
@@ -171,13 +174,51 @@ describe("Шаблони для підрядника", () => {
     expect(state.touched.filter((t) => t !== "from profiles")).toEqual([]);
   });
 
-  it("AC-VENDOR-08: сторінка шаблону й форма запуску для V — та сама відмова, без даних шаблону", async () => {
-    for (const page of [
-      await TemplatePage({ params: Promise.resolve({ id: TEMPLATE }) } as never),
+  it("AC-VENDOR-14: форма запуску, сторінка шаблону, список версій і редактор за прямим посиланням — «Not enough rights» і «Back to runs», без вмісту шаблону", async () => {
+    const pages = [
       await LaunchTemplatePage({ params: Promise.resolve({ id: TEMPLATE }), searchParams: Promise.resolve({}) } as never),
-    ]) {
-      expect(renderToStaticMarkup(page)).toContain("Not enough rights");
+      await TemplatePage({ params: Promise.resolve({ id: TEMPLATE }) } as never),
+      await VersionsPage({ params: Promise.resolve({ id: TEMPLATE }) } as never),
+      await EditTemplatePage({ params: Promise.resolve({ id: TEMPLATE }), searchParams: Promise.resolve({}) } as never),
+    ];
+    for (const page of pages) {
+      const html = renderToStaticMarkup(page);
+      expect(html).toContain("Not enough rights");
+      expect(html).toMatch(/href="\/runs"[^>]*>Back to runs</);
+      expect(html).not.toContain("Back to templates");
+      for (const content of ["Tenant move-in", "Case name", "Version 1", "Add task", "Add section"]) expect(html).not.toContain(content);
     }
     expect(state.touched.filter((t) => t !== "from profiles")).toEqual([]);
+  });
+});
+
+describe("Уточнення PM: сторінка запуску, список і навігація підрядника", () => {
+  it("AC-VENDOR-11: на сторінці запуску V бачить назву випадку як заголовок і «Your tasks: 1 of 2 done», без статусу запуску, назви й версії шаблону", async () => {
+    state.vendorRuns = [{ ...run12, done: 1 }];
+    state.tasks = [task("t3", "Order cleaning", "Before move-in", false, "done"), task("t4", "Hand over the keys", "Move-in day", true)];
+    const html = renderToStaticMarkup(await RunPage({ params: Promise.resolve({ id: RUN_12 }), searchParams: Promise.resolve({}) } as never));
+    expect(html).toMatch(/<h1[^>]*>(?:<[^>]+>)*Apartment 12, move-in</);
+    expect(html).toContain("Your tasks: 1 of 2 done");
+    for (const hidden of ["in progress", "completed", "Tenant move-in", "Template version", "Version 1"]) expect(html).not.toContain(hidden);
+    expect(state.touched).not.toContain("from runs");
+  });
+
+  it("AC-VENDOR-12: рядок запуску в списку V — назва випадку, статус і «Your tasks: 0 of 2 done», без назви шаблону «Tenant move-in»", async () => {
+    state.vendorRuns = [run12];
+    const html = renderToStaticMarkup(await RunsPage({ searchParams: Promise.resolve({}) } as never));
+    expect(html).toContain("Apartment 12, move-in");
+    expect(html).toContain("in progress");
+    expect(html).toContain("Your tasks: 0 of 2 done");
+    expect(html).not.toContain("Tenant move-in");
+    expect(state.touched).not.toContain("from runs");
+  });
+
+  it("AC-VENDOR-13: після входу V потрапляє на список запусків, а «Profile» показує його власний email і роль", async () => {
+    expect(await errorOf(Home())).toBe("NEXT_REDIRECT /runs");
+    const html = renderToStaticMarkup(await ProfilePage());
+    expect(html).toContain("Profile");
+    expect(html).toContain("vendor.v@example.test");
+    expect(html).toMatch(/data-testid="user-role"[^>]*>vendor</);
+    expect(state.touched).toEqual(["from profiles", "from profiles"]);
   });
 });
