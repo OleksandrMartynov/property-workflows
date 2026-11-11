@@ -3,7 +3,8 @@
 // випадковими паролями, які ніде не зберігаються, і запуски-передумови «Дано». Прибирає teardown «cleanup»
 // (tests/e2e/support/admin.ts, OWNED_ROWS: запуски й задачі синтетичних користувачів).
 import { existsSync, readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Browser, Page } from "@playwright/test";
+import { thenStep } from "./uat";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /** «Tenant move-in» — шаблон із початкових даних (міграція 20261019174350_run_launch.sql), той самий id на проді. */
@@ -134,3 +135,24 @@ export async function settled(page: Page) {
       .every((animation) => animation.playState !== "running" || animation.effect?.getComputedTiming().iterations === Infinity),
   );
 }
+
+/** Друга вкладка під іншою роллю — лише щоб показати на екрані «що не змінилося» (читання). */
+export async function pageAs(browser: Browser, person: Person) {
+  const context = await browser.newContext({ storageState: statePath(person) });
+  return { context, page: await context.newPage() };
+}
+
+/**
+ * Крок «Тоді», де кадр знято після кінця анімацій появи: спершу твердження (вони чекають на вміст), потім
+ * settled(page), і лише тоді thenStep знімає кадр — інакше вміст на кадрі напівпрозорий.
+ */
+export const thenSettled: typeof thenStep = (page, spec, assertions) =>
+  thenStep(page, spec, async () => {
+    await assertions();
+    await settled(page);
+  });
+
+export const taskRow = (page: Page, name: string) => page.getByTestId("run-task").filter({ hasText: name });
+/** Статус задачі в рядку — точне слово «to do» / «done» (кнопка «Mark as done» не рахується). */
+export const taskStatus = (page: Page, name: string, status: "to do" | "done") =>
+  taskRow(page, name).getByText(status, { exact: true });

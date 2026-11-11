@@ -4,18 +4,20 @@
 // AC-VENDOR-07 і AC-VENDOR-09 («напряму, оминаючи сторінки»): правило доводять тести бази на PGlite
 // (tests/db/vendor-db.test.ts) і SQL-мутанти V07, V09; тут — прямий запит тим самим ключем, що в браузері підрядника,
 // і крок, який показує на екрані «що не змінилося».
-import { expect, test, type Browser, type Page } from "@playwright/test";
-import { attachRuntimeErrors, given, thenStep, when } from "./support/uat";
+import { expect, test, type Page } from "@playwright/test";
+import { attachRuntimeErrors, given, when } from "./support/uat";
 import {
   ADMINISTRATOR,
   MANAGER_B,
   TENANT_MOVE_IN,
   clientFromState,
   launchTenantMoveIn,
+  pageAs,
   readFixture,
-  settled,
   statePath,
-  type Person,
+  taskRow,
+  taskStatus,
+  thenSettled,
 } from "./support/vendor";
 
 test.afterEach(async ({ page }) => attachRuntimeErrors(page));
@@ -28,26 +30,6 @@ async function visibleEmails(page: Page): Promise<string[]> {
   const text = await page.locator("body").innerText();
   return [...new Set(text.match(/[\w.+-]+@example\.test/gi) ?? [])];
 }
-
-/** Друга вкладка під іншою роллю — лише щоб показати на екрані «що не змінилося» (читання). */
-async function pageAs(browser: Browser, person: Person) {
-  const context = await browser.newContext({ storageState: statePath(person) });
-  return { context, page: await context.newPage() };
-}
-
-/**
- * Крок «Тоді», де кадр знято після кінця анімацій появи: спершу твердження (вони чекають на вміст), потім
- * settled(page), і лише тоді thenStep знімає кадр — інакше вміст на кадрі напівпрозорий.
- */
-const thenSettled: typeof thenStep = (page, spec, assertions) =>
-  thenStep(page, spec, async () => {
-    await assertions();
-    await settled(page);
-  });
-
-const taskRow = (page: Page, name: string) => page.getByTestId("run-task").filter({ hasText: name });
-/** Статус задачі в рядку — точне слово «to do» / «done» (кнопка «Mark as done» не рахується). */
-const taskStatus = (page: Page, name: string, status: "to do" | "done") => taskRow(page, name).getByText(status, { exact: true });
 
 test.describe("Менеджер A призначає підрядника", () => {
   test.use({ storageState: statePath("manager") });
@@ -297,12 +279,13 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
   );
 
   test(
-    "AC-VENDOR-07: V напряму позначає задачу 1 менеджера A — задача 1 лишається «to do»",
+    "AC-VENDOR-07: V напряму позначає задачу 1 менеджера A — задача 1 лишається «to do», V отримує повідомлення PM",
     { tag: ["@uat"], annotation: { type: "ac", description: "AC-VENDOR-07" } },
     async ({ page, browser }) => {
       const { emails, runs } = fx();
       const manager = await pageAs(browser, "manager");
       let refusal = "";
+      let refusalText = "";
       try {
         await given("запуск «Apartment 12, move-in»: задача 1 — на менеджері A, задачі 3 і 4 — на підряднику V", async () => {
           await manager.page.goto(`/runs/${runs.apartment12}`);
@@ -322,18 +305,24 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
             .eq("name", taskName(1));
           const { error } = await clientFromState("vendor").rpc("complete_task", { p_task_id: rows![0].id });
           refusal = error?.message ?? "";
+          refusalText = error?.details ?? "";
         });
 
         await manager.page.reload();
         await thenSettled(
           manager.page,
           {
-            clause: 'task 1 stays "to do".',
+            clause:
+              'task 1 stays "to do", and V gets the message "Only the task\'s assignee, the run manager, or an administrator can mark a task as done".',
             visible: [`задача «${taskName(1)}» у запуску «Apartment 12, move-in» — зі статусом «to do» (сторінка менеджера A)`],
-            hidden: ["прямий запит підрядника відхилено: функція бази повернула NOT_ALLOWED"],
+            hidden: [
+              "прямий запит підрядника відхилено: функція бази повернула NOT_ALLOWED",
+              "V отримав у відповіді на прямий запит повідомлення «Only the task's assignee, the run manager, or an administrator can mark a task as done» (поле details)",
+            ],
           },
           async () => {
             expect(refusal).toContain("NOT_ALLOWED");
+            expect(refusalText).toBe("Only the task's assignee, the run manager, or an administrator can mark a task as done");
             await expect(taskStatus(manager.page, taskName(1), "to do")).toBeVisible();
             await expect(taskStatus(manager.page, taskName(1), "done")).toHaveCount(0);
           },
@@ -345,7 +334,7 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
   );
 
   test(
-    "AC-VENDOR-08: V за прямим посиланням на список шаблонів — «Not enough rights» і жодного шаблону",
+    "AC-VENDOR-08: V за прямим посиланням на список шаблонів — «Not enough rights», «Back to runs» і жодного шаблону",
     { tag: ["@uat"], annotation: { type: "ac", description: "AC-VENDOR-08" } },
     async ({ page }) => {
       const { emails, tasks } = fx();
@@ -360,12 +349,13 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       await thenSettled(
         page,
         {
-          clause: 'V sees the message "Not enough rights" and no template.',
-          visible: ["повідомлення «Not enough rights»"],
+          clause: 'V sees the message "Not enough rights" and the link "Back to runs", and no template.',
+          visible: ["повідомлення «Not enough rights»", "посилання «Back to runs»"],
           hidden: ["жодного шаблону: ні «Tenant move-in», ні назви його задач, ні таблиці чи карток шаблонів"],
         },
         async () => {
           await expect(page.getByRole("main").getByRole("alert")).toHaveText("Not enough rights");
+          await expect(page.getByRole("main").getByRole("link", { name: "Back to runs" })).toHaveAttribute("href", "/runs");
           await expect(page.getByText("Tenant move-in")).toHaveCount(0);
           await expect(page.getByText(tasks[0].name)).toHaveCount(0);
           await expect(page.getByRole("table")).toHaveCount(0);
