@@ -29,7 +29,7 @@
 | AC-LEAVE-10 | діапазон лише із заблокованих днів | — | — | відкладено (чекає реалізації) |
 -->
 
-Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-10-30
+Вимоги: https://github.com/solomchaak/property-workflows-spec · джерело: issues · знімок 2026-11-11
 
 | AC | Що перевіряє | Код | Тест | Статус |
 |---|---|---|---|---|
