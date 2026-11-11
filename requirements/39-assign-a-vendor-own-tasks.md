@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/39 · оновлено 2026-10-30T07:15:12Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/39 · оновлено 2026-11-10T09:13:05Z
 
 # Requirement: Assign a vendor and let the vendor work on their own tasks
 
@@ -28,10 +28,18 @@ Part of the work in a run is done by outside contractors, but today a task can o
 - AC-VENDOR-04: Given vendor V who is the assignee of tasks 3 and 4 in the run "Apartment 12, move-in" (5 tasks). When V opens this run. Then V sees exactly tasks 3 and 4, each with its name, its section, the mark "required" or "optional" and its status, and does not see tasks 1, 2 and 5, the emails of other users or the progress of the whole run.
 - AC-VENDOR-05: Given vendor V who is the assignee of task 3 with status "to do", which is not the last required task of the run "Apartment 12, move-in". When V marks task 3 as done. Then task 3 has status "done", and V sees "Your tasks: 1 of 2 done".
 - AC-VENDOR-06: Given the run "Apartment 14, repair" in which vendor V has no task. When V opens the page of this run by a direct link. Then V sees the message "Run not found" and none of the tasks of the run.
-- AC-VENDOR-07: Given the run "Apartment 12, move-in" in which task 1 is assigned to manager A and tasks 3 and 4 to vendor V. When V tries to mark task 1 as done directly, bypassing the pages of the application. Then task 1 stays "to do".
-- AC-VENDOR-08: Given vendor V signed in. When V opens the list of templates by a direct link. Then V sees the message "Not enough rights" and no template.
+- AC-VENDOR-07: Given the run "Apartment 12, move-in" in which task 1 is assigned to manager A and tasks 3 and 4 to vendor V. When V tries to mark task 1 as done directly, bypassing the pages of the application. Then task 1 stays "to do", and V gets the message "Only the task's assignee, the run manager, or an administrator can mark a task as done".
+- AC-VENDOR-08: Given vendor V signed in. When V opens the list of templates by a direct link. Then V sees the message "Not enough rights" and the link "Back to runs", and no template.
 - AC-VENDOR-09: Given vendor V signed in and the template "Tenant move-in" with current version 1. When V tries to launch this template directly, bypassing the pages of the application. Then no run is created, and the list of runs does not change.
 - AC-VENDOR-10: Given vendor V to whom no task is assigned. When V opens the list of runs. Then V sees the message "No tasks assigned to you yet." and no empty table.
+- AC-VENDOR-11: Given vendor V who is the assignee of tasks 3 ("done") and 4 ("to do") in the run "Apartment 12, move-in" (5 tasks). When V opens this run. Then V sees the case name "Apartment 12, move-in" as the title of the page and "Your tasks: 1 of 2 done", and does not see the run status, the template name or the template version.
+- AC-VENDOR-12: Given vendor V who is the assignee of 2 tasks in the run "Apartment 12, move-in", launched from the template "Tenant move-in". When V opens the list of runs. Then the row of this run shows the case name, the run status and "Your tasks: 0 of 2 done", and does not show the template name "Tenant move-in".
+- AC-VENDOR-13: Given vendor V who is the assignee of 2 tasks in the run "Apartment 12, move-in". When V signs in. Then V sees the list of runs, and the navigation shows only "Runs" and "Profile".
+- AC-VENDOR-14: Given vendor V signed in. When V opens the launch form, the page of a template, the list of versions or the editor by a direct link. Then V sees the message "Not enough rights" and the link "Back to runs", and no content of the template.
+- AC-VENDOR-15: Given the run "Apartment 14, repair" in which vendor V has no task and task 1 is assigned to manager A. When V tries to mark task 1 as done directly, bypassing the pages of the application. Then task 1 stays "to do", and V gets the message "Run not found".
+- AC-VENDOR-16: Given the run "Apartment 12, move-in" with status "completed" in which vendor V is the assignee of the optional task 3 with status "to do". When V marks task 3 as done. Then task 3 has status "done", V sees "Your tasks: 1 of 1 done", and the run stays "completed".
+- AC-VENDOR-17: Given vendor V who is the assignee of tasks 3 and 4 in the run "Apartment 12, move-in" (5 tasks). When V requests the tasks of this run directly, bypassing the pages of the application. Then V receives only tasks 3 and 4.
+- AC-VENDOR-18: Given vendor V who is the assignee of tasks 3 and 4 in the run "Apartment 12, move-in" and of no task in the run "Apartment 14, repair". When V requests directly, bypassing the pages of the application, the emails and profiles of other users and the tasks of "Apartment 14, repair". Then V receives nothing about other users or about "Apartment 14, repair".
 
 ### Поза межами
 
@@ -49,6 +57,11 @@ Part of the work in a run is done by outside contractors, but today a task can o
 - "Your tasks: N of K done" counts only the tasks assigned to this vendor in this run, K being their number and N those with status "done".
 - Marking the last required task of a run as done asks for confirmation also for a vendor, with the notice "This cannot be undone", as in "Requirement: Complete tasks and track run progress".
 - A vendor sees in a run only the name, the section, the mark "required" or "optional" and the status of their own tasks; the case name and the run status are shown in the list of runs.
+- A vendor sees on the page of a run the case name as the title and "Your tasks: N of K done", and no run status, template name or template version; a row of the list of runs shows the case name, the run status and "Your tasks: N of K done", and no template name.
+- The navigation of a vendor shows only "Runs" and "Profile"; after signing in a vendor lands on the list of runs.
+- Every page that a vendor is not allowed to open (the launch form, the list and the page of a template, the list of versions, the editor) shows "Not enough rights" and the link "Back to runs".
+- A role is not changed in the application in this slice: the role `vendor` is set when the user is created, and for another role the administrator creates a new user.
+- An optional task of a completed run can still be marked as done, also by a vendor; the run stays "completed".
 - Every limit in the rights matrix of the Product is enforced for direct requests too: a request that a role is not allowed to make is refused, changes nothing and discloses nothing.
 - The interface is in English: messages and statuses are shown exactly as written in the acceptance criteria and in the glossary.
 - All dates and times in the application are shown in Kyiv time; this requirement has no time rules.
@@ -61,3 +74,4 @@ Part of the work in a run is done by outside contractors, but today a task can o
 ### Журнал змін
 
 - 2026-10-30 — created
+- 2026-11-10 — AC-VENDOR-11 to AC-VENDOR-18 added (what a vendor sees on the page of a run and in the list, the navigation and the first page, the pages closed to a vendor, a direct request for someone else's task, an optional task after the run is completed, direct reads); AC-VENDOR-07 and AC-VENDOR-08 reworded; assumptions added — https://github.com/solomchaak/property-workflows-spec/issues/41, https://github.com/solomchaak/property-workflows-spec/issues/42, https://github.com/solomchaak/property-workflows-spec/issues/44, https://github.com/solomchaak/property-workflows-spec/issues/45, https://github.com/solomchaak/property-workflows-spec/issues/46, https://github.com/solomchaak/property-workflows-spec/issues/47, https://github.com/solomchaak/property-workflows-spec/issues/48, https://github.com/solomchaak/property-workflows-spec/issues/49, https://github.com/solomchaak/property-workflows-spec/issues/50

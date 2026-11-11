@@ -1,4 +1,4 @@
-> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-10-30T07:15:11Z
+> Джерело: https://github.com/solomchaak/property-workflows-spec/issues/3 · оновлено 2026-11-10T09:13:07Z
 
 # Requirement: Complete tasks and track run progress
 
@@ -41,6 +41,7 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 - AC-TASK-16: Given a run "in progress" with 3 required tasks, 2 of them "done", and the third required task "to do" assigned to manager B. When manager B chooses to mark the third required task as done and cancels at the confirmation. Then the task stays "to do", and the run stays "in progress".
 - AC-TASK-17: Given a run of manager A with 5 tasks, 2 of them "done", and manager B, who is the assignee of one task in this run. When manager B opens the list of runs. Then this run is shown with the progress "2 of 5 done".
 - AC-TASK-18: Given a run of manager A with a task assigned to manager B and a task assigned to manager C, and manager C. When manager C opens this run. Then the option to mark a task as done is offered on the task assigned to manager C and not on the task assigned to manager B.
+- AC-TASK-19: Given a run with status "completed" that has the optional task "Order a part" with status "to do", and the assignee of this task. When the assignee marks "Order a part" as done. Then the task has status "done", the run stays "completed", and the progress counts the task as done.
 
 ### Поза межами
 
@@ -55,6 +56,7 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 
 - A run is "completed" when all its required tasks are "done"; optional tasks do not affect the run status, and completing a run does not change the status of its optional tasks.
 - Progress counts all tasks of the run, required or not.
+- An optional task of a completed run can still be marked as done: the run stays "completed" (AC-TASK-19).
 - A task is marked as done once: a second attempt to mark an already "done" task changes nothing, and the task stays "done".
 - Marking the last required task of a run as done asks for confirmation: the user sees the task name and the notice "This cannot be undone", and the task becomes "done" only after confirmation. Marking any other task needs no confirmation.
 - The option to mark a task as done is offered to its assignee, to the run manager and to an administrator only; the rule of AC-TASK-03 is also checked on the action itself, whether or not the option is offered.
@@ -68,7 +70,7 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 
 ### Відкриті питання
 
-- Q1. A run becomes "completed" when all required tasks are done, but it may still contain optional tasks that are "to do". Can one of them be marked as done after the run is completed? (not in this slice: we do not specify this behavior; developers' tests do not check it.)
+Немає.
 
 ### Журнал змін
 
@@ -78,3 +80,4 @@ A manager cannot see which tasks of a run are done and which are not, and assign
 - 2026-10-20 — AC-TASK-01, AC-TASK-02 and AC-TASK-07: the task is not the last required task of the run, because the confirmation is asked only for the last required task — own PM decision (self-check against the checklist)
 - 2026-10-27 — assumption added: the template name shown for a run is the name of the version it was launched from — https://github.com/solomchaak/property-workflows-spec/issues/29
 - 2026-10-30 — assumption added: a vendor sees only their own tasks of a run; the assignee may also be a vendor — own PM decision, after the new requirement
+- 2026-11-10 — AC-TASK-19 added; Q1 resolved and removed: an optional task of a completed run can still be marked as done — https://github.com/solomchaak/property-workflows-spec/issues/46
