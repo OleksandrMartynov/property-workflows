@@ -10,9 +10,12 @@ export interface ViewerLike {
 
 export function canCompleteTask(
   viewer: ViewerLike,
-  task: { assignee_id: string; status: string },
+  task: { assignee_id: string; status: string; required?: boolean },
   run: { run_manager_id: string; status: string },
 ): boolean {
-  if (task.status !== "to_do" || run.status !== "in_progress") return false;
+  if (task.status !== "to_do") return false;
+  // Позначка — у запуску «in progress»; у «completed» — лише необов'язкова задача (AC-TASK-19, AC-VENDOR-16), як і в
+  // complete_task. Невідома обов'язковість — як обов'язкова: кнопки в завершеному запуску немає.
+  if (run.status !== "in_progress" && !(run.status === "completed" && task.required === false)) return false;
   return viewer.role === "admin" || task.assignee_id === viewer.id || run.run_manager_id === viewer.id;
 }
