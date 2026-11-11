@@ -6,11 +6,11 @@
 
 ## 1. Позначка задачі й прямі запити підрядника (база)
 
-- [ ] 1.1 Міграція `…_vendor_clarify.sql`: нова версія `private.complete_task` — `RUN_NOT_FOUND` для запуску без задач
+- [x] 1.1 Міграція `…_vendor_clarify.sql`: нова версія `private.complete_task` — `RUN_NOT_FOUND` для запуску без задач
   підрядника, текст PM у деталях `NOT_ALLOWED`, необов'язкова задача завершеного запуску.
-- [ ] 1.2 `RUN_NOT_FOUND` → «Run not found» у `src/lib/runs/messages.ts`; `canCompleteTask` (`src/lib/runs/access.ts`)
+- [x] 1.2 `RUN_NOT_FOUND` → «Run not found» у `src/lib/runs/messages.ts`; `canCompleteTask` (`src/lib/runs/access.ts`)
   пропонує «Mark as done» і на необов'язковій задачі «to do» завершеного запуску (AC-VENDOR-16, AC-TASK-19).
-- [ ] 1.3 Тести бази й `canCompleteTask` з AC ID, SQL-мутанти; тест сторінки запуску менеджера й підрядника: у запуску
+- [x] 1.3 Тести бази й `canCompleteTask` з AC ID, SQL-мутанти; тест сторінки запуску менеджера й підрядника: у запуску
   «completed» «Mark as done» є на необов'язковій задачі «to do» і немає на обов'язковій (дані задач — з полем `required`);
   рядки `docs/conformance.md` цих AC — у тому самому PR, що й код 1.1–1.2.
   Done when: AC-VENDOR-07, AC-VENDOR-15, AC-VENDOR-16, AC-VENDOR-17, AC-VENDOR-18, AC-TASK-19.
