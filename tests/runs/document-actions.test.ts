@@ -207,3 +207,12 @@ describe("saveTaskDocument: запис лише після людини", () => 
     expect(await saveTaskDocument(null, saveForm({ kind: "request", urgency: "urgent" }))).toMatchObject({ status: "error", message: MESSAGES.NOT_ALLOWED });
   });
 });
+
+describe("requestDocumentDraft: довгий текст", () => {
+  it("текст довший за межу промпту — повідомлення, а не мовчазне обрізання; модель не викликано", async () => {
+    const spy = answering(recorded["GC-01"].text);
+    model = spy;
+    expect(await requestDocumentDraft(null, requestForm({ text: "x".repeat(8_001) }))).toMatchObject({ message: MESSAGES.DOCUMENT_TOO_LONG });
+    expect(spy.doGenerateCalls).toHaveLength(0);
+  });
+});

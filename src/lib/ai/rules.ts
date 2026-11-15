@@ -36,6 +36,11 @@ export function applyRules(draft: Draft): Draft {
   if (draft.status === "refused") {
     return { ...draft, kind: null, phone: null, description: null, category: null, urgency: null, items: null, total: null, notes: [] };
   }
+  // needs_info (schema.ts): проблему чи позиції визначити не можна — значень проблеми й кошторису немає, лишаються
+  // вид документа, телефон (факт із документа, не вигадка) і примітки.
+  if (draft.status === "needs_info") {
+    return { ...draft, phone: normalizePhone(draft.phone), description: null, category: null, urgency: null, items: null, total: null };
+  }
   const warning = totalWarning(draft.items, draft.total);
   const notes = draft.notes.filter((note) => !/^items add up to /i.test(note));
   return { ...draft, phone: normalizePhone(draft.phone), notes: warning ? [...notes, warning] : notes };

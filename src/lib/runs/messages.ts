@@ -1,5 +1,7 @@
 // Тексти повідомлень — дослівно з вимог PM (requirements/2-…, requirements/3-…) і коди помилок функцій бази.
 
+import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
+
 export const CASE_NAME_MAX_LENGTH = 100;
 
 export const MESSAGES = {
@@ -35,6 +37,7 @@ export const MESSAGES = {
   // Зріз 4 «AI document parsing» (ADR 0008): вимоги з AC у PM ще немає — робочі тексти до її публікації.
   TASK_DONE: "The task is already done",
   DOCUMENT_INPUT_REQUIRED: "Paste the document text or attach a PDF",
+  DOCUMENT_TOO_LONG: `The document text must be at most ${MAX_DOCUMENT_CHARS.toLocaleString("en-US")} characters. Attach the document as a PDF instead.`,
   DOCUMENT_FILE_INVALID: "Attach a PDF, PNG or JPEG up to 1 MB",
   DOCUMENT_EMPTY: "Enter at least one value",
   DOCUMENT_INVALID: "Some values are not valid. Check them and save again.",

@@ -168,6 +168,11 @@ describe("База: які значення приймає", () => {
     ["кількість 0", { kind: "estimate", items: [{ name: "Faucet", quantity: 0, unitPrice: 10 }] }],
     ["ціна текстом", { kind: "estimate", items: [{ name: "Faucet", quantity: 1, unitPrice: "10" }] }],
     ["позиції не списком", { kind: "estimate", items: { name: "Faucet" } }],
+    ["порожня позиція {}", { kind: "estimate", items: [{}] }],
+    ["позиція без назви (ключа немає)", { kind: "estimate", items: [{ quantity: 1, unitPrice: 10 }] }],
+    ["позиція без кількості", { kind: "estimate", items: [{ name: "Faucet", unitPrice: 10 }] }],
+    ["позиція без ціни", { kind: "estimate", items: [{ name: "Faucet", quantity: 1 }] }],
+    ["позиція — не об'єкт", { kind: "estimate", items: ["Faucet"] }],
     ["понад 30 позицій", { kind: "estimate", items: Array.from({ length: 31 }, () => ({ name: "Bolt", quantity: 1, unitPrice: 1 })) }],
   ])("%s — DOCUMENT_INVALID, нічого не записано", async (_label, doc) => {
     const runId = await runWithVendor(`Flat 9, invalid ${_label}`.slice(0, 100));

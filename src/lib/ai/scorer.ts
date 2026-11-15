@@ -14,10 +14,21 @@ export type GoldenCase = {
   rubric?: string;
 };
 
-// (1) Детермінована частина: точний збіг значень, зафіксованих PM (масиви позицій — поелементно).
+/** JSON із ключами об'єктів за абеткою (порядок елементів масиву лишається): `{a,b}` і `{b,a}` — один рядок. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    const entries = Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
+// (1) Детермінована частина: точний збіг значень, зафіксованих PM (масиви позицій — поелементно, порядок ключів
+// об'єкта не важить).
 export function scoreFields(expected: GoldenCase["expected"], actual: Draft) {
   const mismatches = (Object.keys(expected) as ExpectedField[])
-    .filter((k) => JSON.stringify(expected[k]) !== JSON.stringify(actual[k]))
+    .filter((k) => canonical(expected[k]) !== canonical(actual[k]))
     .map((k) => ({ field: k, expected: expected[k], actual: actual[k] }));
   return { pass: mismatches.length === 0, mismatches };
 }

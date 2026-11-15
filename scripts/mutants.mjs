@@ -41,9 +41,15 @@ export const mutants = [
     replace: "    and true",
   },
   {
+    id: "D6", kind: "sql", ac: "(зріз 4: форма позицій)", file: DOCS, tests: [DOCS_DB],
+    what: "перевірка типу поля позиції через <> замість IS DISTINCT FROM: позиція без name ({}) проходить",
+    find: "                   when jsonb_typeof(e.item -> 'name') is distinct from 'string' then true",
+    replace: "                   when jsonb_typeof(e.item -> 'name') <> 'string' then true",
+  },
+  {
     id: "D5", kind: "sql", ac: "(зріз 4: межа позицій)", file: DOCS, tests: [DOCS_DB],
     what: "save_task_document без межі 30 позицій кошторису",
-    find: "       or jsonb_array_length(p_items) > 30\n",
+    find: "         when jsonb_array_length(p_items) > 30 then true\n",
     replace: "",
   },
   // ── Перевірка гарнесу (PGlite) на profiles шаблону ─────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@
 import { revalidatePath } from "next/cache";
 import { USER_MESSAGES, isFileType, proposeDraft, type DraftInput } from "@/lib/ai/draft";
 import { productModel } from "@/lib/ai/openrouter";
+import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
 import { NEEDS_INFO_MESSAGE, REFUSED_MESSAGE } from "@/lib/ai/rules";
 import type { Draft } from "@/lib/ai/schema";
 import { MESSAGES, dbErrorCode, type ErrorCode } from "@/lib/runs/messages";
@@ -20,21 +21,18 @@ import { isUuid } from "@/lib/templates/current";
 
 // Найбільший файл документа: 1 МБ (межу тіла Server Action піднято до 2 МБ у next.config.ts).
 const MAX_FILE_BYTES = 1024 * 1024;
-// Довший текст однаково обріже wrapDocument (MAX_DOCUMENT_CHARS); тут — щоб не тримати в пам'яті мегабайти.
-const MAX_TEXT_CHARS = 20_000;
 
-export type DocumentDraftState =
-  | { status: "draft"; draft: Draft; notice: string | null; at: number }
-  | { status: "error"; message: string; at: number }
-  | null;
+export type DocumentDraftState = { status: "draft"; draft: Draft; notice: string | null } | { status: "error"; message: string } | null;
 
-export type SaveDocumentState = { status: "saved"; at: number } | { status: "error"; message: string; at: number } | null;
+export type SaveDocumentState = { status: "saved" } | { status: "error"; message: string } | null;
 
-const failed = (message: string) => ({ status: "error" as const, message, at: Date.now() });
+const failed = (message: string) => ({ status: "error" as const, message });
 
 /** Документ із форми: текст і (за потреби) файл PDF / PNG / JPEG до 1 МБ; інакше — код помилки для повідомлення. */
 async function readDocument(formData: FormData): Promise<DraftInput | ErrorCode> {
-  const text = String(formData.get("text") ?? "").slice(0, MAX_TEXT_CHARS);
+  const text = String(formData.get("text") ?? "");
+  // Довший текст модель не побачила б цілком (wrapDocument обрізає) — кажемо про це, а не обрізаємо мовчки.
+  if (text.length > MAX_DOCUMENT_CHARS) return "DOCUMENT_TOO_LONG";
   const file = formData.get("file");
   const attached = file instanceof File && file.size > 0 ? file : null;
   if (!attached) return text.trim() ? { text } : "DOCUMENT_INPUT_REQUIRED";
@@ -65,7 +63,6 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
     status: "draft",
     draft: result.draft,
     notice: result.draft.status === "needs_info" ? NEEDS_INFO_MESSAGE : null,
-    at: Date.now(),
   };
 }
 
@@ -93,5 +90,5 @@ export async function saveTaskDocument(_prev: SaveDocumentState, formData: FormD
   if (error) return failed(MESSAGES[dbErrorCode(error)]);
 
   revalidatePath(`/runs/${runId}`);
-  return { status: "saved", at: Date.now() };
+  return { status: "saved" };
 }

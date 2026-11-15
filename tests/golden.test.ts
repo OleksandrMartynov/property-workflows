@@ -68,7 +68,7 @@ describe("golden cases, офлайн-реплей", () => {
     const missing = cases.map((c) => c.id).filter((id) => !recorded[id]);
     expect(missing).toEqual([]);
     const stale = Object.entries(recorded)
-      .filter(([, r]) => r.promptVersion && r.promptVersion !== DRAFT_PROMPT_VERSION)
+      .filter(([, r]) => r.promptVersion !== DRAFT_PROMPT_VERSION)
       .map(([id]) => id);
     // Змінили DRAFT_PROMPT_VERSION — перезапишіть записи живим прогоном (README, «Перезапис записів»).
     expect(stale).toEqual([]);

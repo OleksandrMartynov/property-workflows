@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { MAX_DOCUMENT_CHARS, wrapDocument } from "@/lib/ai/prompts/draft";
 import { REFUSED_MESSAGE, applyRules, itemsTotal, normalizePhone, totalWarning } from "@/lib/ai/rules";
 import type { Draft } from "@/lib/ai/schema";
+import { scoreFields } from "@/lib/ai/scorer";
 
 const draft = (over: Partial<Draft>): Draft => ({
   status: "ok",
@@ -69,5 +70,30 @@ describe("межа даних у промпті (кейс 10 PM: текст до
 
   it(`довжину документа обмежено (${MAX_DOCUMENT_CHARS} символів)`, () => {
     expect(wrapDocument("a".repeat(MAX_DOCUMENT_CHARS + 500)).length).toBe(MAX_DOCUMENT_CHARS + "<document>\n\n</document>".length);
+  });
+});
+
+describe("needs_info і оцінювач golden cases", () => {
+  const base = {
+    status: "needs_info" as const,
+    kind: "request" as const,
+    phone: "555 01 07",
+    description: "Something is wrong",
+    category: "other" as const,
+    urgency: "urgent" as const,
+    items: [{ name: "Visit", quantity: 1, unitPrice: 50 }],
+    total: 50,
+    notes: ["the problem is not described"],
+  };
+
+  it("needs_info — значень проблеми й кошторису немає; вид, телефон в одній формі й примітки лишаються", () => {
+    expect(applyRules(base)).toEqual({ ...base, phone: "555-0107", description: null, category: null, urgency: null, items: null, total: null });
+  });
+
+  it("scoreFields: порядок ключів у позиції не важить, порядок позицій — важить", () => {
+    const actual = { ...base, status: "ok" as const, items: [{ unitPrice: 85, quantity: 1, name: "Faucet" }, { name: "Labour", quantity: 2, unitPrice: 60 }] };
+    const items = [{ name: "Faucet", quantity: 1, unitPrice: 85 }, { name: "Labour", quantity: 2, unitPrice: 60 }];
+    expect(scoreFields({ items }, actual).pass).toBe(true);
+    expect(scoreFields({ items: [...items].reverse() }, actual).pass).toBe(false);
   });
 });

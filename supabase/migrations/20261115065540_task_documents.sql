@@ -137,21 +137,25 @@ begin
   if p_items is not null and jsonb_typeof(p_items) = 'array' and jsonb_array_length(p_items) = 0 then
     p_items := null;
   end if;
+  -- IS DISTINCT FROM, а не <>: відсутній ключ дає NULL, і «NULL <> 'string'» не спрацював би (позиція {} пройшла б).
+  -- CASE — щоб довжину й елементи рахувати лише для масиву (порядок обчислення OR Postgres не гарантує).
   if p_items is not null and (
-       jsonb_typeof(p_items) <> 'array'
-       or jsonb_array_length(p_items) > 30
-       or exists (
-         select 1 from jsonb_array_elements(p_items) as e(item)
-         where case
-                 when jsonb_typeof(e.item) <> 'object' then true
-                 when jsonb_typeof(e.item -> 'name') <> 'string' then true
-                 when jsonb_typeof(e.item -> 'quantity') <> 'number' then true
-                 when jsonb_typeof(e.item -> 'unitPrice') <> 'number' then true
-                 else char_length(btrim(e.item ->> 'name')) not between 1 and 120
-                   or (e.item ->> 'quantity')::numeric <= 0
-                   or (e.item ->> 'unitPrice')::numeric < 0
-               end
-       )
+       case
+         when jsonb_typeof(p_items) is distinct from 'array' then true
+         when jsonb_array_length(p_items) > 30 then true
+         else exists (
+           select 1 from jsonb_array_elements(p_items) as e(item)
+           where case
+                   when jsonb_typeof(e.item) is distinct from 'object' then true
+                   when jsonb_typeof(e.item -> 'name') is distinct from 'string' then true
+                   when jsonb_typeof(e.item -> 'quantity') is distinct from 'number' then true
+                   when jsonb_typeof(e.item -> 'unitPrice') is distinct from 'number' then true
+                   else char_length(btrim(e.item ->> 'name')) not between 1 and 120
+                     or (e.item ->> 'quantity')::numeric <= 0
+                     or (e.item ->> 'unitPrice')::numeric < 0
+                 end
+         )
+       end
      ) then
     raise exception 'DOCUMENT_INVALID';
   end if;
