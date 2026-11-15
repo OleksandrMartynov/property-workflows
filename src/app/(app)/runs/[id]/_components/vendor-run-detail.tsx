@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { ProgressRing } from "@/components/ui/progress-ring";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { canCompleteTask } from "@/lib/runs/access";
-import { taskStatusLabel } from "@/lib/runs/labels";
 import { countProgress, formatVendorProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
-import { MarkDoneForm } from "../mark-done-form";
 import type { RunTaskRow } from "./run-detail";
+import { TaskActions } from "./task-actions";
+import type { TaskDocumentActions } from "./task-document-dialog";
+import { TaskDocumentSummary } from "./task-document-summary";
 import { TaskRow } from "./task-row";
 
 /**
@@ -22,12 +22,15 @@ export function VendorRunDetail({
   lastRequiredTaskId,
   viewer,
   completeTask,
+  documentActions,
 }: {
   run: { id: string; status: string };
   tasks: RunTaskRow[];
   lastRequiredTaskId: string | null;
   viewer: Viewer;
   completeTask: (formData: FormData) => Promise<void>;
+  /** «Parse document» (зріз 4): дії передає сторінка; без них кнопки немає. */
+  documentActions?: TaskDocumentActions;
 }) {
   const sections = groupBySection(tasks);
   const progress = countProgress(tasks);
@@ -50,21 +53,22 @@ export function VendorRunDetail({
           <Card>
             <ul className="flex flex-col divide-y divide-border">
               {section.tasks.map((task) => {
-                const isDone = task.status === "done";
                 return (
-                  <TaskRow key={task.id} name={task.name} required={task.required} done={isDone}>
-                    <StatusBadge status={isDone ? "done" : "todo"} bare>
-                      {taskStatusLabel(task.status)}
-                    </StatusBadge>
-                    {canCompleteTask(viewer, task, runForAccess) ? (
-                      <MarkDoneForm
-                        action={completeTask}
-                        runId={run.id}
-                        taskId={task.id}
-                        taskName={task.name}
-                        needsConfirmation={task.id === lastRequiredTaskId}
-                      />
-                    ) : null}
+                  <TaskRow
+                    key={task.id}
+                    name={task.name}
+                    required={task.required}
+                    done={task.status === "done"}
+                    meta={task.document ? <TaskDocumentSummary document={task.document} /> : undefined}
+                  >
+                    <TaskActions
+                      runId={run.id}
+                      task={task}
+                      canEdit={canCompleteTask(viewer, task, runForAccess)}
+                      needsConfirmation={task.id === lastRequiredTaskId}
+                      completeTask={completeTask}
+                      documentActions={documentActions}
+                    />
                   </TaskRow>
                 );
               })}

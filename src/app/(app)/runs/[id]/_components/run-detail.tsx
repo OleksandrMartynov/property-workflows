@@ -7,11 +7,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { CompletionGlow } from "@/components/ui/completion-glow";
 import { canCompleteTask } from "@/lib/runs/access";
 import { isLastRequiredTask } from "@/lib/runs/confirmation";
-import { runStatusLabel, runStatusTone, taskStatusLabel, templateVersionLabel } from "@/lib/runs/labels";
+import { runStatusLabel, runStatusTone, templateVersionLabel } from "@/lib/runs/labels";
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
-import { MarkDoneForm } from "../mark-done-form";
+import type { StoredTaskDocument } from "@/lib/runs/task-document";
+import { TaskActions } from "./task-actions";
+import type { TaskDocumentActions } from "./task-document-dialog";
+import { TaskDocumentSummary } from "./task-document-summary";
 import { TaskRow } from "./task-row";
 
 export interface RunInfo {
@@ -32,6 +35,8 @@ export interface RunTaskRow {
   required: boolean;
   assignee_id: string;
   status: string;
+  /** Збережені значення документа задачі (зріз 4); немає — null або відсутнє поле. */
+  document?: StoredTaskDocument | null;
 }
 
 /** Тіло сторінки запуску: чекліст за секціями зліва, «Details» справа. Дані читає сторінка, тут лише вигляд. */
@@ -41,12 +46,15 @@ export function RunDetail({
   emailOf,
   viewer,
   completeTask,
+  documentActions,
 }: {
   run: RunInfo;
   tasks: RunTaskRow[];
   emailOf: Map<string, string | null>;
   viewer: Viewer;
   completeTask: (formData: FormData) => Promise<void>;
+  /** «Parse document» (зріз 4): дії передає сторінка; без них кнопки немає. */
+  documentActions?: TaskDocumentActions;
 }) {
   const sections = groupBySection(tasks);
   const progress = countProgress(tasks);
@@ -121,34 +129,32 @@ export function RunDetail({
               <Card>
                 <ul className="flex flex-col divide-y divide-border">
                   {section.tasks.map((task) => {
-                    const isDone = task.status === "done";
                     const assignee = emailOf.get(task.assignee_id);
                     return (
                       <TaskRow
                         key={task.id}
                         name={task.name}
                         required={task.required}
-                        done={isDone}
+                        done={task.status === "done"}
                         mine={task.assignee_id === viewer.id}
                         meta={
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            {assignee ? <Avatar email={assignee} size="xs" /> : null}
-                            <span className="min-w-0 break-words">{assignee ?? "—"}</span>
-                          </span>
+                          <>
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              {assignee ? <Avatar email={assignee} size="xs" /> : null}
+                              <span className="min-w-0 break-words">{assignee ?? "—"}</span>
+                            </span>
+                            <TaskDocumentSummary document={task.document} />
+                          </>
                         }
                       >
-                        <StatusBadge status={isDone ? "done" : "todo"} bare>
-                          {taskStatusLabel(task.status)}
-                        </StatusBadge>
-                        {canCompleteTask(viewer, task, run) ? (
-                          <MarkDoneForm
-                            action={completeTask}
-                            runId={run.id}
-                            taskId={task.id}
-                            taskName={task.name}
-                            needsConfirmation={isLastRequiredTask(task, tasks)}
-                          />
-                        ) : null}
+                        <TaskActions
+                          runId={run.id}
+                          task={task}
+                          canEdit={canCompleteTask(viewer, task, run)}
+                          needsConfirmation={isLastRequiredTask(task, tasks)}
+                          completeTask={completeTask}
+                          documentActions={documentActions}
+                        />
                       </TaskRow>
                     );
                   })}

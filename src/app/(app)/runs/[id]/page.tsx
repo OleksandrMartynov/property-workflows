@@ -9,8 +9,12 @@ import { morphName } from "@/components/ui/motion";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
+import { requestDocumentDraft, saveTaskDocument } from "./document-actions";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
+
+// «Parse document» (зріз 4, ADR 0008): дії передаємо в дерево явно — компоненти рядка лишаються без імпорту серверного коду.
+const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveTaskDocument };
 
 // Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
 // виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
@@ -37,7 +41,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       .maybeSingle(),
     supabase
       .from("run_tasks")
-      .select("id, section_name, section_position, position, name, required, assignee_id, status")
+      .select("id, section_name, section_position, position, name, required, assignee_id, status, document:run_task_documents(kind, phone, description, category, urgency, items, total)")
       .eq("run_id", id)
       .order("section_position")
       .order("position"),
@@ -65,7 +69,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
           {message}
         </FlashNotice>
       ) : null}
-      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} />
+      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} documentActions={DOCUMENT_ACTIONS} />
     </PageShell>
   );
 }

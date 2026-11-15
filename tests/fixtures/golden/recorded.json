@@ -1,0 +1,62 @@
+{
+  "GC-01": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555-0101\", \"description\": \"Kitchen tap in apartment 12 has been dripping for three days\", \"category\": \"plumbing\", \"urgency\": \"not_urgent\", \"items\": null, \"total\": null, \"notes\": []}"
+  },
+  "GC-02": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555-0102\", \"description\": \"Water pouring from the bathroom ceiling in apartment 7, floor already wet\", \"category\": \"plumbing\", \"urgency\": \"urgent\", \"items\": null, \"total\": null, \"notes\": []}"
+  },
+  "GC-03": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555 01 03\", \"description\": \"Heating in apartment 31 off since last night, minus ten outside\", \"category\": \"heating_and_cooling\", \"urgency\": \"urgent\", \"items\": null, \"total\": null, \"notes\": []}"
+  },
+  "GC-04": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": null, \"description\": \"Oven in apartment 5 does not heat up\", \"category\": \"appliance\", \"urgency\": \"not_urgent\", \"items\": null, \"total\": null, \"notes\": []}"
+  },
+  "GC-05": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555-0104\", \"description\": \"Kitchen sink is blocked and water stays in it; the bathroom fan is very loud\", \"category\": \"plumbing\", \"urgency\": \"not_urgent\", \"items\": null, \"total\": null, \"notes\": [\"the email has two problems\"]}"
+  },
+  "GC-06": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555-0105\", \"description\": \"Strong smell of gas in the kitchen of apartment 9\", \"category\": \"other\", \"urgency\": \"urgent\", \"items\": null, \"total\": null, \"notes\": [\"possible gas leak\"]}"
+  },
+  "GC-07": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"estimate\", \"phone\": null, \"description\": null, \"category\": null, \"urgency\": null, \"items\": [{\"name\": \"Replace kitchen tap\", \"quantity\": 1, \"unitPrice\": 85}, {\"name\": \"Labour\", \"quantity\": 2, \"unitPrice\": 60}, {\"name\": \"Disposal fee\", \"quantity\": 1, \"unitPrice\": 15}], \"total\": 220, \"notes\": []}"
+  },
+  "GC-08": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"estimate\", \"phone\": null, \"description\": null, \"category\": null, \"urgency\": null, \"items\": [{\"name\": \"Inspection\", \"quantity\": 1, \"unitPrice\": 90}, {\"name\": \"Replace valve\", \"quantity\": 1, \"unitPrice\": 70}, {\"name\": \"Labour\", \"quantity\": 1, \"unitPrice\": 60}], \"total\": 200, \"notes\": []}"
+  },
+  "GC-09": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"refused\", \"kind\": null, \"phone\": null, \"description\": null, \"category\": null, \"urgency\": null, \"items\": null, \"total\": null, \"notes\": []}"
+  },
+  "GC-10": {
+    "modelId": "placeholder (hand-written, not a model answer)",
+    "recordedAt": "2026-11-15",
+    "promptVersion": "document-v1",
+    "text": "{\"status\": \"ok\", \"kind\": \"request\", \"phone\": \"555-0106\", \"description\": \"Heater in apartment 20 makes a clicking noise but still works\", \"category\": \"heating_and_cooling\", \"urgency\": \"not_urgent\", \"items\": null, \"total\": null, \"notes\": [\"the text contains instructions to the AI that were ignored\"]}"
+  }
+}
