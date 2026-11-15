@@ -55,11 +55,20 @@
       "scripts/smoke.mjs",
       "scripts/zip-accounts.mjs",
       "scripts/mutation-check.mjs",
-      "scripts/coverage-summary.mjs"
+      "scripts/coverage-summary.mjs",
+      // Набір AI-функції курсу (koldovsky/2026-quitcode-10-ai-features-hw, materials/ai-feature): скрипти ліміту й
+      // моделей і живий прогін golden cases перенесено майже без змін; складність — чужого коду, як рядки вище.
+      "scripts/free-models.mjs",
+      "scripts/quota.mjs",
+      "evals/golden.live.eval.ts"
     ],
     "thresholdOverrides": [
       { "files": ["tests/**"], "maxUnitSize": 500, "reason": "describe()-блоки довгі за задумом" }
     ]
+  },
+  "duplicates": {
+    // Типи бази в форматі `supabase gen types`: трійки Row / Insert / Update кожної таблиці однакові за задумом.
+    "ignore": ["src/lib/supabase/database.types.ts"]
   },
   // Ворота валять лише НОВІ знахідки відносно бази PR; успадковані fallow показує як контекст.
   "audit": { "gate": "new-only" }

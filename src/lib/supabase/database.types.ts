@@ -184,6 +184,53 @@ export type Database = {
           },
         ];
       };
+      run_task_documents: {
+        Row: {
+          task_id: string;
+          kind: string;
+          phone: string | null;
+          description: string | null;
+          category: string | null;
+          urgency: string | null;
+          items: Json | null;
+          total: number | null;
+          saved_by: string;
+          saved_at: string;
+        };
+        Insert: {
+          task_id: string;
+          kind: string;
+          phone?: string | null;
+          description?: string | null;
+          category?: string | null;
+          urgency?: string | null;
+          items?: Json | null;
+          total?: number | null;
+          saved_by: string;
+          saved_at?: string;
+        };
+        Update: {
+          task_id?: string;
+          kind?: string;
+          phone?: string | null;
+          description?: string | null;
+          category?: string | null;
+          urgency?: string | null;
+          items?: Json | null;
+          total?: number | null;
+          saved_by?: string;
+          saved_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "run_task_documents_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: true;
+            referencedRelation: "run_tasks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       run_tasks: {
         Row: {
           id: string;
@@ -261,6 +308,10 @@ export type Database = {
         Args: { p_name: string; p_required: boolean; p_section_id: string; p_template_id: string };
         Returns: string;
       };
+      check_task_document: {
+        Args: { p_task_id: string };
+        Returns: boolean;
+      };
       complete_task: {
         Args: { p_task_id: string; p_confirmed?: boolean };
         Returns: { task_status: string; run_status: string }[];
@@ -272,6 +323,19 @@ export type Database = {
       list_assignable_users: {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; email: string }[];
+      };
+      save_task_document: {
+        Args: {
+          p_task_id: string;
+          p_kind: string;
+          p_phone?: string | null;
+          p_description?: string | null;
+          p_category?: string | null;
+          p_urgency?: string | null;
+          p_items?: Json | null;
+          p_total?: number | null;
+        };
+        Returns: undefined;
       };
       vendor_runs: {
         Args: { p_run_id?: string };

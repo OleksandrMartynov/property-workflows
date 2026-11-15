@@ -50,6 +50,9 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+// Сторінка запуску імпортує дії «Parse document» (зріз 4), а ті — фабрику моделі з `import "server-only"`, який поза
+// React Server Components (тут — Vitest) кидає помилку. Моделі ці тести не кличуть.
+vi.mock("server-only", () => ({}));
 
 const { default: RunsPage } = await import("@/app/(app)/runs/page");
 const { default: RunPage } = await import("@/app/(app)/runs/[id]/page");
