@@ -10,3 +10,8 @@ export function productModel() {
   const key = process.env.OPENROUTER_API_KEY?.trim();
   return key ? makeProductModel(key) : null;
 }
+
+/** Для сторінки статусу: чи задано ключ (саме значення з цього файлу не виходить). */
+export function aiConfigured(): boolean {
+  return Boolean(process.env.OPENROUTER_API_KEY?.trim());
+}

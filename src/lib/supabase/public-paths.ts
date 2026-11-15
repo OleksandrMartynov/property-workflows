@@ -2,6 +2,7 @@
 // коміт збірки й «база відповідає», без даних користувачів). Будь-яку іншу сторінку proxy
 // перенаправляє на /login — це UX; дані захищають RLS і перевірка в кожній дії. Збіг — за цілим сегментом:
 // «/login-x», «/authorize» чи інша сторінка під /auth публічними не є (новий маршрут входу — лише явно в списку).
-const PUBLIC_PATHS = ["/login", "/auth/confirm", "/api/health"];
+// WS11: сторінка статусу (/status і /api/status) — стани компонентів, версія й час відповіді, без даних користувачів.
+const PUBLIC_PATHS = ["/login", "/auth/confirm", "/api/health", "/status", "/api/status"];
 
 export const isPublicPath = (pathname: string) => PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
