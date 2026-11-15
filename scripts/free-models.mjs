@@ -30,16 +30,18 @@ if (!Array.isArray(data)) {
 data = data.filter((m) => m && typeof m.id === "string");
 
 const isZero = (v) => v === undefined || v === null || Number(v) === 0;
+// Поле не того типу (формат змінився) — як порожнє, а не виняток.
+const list = (v) => (Array.isArray(v) ? v : []);
 const rows = data
   .filter((m) => m.id.endsWith(":free") || (isZero(m.pricing?.prompt) && isZero(m.pricing?.completion)))
   .map((m) => {
-    const sp = m.supported_parameters ?? [];
+    const sp = list(m.supported_parameters);
     return {
       id: m.id,
       // Нульова ціна без суфікса :free (stealth-моделі, генерація музики тощо) — не плутати з безкоштовними LLM.
       note: m.id.endsWith(":free") ? "" : "ціна 0, але без :free — перевірте опис",
       context: m.context_length ?? m.top_provider?.context_length ?? null,
-      input: (m.architecture?.input_modalities ?? []).join("+"),
+      input: list(m.architecture?.input_modalities).join("+"),
       tools: sp.includes("tools"),
       SO: sp.includes("structured_outputs"),
       RF: sp.includes("response_format"),
