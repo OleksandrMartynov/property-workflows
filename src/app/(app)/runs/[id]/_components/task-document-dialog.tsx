@@ -19,6 +19,7 @@ import { SparkleIcon } from "@/components/ui/icons";
 import { Textarea } from "@/components/ui/input";
 import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
 import type { Draft } from "@/lib/ai/schema";
+import { MESSAGES } from "@/lib/runs/messages";
 import type { TaskDocument } from "@/lib/runs/task-document";
 import type { DocumentDraftState, SaveDocumentState } from "../document-actions";
 import { ValueFields } from "./task-document-fields";
@@ -78,18 +79,28 @@ function useDocumentSession(actions: TaskDocumentActions, onClose: () => void) {
   const [requesting, startRequest] = useTransition();
   const [saving, startSave] = useTransition();
 
+  // Обрив з'єднання під час Server Action — виняток з await: показуємо повідомлення біля форми, а не Error Boundary
+  // (інакше вікно з введеним зникло б). Текст винятку не показуємо.
   const propose = (formData: FormData) =>
     startRequest(async () => {
-      const result = await actions.requestDraft(null, formData);
-      if (result?.status === "draft") setProposal((prev) => ({ draft: result.draft, notice: result.notice, seq: (prev?.seq ?? 0) + 1 }));
-      setRequestError(result?.status === "error" ? result.message : null);
+      try {
+        const result = await actions.requestDraft(null, formData);
+        if (result?.status === "draft") setProposal((prev) => ({ draft: result.draft, notice: result.notice, seq: (prev?.seq ?? 0) + 1 }));
+        setRequestError(result?.status === "error" ? result.message : null);
+      } catch {
+        setRequestError(MESSAGES.DB_ERROR);
+      }
     });
 
   const save = (formData: FormData) =>
     startSave(async () => {
-      const result = await actions.save(null, formData);
-      if (result?.status === "saved") onClose();
-      setSaveError(result?.status === "error" ? result.message : null);
+      try {
+        const result = await actions.save(null, formData);
+        if (result?.status === "saved") onClose();
+        setSaveError(result?.status === "error" ? result.message : null);
+      } catch {
+        setSaveError(MESSAGES.DB_ERROR);
+      }
     });
 
   return { proposal, requestError, saveError, requesting, saving, propose, save };
