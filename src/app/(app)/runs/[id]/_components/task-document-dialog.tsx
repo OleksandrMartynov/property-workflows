@@ -40,8 +40,10 @@ interface DialogProps {
 const TAP = "pointer-coarse:h-10 pointer-coarse:px-3.5";
 
 export function TaskDocumentDialog(props: DialogProps) {
-  const [session, setSession] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [dialog, setDialog] = useState({ session: 0, open: false });
+  const { session, open } = dialog;
+  // Закриває лише свій сеанс: відповідь збереження, що прийшла після «Cancel» і нового відкриття, нове вікно не закриє.
+  const close = () => setDialog((current) => (current.session === session ? { ...current, open: false } : current));
   return (
     <>
       <Button
@@ -49,16 +51,13 @@ export function TaskDocumentDialog(props: DialogProps) {
         size="sm"
         className={TAP}
         aria-haspopup="dialog"
-        onClick={() => {
-          setSession((n) => n + 1);
-          setOpen(true);
-        }}
+        onClick={() => setDialog((current) => ({ session: current.session + 1, open: true }))}
       >
         <SparkleIcon />
         {props.saved ? "Edit document" : "Parse document"}
       </Button>
       {/* Вікно з формами існує лише відкритим: у запуску десятки задач, і кожна несла б дві форми. */}
-      {open ? <DocumentSession key={session} {...props} onClose={() => setOpen(false)} /> : null}
+      {open ? <DocumentSession key={session} {...props} onClose={close} /> : null}
     </>
   );
 }

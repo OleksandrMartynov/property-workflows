@@ -134,7 +134,7 @@ begin
   perform private.check_task_document(p_task_id);
 
   -- Порожній список позицій — «позицій немає».
-  if p_items is not null and jsonb_typeof(p_items) = 'array' and jsonb_array_length(p_items) = 0 then
+  if (case when jsonb_typeof(p_items) = 'array' then jsonb_array_length(p_items) = 0 else false end) then
     p_items := null;
   end if;
   -- IS DISTINCT FROM, а не <>: відсутній ключ дає NULL, і «NULL <> 'string'» не спрацював би (позиція {} пройшла б).

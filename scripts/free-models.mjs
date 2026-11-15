@@ -26,6 +26,8 @@ if (!Array.isArray(data)) {
   console.error("ai:models — у відповіді немає списку data (формат змінився?).");
   process.exit(1);
 }
+// Елемент без рядкового id (формат змінився) пропускаємо, а не падаємо на m.id.endsWith().
+data = data.filter((m) => m && typeof m.id === "string");
 
 const isZero = (v) => v === undefined || v === null || Number(v) === 0;
 const rows = data

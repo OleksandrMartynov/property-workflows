@@ -35,7 +35,7 @@ try {
   process.exit(1);
 }
 const q = body?.data?.free_model_daily_requests;
-if (!q || ![q.used, q.limit, q.remaining].every((n) => typeof n === "number")) {
+if (!q || ![q.used, q.limit, q.remaining].every(Number.isFinite)) {
   console.error("ai:quota — у відповіді немає free_model_daily_requests з used, limit і remaining (формат змінився?).");
   process.exit(1);
 }
