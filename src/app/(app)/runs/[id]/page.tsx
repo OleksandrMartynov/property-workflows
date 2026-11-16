@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
+import { canParseDocuments } from "@/lib/runs/access";
 import { errorMessage } from "@/lib/runs/messages";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
@@ -50,7 +51,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   if (!run) notFound();
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
   // AC-DOCAI-14, 15: блок і записи — лише менеджеру цього запуску й адміністратору; RLS run_documents те саме.
-  const canParse = viewer.role === "admin" || run.run_manager_id === viewer.id;
+  const canParse = canParseDocuments(viewer, run);
   const { data: documentRows, error: documentsError } = canParse
     ? await supabase
         .from("run_documents")
