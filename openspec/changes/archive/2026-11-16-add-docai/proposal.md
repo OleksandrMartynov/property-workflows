@@ -51,7 +51,7 @@ solomchaak/property-workflows-spec#59 «Requirement: Parse a document and confir
 |---|---|
 | `manager` — менеджер запуску | бачить блок «Parse a document» на сторінці свого запуску, просить AI запропонувати значення, виправляє й зберігає їх (AC-DOCAI-01…13) |
 | `admin` | те саме на сторінці будь-якого запуску |
-| `vendor`; `manager` чи `admin`, що лише виконавець задачі в запуску | не бачить блоку (AC-DOCAI-14, AC-DOCAI-15); прямий запит — без значень і без запису, «Not enough rights» (AC-DOCAI-16) |
+| `vendor`; `manager`, що лише виконавець задачі в запуску | не бачить блоку (AC-DOCAI-14, AC-DOCAI-15); прямий запит — без значень і без запису, «Not enough rights» (AC-DOCAI-16) |
 
 ## Non-goals
 
@@ -102,4 +102,10 @@ solomchaak/property-workflows-spec#59 «Requirement: Parse a document and confir
 
 ## Open questions
 
-«Відкриті питання» PM: немає. Питань розробника до PM немає: межу довжини тексту PM дозволив задати розробнику.
+«Відкриті питання» PM: немає. Межу довжини тексту PM дозволив задати розробнику.
+
+- Q15 (розробник, `docs/spec-reading.md`): у «Користувачі й ролі» PM блок не бачить «a manager or an administrator who
+  is only an assignee of a task in the run», а рядок «Administrator — uses the block on the page of any run» і
+  припущення «only the run manager and an administrator see it» дають адміністратору блок на будь-якому запуску.
+  AC-DOCAI-14 і 15 адміністратора-виконавця не охоплюють. Робоче припущення до відповіді PM: адміністратор бачить блок
+  на будь-якому запуску (рядок ролі й припущення PM); питання — до PM через вебформу «Питання до вимог».
