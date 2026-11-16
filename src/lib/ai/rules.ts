@@ -17,7 +17,8 @@ export const INSTRUCTIONS_NOTE = "the text contains instructions to the AI that 
 export function normalizeNotes(notes: string[]): string[] {
   const out = notes.map((note) => {
     if (/\b(two|several|multiple|more than one)\b.*\bproblems?\b/i.test(note)) return TWO_PROBLEMS_NOTE;
-    if (/\binstructions?\b/i.test(note)) return INSTRUCTIONS_NOTE;
+    // Лише примітка про проігноровані інструкції; ризик зі словом «instructions» лишається як є.
+    if (/\binstructions?\b/i.test(note) && /\bignor(ed|ing)\b/i.test(note)) return INSTRUCTIONS_NOTE;
     return note;
   });
   return [...new Set(out)];

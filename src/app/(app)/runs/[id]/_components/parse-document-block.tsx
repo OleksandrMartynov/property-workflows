@@ -73,8 +73,16 @@ function useParseDocument(actions: DocumentActions) {
   const [reading, startReading] = useTransition();
   const [saving, startSave] = useTransition();
   const nextSeq = () => (values?.seq ?? 0) + 1;
+  // Номер читання файла: застосовуємо лише останнє; очищення блока чи ручне редагування робить поточне неактуальним.
+  const readSeq = useRef(0);
+
+  const editText = (value: string) => {
+    readSeq.current += 1;
+    setText(value);
+  };
 
   const reset = () => {
+    readSeq.current += 1;
     setText("");
     setValues(null);
     setMessage(null);
@@ -82,6 +90,8 @@ function useParseDocument(actions: DocumentActions) {
   };
 
   const propose = (formData: FormData) => {
+    // Поки зберігається попередній документ, перший крок вимкнено: інакше його очищення стерло б новий документ.
+    if (saving) return;
     // AC-DOCAI-03: поки AI читає, значень немає.
     setValues(null);
     setMessage(null);
@@ -105,27 +115,30 @@ function useParseDocument(actions: DocumentActions) {
     });
 
   const upload = async (file: File) => {
+    if (saving) return;
+    const mine = ++readSeq.current;
     setValues(null);
     if (!isPlainTextFile(file)) {
       setMessage({ text: MESSAGES.DOCUMENT_FILE_INVALID, tone: "error" });
       return;
     }
     setMessage(null);
-    setText(await file.text());
+    const content = await file.text();
+    if (mine === readSeq.current) setText(content);
   };
 
-  return { text, setText, values, message, saveError, reading, saving, propose, save, upload, reset };
+  return { text, setText: editText, values, message, saveError, reading, saving, propose, save, upload, reset };
 }
 
 /** Кнопки кроку 1 і стан читання (AC-DOCAI-03): поки AI читає — «Reading the document…» і вимкнена «Propose values». */
-export function ProposeControls({ reading, onUpload }: { reading: boolean; onUpload: () => void }) {
+export function ProposeControls({ reading, busy = false, onUpload }: { reading: boolean; busy?: boolean; onUpload: () => void }) {
   return (
     <>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="outline" onClick={onUpload} disabled={reading}>
+        <Button variant="outline" onClick={onUpload} disabled={reading || busy}>
           Upload a text file
         </Button>
-        <Button type="submit" variant="soft" loading={reading} disabled={reading}>
+        <Button type="submit" variant="soft" loading={reading} disabled={reading || busy}>
           Propose values
         </Button>
       </div>
@@ -217,10 +230,10 @@ export function ParseDocumentBlock({ runId, actions }: { runId: string; actions:
       <form onSubmit={(event) => block.propose(formDataOf(event))} className="flex flex-col gap-3" noValidate aria-labelledby={`${id}-title`}>
         <input type="hidden" name="run_id" value={runId} />
         <Field id={`${id}-text`} label="Document text" counter={MAX_DOCUMENT_CHARS}>
-          <Textarea name="text" rows={4} maxRows={12} value={block.text} onChange={(event) => block.setText(event.target.value)} />
+          <Textarea name="text" rows={4} maxRows={12} value={block.text} readOnly={saving} onChange={(event) => block.setText(event.target.value)} />
         </Field>
         <input ref={fileRef} type="file" accept=".txt,text/plain" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={onFile} />
-        <ProposeControls reading={reading} onUpload={() => fileRef.current?.click()} />
+        <ProposeControls reading={reading} busy={saving} onUpload={() => fileRef.current?.click()} />
         {message ? <Alert variant={message.tone}>{message.text}</Alert> : null}
       </form>
 

@@ -60,7 +60,7 @@ describe("Хто бачить блок «Parse a document»", () => {
     expect(html).not.toContain('data-testid="parse-document"');
   });
 
-  it("менеджер запуску A й адміністратор бачать блок", () => {
+  it("AC-DOCAI-14, 15: менеджер запуску A й адміністратор бачать блок", () => {
     expect(canParseDocuments({ id: A, role: "manager" }, run)).toBe(true);
     expect(canParseDocuments({ id: ADMIN, role: "admin" }, run)).toBe(true);
   });

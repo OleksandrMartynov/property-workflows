@@ -63,7 +63,7 @@ describe("parseDocumentForm", () => {
 });
 
 describe("fromStored, documentValues і formatConfirmedAt", () => {
-  it("рядок бази (total рядком із numeric) → значення кошторису", () => {
+  it("AC-DOCAI-04: рядок бази (total рядком із numeric) → значення кошторису", () => {
     const doc = fromStored({ kind: "estimate", phone: null, description: null, category: null, urgency: null, items: [{ name: "Faucet", quantity: 2, unitPrice: 100 }], total: "200.00" });
     expect(doc).toMatchObject({ total: 200, items: [{ name: "Faucet", quantity: 2, unitPrice: 100 }] });
     expect(documentValues(doc!)).toEqual([

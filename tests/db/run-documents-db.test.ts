@@ -96,13 +96,13 @@ describe("База: збереження підтверджених значен
     }
   });
 
-  it("неіснуючий запуск: адміністратор — RUN_NOT_FOUND, менеджер — та сама відмова, що й для чужого", async () => {
+  it("AC-DOCAI-16: неіснуючий запуск: адміністратор — RUN_NOT_FOUND, менеджер — та сама відмова, що й для чужого", async () => {
     const missing = "00000000-0000-0000-0000-00000000dead";
     expect(await errorOf(save(ADMIN, missing, REQUEST))).toContain("RUN_NOT_FOUND");
     expect(await errorOf(save(MANAGER_A, missing, REQUEST))).toContain("DOCUMENT_NOT_ALLOWED");
   });
 
-  it("значення поза переліками, порожній запис і кривий список позицій — відмова, нічого не записано", async () => {
+  it("AC-DOCAI-04: значення поза переліками, порожній запис і кривий список позицій — відмова, нічого не записано", async () => {
     const runId = await runOfA("Apartment 16, invalid");
     expect(await errorOf(save(MANAGER_A, runId, { kind: "request", category: "garden" }))).toContain("DOCUMENT_INVALID");
     expect(await errorOf(save(MANAGER_A, runId, { kind: "menu", phone: "555-0101" }))).toContain("DOCUMENT_INVALID");
