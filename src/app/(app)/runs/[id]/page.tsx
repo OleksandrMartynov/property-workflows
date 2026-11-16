@@ -11,6 +11,7 @@ import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
 import { requestDocumentDraft, saveRunDocument } from "./document-actions";
+import { loadRunDocuments } from "./_lib/documents";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
 
@@ -51,15 +52,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   if (!run) notFound();
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
   // AC-DOCAI-14, 15: блок і записи — лише менеджеру цього запуску й адміністратору; RLS run_documents те саме.
-  const canParse = canParseDocuments(viewer, run);
-  const { data: documentRows, error: documentsError } = canParse
-    ? await supabase
-        .from("run_documents")
-        .select("id, kind, phone, description, category, urgency, items, total, saved_by, saved_at")
-        .eq("run_id", run.id)
-        .order("saved_at", { ascending: false })
-    : { data: null, error: null };
-  if (documentsError) throw new Error(documentsError.message);
+  const documents = canParseDocuments(viewer, run) ? { actions: DOCUMENT_ACTIONS, rows: await loadRunDocuments(supabase, run.id) } : undefined;
 
   return (
     <PageShell
@@ -81,7 +74,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
         </FlashNotice>
       ) : null}
       <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask}
-        documents={canParse ? { actions: DOCUMENT_ACTIONS, rows: documentRows ?? [] } : undefined}
+        documents={documents}
       />
     </PageShell>
   );

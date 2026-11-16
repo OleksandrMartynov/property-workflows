@@ -119,19 +119,19 @@
 | AC-VENDOR-16 | необов'язкова задача підрядника в завершеному запуску — «done», «Your tasks: 1 of 1 done», запуск «completed» | — | — | відкладено (чекає реалізації) |
 | AC-VENDOR-17 | прямий запит задач запуску підрядником — лише його задачі 3 і 4 | — | — | відкладено (чекає реалізації) |
 | AC-VENDOR-18 | прямі запити підрядника про інших користувачів і чужий запуск — нічого | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-01 | запит про кран — «Maintenance request», 555-0101, опис, «plumbing», «not urgent», нічого не збережено | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-02 | кошторис — «Estimate», три позиції, Total 220.00 без попередження | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-03 | «Reading the document…», «Propose values» вимкнена, значень немає | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-04 | Urgency → «urgent», «Save values» — один запис з email A і датою й часом | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-05 | «Discard» — блок порожній, запису немає | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-06 | без телефону — Phone «not found», «appliance», «not urgent» | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-07 | дві проблеми — обидві в описі, «plumbing», примітка «the email has two problems» | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-08 | позиції дають 220.00, Total 200.00 як написано, попередження | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-09 | меню — «This document is not a maintenance request or an estimate.», без значень | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-10 | інструкції в тексті ігноруються — «not urgent», примітка про інструкції | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-11 | порожній текст — «Paste the text of a document» | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-12 | «photo.png» — «Only plain text files (.txt) are accepted» | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-13 | асистент недоступний — повідомлення, порожні редаговані поля, «Save values» працює | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-14 | підрядник не бачить блоку «Parse a document» | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-15 | менеджер-виконавець чужого запуску не бачить блоку | — | — | відкладено (чекає реалізації) |
-| AC-DOCAI-16 | прямий запит без права — без значень, без запису, «Not enough rights» | — | — | відкладено (чекає реалізації) |
+| AC-DOCAI-01 | запит про кран — «Maintenance request», 555-0101, опис, «plumbing», «not urgent», нічого не збережено | `src/app/(app)/runs/[id]/document-actions.ts`, `src/app/(app)/runs/[id]/_components/document-fields.tsx`, `src/lib/ai/draft.ts` | `tests/runs/document-actions.test.ts`, `tests/runs/parse-document-block.test.tsx`, `tests/golden.test.ts` | реалізовано |
+| AC-DOCAI-02 | кошторис — «Estimate», три позиції, Total 220.00 без попередження | `src/app/(app)/runs/[id]/document-actions.ts`, `src/lib/ai/rules.ts` (totalWarning) | `tests/runs/document-actions.test.ts`, `tests/golden.test.ts` | реалізовано |
+| AC-DOCAI-03 | «Reading the document…», «Propose values» вимкнена, значень немає | `src/app/(app)/runs/[id]/_components/parse-document-block.tsx` | `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-04 | Urgency → «urgent», «Save values» — один запис з email A і датою й часом | `src/app/(app)/runs/[id]/document-actions.ts`, `supabase/migrations/20261116162440_run_documents.sql` (save_run_document), `src/app/(app)/runs/[id]/_components/saved-documents.tsx`, `src/lib/runs/run-document.ts` | `tests/runs/document-actions.test.ts`, `tests/db/run-documents-db.test.ts`, `tests/runs/run-document.test.ts`, `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-05 | «Discard» — блок порожній, запису немає | `src/app/(app)/runs/[id]/_components/parse-document-block.tsx` (Discard), `src/app/(app)/runs/[id]/_components/saved-documents.tsx` | `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-06 | без телефону — Phone «not found», «appliance», «not urgent» | `src/app/(app)/runs/[id]/_components/document-fields.tsx` («not found»), `src/lib/ai/rules.ts` | `tests/runs/document-actions.test.ts`, `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-07 | дві проблеми — обидві в описі, «plumbing», примітка «the email has two problems» | `src/lib/ai/rules.ts` (normalizeNotes) | `tests/runs/document-actions.test.ts` | реалізовано |
+| AC-DOCAI-08 | позиції дають 220.00, Total 200.00 як написано, попередження | `src/lib/ai/rules.ts` (totalWarning), `src/app/(app)/runs/[id]/_components/document-fields.tsx` | `tests/runs/document-actions.test.ts`, `tests/golden.test.ts` | реалізовано |
+| AC-DOCAI-09 | меню — «This document is not a maintenance request or an estimate.», без значень | `src/app/(app)/runs/[id]/document-actions.ts`, `src/lib/ai/rules.ts` (REFUSED_MESSAGE) | `tests/runs/document-actions.test.ts`, `tests/golden.test.ts` | реалізовано |
+| AC-DOCAI-10 | інструкції в тексті ігноруються — «not urgent», примітка про інструкції | `src/lib/ai/prompts/draft.ts` (межа <document>), `src/lib/ai/rules.ts` (normalizeNotes) | `tests/runs/document-actions.test.ts`, `tests/golden.test.ts` | реалізовано |
+| AC-DOCAI-11 | порожній текст — «Paste the text of a document» | `src/app/(app)/runs/[id]/document-actions.ts`, `src/lib/runs/messages.ts` | `tests/runs/document-actions.test.ts` | реалізовано |
+| AC-DOCAI-12 | «photo.png» — «Only plain text files (.txt) are accepted» | `src/app/(app)/runs/[id]/_components/parse-document-block.tsx` (isPlainTextFile), `src/lib/runs/messages.ts` | `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-13 | асистент недоступний — повідомлення, порожні редаговані поля, «Save values» працює | `src/app/(app)/runs/[id]/document-actions.ts` (unavailable), `src/lib/ai/draft.ts` (ASSISTANT_UNAVAILABLE), `src/app/(app)/runs/[id]/_components/document-fields.tsx` | `tests/runs/document-actions.test.ts`, `tests/runs/parse-document-block.test.tsx`, `tests/db/run-documents-db.test.ts` | реалізовано |
+| AC-DOCAI-14 | підрядник не бачить блоку «Parse a document» | `src/lib/runs/access.ts` (canParseDocuments), `src/app/(app)/runs/[id]/_components/vendor-run-page.tsx` | `tests/runs/parse-document-block.test.tsx` | реалізовано |
+| AC-DOCAI-15 | менеджер-виконавець чужого запуску не бачить блоку | `src/lib/runs/access.ts` (canParseDocuments), `src/app/(app)/runs/[id]/page.tsx`, `supabase/migrations/20261116162440_run_documents.sql` (run_documents_select) | `tests/runs/parse-document-block.test.tsx`, `tests/db/run-documents-db.test.ts` | реалізовано |
+| AC-DOCAI-16 | прямий запит без права — без значень, без запису, «Not enough rights» | `supabase/migrations/20261116162440_run_documents.sql` (check_run_document, save_run_document, RLS), `src/app/(app)/runs/[id]/document-actions.ts` | `tests/runs/document-actions.test.ts`, `tests/db/run-documents-db.test.ts`, `scripts/mutants.mjs` (D1–D3) | реалізовано |

@@ -30,6 +30,31 @@ export interface DocumentActions {
 type Values = { mode: "proposal"; draft: Draft; notice: string | null; seq: number } | { mode: "manual"; seq: number } | null;
 type Message = { text: string; tone: "error" | "info" } | null;
 
+/**
+ * Відповідь requestDocumentDraft → що показати в блоці: пропозиція з приміткою needs_info (AC-DOCAI-01), порожні поля
+ * для ручного введення з повідомленням «недоступний» (AC-DOCAI-13) або лише повідомлення без значень (AC-DOCAI-09, 11, 16).
+ */
+export function afterProposal(result: DocumentDraftState, seq: number): { values: Values; message: Message } {
+  if (result?.status === "draft") {
+    return { values: { mode: "proposal", draft: result.draft, notice: result.notice, seq }, message: result.notice ? { text: result.notice, tone: "info" } : null };
+  }
+  if (result?.status === "unavailable") return { values: { mode: "manual", seq }, message: { text: result.message, tone: "info" } };
+  return { values: null, message: result ? { text: result.message, tone: "error" } : null };
+}
+
+/** Відповідь saveRunDocument → помилка біля форми; null — збережено (блок очищається) або нічого не сталося. */
+export const saveErrorOf = (result: SaveDocumentState) => (result?.status === "error" ? result.message : null);
+
+/** Запускає дію; обрив з'єднання — загальне повідомлення замість сторінки помилки (введене лишається). */
+async function guarded<T>(run: () => Promise<T>, onFailure: () => void): Promise<T | undefined> {
+  try {
+    return await run();
+  } catch {
+    onFailure();
+    return undefined;
+  }
+}
+
 /** Файл .txt — у поле тексту; інший файл — відмова (AC-DOCAI-12). */
 export const isPlainTextFile = (file: { name: string; type: string }) =>
   /\.txt$/i.test(file.name) && (file.type === "" || file.type.startsWith("text/plain"));
@@ -61,33 +86,22 @@ function useParseDocument(actions: DocumentActions) {
     setValues(null);
     setMessage(null);
     setSaveError(null);
+    const seq = nextSeq();
     startReading(async () => {
-      try {
-        const result = await actions.requestDraft(null, formData);
-        if (result?.status === "draft") {
-          setValues({ mode: "proposal", draft: result.draft, notice: result.notice, seq: nextSeq() });
-          setMessage(result.notice ? { text: result.notice, tone: "info" } : null);
-        } else if (result?.status === "unavailable") {
-          setValues({ mode: "manual", seq: nextSeq() });
-          setMessage({ text: result.message, tone: "info" });
-        } else if (result?.status === "error") {
-          setMessage({ text: result.message, tone: "error" });
-        }
-      } catch {
-        setMessage({ text: MESSAGES.DB_ERROR, tone: "error" });
-      }
+      const result = await guarded(() => actions.requestDraft(null, formData), () => setMessage({ text: MESSAGES.DB_ERROR, tone: "error" }));
+      if (result === undefined) return;
+      const next = afterProposal(result, seq);
+      setValues(next.values);
+      setMessage(next.message);
     });
   };
 
   const save = (formData: FormData) =>
     startSave(async () => {
-      try {
-        const result = await actions.save(null, formData);
-        if (result?.status === "saved") reset();
-        setSaveError(result?.status === "error" ? result.message : null);
-      } catch {
-        setSaveError(MESSAGES.DB_ERROR);
-      }
+      const result = await guarded(() => actions.save(null, formData), () => setSaveError(MESSAGES.DB_ERROR));
+      if (result === undefined) return;
+      if (result?.status === "saved") reset();
+      setSaveError(saveErrorOf(result));
     });
 
   const upload = async (file: File) => {
@@ -103,12 +117,90 @@ function useParseDocument(actions: DocumentActions) {
   return { text, setText, values, message, saveError, reading, saving, propose, save, upload, reset };
 }
 
+/** Кнопки кроку 1 і стан читання (AC-DOCAI-03): поки AI читає — «Reading the document…» і вимкнена «Propose values». */
+export function ProposeControls({ reading, onUpload }: { reading: boolean; onUpload: () => void }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" onClick={onUpload} disabled={reading}>
+          Upload a text file
+        </Button>
+        <Button type="submit" variant="soft" loading={reading} disabled={reading}>
+          Propose values
+        </Button>
+      </div>
+      {reading ? (
+        <p role="status" className="text-body text-muted-foreground">
+          Reading the document…
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+/** Значення показуємо лише після відповіді: поки AI читає, жодного значення (AC-DOCAI-03). */
+export const showsValues = (values: unknown, reading: boolean) => Boolean(values) && !reading;
+
+/**
+ * Крок 2: значення на перевірку (AC-DOCAI-01) чи порожні поля (AC-DOCAI-13), примітки моделі, «Save values»
+ * (AC-DOCAI-04) і «Discard» (AC-DOCAI-05). Попередження про суму (AC-DOCAI-08) показують самі поля — живим, за
+ * поточними позиціями; тут — інші примітки.
+ */
+export function ValuesForm({
+  id,
+  runId,
+  values,
+  saving,
+  saveError,
+  onSave,
+  onDiscard,
+}: {
+  id: string;
+  runId: string;
+  values: NonNullable<Values>;
+  saving: boolean;
+  saveError: string | null;
+  onSave: (formData: FormData) => void;
+  onDiscard: () => void;
+}) {
+  const draft = values.mode === "proposal" ? values.draft : null;
+  const notes = draft ? draft.notes.filter((note) => !/^items add up to /i.test(note)) : [];
+  return (
+    <form onSubmit={(event) => onSave(formDataOf(event))} className="flex flex-col gap-4 border-t border-border pt-4" noValidate>
+      <input type="hidden" name="run_id" value={runId} />
+      <div className="flex items-center gap-2">
+        <h3 className="text-heading">Values</h3>
+        {draft ? <Badge variant="ai">AI proposal</Badge> : null}
+      </div>
+      {notes.length ? (
+        <Alert variant="info">
+          <ul className="flex list-disc flex-col gap-0.5 pl-4" data-testid="document-notes">
+            {notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </Alert>
+      ) : null}
+      {/* Нова пропозиція — нові початкові значення: поля монтуються наново лише з новою пропозицією. */}
+      <ValueFields key={values.seq} id={id} draft={draft} />
+      {saveError ? <Alert variant="error">{saveError}</Alert> : null}
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="outline" onClick={onDiscard} disabled={saving}>
+          Discard
+        </Button>
+        <Button type="submit" loading={saving}>
+          {saving ? "Saving…" : "Save values"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function ParseDocumentBlock({ runId, actions }: { runId: string; actions: DocumentActions }) {
   const id = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const block = useParseDocument(actions);
   const { values, message, reading, saving } = block;
-  const notes = values?.mode === "proposal" ? values.draft.notes.filter((note) => !/^items add up to /i.test(note)) : [];
 
   const onFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -128,51 +220,12 @@ export function ParseDocumentBlock({ runId, actions }: { runId: string; actions:
           <Textarea name="text" rows={4} maxRows={12} value={block.text} onChange={(event) => block.setText(event.target.value)} />
         </Field>
         <input ref={fileRef} type="file" accept=".txt,text/plain" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={onFile} />
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={reading}>
-            Upload a text file
-          </Button>
-          <Button type="submit" variant="soft" loading={reading} disabled={reading}>
-            Propose values
-          </Button>
-        </div>
-        {reading ? (
-          <p role="status" className="text-body text-muted-foreground">
-            Reading the document…
-          </p>
-        ) : null}
+        <ProposeControls reading={reading} onUpload={() => fileRef.current?.click()} />
         {message ? <Alert variant={message.tone}>{message.text}</Alert> : null}
       </form>
 
-      {values && !reading ? (
-        <form onSubmit={(event) => block.save(formDataOf(event))} className="flex flex-col gap-4 border-t border-border pt-4" noValidate>
-          <input type="hidden" name="run_id" value={runId} />
-          <div className="flex items-center gap-2">
-            <h3 className="text-heading">Values</h3>
-            {values.mode === "proposal" ? <Badge variant="ai">AI proposal</Badge> : null}
-          </div>
-          {/* Попередження про суму (AC-DOCAI-08) показують самі поля — живим, за поточними позиціями; тут — інші примітки. */}
-          {notes.length ? (
-            <Alert variant="info" data-testid="document-notes">
-              <ul className="flex list-disc flex-col gap-0.5 pl-4">
-                {notes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
-            </Alert>
-          ) : null}
-          {/* Нова пропозиція — нові початкові значення: поля монтуються наново лише з новою пропозицією. */}
-          <ValueFields key={values.seq} id={id} draft={values.mode === "proposal" ? values.draft : null} />
-          {block.saveError ? <Alert variant="error">{block.saveError}</Alert> : null}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="outline" onClick={block.reset} disabled={saving}>
-              Discard
-            </Button>
-            <Button type="submit" loading={saving}>
-              {saving ? "Saving…" : "Save values"}
-            </Button>
-          </div>
-        </form>
+      {values && showsValues(values, reading) ? (
+        <ValuesForm id={id} runId={runId} values={values} saving={saving} saveError={block.saveError} onSave={block.save} onDiscard={block.reset} />
       ) : null}
     </Card>
   );

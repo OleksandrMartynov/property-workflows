@@ -14,9 +14,8 @@ import { applyRules } from "./rules";
 // `ProviderOptions` не експортується з "ai" 7.0.162 — беремо тип із параметрів generateText.
 type ProviderOptions = NonNullable<Parameters<typeof generateText>[0]["providerOptions"]>;
 
-export const FILE_TYPES = ["application/pdf", "image/png", "image/jpeg"] as const;
-export type FileType = (typeof FILE_TYPES)[number];
-export const isFileType = (t: string): t is FileType => (FILE_TYPES as readonly string[]).includes(t);
+// Файли (PDF, зображення) пропонує ланцюжок моделей (ADR 0008); застосунок за вимогою PM передає лише текст (ADR 0009).
+export type FileType = "application/pdf" | "image/png" | "image/jpeg";
 
 // Чиста функція: модель передають параметром. Застосунок передає модель OpenRouter (src/lib/ai/openrouter.ts),
 // тести — MockLanguageModelV4 із записаною відповіддю. Тут немає `import "server-only"` і немає process.env,
@@ -86,9 +85,3 @@ export function classifyError(error: unknown): Extract<DraftResult, { ok: false 
 // AC-DOCAI-13: будь-яка недоступність помічника (немає ключа, ліміт, тайм-аут, нечитана відповідь) — один текст PM
 // дослівно; людина заповнює значення сама. Причину (reason) пишемо лише в журнал сервера.
 export const ASSISTANT_UNAVAILABLE = "The assistant is not available now. Fill in the values yourself.";
-export const USER_MESSAGES: Record<Extract<DraftResult, { ok: false }>["reason"], string> = {
-  invalid_output: ASSISTANT_UNAVAILABLE,
-  rate_limited: ASSISTANT_UNAVAILABLE,
-  timeout: ASSISTANT_UNAVAILABLE,
-  provider_error: ASSISTANT_UNAVAILABLE,
-};

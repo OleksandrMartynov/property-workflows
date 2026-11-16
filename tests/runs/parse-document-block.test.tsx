@@ -114,3 +114,134 @@ describe("Файл документа", () => {
     expect(isPlainTextFile({ name: "request.TXT", type: "" })).toBe(true);
   });
 });
+
+describe("Стан читання й поля пропозиції", () => {
+  it("AC-DOCAI-03: поки AI читає — «Reading the document…», «Propose values» вимкнена, значень не показано", async () => {
+    const { ProposeControls, showsValues } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    const html = renderToStaticMarkup(<ProposeControls reading onUpload={() => {}} />);
+    expect(html).toContain("Reading the document…");
+    expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled=""[^>]*>[\s\S]*?Propose values/);
+    expect(showsValues({ mode: "manual", seq: 1 }, true)).toBe(false);
+    expect(showsValues({ mode: "manual", seq: 1 }, false)).toBe(true);
+    expect(renderToStaticMarkup(<ProposeControls reading={false} onUpload={() => {}} />)).not.toContain("Reading the document…");
+  });
+
+  it("AC-DOCAI-01, AC-DOCAI-06: поля пропозиції — «Maintenance request», 555-0101, «plumbing», «not urgent»; відсутнє — «not found»", async () => {
+    const { ValueFields } = await import("@/app/(app)/runs/[id]/_components/document-fields");
+    const draft = {
+      status: "ok" as const,
+      kind: "request" as const,
+      phone: null,
+      description: "The kitchen tap in apartment 12 has been dripping for three days.",
+      category: "plumbing" as const,
+      urgency: "not_urgent" as const,
+      items: null,
+      total: null,
+      notes: [],
+    };
+    const html = renderToStaticMarkup(<ValueFields id="v" draft={draft} />);
+    for (const text of ["Document type", "Maintenance request", "plumbing", "not urgent", "dripping for three days"]) expect(html).toContain(text);
+    // Phone порожній і позначений «not found» (AC-DOCAI-06).
+    expect(html).toMatch(/<input[^>]*name="phone"[^>]*placeholder="not found"|<input[^>]*placeholder="not found"[^>]*name="phone"/);
+    expect(renderToStaticMarkup(<ValueFields id="v" draft={{ ...draft, phone: "555-0101" }} />)).toContain('value="555-0101"');
+  });
+
+  it("AC-DOCAI-13: без пропозиції — тип документа й значення порожні й доступні для введення", async () => {
+    const { ValueFields } = await import("@/app/(app)/runs/[id]/_components/document-fields");
+    const html = renderToStaticMarkup(<ValueFields id="m" draft={null} />);
+    expect(html).toContain("Document type");
+    expect(html).not.toContain("not found");
+    expect(html).toMatch(/<input[^>]*name="phone"[^>]*value=""/);
+    expect(html).not.toMatch(/readonly|disabled=""/);
+  });
+});
+
+describe("Стан блоку після відповіді дії", () => {
+  const draft = { status: "ok" as const, kind: "request" as const, phone: "555-0101", description: "Tap drips.", category: "plumbing" as const, urgency: "not_urgent" as const, items: null, total: null, notes: [] };
+
+  it("AC-DOCAI-01: пропозиція — значення на перевірку, без повідомлення", async () => {
+    const { afterProposal } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    expect(afterProposal({ status: "draft", draft, notice: null }, 2)).toEqual({ values: { mode: "proposal", draft, notice: null, seq: 2 }, message: null });
+    expect(afterProposal({ status: "draft", draft, notice: "Fill in" }, 3).message).toEqual({ text: "Fill in", tone: "info" });
+  });
+
+  it("AC-DOCAI-13: помічник недоступний — порожні поля для ручного введення й повідомлення PM", async () => {
+    const { afterProposal } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    const message = "The assistant is not available now. Fill in the values yourself.";
+    expect(afterProposal({ status: "unavailable", message }, 1)).toEqual({ values: { mode: "manual", seq: 1 }, message: { text: message, tone: "info" } });
+  });
+
+  it("AC-DOCAI-09: відмова — лише повідомлення, жодного значення; немає відповіді — нічого", async () => {
+    const { afterProposal } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    const text = "This document is not a maintenance request or an estimate.";
+    expect(afterProposal({ status: "error", message: text }, 4)).toEqual({ values: null, message: { text, tone: "error" } });
+    expect(afterProposal(null, 5)).toEqual({ values: null, message: null });
+  });
+
+  it("AC-DOCAI-04: збережено — помилки немає (блок очищається); відмова — текст біля форми", async () => {
+    const { saveErrorOf } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    expect(saveErrorOf({ status: "saved" })).toBeNull();
+    expect(saveErrorOf({ status: "error", message: "Not enough rights" })).toBe("Not enough rights");
+    expect(saveErrorOf(null)).toBeNull();
+  });
+});
+
+describe("Записи документів запуску з бази", () => {
+  const client = (result: { data: unknown; error: { message: string } | null }, calls: unknown[][]) => {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "order"]) {
+      chain[m] = (...args: unknown[]) => {
+        calls.push([m, ...args]);
+        return chain;
+      };
+    }
+    chain.then = (resolve: (r: unknown) => unknown) => resolve(result);
+    return { from: (table: string) => (calls.push(["from", table]), chain) } as never;
+  };
+
+  it("AC-DOCAI-04: записи запуску — новіший першим; помилка бази — помилка сторінки", async () => {
+    const { loadRunDocuments } = await import("@/app/(app)/runs/[id]/_lib/documents");
+    const calls: unknown[][] = [];
+    expect(await loadRunDocuments(client({ data: [{ id: "d1" }], error: null }, calls), "r1")).toEqual([{ id: "d1" }]);
+    expect(calls).toContainEqual(["from", "run_documents"]);
+    expect(calls).toContainEqual(["eq", "run_id", "r1"]);
+    expect(calls).toContainEqual(["order", "saved_at", { ascending: false }]);
+    expect(await loadRunDocuments(client({ data: null, error: null }, []), "r1")).toEqual([]);
+    await expect(loadRunDocuments(client({ data: null, error: { message: "connection reset" } }, []), "r1")).rejects.toThrow("connection reset");
+  });
+});
+
+describe("Форма значень", () => {
+  const draft = {
+    status: "ok" as const,
+    kind: "request" as const,
+    phone: "555-0104",
+    description: "Loud bathroom fan and a blocked kitchen sink.",
+    category: "plumbing" as const,
+    urgency: "not_urgent" as const,
+    items: null,
+    total: null,
+    notes: ["the email has two problems", "items add up to 220.00, the stated total is 200.00"],
+  };
+
+  it("AC-DOCAI-05, AC-DOCAI-07: «Discard» і «Save values»; примітка «the email has two problems» видна, попередження суми — у полях", async () => {
+    const { ValuesForm } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    const html = renderToStaticMarkup(
+      <ValuesForm id="v" runId="r1" values={{ mode: "proposal", draft, notice: null, seq: 1 }} saving={false} saveError={null} onSave={() => {}} onDiscard={() => {}} />,
+    );
+    expect(html).toContain(">Discard<");
+    expect(html).toContain("Save values");
+    expect(html).toContain("AI proposal");
+    expect(html).toMatch(/data-testid="document-notes"[\s\S]*the email has two problems/);
+    expect(html).not.toMatch(/data-testid="document-notes"[\s\S]*items add up to/);
+  });
+
+  it("AC-DOCAI-13: ручне введення — без позначки «AI proposal», помилка збереження біля форми", async () => {
+    const { ValuesForm } = await import("@/app/(app)/runs/[id]/_components/parse-document-block");
+    const html = renderToStaticMarkup(
+      <ValuesForm id="m" runId="r1" values={{ mode: "manual", seq: 1 }} saving={false} saveError="Enter at least one value" onSave={() => {}} onDiscard={() => {}} />,
+    );
+    expect(html).not.toContain("AI proposal");
+    expect(html).toContain("Enter at least one value");
+  });
+});
