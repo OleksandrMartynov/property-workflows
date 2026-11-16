@@ -83,11 +83,12 @@ export function classifyError(error: unknown): Extract<DraftResult, { ok: false 
   return { ok: false, reason: "provider_error", message: cause instanceof Error ? cause.message : String(cause) };
 }
 
-// Повідомлення для інтерфейсу (інтерфейс продукту англійською): людина бачить причину, а не стек помилки, і може
-// заповнити значення вручну.
+// AC-DOCAI-13: будь-яка недоступність помічника (немає ключа, ліміт, тайм-аут, нечитана відповідь) — один текст PM
+// дослівно; людина заповнює значення сама. Причину (reason) пишемо лише в журнал сервера.
+export const ASSISTANT_UNAVAILABLE = "The assistant is not available now. Fill in the values yourself.";
 export const USER_MESSAGES: Record<Extract<DraftResult, { ok: false }>["reason"], string> = {
-  invalid_output: "The assistant returned an answer that could not be read. Try again or fill in the values yourself.",
-  rate_limited: "The assistant is unavailable right now: the daily limit is reached. Try again later or fill in the values yourself.",
-  timeout: "The assistant did not answer in time. Try again or fill in the values yourself.",
-  provider_error: "The assistant is unavailable right now. Fill in the values yourself.",
+  invalid_output: ASSISTANT_UNAVAILABLE,
+  rate_limited: ASSISTANT_UNAVAILABLE,
+  timeout: ASSISTANT_UNAVAILABLE,
+  provider_error: ASSISTANT_UNAVAILABLE,
 };
