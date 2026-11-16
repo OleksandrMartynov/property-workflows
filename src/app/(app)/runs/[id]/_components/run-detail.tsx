@@ -11,10 +11,9 @@ import { runStatusLabel, runStatusTone, templateVersionLabel } from "@/lib/runs/
 import { countProgress, formatProgress } from "@/lib/runs/progress";
 import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
-import type { StoredTaskDocument } from "@/lib/runs/task-document";
+import { ParseDocumentBlock, type DocumentActions } from "./parse-document-block";
+import { SavedDocuments, type SavedDocumentRow } from "./saved-documents";
 import { TaskActions } from "./task-actions";
-import type { TaskDocumentActions } from "./task-document-dialog";
-import { TaskDocumentSummary } from "./task-document-summary";
 import { TaskRow } from "./task-row";
 
 export interface RunInfo {
@@ -35,8 +34,6 @@ export interface RunTaskRow {
   required: boolean;
   assignee_id: string;
   status: string;
-  /** Збережені значення документа задачі (зріз 4); немає — null або відсутнє поле. */
-  document?: StoredTaskDocument | null;
 }
 
 /** Тіло сторінки запуску: чекліст за секціями зліва, «Details» справа. Дані читає сторінка, тут лише вигляд. */
@@ -46,15 +43,18 @@ export function RunDetail({
   emailOf,
   viewer,
   completeTask,
-  documentActions,
+  documents,
 }: {
   run: RunInfo;
   tasks: RunTaskRow[];
   emailOf: Map<string, string | null>;
   viewer: Viewer;
   completeTask: (formData: FormData) => Promise<void>;
-  /** «Parse document» (зріз 4): дії передає сторінка; без них кнопки немає. */
-  documentActions?: TaskDocumentActions;
+  /**
+   * Зріз 4 «Parse a document» (AC-DOCAI-01…16): збережені записи й дії блоку передає сторінка — лише менеджеру
+   * запуску й адміністратору (AC-DOCAI-14, 15); без них блоку й записів немає.
+   */
+  documents?: { actions: DocumentActions; rows: SavedDocumentRow[] };
 }) {
   const sections = groupBySection(tasks);
   const progress = countProgress(tasks);
@@ -138,13 +138,10 @@ export function RunDetail({
                         done={task.status === "done"}
                         mine={task.assignee_id === viewer.id}
                         meta={
-                          <>
-                            <span className="inline-flex min-w-0 items-center gap-1.5">
-                              {assignee ? <Avatar email={assignee} size="xs" /> : null}
-                              <span className="min-w-0 break-words">{assignee ?? "—"}</span>
-                            </span>
-                            <TaskDocumentSummary document={task.document} />
-                          </>
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            {assignee ? <Avatar email={assignee} size="xs" /> : null}
+                            <span className="min-w-0 break-words">{assignee ?? "—"}</span>
+                          </span>
                         }
                       >
                         <TaskActions
@@ -153,7 +150,6 @@ export function RunDetail({
                           canEdit={canCompleteTask(viewer, task, run)}
                           needsConfirmation={isLastRequiredTask(task, tasks)}
                           completeTask={completeTask}
-                          documentActions={documentActions}
                         />
                       </TaskRow>
                     );
@@ -163,8 +159,13 @@ export function RunDetail({
             </section>
           );
         })}
+        {documents ? (
+          <>
+            <ParseDocumentBlock runId={run.id} actions={documents.actions} />
+            <SavedDocuments rows={documents.rows} emailOf={emailOf} />
+          </>
+        ) : null}
       </div>
-
     </div>
   );
 }

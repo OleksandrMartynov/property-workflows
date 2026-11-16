@@ -9,12 +9,12 @@ import { morphName } from "@/components/ui/motion";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
-import { requestDocumentDraft, saveTaskDocument } from "./document-actions";
+import { requestDocumentDraft, saveRunDocument } from "./document-actions";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
 
-// «Parse document» (зріз 4, ADR 0008): дії передаємо в дерево явно — компоненти рядка лишаються без імпорту серверного коду.
-const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveTaskDocument };
+// «Parse a document» (зріз 4, AC-DOCAI-01…16): дії передаємо в дерево явно — клієнтський блок без імпорту серверного коду.
+const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveRunDocument };
 
 // Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
 // виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
@@ -41,7 +41,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       .maybeSingle(),
     supabase
       .from("run_tasks")
-      .select("id, section_name, section_position, position, name, required, assignee_id, status, document:run_task_documents(kind, phone, description, category, urgency, items, total)")
+      .select("id, section_name, section_position, position, name, required, assignee_id, status")
       .eq("run_id", id)
       .order("section_position")
       .order("position"),
@@ -49,6 +49,16 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   ]);
   if (!run) notFound();
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
+  // AC-DOCAI-14, 15: блок і записи — лише менеджеру цього запуску й адміністратору; RLS run_documents те саме.
+  const canParse = viewer.role === "admin" || run.run_manager_id === viewer.id;
+  const { data: documentRows, error: documentsError } = canParse
+    ? await supabase
+        .from("run_documents")
+        .select("id, kind, phone, description, category, urgency, items, total, saved_by, saved_at")
+        .eq("run_id", run.id)
+        .order("saved_at", { ascending: false })
+    : { data: null, error: null };
+  if (documentsError) throw new Error(documentsError.message);
 
   return (
     <PageShell
@@ -69,7 +79,9 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
           {message}
         </FlashNotice>
       ) : null}
-      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} documentActions={DOCUMENT_ACTIONS} />
+      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask}
+        documents={canParse ? { actions: DOCUMENT_ACTIONS, rows: documentRows ?? [] } : undefined}
+      />
     </PageShell>
   );
 }

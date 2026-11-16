@@ -1,191 +1,179 @@
 "use client";
 
-// «Parse document» у рядку задачі (зріз 4, ADR 0008). Два кроки в одному вікні, між ними — людина:
-//   1. текст документа або PDF → «Propose values»: AI пропонує значення (requestDocumentDraft нічого не пише);
-//   2. людина бачить усі значення в полях, виправляє й лише тоді натискає «Save values» (saveTaskDocument).
-// Поля працюють і без AI: коли помічник недоступний чи відмовив, значення вводять вручну.
-//
-// Кожне відкриття — новий сеанс (DocumentSession з власним key): стара пропозиція не повертається після «Cancel», а
-// початкові значення беруться з актуального збереженого. Форми надсилаються через onSubmit, а не `action`: React 19
-// після `action` скидає некеровані поля, і після помилки (невірний телефон, 429) людина втратила б введене.
-import { useId, useState, useTransition, type FormEvent } from "react";
+// Блок «Parse a document» на сторінці запуску (зріз 4, solomchaak/property-workflows-spec#59, AC-DOCAI-01…13).
+// Бачать його лише менеджер запуску й адміністратор — це вирішує сторінка (AC-DOCAI-14, 15); права ще раз перевіряють
+// дії й функції бази (AC-DOCAI-16). Два кроки, між ними — людина:
+//   1. текст (вставлений чи з файлу .txt) → «Propose values»: AI пропонує значення (requestDocumentDraft нічого не пише);
+//   2. людина бачить усі значення в полях, виправляє й лише тоді натискає «Save values» (saveRunDocument) або «Discard».
+// Форми надсилаються через onSubmit, а не `action`: React 19 після `action` скидає некеровані поля, і після помилки
+// (невірний телефон) людина втратила б введене.
+import { useId, useRef, useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogCancel, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FileDrop } from "@/components/ui/file-drop";
 import { SparkleIcon } from "@/components/ui/icons";
 import { Textarea } from "@/components/ui/input";
 import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
 import type { Draft } from "@/lib/ai/schema";
 import { MESSAGES } from "@/lib/runs/messages";
-import type { TaskDocument } from "@/lib/runs/task-document";
 import type { DocumentDraftState, SaveDocumentState } from "../document-actions";
-import { ValueFields } from "./task-document-fields";
+import { ValueFields } from "./document-fields";
 
-export interface TaskDocumentActions {
+export interface DocumentActions {
   requestDraft: (state: DocumentDraftState, formData: FormData) => Promise<DocumentDraftState>;
   save: (state: SaveDocumentState, formData: FormData) => Promise<SaveDocumentState>;
 }
 
-interface DialogProps {
-  runId: string;
-  taskId: string;
-  taskName: string;
-  saved: TaskDocument | null;
-  actions: TaskDocumentActions;
-}
+/** Що зараз у блоці: нічого, пропозиція AI на перевірку чи порожні поля для ручного введення (AC-DOCAI-13). */
+type Values = { mode: "proposal"; draft: Draft; notice: string | null; seq: number } | { mode: "manual"; seq: number } | null;
+type Message = { text: string; tone: "error" | "info" } | null;
 
-// Палець — не курсор: на сенсорному екрані кнопка 40 px, як «Mark as done».
-const TAP = "pointer-coarse:h-10 pointer-coarse:px-3.5";
-
-export function TaskDocumentDialog(props: DialogProps) {
-  const [dialog, setDialog] = useState({ session: 0, open: false });
-  const { session, open } = dialog;
-  // Закриває лише свій сеанс: відповідь збереження, що прийшла після «Cancel» і нового відкриття, нове вікно не закриє.
-  const close = () => setDialog((current) => (current.session === session ? { ...current, open: false } : current));
-  return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        className={TAP}
-        aria-haspopup="dialog"
-        onClick={() => setDialog((current) => ({ session: current.session + 1, open: true }))}
-      >
-        <SparkleIcon />
-        {props.saved ? "Edit document" : "Parse document"}
-      </Button>
-      {/* Вікно з формами існує лише відкритим: у запуску десятки задач, і кожна несла б дві форми. */}
-      {open ? <DocumentSession key={session} {...props} onClose={close} /> : null}
-    </>
-  );
-}
-
-/** Остання вдала пропозиція AI; `seq` змінюється лише з новою пропозицією — помилка повтору полів не скидає. */
-type Proposal = { draft: Draft; notice: string | null; seq: number };
+/** Файл .txt — у поле тексту; інший файл — відмова (AC-DOCAI-12). */
+export const isPlainTextFile = (file: { name: string; type: string }) =>
+  /\.txt$/i.test(file.name) && (file.type === "" || file.type.startsWith("text/plain"));
 
 const formDataOf = (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
   return new FormData(event.currentTarget);
 };
 
-/** Стан сеансу: остання вдала пропозиція, помилки двох кроків і самі кроки (без скидання полів після помилки). */
-function useDocumentSession(actions: TaskDocumentActions, onClose: () => void) {
-  const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [requestError, setRequestError] = useState<string | null>(null);
+/** Стан блоку й два кроки; обрив з'єднання під час дії — повідомлення в блоці, а не сторінка помилки. */
+function useParseDocument(actions: DocumentActions) {
+  const [text, setText] = useState("");
+  const [values, setValues] = useState<Values>(null);
+  const [message, setMessage] = useState<Message>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [requesting, startRequest] = useTransition();
+  const [reading, startReading] = useTransition();
   const [saving, startSave] = useTransition();
+  const nextSeq = () => (values?.seq ?? 0) + 1;
 
-  // Обрив з'єднання під час Server Action — виняток з await: показуємо повідомлення біля форми, а не Error Boundary
-  // (інакше вікно з введеним зникло б). Текст винятку не показуємо.
-  const propose = (formData: FormData) =>
-    startRequest(async () => {
+  const reset = () => {
+    setText("");
+    setValues(null);
+    setMessage(null);
+    setSaveError(null);
+  };
+
+  const propose = (formData: FormData) => {
+    // AC-DOCAI-03: поки AI читає, значень немає.
+    setValues(null);
+    setMessage(null);
+    setSaveError(null);
+    startReading(async () => {
       try {
         const result = await actions.requestDraft(null, formData);
-        if (result?.status === "draft") setProposal((prev) => ({ draft: result.draft, notice: result.notice, seq: (prev?.seq ?? 0) + 1 }));
-        setRequestError(result?.status === "error" ? result.message : null);
+        if (result?.status === "draft") {
+          setValues({ mode: "proposal", draft: result.draft, notice: result.notice, seq: nextSeq() });
+          setMessage(result.notice ? { text: result.notice, tone: "info" } : null);
+        } else if (result?.status === "unavailable") {
+          setValues({ mode: "manual", seq: nextSeq() });
+          setMessage({ text: result.message, tone: "info" });
+        } else if (result?.status === "error") {
+          setMessage({ text: result.message, tone: "error" });
+        }
       } catch {
-        setRequestError(MESSAGES.DB_ERROR);
+        setMessage({ text: MESSAGES.DB_ERROR, tone: "error" });
       }
     });
+  };
 
   const save = (formData: FormData) =>
     startSave(async () => {
       try {
         const result = await actions.save(null, formData);
-        if (result?.status === "saved") onClose();
+        if (result?.status === "saved") reset();
         setSaveError(result?.status === "error" ? result.message : null);
       } catch {
         setSaveError(MESSAGES.DB_ERROR);
       }
     });
 
-  return { proposal, requestError, saveError, requesting, saving, propose, save };
+  const upload = async (file: File) => {
+    setValues(null);
+    if (!isPlainTextFile(file)) {
+      setMessage({ text: MESSAGES.DOCUMENT_FILE_INVALID, tone: "error" });
+      return;
+    }
+    setMessage(null);
+    setText(await file.text());
+  };
+
+  return { text, setText, values, message, saveError, reading, saving, propose, save, upload, reset };
 }
 
-function DocumentSession({ runId, taskId, taskName, saved, actions, onClose }: DialogProps & { onClose: () => void }) {
+export function ParseDocumentBlock({ runId, actions }: { runId: string; actions: DocumentActions }) {
   const id = useId();
-  const formId = `${id}-values`;
-  const { proposal, requestError, saveError, requesting, saving, propose, save } = useDocumentSession(actions, onClose);
-  const draft = proposal?.draft ?? null;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const block = useParseDocument(actions);
+  const { values, message, reading, saving } = block;
+  const notes = values?.mode === "proposal" ? values.draft.notes.filter((note) => !/^items add up to /i.test(note)) : [];
+
+  const onFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void block.upload(file);
+  };
 
   return (
-    <Dialog open onClose={onClose} labelledBy={`${id}-title`} describedBy={`${id}-task`} size="lg">
-      <DialogHeader icon={<SparkleIcon />} title="Parse document" titleId={`${id}-title`} description={taskName} descriptionId={`${id}-task`} />
-      <div className="flex flex-col gap-6 px-6 pb-6">
-        <DocumentRequestForm id={id} taskId={taskId} pending={requesting} onPropose={propose} message={requestError ?? proposal?.notice ?? null} isError={Boolean(requestError)} />
-        <form id={formId} onSubmit={(event) => save(formDataOf(event))} className="flex flex-col gap-4" noValidate>
+    <Card className="flex flex-col gap-4 p-4" data-testid="parse-document">
+      <h2 id={`${id}-title`} className="flex items-center gap-2 text-heading">
+        <SparkleIcon className="size-4 text-ai-mark" />
+        Parse a document
+      </h2>
+      <form onSubmit={(event) => block.propose(formDataOf(event))} className="flex flex-col gap-3" noValidate aria-labelledby={`${id}-title`}>
+        <input type="hidden" name="run_id" value={runId} />
+        <Field id={`${id}-text`} label="Document text" counter={MAX_DOCUMENT_CHARS}>
+          <Textarea name="text" rows={4} maxRows={12} value={block.text} onChange={(event) => block.setText(event.target.value)} />
+        </Field>
+        <input ref={fileRef} type="file" accept=".txt,text/plain" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={onFile} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={reading}>
+            Upload a text file
+          </Button>
+          <Button type="submit" variant="soft" loading={reading} disabled={reading}>
+            Propose values
+          </Button>
+        </div>
+        {reading ? (
+          <p role="status" className="text-body text-muted-foreground">
+            Reading the document…
+          </p>
+        ) : null}
+        {message ? <Alert variant={message.tone}>{message.text}</Alert> : null}
+      </form>
+
+      {values && !reading ? (
+        <form onSubmit={(event) => block.save(formDataOf(event))} className="flex flex-col gap-4 border-t border-border pt-4" noValidate>
           <input type="hidden" name="run_id" value={runId} />
-          <input type="hidden" name="task_id" value={taskId} />
-          <ValuesHeader draft={draft} />
-          {/* Нова пропозиція — нові початкові значення: поля монтуються наново лише з новою вдалою пропозицією. */}
-          <ValueFields key={proposal?.seq ?? 0} id={id} draft={draft} saved={saved} />
-          {saveError ? <Alert variant="error">{saveError}</Alert> : null}
+          <div className="flex items-center gap-2">
+            <h3 className="text-heading">Values</h3>
+            {values.mode === "proposal" ? <Badge variant="ai">AI proposal</Badge> : null}
+          </div>
+          {/* Попередження про суму (AC-DOCAI-08) показують самі поля — живим, за поточними позиціями; тут — інші примітки. */}
+          {notes.length ? (
+            <Alert variant="info" data-testid="document-notes">
+              <ul className="flex list-disc flex-col gap-0.5 pl-4">
+                {notes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </Alert>
+          ) : null}
+          {/* Нова пропозиція — нові початкові значення: поля монтуються наново лише з новою пропозицією. */}
+          <ValueFields key={values.seq} id={id} draft={values.mode === "proposal" ? values.draft : null} />
+          {block.saveError ? <Alert variant="error">{block.saveError}</Alert> : null}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={block.reset} disabled={saving}>
+              Discard
+            </Button>
+            <Button type="submit" loading={saving}>
+              {saving ? "Saving…" : "Save values"}
+            </Button>
+          </div>
         </form>
-      </div>
-      <DialogFooter>
-        <DialogCancel onClick={onClose} />
-        <Button type="submit" form={formId} loading={saving}>
-          {saving ? "Saving…" : "Save values"}
-        </Button>
-      </DialogFooter>
-    </Dialog>
-  );
-}
-
-/** Крок 1: документ текстом або файлом → пропозиція AI. Відмова, ліміт, «недоступний» чи needs_info — повідомлення тут же. */
-function DocumentRequestForm({
-  id,
-  taskId,
-  pending,
-  onPropose,
-  message,
-  isError,
-}: {
-  id: string;
-  taskId: string;
-  pending: boolean;
-  onPropose: (formData: FormData) => void;
-  message: string | null;
-  isError: boolean;
-}) {
-  return (
-    <form onSubmit={(event) => onPropose(formDataOf(event))} className="flex flex-col gap-3" noValidate>
-      <input type="hidden" name="task_id" value={taskId} />
-      <Field id={`${id}-text`} label="Document text" counter={MAX_DOCUMENT_CHARS}>
-        <Textarea name="text" rows={4} maxRows={10} maxLength={MAX_DOCUMENT_CHARS} />
-      </Field>
-      <FileDrop label="Document file" name="file" multiple={false} maxSizeMB={1} accept="application/pdf,.pdf,image/png,image/jpeg" kind="PDF" />
-      <div className="flex justify-end">
-        <Button type="submit" variant="soft" loading={pending}>
-          {pending ? "Reading…" : "Propose values"}
-        </Button>
-      </div>
-      {message ? <Alert variant={isError ? "error" : "info"}>{message}</Alert> : null}
-    </form>
-  );
-}
-
-/** Заголовок кроку 2: позначка «AI proposal», поки в полях пропозиція, і примітки моделі й коду (кейси 3, 6, 8, 10 PM). */
-function ValuesHeader({ draft }: { draft: Draft | null }) {
-  return (
-    <>
-      <div className="flex items-center gap-2 border-t border-border pt-4">
-        <h3 className="text-heading">Values</h3>
-        {draft ? <Badge variant="ai">AI proposal</Badge> : null}
-      </div>
-      {draft?.notes.length ? (
-        <Alert variant="info">
-          <ul className="flex list-disc flex-col gap-0.5 pl-4">
-            {draft.notes.map((note) => (
-              <li key={note}>{note}</li>
-            ))}
-          </ul>
-        </Alert>
       ) : null}
-    </>
+    </Card>
   );
 }

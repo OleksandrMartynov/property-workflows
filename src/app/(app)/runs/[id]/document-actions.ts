@@ -1,63 +1,62 @@
 "use server";
 
-// Зріз 4 «AI document parsing» (ADR 0008): дві дії, між ними — людина.
-//   1. requestDocumentDraft — хто кличе (getClaims через requireViewer) і чи можна працювати з документом цієї
-//      задачі (check_task_document — ті самі права, що в позначки задачі) ДО виклику моделі; модель лише ПРОПОНУЄ
-//      значення, дія повертає їх у форму й нічого не пише.
-//   2. saveTaskDocument — людина переглянула, виправила й натиснула «Save values»: повторна перевірка форми кодом
-//      (parseDocumentForm) і запис функцією бази save_task_document під сесією користувача (RLS, права, статуси).
-// Взято з koldovsky/2026-quitcode-10-ai-features-hw/materials/ai-feature/src/app/ai-draft/actions.ts і перенесено
-// в сторінку запуску.
+// Зріз 4 «Parse a document and confirm the values» (solomchaak/property-workflows-spec#59, AC-DOCAI-01…16; ADR 0008):
+// дві дії блоку на сторінці запуску, між ними — людина.
+//   1. requestDocumentDraft — хто кличе (getClaims через requireViewer) і чи це менеджер запуску чи адміністратор
+//      (check_run_document) ДО виклику моделі; модель лише ПРОПОНУЄ значення, дія повертає їх у форму й нічого не пише
+//      (AC-DOCAI-01: «nothing is saved yet»).
+//   2. saveRunDocument — людина переглянула, виправила й натиснула «Save values»: повторна перевірка форми кодом
+//      (parseDocumentForm) і запис функцією бази save_run_document під сесією користувача (AC-DOCAI-04, 13).
+// Будь-хто інший — «Not enough rights», без значень і без запису (AC-DOCAI-16). Вставлений текст і відповідь AI не
+// зберігаються («Поза межами» PM).
 import { revalidatePath } from "next/cache";
-import { USER_MESSAGES, isFileType, proposeDraft, type DraftInput } from "@/lib/ai/draft";
+import { ASSISTANT_UNAVAILABLE, proposeDraft } from "@/lib/ai/draft";
 import { productModel } from "@/lib/ai/openrouter";
 import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
 import { NEEDS_INFO_MESSAGE, REFUSED_MESSAGE } from "@/lib/ai/rules";
 import type { Draft } from "@/lib/ai/schema";
-import { MESSAGES, dbErrorCode, type ErrorCode } from "@/lib/runs/messages";
-import { parseDocumentForm } from "@/lib/runs/task-document";
+import { MESSAGES, dbErrorCode } from "@/lib/runs/messages";
+import { parseDocumentForm } from "@/lib/runs/run-document";
 import { requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
 
-// Найбільший файл документа: 1 МБ (межу тіла Server Action піднято до 2 МБ у next.config.ts).
-const MAX_FILE_BYTES = 1024 * 1024;
-
-export type DocumentDraftState = { status: "draft"; draft: Draft; notice: string | null } | { status: "error"; message: string } | null;
+/**
+ * draft — пропозиція на перевірку; unavailable — помічник недоступний, людина заповнює значення сама (AC-DOCAI-13);
+ * error — відмова, порожній текст, немає права: жодного значення (AC-DOCAI-09, 11, 16).
+ */
+export type DocumentDraftState =
+  | { status: "draft"; draft: Draft; notice: string | null }
+  | { status: "unavailable"; message: string }
+  | { status: "error"; message: string }
+  | null;
 
 export type SaveDocumentState = { status: "saved" } | { status: "error"; message: string } | null;
 
 const failed = (message: string) => ({ status: "error" as const, message });
 
-/** Документ із форми: текст і (за потреби) файл PDF / PNG / JPEG до 1 МБ; інакше — код помилки для повідомлення. */
-async function readDocument(formData: FormData): Promise<DraftInput | ErrorCode> {
-  const text = String(formData.get("text") ?? "");
-  // Довший текст модель не побачила б цілком (wrapDocument обрізає) — кажемо про це, а не обрізаємо мовчки.
-  if (text.length > MAX_DOCUMENT_CHARS) return "DOCUMENT_TOO_LONG";
-  const file = formData.get("file");
-  const attached = file instanceof File && file.size > 0 ? file : null;
-  if (!attached) return text.trim() ? { text } : "DOCUMENT_INPUT_REQUIRED";
-  const mediaType = attached.type;
-  if (attached.size > MAX_FILE_BYTES || !isFileType(mediaType)) return "DOCUMENT_FILE_INVALID";
-  return { text, file: { data: new Uint8Array(await attached.arrayBuffer()), mediaType, filename: attached.name } };
+/** Права на документ запуску: менеджер запуску чи адміністратор; інакше — текст відмови (AC-DOCAI-16). */
+async function checkAccess(runId: string) {
+  const { supabase } = await requireViewer();
+  if (!isUuid(runId)) return { supabase, denied: MESSAGES.RUN_NOT_FOUND };
+  const { error } = await supabase.rpc("check_run_document", { p_run_id: runId });
+  return { supabase, denied: error ? MESSAGES[dbErrorCode(error)] : null };
 }
 
 export async function requestDocumentDraft(_prev: DocumentDraftState, formData: FormData): Promise<DocumentDraftState> {
-  // Авторизація ДО виклику моделі: інакше будь-хто витратив би денний ліміт безкоштовних моделей (50 запитів).
-  const { supabase } = await requireViewer();
-  const taskId = String(formData.get("task_id") ?? "");
-  if (!isUuid(taskId)) return failed(MESSAGES.TASK_NOT_FOUND);
-  const { error } = await supabase.rpc("check_task_document", { p_task_id: taskId });
-  if (error) return failed(MESSAGES[dbErrorCode(error)]);
+  // Авторизація ДО виклику моделі: інакше будь-хто витратив би денний ліміт безкоштовних моделей.
+  const { denied } = await checkAccess(String(formData.get("run_id") ?? ""));
+  if (denied) return failed(denied);
 
-  const input = await readDocument(formData);
-  if (typeof input === "string") return failed(MESSAGES[input]);
+  const text = String(formData.get("text") ?? "");
+  if (!text.trim()) return failed(MESSAGES.DOCUMENT_INPUT_REQUIRED);
+  // Довший текст модель не побачила б цілком (wrapDocument обрізає) — кажемо про це, а не обрізаємо мовчки.
+  if (text.length > MAX_DOCUMENT_CHARS) return failed(MESSAGES.DOCUMENT_TOO_LONG);
 
-  // Немає ключа (або лише пробіли) — стан «недоступний», а не сторінка помилки: значення людина вводить сама.
+  // Немає ключа, ліміт, тайм-аут, нечитана відповідь — «недоступний»: значення людина вводить сама (AC-DOCAI-13).
   const model = productModel();
-  if (!model) return failed(USER_MESSAGES.provider_error);
-  const result = await proposeDraft(input, model);
-  if (!result.ok) return failed(USER_MESSAGES[result.reason]);
-  // Кейс 9 PM: не заявка й не кошторис — жодних значень у формі, лише повідомлення.
+  const result = model ? await proposeDraft({ text }, model) : null;
+  if (!result?.ok) return { status: "unavailable", message: ASSISTANT_UNAVAILABLE };
+  // AC-DOCAI-09: не заявка й не кошторис — жодних значень, лише повідомлення.
   if (result.draft.status === "refused") return failed(REFUSED_MESSAGE);
   return {
     status: "draft",
@@ -66,19 +65,18 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
   };
 }
 
-export async function saveTaskDocument(_prev: SaveDocumentState, formData: FormData): Promise<SaveDocumentState> {
-  const { supabase } = await requireViewer();
+export async function saveRunDocument(_prev: SaveDocumentState, formData: FormData): Promise<SaveDocumentState> {
   const runId = String(formData.get("run_id") ?? "");
-  const taskId = String(formData.get("task_id") ?? "");
-  if (!isUuid(runId) || !isUuid(taskId)) return failed(MESSAGES.TASK_NOT_FOUND);
+  const { supabase, denied } = await checkAccess(runId);
+  if (denied) return failed(denied);
 
   // Клієнт може надіслати що завгодно: ті самі правила, що й для відповіді моделі, ще раз — тут.
   const parsed = parseDocumentForm(formData);
   if (!parsed.ok) return failed(MESSAGES[parsed.error]);
   const doc = parsed.value;
 
-  const { error } = await supabase.rpc("save_task_document", {
-    p_task_id: taskId,
+  const { error } = await supabase.rpc("save_run_document", {
+    p_run_id: runId,
     p_kind: doc.kind,
     p_phone: doc.phone,
     p_description: doc.description,

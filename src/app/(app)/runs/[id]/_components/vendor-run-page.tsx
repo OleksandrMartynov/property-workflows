@@ -7,12 +7,10 @@ import { PageShell } from "@/app/_components/ui";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./done-task-notice";
 import { completeTask } from "../../actions";
-import { requestDocumentDraft, saveTaskDocument } from "../document-actions";
 import { morphName } from "@/components/ui/motion";
 import { VendorRunDetail } from "./vendor-run-detail";
 
-// «Parse document» (зріз 4, ADR 0008): дії передаємо в дерево явно, як і completeTask.
-const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveTaskDocument };
+// Блоку «Parse a document» підрядник не бачить і не викликає (AC-DOCAI-14, 16): його тут немає.
 
 type ViewerSession = Awaited<ReturnType<typeof requireViewer>>;
 
@@ -34,7 +32,7 @@ export async function VendorRunPage({
     supabase.rpc("vendor_runs", { p_run_id: id }),
     supabase
       .from("run_tasks")
-      .select("id, section_name, section_position, position, name, required, assignee_id, status, document:run_task_documents(kind, phone, description, category, urgency, items, total)")
+      .select("id, section_name, section_position, position, name, required, assignee_id, status")
       .eq("run_id", id)
       .order("section_position")
       .order("position"),
@@ -60,9 +58,7 @@ export async function VendorRunPage({
           {message}
         </FlashNotice>
       ) : null}
-      <VendorRunDetail run={run} tasks={tasks ?? []} lastRequiredTaskId={lastRequired ?? null} viewer={viewer} completeTask={completeTask}
-        documentActions={DOCUMENT_ACTIONS}
-      />
+      <VendorRunDetail run={run} tasks={tasks ?? []} lastRequiredTaskId={lastRequired ?? null} viewer={viewer} completeTask={completeTask} />
     </PageShell>
   );
 }

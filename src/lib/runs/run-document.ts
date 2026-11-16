@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { CATEGORIES, LineItemSchema, URGENCIES, type LineItem } from "@/lib/ai/schema";
 import { money, normalizePhone } from "@/lib/ai/rules";
+import { KYIV_TZ } from "@/lib/dates";
 import type { ErrorCode } from "./messages";
 
 export type DocumentKind = "request" | "estimate";
@@ -144,4 +145,22 @@ export function documentValues(doc: RunDocument): [label: string, value: string]
     ["Total", doc.total === null ? null : money(doc.total)],
   ];
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
+}
+
+/** Дата й час підтвердження за Києвом, як у припущенні PM: «12 Nov 2026, 10:15» (AC-DOCAI-04). */
+export function formatConfirmedAt(iso: string): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: KYIV_TZ,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(iso))
+      .map((part) => [part.type, part.value]),
+  );
+  return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute}`;
 }
