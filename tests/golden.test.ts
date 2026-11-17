@@ -39,18 +39,62 @@ function replay(text: string, modelId = "recorded") {
   });
 }
 
+// 10 кейсів PM — solomchaak/property-workflows-spec#40 («Golden cases: AI document parsing»). Кожен кейс — під AC
+// вимоги solomchaak/property-workflows-spec#59, у «Given» якого стоїть той самий вхідний текст (AC-DOCAI-01 — і для
+// інших заявок на обслуговування: GC-02, 03, 06). Назва — літеральний рядок з AC ID на початку: ac:coverage читає
+// назву з коду, а не після підстановки. Без .skip / .skipIf і без умови «є ключ».
+const casesOf = (...ids: string[]) => cases.filter((c) => ids.includes(c.id));
+
+// Єдине відображення AC → кейси: з нього реєструються групи нижче й будується перевірка повноти. Назви тестів —
+// літеральні рядки з AC ID (ac:coverage читає їх із коду), тому групи лишаються окремими it.each.
+const CASES_BY_AC = {
+  "AC-DOCAI-01": ["GC-01", "GC-02", "GC-03", "GC-06"],
+  "AC-DOCAI-02": ["GC-07"],
+  "AC-DOCAI-06": ["GC-04"],
+  "AC-DOCAI-07": ["GC-05"],
+  "AC-DOCAI-08": ["GC-08"],
+  "AC-DOCAI-09": ["GC-09"],
+  "AC-DOCAI-10": ["GC-10"],
+} as const;
+const group = (ac: keyof typeof CASES_BY_AC) => casesOf(...CASES_BY_AC[ac]);
+
+async function expectGoldenReplay(c: GoldenCase) {
+  const rec = recorded[c.id];
+  expect(rec, `немає запису для ${c.id} у recorded.json`).toBeDefined();
+  const model = replay(rec.text, rec.modelId);
+  const result = await proposeDraft({ text: c.input }, model);
+  expect(scoreFields(c.expected, okDraft(result)).mismatches).toEqual([]);
+  // Недовірений вхід дійшов до моделі загорнутим як дані.
+  expect(JSON.stringify(model.doGenerateCalls[0].prompt)).toContain("<document>");
+}
+
 describe("golden cases, офлайн-реплей", () => {
-  // 10 кейсів PM — solomchaak/property-workflows-spec#40 («Golden cases: AI document parsing»). Вимоги зрізу 4 з AC у PM
-  // ще немає, тож назва тесту — без AC ID; щойно PM опублікує AC (/requirements-sync → спека), назва почнеться з нього:
-  // "AC-<AREA>-<NN>: golden $id" (ac:coverage рахує лише такі). Без .skip / .skipIf і без умови «є ключ».
-  it.each(cases)("golden $id (кейс PM)", async (c) => {
-    const rec = recorded[c.id];
-    expect(rec, `немає запису для ${c.id} у recorded.json`).toBeDefined();
-    const model = replay(rec.text, rec.modelId);
-    const result = await proposeDraft({ text: c.input }, model);
-    expect(scoreFields(c.expected, okDraft(result)).mismatches).toEqual([]);
-    // Недовірений вхід дійшов до моделі загорнутим як дані.
-    expect(JSON.stringify(model.doGenerateCalls[0].prompt)).toContain("<document>");
+  it.each(group("AC-DOCAI-01"))("AC-DOCAI-01: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-02"))("AC-DOCAI-02: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-06"))("AC-DOCAI-06: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-07"))("AC-DOCAI-07: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-08"))("AC-DOCAI-08: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-09"))("AC-DOCAI-09: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+  it.each(group("AC-DOCAI-10"))("AC-DOCAI-10: golden $id", async (c) => {
+    await expectGoldenReplay(c);
+  });
+
+  it("AC-DOCAI-01: кожен golden case PM зареєстровано під своїм AC (жоден кейс не випав із груп)", () => {
+    const covered = Object.values(CASES_BY_AC).flat();
+    expect([...covered].sort()).toEqual(cases.map((c) => c.id).sort());
+    expect(new Set(covered).size).toBe(covered.length);
   });
 
   it("кейс 8 PM: розбіжність суми кошторису позначає КОД, навіть якщо модель її не помітила", async () => {
