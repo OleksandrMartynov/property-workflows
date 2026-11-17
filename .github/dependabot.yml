@@ -37,6 +37,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # OpenSpec закріплено на 1.14.1 разом із глобальним CLI тієї ж версії (AGENTS.md, «Команди»): будь-яке оновлення —
+      # свідомим PR разом з оновленням CLI.
+      - dependency-name: "@fission-ai/openspec"
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
