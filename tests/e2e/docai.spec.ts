@@ -86,6 +86,8 @@ test.describe("Менеджер A на сторінці свого запуск�
           await expect(value("Phone")).toHaveText("555-0101");
           await expect(value("Category")).toHaveText("plumbing");
           await expect(value("Urgency")).toHaveText("urgent");
+          // Запис — лише значення, які підтвердила людина, у порядку блоку; кошторисних полів у запиті немає.
+          await expect(saved.locator("dt")).toHaveText(["Document type", "Phone", "Description", "Category", "Urgency"]);
           await expect(saved).toContainText(emails.manager);
           await expect(saved).toContainText(/\d{2}:\d{2}/);
         },
