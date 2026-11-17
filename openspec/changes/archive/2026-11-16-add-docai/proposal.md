@@ -104,7 +104,7 @@ solomchaak/property-workflows-spec#59 «Requirement: Parse a document and confir
 
 «Відкриті питання» PM: немає. Межу довжини тексту PM дозволив задати розробнику.
 
-- Q15 (розробник, `docs/spec-reading.md`): у «Користувачі й ролі» PM блок не бачить «a manager or an administrator who
+- Q15 (розробник, `docs/spec-reading.md`; питання PM — solomchaak/property-workflows-spec#61): у «Користувачі й ролі» PM блок не бачить «a manager or an administrator who
   is only an assignee of a task in the run», а рядок «Administrator — uses the block on the page of any run» і
   припущення «only the run manager and an administrator see it» дають адміністратору блок на будь-якому запуску.
   AC-DOCAI-14 і 15 адміністратора-виконавця не охоплюють. Робоче припущення до відповіді PM: адміністратор бачить блок
