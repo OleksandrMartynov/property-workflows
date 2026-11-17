@@ -78,11 +78,14 @@ test.describe("Менеджер A на сторінці свого запуск�
         async () => {
           const saved = page.getByTestId("saved-document");
           await expect(saved).toHaveCount(1);
-          await expect(saved).toContainText("Maintenance request");
-          await expect(saved).toContainText("555-0101");
-          await expect(saved).toContainText("plumbing");
-          await expect(saved).toContainText(/\burgent\b/);
-          await expect(saved).not.toContainText("not urgent");
+          // Кадр «Тоді» знімається після перевірок — запис має бути в кадрі, а не нижче краю сторінки.
+          await saved.scrollIntoViewIfNeeded();
+          // Значення — у парі dt / dd: textContent запису злитий («Urgencyurgent…»), тож межа слова тут не працює.
+          const value = (label: string) => saved.locator("dt", { hasText: label }).locator("xpath=following-sibling::dd[1]");
+          await expect(value("Document type")).toHaveText("Maintenance request");
+          await expect(value("Phone")).toHaveText("555-0101");
+          await expect(value("Category")).toHaveText("plumbing");
+          await expect(value("Urgency")).toHaveText("urgent");
           await expect(saved).toContainText(emails.manager);
           await expect(saved).toContainText(/\d{2}:\d{2}/);
         },
