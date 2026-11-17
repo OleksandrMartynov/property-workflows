@@ -13,10 +13,15 @@ import casesJson from "../tests/fixtures/golden/cases.json";
 // Перший 429 (моделі чи судді) зупиняє прогін: цей і решта кейсів — NOT RUN з причиною у звіті, у частку успіху не входять.
 // Таймаут, помилка постачальника, відповідь не за схемою — FAIL з причиною (входять у частку успіху).
 //   RUNS=2    — кілька прогонів поспіль для частки успіху (pass rate); бюджет див. нижче.
-//   RECORD=1  — успішні відповіді дописати в tests/fixtures/golden/recorded.json (для офлайн-реплею в CI).
+//   RECORD=1  — справжні відповіді, що пройшли схему й поля, дописати в tests/fixtures/golden/recorded.json (для
+//               офлайн-реплею в CI; той перевіряє лише поля). Вердикт судді — лише у звіті: FAIL судді не ховаємо.
+//   ONLY=GC-06,GC-07 — лише ці кейси (дозапуск після 429: звіт окремий, записи зливаються з наявними).
+//   EVAL_GAP_MS=15000 — пауза перед кейсом. Ланцюжок fallback і суддя дають до 4 запитів на кейс, а хвилинний
+//               ліміт безкоштовних моделей — 20 запитів.
 // PowerShell: $env:RECORD="1"; npm run eval   (а потім Remove-Item Env:RECORD)
 
-const cases = casesJson as GoldenCase[];
+const ONLY = (process.env.ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const cases = (casesJson as GoldenCase[]).filter((c) => ONLY.length === 0 || ONLY.includes(c.id));
 const key = process.env.OPENROUTER_API_KEY;
 const RECORD = process.env.RECORD === "1";
 const RUNS = Math.max(1, Number(process.env.RUNS ?? 1) || 1);
@@ -26,7 +31,8 @@ const REPORT_DIR = "evals/reports";
 // Бюджет: на прогін — 10 викликів моделі + до 10 викликів судді, з одного денного лічильника акаунта
 // (50/день без покупки ≥10 кредитів). Ланцюжок `models` цей ліміт не обходить, спроби fallback теж можуть рахуватися.
 const NEEDED = RUNS * (cases.length + cases.filter((c) => c.rubric).length);
-const GAP_MS = 3_000; // ≤ 20 запитів/хв навіть коли модель і суддя відповідають швидко
+// ≤ 20 запитів/хв навіть тоді, коли дві перші моделі ланцюжка відповідають 429 (тоді кейс — до 4 запитів).
+const GAP_MS = Math.max(0, Number(process.env.EVAL_GAP_MS ?? 15_000) || 0);
 
 type Recording = { modelId: string; recordedAt: string; promptVersion: string; text: string };
 // notRun — кейс не запускали через ліміт (429): у частку успіху не входить, у звіті — окремим рядком з причиною.
@@ -87,8 +93,9 @@ describe.skipIf(!key)("golden cases, живий прогін (безкоштов
         }
         const pass = fields.pass && (verdict?.pass ?? true);
         rows.push({ run, id: c.id, modelId: result.modelId, fields: fields.pass, judge: verdict?.pass, pass, why: verdict?.reason });
-        // Записуємо ЛИШЕ успішні відповіді: офлайн-реплей у CI має лишатися зеленим.
-        if (RECORD && pass) {
+        // Записуємо справжню відповідь, що пройшла схему й поля: офлайн-реплей у CI перевіряє саме поля, тож лишається
+        // зеленим. Вердикт судді (вільний текст) — у звіті, а не в записі.
+        if (RECORD && fields.pass) {
           fresh[c.id] = {
             modelId: result.modelId,
             recordedAt: new Date().toISOString(),
@@ -127,7 +134,7 @@ function writeReport() {
     `# Живий прогін golden cases — ${new Date().toISOString()}`,
     "",
     `- Промпт: \`${DRAFT_PROMPT_VERSION}\`; ланцюжок моделей: ${PRODUCT_MODELS.map((m) => `\`${m}\``).join(" → ")}; суддя: \`${JUDGE_MODEL}\``,
-    `- Прогонів: ${RUNS}; кейсів у прогоні: ${cases.length}`,
+    `- Прогонів: ${RUNS}; кейсів у прогоні: ${cases.length}${ONLY.length ? ` (дозапуск: ${ONLY.join(", ")})` : ""}; пауза перед кейсом: ${GAP_MS / 1000} с`,
     `- **Частка успіху: ${total.passed}/${total.total} (${Math.round(total.rate * 100)}%)** — з кейсів, що отримали відповідь`,
     `- Не запущено (NOT RUN): ${notRun.length}${stoppedAt ? ` — ліміт 429, зупинено на: ${stoppedAt}` : ""}`,
     "",

@@ -54,7 +54,9 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts$/, teardown: "cleanup", use: noRecording },
     // Прибирання після всіх тестів: видаляє синтетичних uat-*@example.test і перевіряє, що нічого не лишилось.
     { name: "cleanup", testMatch: /cleanup\.teardown\.ts$/, use: noRecording },
-    { name: "chromium", dependencies: ["setup"], grepInvert: /@negative-control/ },
+    // @ai — AC, що кличуть живу модель: лише на розгорнутому застосунку (ключ OpenRouter — на сервері проду). Локальна
+    // збірка в CI ключа не має, і жодного живого виклику моделі в CI бути не може.
+    { name: "chromium", dependencies: ["setup"], grepInvert: deployed ? /@negative-control/ : /@negative-control|@ai/ },
     ...(withNegativeControls
       ? [{ name: "negative-controls", dependencies: ["setup"], grep: /@negative-control/ }]
       : []),

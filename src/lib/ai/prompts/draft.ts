@@ -2,7 +2,7 @@
 // Змінили промпт — збільште DRAFT_PROMPT_VERSION, запустіть `npm run eval` і перезапишіть записи (RECORD=1).
 import { CATEGORIES } from "../schema";
 
-export const DRAFT_PROMPT_VERSION = "document-v1";
+export const DRAFT_PROMPT_VERSION = "document-v2";
 
 // Найдовший документ, який ми передаємо моделі (символів); довшу частину відрізаємо.
 export const MAX_DOCUMENT_CHARS = 8_000;
@@ -18,7 +18,7 @@ export const DRAFT_INSTRUCTIONS = [
   `Category of a request: one of ${CATEGORIES.join(", ")}. If there are two problems, the category follows the more serious one, the description mentions both, and a note says that there are two problems.`,
   "Urgency of a request: urgent when there is active damage or a risk to safety or health now (water pouring, a gas smell, no heating in frost); otherwise not_urgent. Exclamation marks alone do not make it urgent.",
   "A safety risk that fits no category exactly: category other, urgency urgent, and a note naming the risk (for example \"possible gas leak\").",
-  "Description of a request: one short English sentence, what is wrong and where, without greetings, names or filler words.",
+  "Description of a request: one English sentence that keeps every fact about the problem — what is wrong, where, since when or for how long, and any condition that makes it worse (for example the weather outside) — without greetings, names or filler words.",
   "An estimate: kind estimate; items exactly as written (name, quantity, unit price); total exactly as written. Never correct the numbers. Request fields (phone, description, category, urgency) stay null unless written in the estimate.",
   // Безкоштовні моделі Gemma не гарантують json_schema (немає structured_outputs), тож поля повторюємо в тексті.
   "Answer with ONE JSON object and nothing else, with exactly these fields:",
