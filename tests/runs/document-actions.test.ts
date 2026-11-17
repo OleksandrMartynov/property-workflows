@@ -209,3 +209,47 @@ describe("saveRunDocument: лише те, що підтвердила людин
     expect(rpc).not.toHaveBeenCalled();
   });
 });
+
+describe("журнал llm.call (WS11): один рядок на виклик моделі, без тексту документа", () => {
+  const MARKER = "MARKER-5f2c Lena Test lena.private@example.test 555-0199";
+  const lines = () => {
+    const calls = [...vi.mocked(console.info).mock.calls, ...vi.mocked(console.error).mock.calls].map(([line]) => String(line));
+    return calls.filter((line) => line.includes('"llm.call"'));
+  };
+
+  beforeEach(() => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it("AC-DOCAI-01: пропозиція — рядок зі станом ok, моделлю, версією промпту й токенами; маркера з документа немає", async () => {
+    await propose("GC-01", `Kitchen tap drips. ${MARKER}`);
+    const [line, ...rest] = lines();
+    expect(rest).toEqual([]);
+    const entry = JSON.parse(line);
+    expect(entry).toMatchObject({ event: "llm.call", route: "/runs/[id]", state: "ok", fallbackUsed: expect.any(Boolean), promptVersion: expect.any(String) });
+    expect(typeof entry.latencyMs).toBe("number");
+    expect(line).not.toContain("MARKER-5f2c");
+    expect(line).not.toContain("Kitchen tap");
+    expect(line).not.toContain("lena.private");
+    expect(Object.keys(entry).sort()).toEqual(
+      expect.arrayContaining(["event", "ts", "requestId", "route", "model", "fallbackUsed", "state", "latencyMs", "promptVersion"]),
+    );
+  });
+
+  it("AC-DOCAI-13: без ключа модель не викликана — рядок unavailable рівнем error з кодом no_key, без тексту", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    await requestDocumentDraft(null, requestForm(`The oven does not heat. ${MARKER}`));
+    const [line] = lines();
+    expect(JSON.parse(line)).toMatchObject({ event: "llm.call", state: "unavailable", errorKind: "no_key" });
+    expect(vi.mocked(console.error)).toHaveBeenCalledTimes(1);
+    expect(line).not.toContain("MARKER-5f2c");
+  });
+
+  it("AC-DOCAI-16: без права модель не викликана — і журнал llm.call порожній", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "DOCUMENT_NOT_ALLOWED" } });
+    await requestDocumentDraft(null, requestForm(MARKER));
+    expect(lines()).toEqual([]);
+  });
+});

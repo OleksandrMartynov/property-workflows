@@ -10,9 +10,12 @@
 // Будь-хто інший — «Not enough rights», без значень і без запису (AC-DOCAI-16). Вставлений текст і відповідь AI не
 // зберігаються («Поза межами» PM).
 import { revalidatePath } from "next/cache";
-import { ASSISTANT_UNAVAILABLE, proposeDraft } from "@/lib/ai/draft";
+import { randomUUID } from "node:crypto";
+import { ASSISTANT_UNAVAILABLE, proposeDraft, type DraftResult } from "@/lib/ai/draft";
+import { isFallback, logLlmCall } from "@/lib/ai/llm-log";
+import { PRODUCT_MODELS } from "@/lib/ai/models";
 import { productModel } from "@/lib/ai/openrouter";
-import { MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
+import { DRAFT_PROMPT_VERSION, MAX_DOCUMENT_CHARS } from "@/lib/ai/prompts/draft";
 import { NEEDS_INFO_MESSAGE, REFUSED_MESSAGE } from "@/lib/ai/rules";
 import type { Draft } from "@/lib/ai/schema";
 import { MESSAGES, dbErrorCode } from "@/lib/runs/messages";
@@ -54,7 +57,9 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
 
   // Немає ключа, ліміт, тайм-аут, нечитана відповідь — «недоступний»: значення людина вводить сама (AC-DOCAI-13).
   const model = productModel();
+  const started = performance.now();
   const result = model ? await proposeDraft({ text }, model) : null;
+  logDraftCall(result, performance.now() - started);
   if (!result?.ok) return { status: "unavailable", message: ASSISTANT_UNAVAILABLE };
   // AC-DOCAI-09: не заявка й не кошторис — жодних значень, лише повідомлення.
   if (result.draft.status === "refused") return failed(REFUSED_MESSAGE);
@@ -63,6 +68,28 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
     draft: result.draft,
     notice: result.draft.status === "needs_info" ? NEEDS_INFO_MESSAGE : null,
   };
+}
+
+/**
+ * WS11: один рядок llm.call на виклик моделі (src/lib/ai/llm-log.ts) — модель, затримка, токени, стан, fallback,
+ * версія промпту, id запиту. Тексту документа, промпту й відповіді моделі в журналі немає: їх сюди не передаємо, а
+ * схема журналу таких полів не має. Без ключа модель не викликалась — стан unavailable з кодом no_key.
+ */
+function logDraftCall(result: DraftResult | null, latencyMs: number) {
+  const primary = PRODUCT_MODELS[0];
+  const answered = result?.ok ? result.modelId : primary;
+  logLlmCall({
+    requestId: randomUUID(),
+    route: "/runs/[id]",
+    model: answered,
+    fallbackUsed: result?.ok ? isFallback(answered, primary) : false,
+    state: result?.ok ? result.draft.status : "unavailable",
+    latencyMs,
+    inputTokens: result?.ok ? result.inputTokens : undefined,
+    outputTokens: result?.ok ? result.outputTokens : undefined,
+    promptVersion: DRAFT_PROMPT_VERSION,
+    errorKind: result ? (result.ok ? undefined : result.reason) : "no_key",
+  });
 }
 
 export async function saveRunDocument(_prev: SaveDocumentState, formData: FormData): Promise<SaveDocumentState> {
