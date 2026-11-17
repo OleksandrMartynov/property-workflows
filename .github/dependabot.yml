@@ -29,6 +29,14 @@ updates:
     ignore:
       - dependency-name: supabase
         update-types: ["version-update:semver-major"]
+      # AGENTS.md «Стек і версії (не оновлювати без ADR)»: TypeScript 7 і ESLint 10 шаблон курсу не перевіряв;
+      # @types/node — під рантайм Node 24.x, не новіший. Мажор — лише свідомим PR з ADR.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
