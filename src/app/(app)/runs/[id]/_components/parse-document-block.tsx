@@ -75,6 +75,8 @@ function useParseDocument(actions: DocumentActions) {
   const nextSeq = () => (values?.seq ?? 0) + 1;
   // Номер читання файла: застосовуємо лише останнє; очищення блока чи ручне редагування робить поточне неактуальним.
   const readSeq = useRef(0);
+  // Лічильник символів поля рахує подію input; текст, змінений кодом (очищення, файл), — нове монтування поля.
+  const [textVersion, setTextVersion] = useState(0);
 
   const editText = (value: string) => {
     readSeq.current += 1;
@@ -84,6 +86,7 @@ function useParseDocument(actions: DocumentActions) {
   const reset = () => {
     readSeq.current += 1;
     setText("");
+    setTextVersion((v) => v + 1);
     setValues(null);
     setMessage(null);
     setSaveError(null);
@@ -124,10 +127,12 @@ function useParseDocument(actions: DocumentActions) {
     }
     setMessage(null);
     const content = await file.text();
-    if (mine === readSeq.current) setText(content);
+    if (mine !== readSeq.current) return;
+    setText(content);
+    setTextVersion((v) => v + 1);
   };
 
-  return { text, setText: editText, values, message, saveError, reading, saving, propose, save, upload, reset };
+  return { text, textVersion, setText: editText, values, message, saveError, reading, saving, propose, save, upload, reset };
 }
 
 /** Кнопки кроку 1 і стан читання (AC-DOCAI-03): поки AI читає — «Reading the document…» і вимкнена «Propose values». */
@@ -229,7 +234,7 @@ export function ParseDocumentBlock({ runId, actions }: { runId: string; actions:
       </h2>
       <form onSubmit={(event) => block.propose(formDataOf(event))} className="flex flex-col gap-3" noValidate aria-labelledby={`${id}-title`}>
         <input type="hidden" name="run_id" value={runId} />
-        <Field id={`${id}-text`} label="Document text" counter={MAX_DOCUMENT_CHARS}>
+        <Field key={block.textVersion} id={`${id}-text`} label="Document text" counter={MAX_DOCUMENT_CHARS}>
           <Textarea name="text" rows={4} maxRows={12} value={block.text} readOnly={saving} onChange={(event) => block.setText(event.target.value)} />
         </Field>
         <input ref={fileRef} type="file" accept=".txt,text/plain" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={onFile} />

@@ -1,0 +1,167 @@
+{
+  "kind": "uat",
+  "generatedAt": "2026-11-17T15:00:10.779Z",
+  "baseURL": "https://property-workflows-rho.vercel.app",
+  "deployedSha": "5d6e5221c1569ce701b5028b92467ea1037fdebb",
+  "testsCommit": "5d6e5221c1569ce701b5028b92467ea1037fdebb",
+  "reviewer": {
+    "model": "claude-haiku-5-5",
+    "disputes": "claude-sonnet-5-5"
+  },
+  "note": "Відео й траси не в git (test-results/ локально, артефакт CI). check-recordings конвеєра WS9 вимагає відео на диску — для нього цей manifest треба доповнити.",
+  "results": [
+    {
+      "id": "AC-DOCAI-04",
+      "proof": "AC-DOCAI-04",
+      "title": "AC-DOCAI-04: A змінює Urgency на «urgent» і обирає «Save values» — на сторінці запуску один збережений запис з email A і часом",
+      "screenshot": "docs/qa/uat/2026-11-17/frames/AC-DOCAI-04-then-1.png",
+      "video": "test-results/artifacts/docai-Менеджер-A-на-сторін-a7dd9-ний-запис-з-email-A-і-часом-chromium/video.webm",
+      "trace": "test-results/artifacts/docai-Менеджер-A-на-сторін-a7dd9-ний-запис-з-email-A-і-часом-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі в розділі «Saved documents» видно один запис із Document type «Maintenance request», Phone «555-0101», Category «plumbing» і Urgency «urgent». Унизу запису підпис «uat-261117145858-manager@example.test · 17 Nov 2026, 16:59», тож email A і дата з часом видимі. Запис також містить поле Description, якого в критерії немає; критерій його не забороняє, тому це не вада."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Saved documents",
+          "onPage": true
+        },
+        {
+          "quote": "Document type",
+          "onPage": true
+        },
+        {
+          "quote": "Maintenance request",
+          "onPage": true
+        },
+        {
+          "quote": "Phone",
+          "onPage": true
+        },
+        {
+          "quote": "555-0101",
+          "onPage": true
+        },
+        {
+          "quote": "Category",
+          "onPage": true
+        },
+        {
+          "quote": "plumbing",
+          "onPage": true
+        },
+        {
+          "quote": "Urgency",
+          "onPage": true
+        },
+        {
+          "quote": "urgent",
+          "onPage": true
+        },
+        {
+          "quote": "uat-261117145858-manager@example.test",
+          "onPage": true
+        },
+        {
+          "quote": "17 Nov 2026, 16:59",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 15828,
+      "reviewCostUsd": 0.00241,
+      "reviewWallMs": 9245
+    },
+    {
+      "id": "AC-DOCAI-11",
+      "proof": "AC-DOCAI-11",
+      "title": "AC-DOCAI-11: A обирає «Propose values» з порожнім текстом — блок показує «Paste the text of a document», значень немає",
+      "screenshot": "docs/qa/uat/2026-11-17/frames/AC-DOCAI-11-then-1.png",
+      "video": "test-results/artifacts/docai-Менеджер-A-на-сторін-1a07a-f-a-document»-значень-немає-chromium/video.webm",
+      "trace": "test-results/artifacts/docai-Менеджер-A-на-сторін-1a07a-f-a-document»-значень-немає-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "У блоці «Parse a document» поле тексту порожнє на вигляд (лічильник 3/8000, тобто лише пробіли), під кнопками червоне повідомлення «Paste the text of a document». Форми «Values» з пропозицією AI у блоці немає; нижче лише раніше збережений документ в «Saved documents»."
+      },
+      "agentModel": "claude-sonnet-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "NEEDS-HUMAN",
+        "claude-sonnet-5-5": "PASS"
+      },
+      "escalated": true,
+      "quotesVerified": [
+        {
+          "quote": "Paste the text of a document",
+          "onPage": true
+        },
+        {
+          "quote": "Parse a document",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 4951,
+      "reviewCostUsd": 0.03213,
+      "reviewWallMs": 19434
+    },
+    {
+      "id": "AC-DOCAI-14",
+      "proof": "AC-DOCAI-14",
+      "title": "AC-DOCAI-14: V відкриває сторінку запуску «Apartment 12, move-in» — блоку «Parse a document» немає",
+      "screenshot": "docs/qa/uat/2026-11-17/frames/AC-DOCAI-14-then-1.png",
+      "video": "test-results/artifacts/docai-Підрядник-V-із-задач-4d6e9-ку-«Parse-a-document»-немає-chromium/video.webm",
+      "trace": "test-results/artifacts/docai-Підрядник-V-із-задач-4d6e9-ку-«Parse-a-document»-немає-chromium/trace.zip",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "На кадрі видно сторінку запуску «Apartment 12, move-in» з блоками «Move-in day» і «Before move-in», блоку «Parse a document» немає, сторінка повністю відрисована без ознак завантаження. Кадр не показує номери задач, тому те, що V є виконавцем задач 3 і 4, з кадру не перевірити; це частина «Дано», а не «Тоді»."
+      },
+      "agentModel": "claude-haiku-5-5",
+      "agentVerdicts": {
+        "claude-haiku-5-5": "PASS",
+        "claude-sonnet-5-5": null
+      },
+      "escalated": false,
+      "quotesVerified": [
+        {
+          "quote": "Apartment 12, move-in",
+          "onPage": true
+        }
+      ],
+      "verdict": "PASS",
+      "factoryGate": "PASS",
+      "rule": "R6: перевірки, агент і цитати збігаються",
+      "playwrightMs": 2149,
+      "reviewCostUsd": 0.00218,
+      "reviewWallMs": 8487
+    }
+  ],
+  "negativeControls": [],
+  "cleanup": {
+    "at": "2026-11-17T14:59:50.467Z",
+    "deleted": [
+      "uat-261117145858-vendor-empty@example.test",
+      "uat-261117145858-vendor-done@example.test",
+      "uat-261117145858-vendor@example.test",
+      "uat-261117145858-vendor-launch@example.test",
+      "uat-261117145858-manager@example.test"
+    ],
+    "remaining": [],
+    "leftoverRequests": 0
+  }
+}
