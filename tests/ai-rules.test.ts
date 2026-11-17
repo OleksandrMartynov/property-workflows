@@ -2,7 +2,7 @@
 // (src/lib/ai/prompts/draft.ts). Кейси — з golden cases PM, solomchaak/property-workflows-spec#40.
 import { describe, expect, it } from "vitest";
 import { MAX_DOCUMENT_CHARS, wrapDocument } from "@/lib/ai/prompts/draft";
-import { REFUSED_MESSAGE, applyRules, itemsTotal, normalizePhone, totalWarning } from "@/lib/ai/rules";
+import { INSTRUCTIONS_NOTE, REFUSED_MESSAGE, applyRules, itemsTotal, normalizeNotes, normalizePhone, totalWarning } from "@/lib/ai/rules";
 import type { Draft } from "@/lib/ai/schema";
 import { scoreFields } from "@/lib/ai/scorer";
 
@@ -95,5 +95,12 @@ describe("needs_info і оцінювач golden cases", () => {
     const items = [{ name: "Faucet", quantity: 1, unitPrice: 85 }, { name: "Labour", quantity: 2, unitPrice: 60 }];
     expect(scoreFields({ items }, actual).pass).toBe(true);
     expect(scoreFields({ items: [...items].reverse() }, actual).pass).toBe(false);
+  });
+});
+
+describe("Примітки моделі → тексти PM", () => {
+  it("AC-DOCAI-10: примітка про проігноровані інструкції — дослівно текст PM, а ризик зі словом «instructions» лишається як є", () => {
+    const risk = "Safety risk: isolate power before following the manufacturer's instructions.";
+    expect(normalizeNotes(["The text contained instructions which were ignored.", risk])).toEqual([INSTRUCTIONS_NOTE, risk]);
   });
 });

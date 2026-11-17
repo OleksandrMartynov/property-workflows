@@ -34,11 +34,12 @@ export const MESSAGES = {
   RUN_COMPLETED: "The run is already completed",
   // AC-TASK-04, AC-TASK-16: без підтвердження остання обов'язкова задача лишається «to do».
   CONFIRMATION_REQUIRED: "Confirm marking the last required task as done: This cannot be undone",
-  // Зріз 4 «AI document parsing» (ADR 0008): вимоги з AC у PM ще немає — робочі тексти до її публікації.
-  TASK_DONE: "The task is already done",
-  DOCUMENT_INPUT_REQUIRED: "Paste the document text or attach a PDF",
-  DOCUMENT_TOO_LONG: `The document text must be at most ${MAX_DOCUMENT_CHARS.toLocaleString("en-US")} characters. Attach the document as a PDF instead.`,
-  DOCUMENT_FILE_INVALID: "Attach a PDF, PNG or JPEG up to 1 MB",
+  // Зріз 4 «Parse a document» (solomchaak/property-workflows-spec#59): тексти AC-DOCAI-11, 12, 16 — дослівно.
+  DOCUMENT_INPUT_REQUIRED: "Paste the text of a document",
+  DOCUMENT_FILE_INVALID: "Only plain text files (.txt) are accepted",
+  DOCUMENT_NOT_ALLOWED: "Not enough rights",
+  // Межу довжини PM дозволив задати розробнику (припущення PM): довший текст — повідомлення, а не мовчазне обрізання.
+  DOCUMENT_TOO_LONG: `The document text must be at most ${MAX_DOCUMENT_CHARS.toLocaleString("en-US")} characters`,
   DOCUMENT_EMPTY: "Enter at least one value",
   DOCUMENT_INVALID: "Some values are not valid. Check them and save again.",
   PHONE_INVALID: "Enter the phone as 555-0101",

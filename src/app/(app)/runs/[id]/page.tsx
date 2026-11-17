@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
+import { canParseDocuments } from "@/lib/runs/access";
 import { errorMessage } from "@/lib/runs/messages";
 import { isVendor, requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
@@ -9,12 +10,13 @@ import { morphName } from "@/components/ui/motion";
 import { FlashNotice } from "@/components/ui/flash-notice";
 import { DoneTaskNotice } from "./_components/done-task-notice";
 import { completeTask } from "../actions";
-import { requestDocumentDraft, saveTaskDocument } from "./document-actions";
+import { requestDocumentDraft, saveRunDocument } from "./document-actions";
+import { loadRunDocuments } from "./_lib/documents";
 import { RunDetail } from "./_components/run-detail";
 import { VendorRunPage } from "./_components/vendor-run-page";
 
-// «Parse document» (зріз 4, ADR 0008): дії передаємо в дерево явно — компоненти рядка лишаються без імпорту серверного коду.
-const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveTaskDocument };
+// «Parse a document» (зріз 4, AC-DOCAI-01…16): дії передаємо в дерево явно — клієнтський блок без імпорту серверного коду.
+const DOCUMENT_ACTIONS = { requestDraft: requestDocumentDraft, save: saveRunDocument };
 
 // Сторінка запуску: AC-RUN-02, AC-RUN-12 (задачі й секції — копія на момент запуску), AC-RUN-04…09 (менеджер запуску й
 // виконавці), AC-TASK-05 (прогрес «N of M done»), AC-TASK-08 (статус кожної задачі), AC-TASK-01…03, 07, 18 (позначка
@@ -41,7 +43,7 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
       .maybeSingle(),
     supabase
       .from("run_tasks")
-      .select("id, section_name, section_position, position, name, required, assignee_id, status, document:run_task_documents(kind, phone, description, category, urgency, items, total)")
+      .select("id, section_name, section_position, position, name, required, assignee_id, status")
       .eq("run_id", id)
       .order("section_position")
       .order("position"),
@@ -49,6 +51,8 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
   ]);
   if (!run) notFound();
   const emailOf = new Map((users ?? []).map((u) => [u.id, u.email]));
+  // AC-DOCAI-14, 15: блок і записи — лише менеджеру цього запуску й адміністратору; RLS run_documents те саме.
+  const documents = canParseDocuments(viewer, run) ? { actions: DOCUMENT_ACTIONS, rows: await loadRunDocuments(supabase, run.id) } : undefined;
 
   return (
     <PageShell
@@ -69,7 +73,9 @@ export default async function RunPage({ params, searchParams }: PageProps<"/runs
           {message}
         </FlashNotice>
       ) : null}
-      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask} documentActions={DOCUMENT_ACTIONS} />
+      <RunDetail run={run} tasks={tasks ?? []} emailOf={emailOf} viewer={viewer} completeTask={completeTask}
+        documents={documents}
+      />
     </PageShell>
   );
 }

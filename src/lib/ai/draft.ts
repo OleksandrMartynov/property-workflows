@@ -14,9 +14,8 @@ import { applyRules } from "./rules";
 // `ProviderOptions` не експортується з "ai" 7.0.162 — беремо тип із параметрів generateText.
 type ProviderOptions = NonNullable<Parameters<typeof generateText>[0]["providerOptions"]>;
 
-export const FILE_TYPES = ["application/pdf", "image/png", "image/jpeg"] as const;
-export type FileType = (typeof FILE_TYPES)[number];
-export const isFileType = (t: string): t is FileType => (FILE_TYPES as readonly string[]).includes(t);
+// Файли (PDF, зображення) пропонує ланцюжок моделей (ADR 0008); застосунок за вимогою PM передає лише текст (ADR 0009).
+export type FileType = "application/pdf" | "image/png" | "image/jpeg";
 
 // Чиста функція: модель передають параметром. Застосунок передає модель OpenRouter (src/lib/ai/openrouter.ts),
 // тести — MockLanguageModelV4 із записаною відповіддю. Тут немає `import "server-only"` і немає process.env,
@@ -83,11 +82,6 @@ export function classifyError(error: unknown): Extract<DraftResult, { ok: false 
   return { ok: false, reason: "provider_error", message: cause instanceof Error ? cause.message : String(cause) };
 }
 
-// Повідомлення для інтерфейсу (інтерфейс продукту англійською): людина бачить причину, а не стек помилки, і може
-// заповнити значення вручну.
-export const USER_MESSAGES: Record<Extract<DraftResult, { ok: false }>["reason"], string> = {
-  invalid_output: "The assistant returned an answer that could not be read. Try again or fill in the values yourself.",
-  rate_limited: "The assistant is unavailable right now: the daily limit is reached. Try again later or fill in the values yourself.",
-  timeout: "The assistant did not answer in time. Try again or fill in the values yourself.",
-  provider_error: "The assistant is unavailable right now. Fill in the values yourself.",
-};
+// AC-DOCAI-13: будь-яка недоступність помічника (немає ключа, ліміт, тайм-аут, нечитана відповідь) — один текст PM
+// дослівно; людина заповнює значення сама. Причину (reason) пишемо лише в журнал сервера.
+export const ASSISTANT_UNAVAILABLE = "The assistant is not available now. Fill in the values yourself.";

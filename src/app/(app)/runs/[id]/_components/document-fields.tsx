@@ -1,8 +1,9 @@
 "use client";
 
-// Поля значень документа задачі (крок 2 «Parse document», ADR 0008): початкові — з пропозиції AI, інакше зі
-// збереженого. Порожнє поле пропозиції — підказка «not found» (кейс 4 PM: значення, якого немає в документі, не
-// вигадуємо). Позиції кошторису — рядки, які людина додає, змінює й прибирає; у форму йдуть одним JSON.
+// Поля значень блоку «Parse a document» (AC-DOCAI-01…13): початкові — з пропозиції AI; без пропозиції (помічник
+// недоступний, AC-DOCAI-13) — порожні й доступні для введення, разом із типом документа. Порожнє поле пропозиції —
+// «not found» (AC-DOCAI-06: значення, якого немає в документі, не вигадуємо). Позиції кошторису — рядки, які людина
+// додає, змінює й прибирає; у форму йдуть одним JSON.
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,7 @@ import {
   MAX_ITEMS,
   URGENCY_LABELS,
   parseMoney,
-  type TaskDocument,
-} from "@/lib/runs/task-document";
+} from "@/lib/runs/run-document";
 
 const options = (labels: Record<string, string>, empty = true) => [
   ...(empty ? [{ value: "", label: "—" }] : []),
@@ -52,8 +52,8 @@ function liveWarning(rows: ItemRow[], total: string): string | null {
   return totalWarning(items, stated);
 }
 
-export function ValueFields({ id, draft, saved }: { id: string; draft: Draft | null; saved: TaskDocument | null }) {
-  const source = draft ?? saved;
+export function ValueFields({ id, draft }: { id: string; draft: Draft | null }) {
+  const source = draft;
   const missing = draft ? NOT_FOUND : undefined;
   const [rows, setRows] = useState<ItemRow[]>(() => toRows(source?.items));
   const [total, setTotal] = useState(source?.total == null ? "" : String(source.total));
@@ -61,8 +61,8 @@ export function ValueFields({ id, draft, saved }: { id: string; draft: Draft | n
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field id={`${id}-kind`} label="Kind" required>
-        <Select id={`${id}-kind`} name="kind" defaultValue={source?.kind ?? "request"} options={options(KIND_LABELS, false)} />
+      <Field id={`${id}-kind`} label="Document type" required>
+        <Select id={`${id}-kind`} name="kind" defaultValue={source?.kind ?? ""} placeholder="—" options={options(KIND_LABELS, false)} />
       </Field>
       <Field id={`${id}-phone`} label="Phone">
         <Input name="phone" inputMode="tel" autoComplete="off" defaultValue={source?.phone ?? ""} placeholder={missing} />

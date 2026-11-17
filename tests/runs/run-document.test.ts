@@ -1,6 +1,6 @@
 // Розбір форми «Save values», значення з бази й підсумок у рядку задачі (зріз 4, ADR 0008). Чисті функції.
 import { describe, expect, it } from "vitest";
-import { documentSummary, fromStored, parseDocumentForm, parseMoney } from "@/lib/runs/task-document";
+import { documentValues, formatConfirmedAt, fromStored, parseDocumentForm, parseMoney } from "@/lib/runs/run-document";
 
 const form = (values: Record<string, string>) => {
   const fd = new FormData();
@@ -62,16 +62,34 @@ describe("parseDocumentForm", () => {
   });
 });
 
-describe("fromStored і documentSummary", () => {
-  it("рядок бази (total рядком із numeric) → значення й підсумок кошторису", () => {
+describe("fromStored, documentValues і formatConfirmedAt", () => {
+  it("AC-DOCAI-04: рядок бази (total рядком із numeric) → значення кошторису", () => {
     const doc = fromStored({ kind: "estimate", phone: null, description: null, category: null, urgency: null, items: [{ name: "Faucet", quantity: 2, unitPrice: 100 }], total: "200.00" });
     expect(doc).toMatchObject({ total: 200, items: [{ name: "Faucet", quantity: 2, unitPrice: 100 }] });
-    expect(documentSummary(doc!)).toBe("Estimate · 1 item · Total 200.00");
+    expect(documentValues(doc!)).toEqual([
+      ["Document type", "Estimate"],
+      ["Items", "Faucet 2 x 100.00"],
+      ["Total", "200.00"],
+    ]);
   });
 
-  it("підсумок заявки: вид, категорія, терміновість, телефон", () => {
-    const doc = fromStored({ kind: "request", phone: "555-0101", description: "Leak.", category: "heating_and_cooling", urgency: "urgent", items: null, total: null });
-    expect(documentSummary(doc!)).toBe("Request · Heating and cooling · Urgent · 555-0101");
+  it("AC-DOCAI-04: збережений запис — Document type «Maintenance request», Phone, Category «plumbing», Urgency «urgent»", () => {
+    const doc = fromStored({ kind: "request", phone: "555-0101", description: null, category: "plumbing", urgency: "urgent", items: null, total: null });
+    expect(documentValues(doc!)).toEqual([
+      ["Document type", "Maintenance request"],
+      ["Phone", "555-0101"],
+      ["Category", "plumbing"],
+      ["Urgency", "urgent"],
+    ]);
+    const heating = fromStored({ kind: "request", phone: null, description: "Clicks.", category: "heating_and_cooling", urgency: "not_urgent", items: null, total: null });
+    expect(documentValues(heating!)).toContainEqual(["Category", "heating and cooling"]);
+    expect(documentValues(heating!)).toContainEqual(["Urgency", "not urgent"]);
+  });
+
+  it("AC-DOCAI-04: дата й час підтвердження за Києвом — «12 Nov 2026, 10:15»", () => {
+    expect(formatConfirmedAt("2026-11-12T08:15:00Z")).toBe("12 Nov 2026, 10:15");
+    // Літній час: +3 години.
+    expect(formatConfirmedAt("2026-07-01T21:05:00Z")).toBe("2 Jul 2026, 00:05");
   });
 
   it("немає рядка або невідомий вид — нічого не показуємо", () => {

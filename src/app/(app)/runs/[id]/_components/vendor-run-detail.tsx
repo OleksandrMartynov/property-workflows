@@ -6,8 +6,6 @@ import { groupBySection } from "@/lib/runs/sections";
 import type { Viewer } from "@/lib/supabase/viewer";
 import type { RunTaskRow } from "./run-detail";
 import { TaskActions } from "./task-actions";
-import type { TaskDocumentActions } from "./task-document-dialog";
-import { TaskDocumentSummary } from "./task-document-summary";
 import { TaskRow } from "./task-row";
 
 /**
@@ -22,15 +20,12 @@ export function VendorRunDetail({
   lastRequiredTaskId,
   viewer,
   completeTask,
-  documentActions,
 }: {
   run: { id: string; status: string };
   tasks: RunTaskRow[];
   lastRequiredTaskId: string | null;
   viewer: Viewer;
   completeTask: (formData: FormData) => Promise<void>;
-  /** «Parse document» (зріз 4): дії передає сторінка; без них кнопки немає. */
-  documentActions?: TaskDocumentActions;
 }) {
   const sections = groupBySection(tasks);
   const progress = countProgress(tasks);
@@ -59,7 +54,6 @@ export function VendorRunDetail({
                     name={task.name}
                     required={task.required}
                     done={task.status === "done"}
-                    meta={task.document ? <TaskDocumentSummary document={task.document} /> : undefined}
                   >
                     <TaskActions
                       runId={run.id}
@@ -67,7 +61,6 @@ export function VendorRunDetail({
                       canEdit={canCompleteTask(viewer, task, runForAccess)}
                       needsConfirmation={task.id === lastRequiredTaskId}
                       completeTask={completeTask}
-                      documentActions={documentActions}
                     />
                   </TaskRow>
                 );

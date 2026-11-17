@@ -1,32 +1,36 @@
-// Значення документа задачі (зріз 4 «AI document parsing», ADR 0008): підписи, розбір форми «Save values» і короткий
-// підсумок для рядка задачі. Чисті функції: їх імпортують Server Action, діалог і тести. Форма приходить від людини
-// (і може прийти напряму, в обхід інтерфейсу), тож тут — повторна перевірка тими самими правилами, що й для
-// відповіді моделі; останнє слово — за функцією бази save_task_document.
+// Значення документа запуску (зріз 4, solomchaak/property-workflows-spec#59, AC-DOCAI-01…16; ADR 0008): підписи
+// дослівно з AC, розбір форми «Save values» і значення збереженого запису. Чисті функції: їх імпортують Server Action,
+// блок «Parse a document» і тести. Форма приходить від людини (і може прийти напряму, в обхід інтерфейсу), тож тут —
+// повторна перевірка тими самими правилами, що й для відповіді моделі; останнє слово — за функцією бази
+// save_run_document.
 import { z } from "zod";
 import { CATEGORIES, LineItemSchema, URGENCIES, type LineItem } from "@/lib/ai/schema";
 import { money, normalizePhone } from "@/lib/ai/rules";
+import { KYIV_TZ } from "@/lib/dates";
 import type { ErrorCode } from "./messages";
 
 export type DocumentKind = "request" | "estimate";
 export type Category = (typeof CATEGORIES)[number];
 export type Urgency = (typeof URGENCIES)[number];
 
-export const KIND_LABELS: Record<DocumentKind, string> = { request: "Request", estimate: "Estimate" };
+// Тексти — дослівно з AC-DOCAI-01…10 і припущень PM: Document type «Maintenance request» / «Estimate», категорії й
+// терміновість малими літерами («plumbing», «heating and cooling», «not urgent»).
+export const KIND_LABELS: Record<DocumentKind, string> = { request: "Maintenance request", estimate: "Estimate" };
 export const CATEGORY_LABELS: Record<Category, string> = {
-  plumbing: "Plumbing",
-  electrical: "Electrical",
-  heating_and_cooling: "Heating and cooling",
-  appliance: "Appliance",
-  structure_and_doors: "Structure and doors",
-  other: "Other",
+  plumbing: "plumbing",
+  electrical: "electrical",
+  heating_and_cooling: "heating and cooling",
+  appliance: "appliance",
+  structure_and_doors: "structure and doors",
+  other: "other",
 };
-export const URGENCY_LABELS: Record<Urgency, string> = { urgent: "Urgent", not_urgent: "Not urgent" };
+export const URGENCY_LABELS: Record<Urgency, string> = { urgent: "urgent", not_urgent: "not urgent" };
 
 export const DESCRIPTION_MAX_LENGTH = 400;
 export const MAX_ITEMS = 30;
 
-/** Значення документа, як їх зберігає run_task_documents. */
-export interface TaskDocument {
+/** Значення документа, як їх зберігає run_documents. */
+export interface RunDocument {
   kind: DocumentKind;
   phone: string | null;
   description: string | null;
@@ -36,8 +40,8 @@ export interface TaskDocument {
   total: number | null;
 }
 
-/** Рядок run_task_documents з бази (items — jsonb, total — numeric, може прийти рядком). */
-export interface StoredTaskDocument {
+/** Рядок run_documents з бази (items — jsonb, total — numeric, може прийти рядком). */
+export interface StoredRunDocument {
   kind: string;
   phone: string | null;
   description: string | null;
@@ -74,9 +78,9 @@ function parseItems(raw: string): LineItem[] | null | undefined {
   return parsed.data.length ? parsed.data : null;
 }
 
-type Parsed = { ok: true; value: TaskDocument } | { ok: false; error: ErrorCode };
+type Parsed = { ok: true; value: RunDocument } | { ok: false; error: ErrorCode };
 
-/** Форма «Save values» → значення для save_task_document або код помилки (тексти — у messages.ts). */
+/** Форма «Save values» → значення для save_run_document або код помилки (тексти — у messages.ts). */
 export function parseDocumentForm(formData: FormData): Parsed {
   const kind = field(formData, "kind");
   const rawPhone = field(formData, "phone");
@@ -99,7 +103,7 @@ export function parseDocumentForm(formData: FormData): Parsed {
     return { ok: false, error: "DOCUMENT_INVALID" };
   }
 
-  const value: TaskDocument = {
+  const value: RunDocument = {
     kind,
     phone,
     description: description || null,
@@ -113,8 +117,8 @@ export function parseDocumentForm(formData: FormData): Parsed {
   return { ok: true, value };
 }
 
-/** Рядок бази → значення для діалогу й підсумку; невідоме (стара схема, ручний запис) відкидаємо. */
-export function fromStored(row: StoredTaskDocument | null | undefined): TaskDocument | null {
+/** Рядок бази → значення для запису на сторінці; невідоме (ручний запис поза переліками) відкидаємо. */
+export function fromStored(row: StoredRunDocument | null | undefined): RunDocument | null {
   if (!row || !oneOf(KINDS, row.kind)) return null;
   const items = ItemsSchema.safeParse(row.items);
   const total = row.total === null ? null : Number(row.total);
@@ -129,13 +133,34 @@ export function fromStored(row: StoredTaskDocument | null | undefined): TaskDocu
   };
 }
 
-/** Короткий підсумок для рядка задачі: «Request · Plumbing · Urgent · 555-0101» або «Estimate · 2 items · Total 200.00». */
-export function documentSummary(doc: TaskDocument): string {
-  const parts: string[] = [KIND_LABELS[doc.kind]];
-  if (doc.category) parts.push(CATEGORY_LABELS[doc.category]);
-  if (doc.urgency) parts.push(URGENCY_LABELS[doc.urgency]);
-  if (doc.phone) parts.push(doc.phone);
-  if (doc.items) parts.push(`${doc.items.length} ${doc.items.length === 1 ? "item" : "items"}`);
-  if (doc.total !== null) parts.push(`Total ${money(doc.total)}`);
-  return parts.join(" · ");
+/** Значення збереженого запису для сторінки запуску (AC-DOCAI-04): підпис → значення; порожні не показуємо. */
+export function documentValues(doc: RunDocument): [label: string, value: string][] {
+  const rows: [string, string | null][] = [
+    ["Document type", KIND_LABELS[doc.kind]],
+    ["Phone", doc.phone],
+    ["Description", doc.description],
+    ["Category", doc.category && CATEGORY_LABELS[doc.category]],
+    ["Urgency", doc.urgency && URGENCY_LABELS[doc.urgency]],
+    ["Items", doc.items && doc.items.map((item) => `${item.name} ${item.quantity} x ${money(item.unitPrice)}`).join("; ")],
+    ["Total", doc.total === null ? null : money(doc.total)],
+  ];
+  return rows.filter((row): row is [string, string] => Boolean(row[1]));
+}
+
+/** Дата й час підтвердження за Києвом, як у припущенні PM: «12 Nov 2026, 10:15» (AC-DOCAI-04). */
+export function formatConfirmedAt(iso: string): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: KYIV_TZ,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(iso))
+      .map((part) => [part.type, part.value]),
+  );
+  return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute}`;
 }

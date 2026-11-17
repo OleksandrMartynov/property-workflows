@@ -184,9 +184,10 @@ export type Database = {
           },
         ];
       };
-      run_task_documents: {
+      run_documents: {
         Row: {
-          task_id: string;
+          id: string;
+          run_id: string;
           kind: string;
           phone: string | null;
           description: string | null;
@@ -198,7 +199,8 @@ export type Database = {
           saved_at: string;
         };
         Insert: {
-          task_id: string;
+          id?: string;
+          run_id: string;
           kind: string;
           phone?: string | null;
           description?: string | null;
@@ -210,7 +212,8 @@ export type Database = {
           saved_at?: string;
         };
         Update: {
-          task_id?: string;
+          id?: string;
+          run_id?: string;
           kind?: string;
           phone?: string | null;
           description?: string | null;
@@ -223,10 +226,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "run_task_documents_task_id_fkey";
-            columns: ["task_id"];
-            isOneToOne: true;
-            referencedRelation: "run_tasks";
+            foreignKeyName: "run_documents_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "runs";
             referencedColumns: ["id"];
           },
         ];
@@ -308,8 +311,8 @@ export type Database = {
         Args: { p_name: string; p_required: boolean; p_section_id: string; p_template_id: string };
         Returns: string;
       };
-      check_task_document: {
-        Args: { p_task_id: string };
+      check_run_document: {
+        Args: { p_run_id: string };
         Returns: boolean;
       };
       complete_task: {
@@ -324,9 +327,9 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: { id: string; email: string }[];
       };
-      save_task_document: {
+      save_run_document: {
         Args: {
-          p_task_id: string;
+          p_run_id: string;
           p_kind: string;
           p_phone?: string | null;
           p_description?: string | null;
@@ -335,7 +338,7 @@ export type Database = {
           p_items?: Json | null;
           p_total?: number | null;
         };
-        Returns: undefined;
+        Returns: string;
       };
       vendor_runs: {
         Args: { p_run_id?: string };

@@ -9,6 +9,20 @@ export const REFUSED_MESSAGE = "This document is not a maintenance request or an
 export const NEEDS_INFO_MESSAGE = "The document does not say what is wrong or what the items are. Fill in the values yourself.";
 // Кейс 4 PM: значення, якого немає в документі, лишається порожнім і позначене «not found».
 export const NOT_FOUND = "not found";
+// Примітки — дослівно з AC-DOCAI-07 і AC-DOCAI-10: модель може сказати те саме іншими словами, код зводить до тексту PM.
+export const TWO_PROBLEMS_NOTE = "the email has two problems";
+export const INSTRUCTIONS_NOTE = "the text contains instructions to the AI that were ignored";
+
+/** Примітки моделі → тексти PM (AC-DOCAI-07, 10) без повторів; інші примітки (наприклад, ризик) — як є. */
+export function normalizeNotes(notes: string[]): string[] {
+  const out = notes.map((note) => {
+    if (/\b(two|several|multiple|more than one)\b.*\bproblems?\b/i.test(note)) return TWO_PROBLEMS_NOTE;
+    // Лише примітка про проігноровані інструкції; ризик зі словом «instructions» лишається як є.
+    if (/\binstructions?\b/i.test(note) && /\bignor(ed|ing)\b/i.test(note)) return INSTRUCTIONS_NOTE;
+    return note;
+  });
+  return [...new Set(out)];
+}
 
 /** Телефон з документа в одній формі 555-0101; не телефон (не 7 цифр) — null, а не вигадана форма. */
 export function normalizePhone(phone: string | null): string | null {
@@ -42,6 +56,6 @@ export function applyRules(draft: Draft): Draft {
     return { ...draft, phone: normalizePhone(draft.phone), description: null, category: null, urgency: null, items: null, total: null };
   }
   const warning = totalWarning(draft.items, draft.total);
-  const notes = draft.notes.filter((note) => !/^items add up to /i.test(note));
+  const notes = normalizeNotes(draft.notes.filter((note) => !/^items add up to /i.test(note)));
   return { ...draft, phone: normalizePhone(draft.phone), notes: warning ? [...notes, warning] : notes };
 }

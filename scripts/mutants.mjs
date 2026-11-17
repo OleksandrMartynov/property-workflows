@@ -11,44 +11,38 @@ const VENDOR_DB = "tests/db/vendor-db.test.ts";
 const LAUNCH = "supabase/migrations/20261102105500_launch_run_hide_draft.sql";
 const VIEWER = "src/lib/supabase/viewer.ts";
 const VENDOR_PAGES = "tests/vendor/vendor-pages.test.tsx";
-const DOCS = "supabase/migrations/20261115065540_task_documents.sql";
-const DOCS_DB = "tests/db/task-documents-db.test.ts";
+const DOCS = "supabase/migrations/20261116162440_run_documents.sql";
+const DOCS_DB = "tests/db/run-documents-db.test.ts";
 
 export const mutants = [
-  // ── Зріз 4 «AI document parsing» (ADR 0008; AC у PM ще немає — golden cases solomchaak/property-workflows-spec#40) ──
+  // ── Зріз 4 «Parse a document» (solomchaak/property-workflows-spec#59, AC-DOCAI-01…16) ───────────────────────────
   {
-    id: "D1", kind: "sql", ac: "(зріз 4: права як у позначки)", file: DOCS, tests: [DOCS_DB],
-    what: "check_task_document без перевірки ролі в запуску: сторонній менеджер зберігає значення чужої задачі",
-    find: "  if not (v_role = 'admin' or v_task.assignee_id = v_uid or v_run.run_manager_id = v_uid) then",
+    id: "D1", kind: "sql", ac: "AC-DOCAI-16", file: DOCS, tests: [DOCS_DB],
+    what: "check_run_document без перевірки менеджера запуску: менеджер-виконавець B зберігає значення в чужому запуску",
+    find: "  if v_role <> 'admin' and (v_run.id is null or v_run.run_manager_id is distinct from v_uid) then",
     replace: "  if false then",
   },
   {
-    id: "D2", kind: "sql", ac: "(зріз 4: історія виконаної задачі)", file: DOCS, tests: [DOCS_DB],
-    what: "check_task_document без статусу задачі: значення задачі «done» перезаписуються",
-    find: "  if v_task.status <> 'to_do' then",
-    replace: "  if false then",
+    id: "D2", kind: "sql", ac: "AC-DOCAI-15", file: DOCS, tests: [DOCS_DB],
+    what: "run_documents_select без менеджера запуску: менеджер-виконавець B читає записи чужого запуску",
+    find: "      where r.id = run_id and r.run_manager_id = (select auth.uid())",
+    replace: "      where r.id = run_id",
   },
   {
-    id: "D3", kind: "sql", ac: "(зріз 4: завершений запуск)", file: DOCS, tests: [DOCS_DB],
-    what: "check_task_document без статусу запуску: значення змінюються в запуску «completed»",
-    find: "  if v_run.status <> 'in_progress' then",
-    replace: "  if false then",
+    id: "D3", kind: "sql", ac: "AC-DOCAI-16", file: DOCS, tests: [DOCS_DB],
+    what: "check_run_document без ролі: неіснуючий запуск для менеджера — RUN_NOT_FOUND (підказка, які запуски є)",
+    find: "  if v_role = 'admin' and v_run.id is null then",
+    replace: "  if v_run.id is null then",
   },
   {
-    id: "D4", kind: "sql", ac: "(зріз 4: хто бачить значення)", file: DOCS, tests: [DOCS_DB],
-    what: "run_task_documents_select без видимості задачі: підрядник і сторонній менеджер читають чужі значення",
-    find: "    and exists (select 1 from public.run_tasks as t where t.id = task_id)",
-    replace: "    and true",
-  },
-  {
-    id: "D6", kind: "sql", ac: "(зріз 4: форма позицій)", file: DOCS, tests: [DOCS_DB],
+    id: "D4", kind: "sql", ac: "(зріз 4: форма позицій)", file: DOCS, tests: [DOCS_DB],
     what: "перевірка типу поля позиції через <> замість IS DISTINCT FROM: позиція без name ({}) проходить",
     find: "                   when jsonb_typeof(e.item -> 'name') is distinct from 'string' then true",
     replace: "                   when jsonb_typeof(e.item -> 'name') <> 'string' then true",
   },
   {
     id: "D5", kind: "sql", ac: "(зріз 4: межа позицій)", file: DOCS, tests: [DOCS_DB],
-    what: "save_task_document без межі 30 позицій кошторису",
+    what: "save_run_document без межі 30 позицій кошторису",
     find: "         when jsonb_array_length(p_items) > 30 then true\n",
     replace: "",
   },
