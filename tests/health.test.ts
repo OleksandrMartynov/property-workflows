@@ -1,6 +1,6 @@
 // D0: /api/health відрізняє «база відповіла» від «база недоступна, призупинена чи ключ хибний».
 import { describe, expect, it } from "vitest";
-import { classifyDbProbe } from "@/lib/health";
+import { appEnvOf, classifyDbProbe } from "@/lib/health";
 
 describe("classifyDbProbe (/api/health)", () => {
   it("рахує базу живою, коли запит пройшов або Postgres відмовив у правах (42501)", () => {
@@ -37,5 +37,20 @@ describe("classifyDbProbe (/api/health)", () => {
       reason: "status-503-53300",
     });
     expect(classifyDbProbe({ status: 500, error: { code: "XX000", message: "internal" } }).db).toBe("down");
+  });
+});
+
+describe("appEnvOf (/api/health, WS11)", () => {
+  it("staging — ярлик з APP_ENV; прод і preview без змінної — null", () => {
+    expect(appEnvOf("staging")).toBe("staging");
+    expect(appEnvOf(" Staging \n")).toBe("staging");
+    expect(appEnvOf(undefined)).toBeNull();
+    expect(appEnvOf("")).toBeNull();
+  });
+
+  it("не ярлик (URL, ключ, пробіли всередині) — null: значення змінної не потрапляє у відповідь", () => {
+    expect(appEnvOf("https://evil.example.test")).toBeNull();
+    expect(appEnvOf("sb_secret_abcdefghijklmnopqrstuvwxyz0123456789")).toBeNull();
+    expect(appEnvOf("staging env")).toBeNull();
   });
 });
