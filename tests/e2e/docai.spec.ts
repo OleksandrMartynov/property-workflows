@@ -32,6 +32,8 @@ test.describe("Менеджер A на сторінці свого запуск�
     "AC-DOCAI-04: A змінює Urgency на «urgent» і обирає «Save values» — на сторінці запуску один збережений запис з email A і часом",
     { tag: ["@uat", "@writes", "@ai"], annotation: { type: "ac", description: "AC-DOCAI-04" } },
     async ({ page }) => {
+      // Жива модель на безкоштовному ланцюжку відповідає до ~90 с: бюджет тесту ширший за очікування пропозиції.
+      test.setTimeout(150_000);
       const { emails, runs } = fx();
       await given(
         "менеджер A на сторінці запуску, у блоці запропоновано Document type «Maintenance request», Phone «555-0101», Category «plumbing» і Urgency «not urgent»",
