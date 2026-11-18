@@ -29,12 +29,13 @@
 | Що | Адреса / де шукати |
 |---|---|
 | Прод | https://property-workflows-rho.vercel.app (гілка `main`) |
-| Staging | гілка `staging`, змінна лише для гілки `APP_ENV=staging`; адресу дописати після створення гілки у Vercel |
+| Staging | https://property-workflows-git-staging-flambs-projects.vercel.app (гілка `staging`, змінна лише для гілки `APP_ENV=staging`; за захистом Vercel) |
 | Здоров'я | `<адреса>/api/health` → `{"ok":true,"sha":"…","env":"production","appEnv":null,"db":"ok","reason":""}`; на staging `"appEnv":"staging"` |
 | Прогони smoke | Actions → `smoke`: job `prod` — прод (після деплою `main` і щодня ≈ 07:23 за Києвом), job `deploy` — кожен preview і staging за адресою саме цього деплою |
 | Vercel | проєкт `property-workflows` → Deployments, Logs |
 | Supabase | проєкт застосунку → Logs, Advisors (MCP — лише `read_only=true`) |
-| Доступ PM до staging | дописати після вибору: запит доступу (на Hobby — одна зовнішня людина на акаунт) / спільне посилання (одне на акаунт, у публічні файли — без параметрів) / захист preview вимкнено (відкриває всі preview, не лише staging) |
+| Захист деплоїв | Vercel Authentication — **Standard Protection**: preview і staging закриті входом Vercel, прод відкритий (D0 і курс читають прод без входу). Smoke проходить захист заголовком `x-vercel-protection-bypass` (секрет `VERCEL_AUTOMATION_BYPASS_SECRET`) |
+| Доступ PM до staging | **спільне посилання Vercel** (Share на деплої staging, адреса гілки + `?_vercel_share=…`), обрано 2026-11-18: PM не потрібен акаунт Vercel; на Hobby — одне посилання на акаунт. Посилання містить токен — лише особистим повідомленням PM, у публічних файлах — адреса без параметрів. Перевипуск: Vercel → деплой staging → Share → нове посилання (старе відкликати) |
 
 ## 1. Червоний smoke
 
