@@ -106,7 +106,9 @@ async function main() {
 
   console.log(JSON.stringify({ base, root: root.status, login: login.status, health }));
   for (const f of fail) console.log(`::error title=smoke ${base}::${f}`);
-  if (!fail.length) console.log("OK — прод живий, сторінка входу відкривається, база відповідає.");
+  // Рядок починається з «OK —» (на нього спирається D0 і перевірка курсу); далі — що саме перевіряли.
+  const what = target === "deploy" ? "деплой живий" : "прод живий";
+  if (!fail.length) console.log(`OK — ${what}, сторінка входу відкривається, база відповідає.`);
   return fail.length ? 1 : 0;
 }
 
