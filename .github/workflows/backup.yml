@@ -1,4 +1,4 @@
-# Взято з https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw/blob/main/materials/ops-kit/bonus/backup.yml (без змін, крім цього рядка).
+# Взято з https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw/blob/main/materials/ops-kit/bonus/backup.yml (змінено: перед відновленням очищаємо public одноразової бази — див. крок «Відновити дані»).
 # БОНУС: зашифрована резервна копія бази Supabase (щодня і вручну) + тренування відновлення в одноразовій базі CI
 # з порівнянням кількості рядків.
 # Куди: .github/workflows/backup.yml у вашому репо (з цієї теки bonus/ — у .github/workflows/).
@@ -144,8 +144,15 @@ jobs:
           file="$RUNNER_TEMP/backup/data.sql"; [ "$SCOPE" = public ] && file="$RUNNER_TEMP/backup/data-public.sql"
           # replica — тимчасово без тригерів і перевірок зовнішніх ключів, як в офіційній інструкції відновлення.
           # Вивід psql (там можуть бути рядки даних у помилках) не друкуємо — лише код результату.
+          # Наші міграції самі вставляють стартові шаблони (20261019174350_run_launch.sql, template_versions), тож
+          # одноразова база вже має ці рядки, а копія принесла б їх удруге (duplicate key, тренування 2026-11-19).
+          # Тому спершу очищаємо таблиці public — лише цієї локальної бази раннера, у тій самій транзакції.
+          truncate_public='DO $$ DECLARE t text; BEGIN
+            SELECT string_agg(format($f$%I.%I$f$, schemaname, tablename), $s$, $s$) INTO t FROM pg_tables WHERE schemaname = $p$public$p$;
+            IF t IS NOT NULL THEN EXECUTE $q$TRUNCATE $q$ || t || $q$ CASCADE$q$; END IF; END $$'
           if psql "$LOCAL_DB" --quiet --single-transaction -v ON_ERROR_STOP=1 \
-               -c 'SET session_replication_role = replica' -f "$file" > /dev/null 2> "$RUNNER_TEMP/psql.err"; then
+               -c 'SET session_replication_role = replica' -c "$truncate_public" -f "$file" \
+               > /dev/null 2> "$RUNNER_TEMP/psql.err"; then
             echo "Дані завантажено ($SCOPE)."
           else
             # Лише початок першого рядка помилки, до першої лапки: значення з рядків даних у журнал не потрапляють.
