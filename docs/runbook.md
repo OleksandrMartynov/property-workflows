@@ -196,7 +196,7 @@ claude --settings .claude/settings.incident.json --permission-mode plan
 |---|---|---|
 | [44504097040](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44504097040) | `all` | ❌ `ERROR: column …` — схема `auth` локального Supabase інша, ніж у хмарі |
 | [44504667852](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44504667852) | `public` | ❌ `duplicate key`: наші міграції самі вставляють стартові шаблони, копія приносила їх удруге → #117: перед завантаженням очищаємо `public` одноразової бази |
-| [44506250509](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44506250509) | `public` | ✅ 9 таблиць, 348 рядків — «у копії = відновлено» в кожній |
+| [44506250509](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44506250509) | `public` | ✅ 9 таблиць, 348 рядків — «у копії = відновлено» в кожній ([знімок Summary](ops/backup-restore-drill.png)) |
 
 **RTO тренування:** job `restore-drill` — **1 хв 45 с** (разом із підняттям бази в Docker), увесь прогін з копією —
 3 хв 12 с. Справжнє відновлення в новий проєкт довше: створення проєкту, змінні у Vercel, Redeploy, smoke — закладаємо
