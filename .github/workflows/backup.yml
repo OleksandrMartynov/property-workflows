@@ -1,4 +1,4 @@
-# Взято з https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw/blob/main/materials/ops-kit/bonus/backup.yml (змінено: перед відновленням очищаємо public одноразової бази — див. крок «Відновити дані»).
+# Взято з https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw/blob/main/materials/ops-kit/bonus/backup.yml (змінено: перед відновленням очищаємо public одноразової бази; типовий scope — public).
 # БОНУС: зашифрована резервна копія бази Supabase (щодня і вручну) + тренування відновлення в одноразовій базі CI
 # з порівнянням кількості рядків.
 # Куди: .github/workflows/backup.yml у вашому репо (з цієї теки bonus/ — у .github/workflows/).
@@ -20,7 +20,7 @@
 # - Окрема група concurrency, НЕ supabase-prod: інакше нічна копія в черзі могла б скасувати db-deploy, що чекає.
 # - Якщо на середовищі production увімкнено обов'язкового рецензента, кожен запуск чекатиме схвалення.
 # НЕ ПЕРЕВІРЕНО повністю від початку до кінця на проєкті курсу: перший запуск — вручну, і дивіться журнал.
-# Відновлення рядків схеми auth.* у локальну базу НЕ відрепетирувано — якщо падає, запустіть з scope=public.
+# Відновлення рядків схеми auth.* у локальну базу перевірено 2026-11-19 — не працює (інша схема auth локально), тому типово scope=public.
 name: backup
 
 on:
@@ -36,7 +36,7 @@ on:
         description: "Що відновлювати: all (разом з auth.*) або public (лише ваші таблиці)"
         type: choice
         options: [all, public]
-        default: all
+        default: public # all (з auth.*) на тренуванні 2026-11-19 не відновився — прогін 44504097040
 
 permissions:
   contents: read
@@ -111,7 +111,7 @@ jobs:
     timeout-minutes: 25
     env:
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
-      SCOPE: ${{ inputs.scope || 'all' }}
+      SCOPE: ${{ inputs.scope || 'public' }}
       LOCAL_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres # стандартна локальна база Supabase CLI
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -138,7 +138,7 @@ jobs:
             -o "$RUNNER_TEMP/backup.tgz" -d "$f" 2>/dev/null
           tar -xzf "$RUNNER_TEMP/backup.tgz" -C "$RUNNER_TEMP"
           rm -f "$RUNNER_TEMP/backup.tgz"
-      - name: Відновити дані (scope=${{ inputs.scope || 'all' }})
+      - name: Відновити дані (scope=${{ inputs.scope || 'public' }})
         run: |
           set -euo pipefail
           file="$RUNNER_TEMP/backup/data.sql"; [ "$SCOPE" = public ] && file="$RUNNER_TEMP/backup/data-public.sql"
