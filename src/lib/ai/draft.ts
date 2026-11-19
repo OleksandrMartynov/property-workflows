@@ -27,7 +27,7 @@ export type DraftInput = {
 };
 
 export type DraftResult =
-  | { ok: true; draft: Draft; modelId: string }
+  | { ok: true; draft: Draft; modelId: string; inputTokens?: number; outputTokens?: number }
   | { ok: false; reason: "invalid_output" | "rate_limited" | "timeout" | "provider_error"; message: string };
 
 export type DraftOptions = {
@@ -57,7 +57,14 @@ export async function proposeDraft(input: DraftInput, model: LanguageModel, opts
     });
     // result.output уже перевірено за DraftSchema (інакше — виняток NoObjectGeneratedError). Правила, які можна
     // перевірити кодом (формат телефону, сума кошторису, порожні значення відмови), — тут, а не лише в промпті.
-    return { ok: true, draft: applyRules(result.output), modelId: result.response.modelId };
+    return {
+      ok: true,
+      draft: applyRules(result.output),
+      modelId: result.response.modelId,
+      // Лише числа токенів — для журналу llm.call (src/lib/ai/llm-log.ts); тексту відповіді тут немає.
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+    };
   } catch (error) {
     return classifyError(error);
   }

@@ -6,13 +6,23 @@
 //   3) "/api/health" → 200 {db:"ok"}; з expected-sha — sha збігається (до 6 спроб × 20 с: прод-домен перемикається
 //                      на новий деплой не миттєво).
 // Код виходу: 0 — усе гаразд, 1 — є збій (рядки ::error:: видно в GitHub Actions), 2 — не вказано адресу.
+//
+// WS11 (smoke кожного деплою; взято з koldovsky/2026-quitcode-11-devops-operations-hw/materials/ops-kit/scripts/smoke.mjs):
+//   - VERCEL_AUTOMATION_BYPASS_SECRET задано → кожен запит несе заголовок x-vercel-protection-bypass, тож smoke відкриває
+//     preview і staging за захистом Vercel. Значення секрету скрипт не друкує ніде.
+//   - x-vercel-set-bypass-cookie не надсилаємо: він відповідає редіректом із Set-Cookie, і redirect:"manual" побачив би 3xx.
+//   - SMOKE_TARGET=deploy (ставить job deploy у smoke.yml) змінює лише підказку про стіну входу.
 const [rawBase = process.env.PROD_URL ?? "", expectSha = ""] = process.argv.slice(2);
 // client_payload.url від Vercel може прийти хостом без схеми — додаємо https://.
 const base = (/^https?:\/\//.test(rawBase) ? rawBase : rawBase ? `https://${rawBase}` : "").replace(/\/+$/, "");
+const bypass = (process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "").trim();
+const target = process.env.SMOKE_TARGET === "deploy" ? "deploy" : "prod";
+const headers = { "user-agent": "smoke/2.0 (WS11)" };
+if (bypass) headers["x-vercel-protection-bypass"] = bypass;
 
 const get = async (path) => {
   try {
-    const r = await fetch(base + path, { redirect: "manual", headers: { "user-agent": "smoke/1.0 (D0)" } });
+    const r = await fetch(base + path, { redirect: "manual", headers });
     return {
       status: r.status,
       location: r.headers.get("location") ?? "",
@@ -26,10 +36,21 @@ const get = async (path) => {
 const vercelWall = (r) =>
   /vercel\.com\/(sso|login)|_vercel_sso/.test(r.location) || ((r.status === 401 || r.status === 403) && /vercel/i.test(r.text));
 
+// Підказка про стіну входу Vercel: що саме налаштувати, залежно від того, що перевіряємо і чи є секрет обходу.
+function wallHint() {
+  if (bypass) {
+    return "Vercel не прийняв секрет обходу — його перегенерували чи видалили? Скопіюйте актуальний з Vercel (Settings → Deployment Protection → Protection Bypass for Automation) у GitHub Secrets VERCEL_AUTOMATION_BYPASS_SECRET і зробіть Redeploy";
+  }
+  if (target === "deploy") {
+    return "деплой за захистом Vercel, а секрету обходу немає — увімкніть Protection Bypass for Automation (Vercel → Settings → Deployment Protection) і додайте значення в GitHub Secrets як VERCEL_AUTOMATION_BYPASS_SECRET";
+  }
+  return "прод за стіною входу Vercel — Settings → Deployment Protection: Standard Protection (захищає preview і staging, прод відкритий), не All Deployments";
+}
+
 async function main() {
   const fail = [];
   const root = await get("/");
-  if (vercelWall(root)) fail.push(`"/": стіна входу Vercel — Settings → Deployment Protection → вимкніть Vercel Authentication`);
+  if (vercelWall(root)) fail.push(`"/": ${wallHint()}`);
   else if (root.status === 0) fail.push(`"/": недоступний (${root.text})`);
   else if (root.status >= 400) {
     const hint = root.vercelError === "MIDDLEWARE_INVOCATION_FAILED" ? " — у Vercel бракує NEXT_PUBLIC_SUPABASE_*?" : "";
@@ -85,7 +106,9 @@ async function main() {
 
   console.log(JSON.stringify({ base, root: root.status, login: login.status, health }));
   for (const f of fail) console.log(`::error title=smoke ${base}::${f}`);
-  if (!fail.length) console.log("OK — прод живий, сторінка входу відкривається, база відповідає.");
+  // Рядок починається з «OK —» (на нього спирається D0 і перевірка курсу); далі — що саме перевіряли.
+  const what = target === "deploy" ? "деплой живий" : "прод живий";
+  if (!fail.length) console.log(`OK — ${what}, сторінка входу відкривається, база відповідає.`);
   return fail.length ? 1 : 0;
 }
 

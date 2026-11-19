@@ -23,3 +23,15 @@ export function classifyDbProbe({ status, error }: DbProbe): DbHealth {
   // 0 — мережа (Supabase недоступний або хибний URL), 5xx, PGRST000–003.
   return { db: "down", reason: `status-${status}${code ? `-${code}` : ""}` };
 }
+
+/** Ярлик середовища з APP_ENV — лише короткі латинські слова; значення змінної нікуди більше не потрапляє. */
+const APP_ENV = /^[a-z][a-z0-9-]{0,31}$/;
+
+/**
+ * WS11: середовище для /api/health. На staging VERCEL_ENV теж «preview», тож гілку staging видно лише за APP_ENV —
+ * змінною у Vercel тільки для гілки staging. Не задано (прод, preview, локально) чи не схоже на ярлик — null.
+ */
+export function appEnvOf(raw: string | undefined): string | null {
+  const value = raw?.trim().toLowerCase() ?? "";
+  return APP_ENV.test(value) ? value : null;
+}
