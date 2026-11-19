@@ -7,7 +7,7 @@
 у https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw); зміст — про наш продукт: агенція з управління
 нерухомістю, шаблони процесів, запуски, задачі, підрядники, AI-розбір документів.
 
-Останнє оновлення: 2026-11-19 (після інцидент-дрілу), версія продукту: до `v1.0.0` (тег ставимо після приймання PM).
+Останнє оновлення: 2026-11-19 (після інцидент-дрілу; staging переїхав на окрему базу), версія продукту: до `v1.0.0` (тег ставимо після приймання PM).
 
 ## Хто отримує алерт і кого кликати
 
@@ -30,10 +30,12 @@
 |---|---|
 | Прод | https://property-workflows-rho.vercel.app (гілка `main`) |
 | Staging | https://property-workflows-git-staging-flambs-projects.vercel.app (гілка `staging`, змінна лише для гілки `APP_ENV=staging`; за захистом Vercel) |
-| Здоров'я | `<адреса>/api/health` → `{"ok":true,"sha":"…","env":"production","appEnv":null,"db":"ok","reason":""}`; на staging `"appEnv":"staging"` |
+| Здоров'я | `<адреса>/api/health` → `{"ok":true,"sha":"…","env":"production","appEnv":null,"supabaseRef":"tdscfcilebnmjeapiems","db":"ok","reason":""}`; на staging `"appEnv":"staging"` і `"supabaseRef":"otguzuprwoeerntjdgzu"`, на PR-preview — теж ref staging |
+| Бази Supabase (з 2026-11-19 — окремі) | прод — проєкт `property-workflows`, ref `tdscfcilebnmjeapiems`; staging, PR-preview і локальна розробка — проєкт `property-workflows-staging`, ref `otguzuprwoeerntjdgzu`. Ref не секрет (він у публічній адресі бази); ключів і рядків підключення тут немає |
+| Міграції | лише CI після злиття в `main`: `db-deploy-staging` (environment `staging`) → лише якщо зелено, `db-deploy` (environment `production`). Обидва спершу звіряють ref рядка підключення зі змінними репо `SUPABASE_STAGING_REF` / `SUPABASE_PROD_REF` і друкують «Ціль міграцій: проєкт <ref> (…)» |
 | Прогони smoke | Actions → `smoke`: job `prod` — прод (після деплою `main` і щодня ≈ 07:23 за Києвом), job `deploy` — кожен preview і staging за адресою саме цього деплою |
 | Vercel | проєкт `property-workflows` → Deployments, Logs |
-| Supabase | проєкт застосунку → Logs, Advisors (MCP — лише `read_only=true`) |
+| Supabase | потрібний проєкт (прод чи staging — за `supabaseRef` у health) → Logs, Advisors (MCP — лише `read_only=true`) |
 | Захист деплоїв | Vercel Authentication — **Standard Protection**: preview і staging закриті входом Vercel, прод відкритий (D0 і курс читають прод без входу). Smoke проходить захист заголовком `x-vercel-protection-bypass` (секрет `VERCEL_AUTOMATION_BYPASS_SECRET`) |
 | Доступ PM до staging | **спільне посилання Vercel** (Share на деплої staging, адреса гілки + `?_vercel_share=…`), обрано 2026-11-18: PM не потрібен акаунт Vercel; на Hobby — одне посилання на акаунт. Посилання містить токен — лише особистим повідомленням PM, у публічних файлах — адреса без параметрів. Перевипуск: Vercel → деплой staging → Share → нове посилання (старе відкликати) |
 
@@ -96,12 +98,17 @@ NEXT_PUBLIC_SUPABASE_URL у Vercel для цього середовища (і п
 **Як зрозуміти:** `/api/health` → 503, `"db":"down"`, `"reason":"paused"`; smoke пише «Supabase призупинено».
 Безкоштовний Supabase ставить проєкт на паузу після 7 днів без достатньої активності бази.
 
-1. Supabase Dashboard → проєкт → **Resume project**. Відновлення займає кілька хвилин.
-2. Actions → smoke → Run workflow (поле `url` порожнє) — зелений.
-3. Запишіть у чат команди, коли була пауза і скільки тривала.
+1. Яка база — за `supabaseRef` у відповіді health: `tdscfcilebnmjeapiems` — прод (`property-workflows`),
+   `otguzuprwoeerntjdgzu` — staging (`property-workflows-staging`).
+2. Supabase Dashboard → цей проєкт → **Resume project**. Відновлення займає кілька хвилин.
+3. Перевірка: прод — Actions → smoke → Run workflow (поле `url` порожнє); staging — Run workflow з `url` = адреса
+   staging. Обидва зелені.
+4. Запишіть у чат команди, коли була пауза і скільки тривала.
 
-Як не допустити до demo day: щоденний прогін smoke (`schedule`) робить запит до бази через `/api/health`; за день до
-показу — ручний прогін smoke і вхід під тестовим акаунтом.
+Як не допустити до demo day: щоденний прогін smoke (`schedule`) будить **лише прод**. Staging будять PR-preview,
+локальна розробка й smoke кожного деплою, але щоденного запиту до нього немає — тому **перед UAT, демо чи дрілом**
+відкрийте Dashboard → `property-workflows-staging` і, якщо він на паузі, Resume project. Міграції теж чекають на
+staging: база staging на паузі → `db-deploy-staging` червоний → прод не мігрує (Resume і перезапуск упалих jobs).
 
 ## 4. Ротація ключа + redeploy
 
@@ -110,9 +117,11 @@ NEXT_PUBLIC_SUPABASE_URL у Vercel для цього середовища (і п
 
 | Що | Де новий | Де замінити | Що ще |
 |---|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → Settings → API Keys | Vercel → Environment Variables (Production, Preview і перевизначення гілки `staging`, якщо є) | **Redeploy**: `NEXT_PUBLIC_*` вбудовуються під час збірки |
-| `SUPABASE_SECRET_KEY` | Supabase → Settings → API Keys | лише `.env.local` розробника (скрипти `users:demo`, `template:ac`); у Vercel і GitHub його немає | старий ключ видалити в Supabase |
-| `SUPABASE_DB_URL` (пароль бази) | Supabase → Settings → Database → Reset password | GitHub → Environments → `production` → секрет | перевірка — наступний `db-deploy` чи ручний `db-check` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — **прод** | проєкт `property-workflows` → Settings → API Keys | Vercel → Environment Variables → лише **Production** | **Redeploy** проду: `NEXT_PUBLIC_*` вбудовуються під час збірки |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — **staging** | проєкт `property-workflows-staging` → Settings → API Keys | Vercel → лише **Preview** (усі гілки), `.env.local` розробника | Redeploy staging і новий push у відкриті PR |
+| `SUPABASE_SECRET_KEY` | API Keys **того проєкту**, чий ключ ротуємо | лише `.env.local` (staging) чи `.env.prod.local` (прод) розробника — скрипти `users:demo`, `template:ac`, UAT; у Vercel і GitHub його немає | старий ключ видалити в Supabase |
+| `SUPABASE_DB_URL` — прод (пароль бази) | `property-workflows` → Settings → Database → Reset password → Connect → Session pooler | GitHub → Environments → **`production`** → секрет (його читають `db-deploy` і `backup`) | перевірка — наступний `db-deploy` (ref у журналі = `SUPABASE_PROD_REF`) і ручний `backup` |
+| `SUPABASE_DB_URL` — staging | `property-workflows-staging` → те саме | GitHub → Environments → **`staging`** → секрет | перевірка — CI на `main` → Re-run `db-deploy-staging` (ref = `SUPABASE_STAGING_REF`) |
 | `OPENROUTER_API_KEY` | OpenRouter → Keys | Vercel (Production, Preview), `.env.local` для `npm run eval` | redeploy; AC-DOCAI-13 («The assistant is not available now…») — ознака, що ключа немає |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel → Settings → Deployment Protection → Protection Bypass for Automation | GitHub → Settings → Secrets → Actions | redeploy staging; ручний smoke з `url` staging — зелений |
 | `BACKUP_PASSPHRASE` | менеджер паролів (нова довга випадкова фраза) | GitHub → Environments → `production` → секрет | ручний прогін `backup` зелений; старі копії — старою фразою (розділ 8) |
@@ -141,12 +150,24 @@ NEXT_PUBLIC_SUPABASE_URL у Vercel для цього середовища (і п
 
 - Гілка `staging` отримує зміни лише з `main` — `git merge --ff-only origin/main` або PR `main → staging`; окремої
   розробки на ній немає.
-- Staging і прод ділять **одну базу Supabase**: на staging — лише тестові акаунти з `accounts.zip`
-  (`*@example.test`), жодних руйнівних дій з даними, жодних міграцій.
-- Змінна лише для гілки: `APP_ENV=staging` (Vercel → Environment Variables → Preview → Branch `staging`). Нові змінні
-  діють лише після Redeploy.
-- Вхід на staging перекидає на прод — додайте адресу staging у Supabase → Authentication → URL Configuration →
-  Redirect URLs.
+- **Окрема база з 2026-11-19:** staging, усі PR-preview і локальна розробка працюють з проєктом
+  `property-workflows-staging` (ref `otguzuprwoeerntjdgzu`); прод — з `property-workflows` (ref `tdscfcilebnmjeapiems`).
+  До цієї дати staging ділив базу з продом (так проходив і дріл 2026-11-19 — без змін даних).
+- Дані staging — лише синтетичні: міграції (стартові шаблони), тестові акаунти з `accounts.zip` (`*@example.test`, ті
+  самі паролі, що на проді; створює `npm run users:demo` з `.env.local` = staging) і записи, введені через застосунок.
+  **Прод-дані в staging не копіюємо ніколи.**
+- Змінні Vercel по середовищах: `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Production =
+  прод, Preview (усі гілки) = staging; лише для гілки `staging` — `APP_ENV=staging`; `SUPABASE_SECRET_KEY` у Vercel
+  немає. Змінні діють лише після Redeploy; старі preview-адреси, зібрані до 2026-11-19, ходять у прод — не надсилайте їх.
+- Перевірка, що бази окремі: `supabaseRef` у `/api/health` проду ≠ staging; у журналі smoke деплою staging і PR-preview —
+  ref staging.
+- Auth: у проєкті staging Site URL — адреса staging, Redirect URLs — адреса staging, `https://*-flambs-projects.vercel.app/**`
+  і `http://localhost:3000/**`; у проді — лише прод-адреси.
+- Пастка: PR-preview працюють на схемі бази staging (= схема `main`): PR з міграцією й кодом, що її читає, на preview
+  може впасти до злиття — міграцію зливаємо окремим PR першою (expand/contract).
+- `.env.local` = staging; прод — лише явно: `node --env-file=.env.prod.local …`. UAT запускаємо проти staging
+  (`npm run uat -- --url <staging>`): перед першим записом він звіряє `supabaseRef` адреси з `.env.local` і зупиняється
+  при розбіжності.
 - Навмисна помилка для перевірки трекера: `<staging>/api/ops/error-drill` під адміністратором (на проді й для інших
   ролей — 404).
 
@@ -224,7 +245,7 @@ claude --settings .claude/settings.incident.json --permission-mode plan
 ## 9. Чого ніколи не робити
 
 - `supabase migration down`, `supabase migration repair`, `supabase db reset --linked` (чи `--db-url`) і
-  `supabase db push` з ноутбука проти нашого проєкту — **знищують дані** або розводять базу з `main`. Схема змінюється
+  `supabase db push` з ноутбука проти **жодного** з наших проєктів (прод і staging) — **знищують дані** або розводять базу з `main`. Схема змінюється
   лише міграцією в PR, у базу її застосовує `db-deploy`.
 - `npx supabase@latest`: CLI 3.x змінює поведінку команд. Лише закріплена версія з `package.json` (Dependabot мажор
   не пропонує).
