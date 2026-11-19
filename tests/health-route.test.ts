@@ -40,6 +40,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("/api/health: supabaseRef — у яку базу ходить середовище (WS11, staging з окремою базою)", () => {
+  it("ref проєкту з NEXT_PUBLIC_SUPABASE_URL поруч з appEnv; наявні поля ok, sha, env, db, reason не змінились", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://stagingrefexample000.supabase.co");
+    const body = await (await GET()).json();
+    expect(body).toMatchObject({ ok: true, sha: "10fdfe9d6f11004d1fb9591aa7e3582d131a075a", env: "preview", appEnv: "staging", supabaseRef: "stagingrefexample000", db: "ok", reason: "" });
+  });
+
+  it("прод: без APP_ENV — appEnv null, supabaseRef проду; без змінної адреси — supabaseRef null", async () => {
+    vi.stubEnv("APP_ENV", "");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://prodrefexample0000000.supabase.co");
+    expect(await (await GET()).json()).toMatchObject({ env: "production", appEnv: null, supabaseRef: "prodrefexample0000000" });
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    expect(await (await GET()).json()).toMatchObject({ supabaseRef: null, reason: "missing-env" });
+  });
+});
+
 describe("/api/health: причина збою бази й назва змінної (дія з postmortem 2026-11-19)", () => {
   it("зламаний стан дрілу: хост не резолвиться — 503, reason unreachable-dns, check NEXT_PUBLIC_SUPABASE_URL і рядок у журналі", async () => {
     probe.result = { status: 0, error: { message: "TypeError: fetch failed" } };
@@ -50,9 +67,12 @@ describe("/api/health: причина збою бази й назва змінн
     expect(body).toMatchObject({ ok: false, db: "down", reason: "unreachable-dns", check: "NEXT_PUBLIC_SUPABASE_URL", appEnv: "staging" });
     expect(errors).toHaveLength(1);
     expect(JSON.parse(errors[0])).toMatchObject({ event: "health.db_down", reason: "unreachable-dns", check: "NEXT_PUBLIC_SUPABASE_URL", env: "preview", sha: "10fdfe9" });
-    // Ні значення змінної, ні хоста, ні ключа — ні у відповіді, ні в журналі.
+    // Ні адреси, ні ключа — ні у відповіді, ні в журналі. Лише ref (supabaseRef, публічний) у відповіді: за ним видно,
+    // у яку базу ходить середовище; у рядок журналу він не йде.
+    expect(body.supabaseRef).toBe("abcdefghijklmnopqrsx");
+    expect(errors[0]).not.toContain("abcdefghijklmnopqrsx");
     for (const text of [JSON.stringify(body), errors[0]]) {
-      expect(text).not.toContain("abcdefghijklmnopqrsx");
+      expect(text).not.toContain("supabase.co");
       expect(text).not.toContain("sb_publishable");
     }
   });

@@ -17,6 +17,10 @@ const baseURL = deployed ?? "http://localhost:3000";
 // Негативні контролі (навмисно хибні очікування) — лише на окреме прохання: UAT_NEGATIVE_CONTROLS=1.
 const withNegativeControls = process.env.UAT_NEGATIVE_CONTROLS === "1";
 const noRecording = { video: "off", trace: "off", screenshot: "off" } as const;
+// WS11: staging за захистом Vercel — заголовок обходу лише для розгорнутої адреси і лише коли змінну задано
+// (Vercel docs «Protection Bypass for Automation»: x-vercel-set-bypass-cookie ставить cookie для наступних запитів).
+const bypass = deployed ? process.env.VERCEL_AUTOMATION_BYPASS_SECRET : undefined;
+const bypassHeaders = bypass ? { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" } : undefined;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -36,6 +40,7 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     baseURL,
+    ...(bypassHeaders ? { extraHTTPHeaders: bypassHeaders } : {}),
     locale: "uk-UA",
     timezoneId: "Europe/Kyiv",
     viewport: { width: 1280, height: 800 },
