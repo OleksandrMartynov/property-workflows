@@ -1,6 +1,6 @@
 // D0: /api/health відрізняє «база відповіла» від «база недоступна, призупинена чи ключ хибний».
 import { describe, expect, it } from "vitest";
-import { appEnvOf, classifyDbProbe } from "@/lib/health";
+import { appEnvOf, classifyDbProbe, missingEnv, networkCause, suspectEnv } from "@/lib/health";
 
 describe("classifyDbProbe (/api/health)", () => {
   it("рахує базу живою, коли запит пройшов або Postgres відмовив у правах (42501)", () => {
@@ -52,5 +52,32 @@ describe("appEnvOf (/api/health, WS11)", () => {
     expect(appEnvOf("https://evil.example.test")).toBeNull();
     expect(appEnvOf("sb_secret_abcdefghijklmnopqrstuvwxyz0123456789")).toBeNull();
     expect(appEnvOf("staging env")).toBeNull();
+  });
+});
+
+describe("причина збою бази й назва змінної (WS11, дія з postmortem 2026-11-19)", () => {
+  it("networkCause: код причини fetch → dns / refused / timeout / tls / network", () => {
+    expect(networkCause({ cause: { code: "ENOTFOUND" } })).toBe("dns");
+    expect(networkCause({ cause: { code: "EAI_AGAIN" } })).toBe("dns");
+    expect(networkCause({ cause: { code: "ECONNREFUSED" } })).toBe("refused");
+    expect(networkCause({ cause: { code: "UND_ERR_CONNECT_TIMEOUT" } })).toBe("timeout");
+    expect(networkCause({ name: "TimeoutError" })).toBe("timeout");
+    // Справжня помилка AbortSignal.timeout(): DOMException з числовим code 23 — не має затінити name.
+    expect(networkCause(new DOMException("The operation timed out.", "TimeoutError"))).toBe("timeout");
+    expect(networkCause({ cause: { code: "CERT_HAS_EXPIRED" } })).toBe("tls");
+    expect(networkCause(new Error("something else"))).toBe("network");
+    expect(networkCause(null)).toBe("network");
+  });
+
+  it("suspectEnv: мережа — адреса Supabase, хибний ключ — ключ; пауза й 5xx — не змінні", () => {
+    expect(suspectEnv("unreachable-dns")).toBe("NEXT_PUBLIC_SUPABASE_URL");
+    expect(suspectEnv("invalid-api-key")).toBe("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+    expect(suspectEnv("paused")).toBeNull();
+    expect(suspectEnv("status-503-PGRST002")).toBeNull();
+  });
+
+  it("missingEnv: лише назви порожніх обов'язкових змінних", () => {
+    expect(missingEnv({ NEXT_PUBLIC_SUPABASE_URL: "https://x", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "k" })).toEqual([]);
+    expect(missingEnv({ NEXT_PUBLIC_SUPABASE_URL: "  " })).toEqual(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
   });
 });

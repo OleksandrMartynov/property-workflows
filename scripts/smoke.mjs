@@ -93,6 +93,11 @@ async function main() {
     fail.push(`"/api/health": Supabase призупинено — Dashboard → Resume project (безкоштовний проєкт засинає після тижня без активності)`);
   } else if (health.reason === "invalid-api-key") {
     fail.push(`"/api/health": ключ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY у Vercel не приймається — звірте змінні Production і зробіть Redeploy`);
+  } else if (health.db !== "ok" && health.check) {
+    // WS11, дія з postmortem 2026-11-19-staging-bad-supabase-url: health сам називає змінну — без її значення.
+    fail.push(
+      `"/api/health": HTTP ${health.status}, db=${health.db ?? "?"} (${health.reason}) — перевірте змінну ${health.check} у Vercel для цього середовища (і перевизначення для гілки), потім Redeploy`,
+    );
   } else if (health.db !== "ok") {
     fail.push(
       `"/api/health": HTTP ${health.status}, db=${health.db ?? "?"}${health.reason ? ` (${health.reason})` : ""} — Supabase недоступний чи NEXT_PUBLIC_SUPABASE_URL у Vercel не той?`,
