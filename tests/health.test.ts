@@ -62,6 +62,8 @@ describe("причина збою бази й назва змінної (WS11, �
     expect(networkCause({ cause: { code: "ECONNREFUSED" } })).toBe("refused");
     expect(networkCause({ cause: { code: "UND_ERR_CONNECT_TIMEOUT" } })).toBe("timeout");
     expect(networkCause({ name: "TimeoutError" })).toBe("timeout");
+    // Справжня помилка AbortSignal.timeout(): DOMException з числовим code 23 — не має затінити name.
+    expect(networkCause(new DOMException("The operation timed out.", "TimeoutError"))).toBe("timeout");
     expect(networkCause({ cause: { code: "CERT_HAS_EXPIRED" } })).toBe("tls");
     expect(networkCause(new Error("something else"))).toBe("network");
     expect(networkCause(null)).toBe("network");

@@ -60,8 +60,11 @@ const CAUSES: [RegExp, NetworkCause][] = [
 
 /** Помилка fetch → вид мережевого збою за кодом причини (undici кладе його в error.cause.code). */
 export function networkCause(error: unknown): NetworkCause {
-  const e = error as { name?: string; code?: string; cause?: { code?: string; name?: string } } | null;
-  const code = e?.cause?.code ?? e?.code ?? e?.cause?.name ?? e?.name ?? "";
+  const e = error as { name?: unknown; code?: unknown; cause?: { code?: unknown; name?: unknown } } | null;
+  // Лише непорожні рядки: DOMException «TimeoutError» з AbortSignal.timeout() має числовий code (23), який інакше
+  // затінив би name і дав «network» замість «timeout».
+  const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+  const code = text(e?.cause?.code) ?? text(e?.code) ?? text(e?.cause?.name) ?? text(e?.name) ?? "";
   return CAUSES.find(([re]) => re.test(code))?.[1] ?? "network";
 }
 
