@@ -115,6 +115,7 @@ NEXT_PUBLIC_SUPABASE_URL у Vercel для цього середовища (і п
 | `SUPABASE_DB_URL` (пароль бази) | Supabase → Settings → Database → Reset password | GitHub → Environments → `production` → секрет | перевірка — наступний `db-deploy` чи ручний `db-check` |
 | `OPENROUTER_API_KEY` | OpenRouter → Keys | Vercel (Production, Preview), `.env.local` для `npm run eval` | redeploy; AC-DOCAI-13 («The assistant is not available now…») — ознака, що ключа немає |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel → Settings → Deployment Protection → Protection Bypass for Automation | GitHub → Settings → Secrets → Actions | redeploy staging; ручний smoke з `url` staging — зелений |
+| `BACKUP_PASSPHRASE` | менеджер паролів (нова довга випадкова фраза) | GitHub → Environments → `production` → секрет | ручний прогін `backup` зелений; старі копії — старою фразою (розділ 8) |
 | `TELEGRAM_BOT_TOKEN` | Telegram, BotFather (перевипуск токена) | GitHub Secrets і змінні Vercel | ручний червоний прогін smoke (`url` = `https://example.invalid`) → повідомлення прийшло |
 
 Перевірка: зелений smoke на прод і staging. Запис у чат: що ротували і чому — без значень.
@@ -175,7 +176,52 @@ claude --settings .claude/settings.incident.json --permission-mode plan
   `-timeout`, `-tls`, `missing-env`, `invalid-env`, `invalid-api-key`, `paused`) і `check` — назву змінної, яку
   перевірити; той самий рядок `health.db_down` пише в Runtime Logs, а smoke — в `::error` і в алерт.
 
-## 8. Чого ніколи не робити
+## 8. Резервна копія і відновлення
+
+Безкоштовний Supabase резервних копій не робить, тому наша копія — єдина. Workflow `.github/workflows/backup.yml`
+(бонус WS11, з набору курсу; інструкція — `materials/ops-kit/bonus/restore-drill.md` у репо домашки).
+
+| Що | Як у нас |
+|---|---|
+| Де копія | Actions → `backup` → прогін → артефакт `supabase-backup` (файл `backup-<UTC>.tgz.gpg`: ролі, схема, усі дані й окремо дані `public`) |
+| Як часто (RPO) | щодня ≈ 03:41 за Києвом (`41 1 * * *` UTC) і вручну → втратити можна до **24 годин** записів |
+| Скільки живе | **7 днів** (артефакт), тобто в будь-який момент є до 7 щоденних копій |
+| Шифрування | `gpg --symmetric` AES256 фразою `BACKUP_PASSPHRASE`; відкритого дампу немає ніде: ні в git, ні в артефакті, ні в журналі |
+| Хто знає фразу | лише розробник (власник репо): секрет середовища `production` у GitHub і його менеджер паролів. Втрачено фразу — копії не розшифрувати |
+| Тренування | job `restore-drill` після кожної копії: одноразова база Supabase на раннері з наших міграцій → копія → порівняння кількості рядків у Summary прогону |
+
+**Тренування 2026-11-19:**
+
+| Прогін | `scope` | Результат |
+|---|---|---|
+| [44504097040](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44504097040) | `all` | ❌ `ERROR: column …` — схема `auth` локального Supabase інша, ніж у хмарі |
+| [44504667852](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44504667852) | `public` | ❌ `duplicate key`: наші міграції самі вставляють стартові шаблони, копія приносила їх удруге → #117: перед завантаженням очищаємо `public` одноразової бази |
+| [44506250509](https://github.com/OleksandrMartynov/property-workflows/actions/runs/44506250509) | `public` | ✅ 9 таблиць, 348 рядків — «у копії = відновлено» в кожній |
+
+**RTO тренування:** job `restore-drill` — **1 хв 45 с** (разом із підняттям бази в Docker), увесь прогін з копією —
+3 хв 12 с. Справжнє відновлення в новий проєкт довше: створення проєкту, змінні у Vercel, Redeploy, smoke — закладаємо
+≈ 30–60 хв.
+
+**Чого тренування не доводить:** рядки `auth.*` (акаунти) у локальну базу не відновлюються, тому типовий `scope` —
+`public` (#118). У новому хмарному проєкті схема `auth` та сама, що й у копії, але це **не перевірено**. Якщо акаунти
+не відновляться, `npm run users:demo` створить тестові акаунти заново, але з новими `id`, тож запуски й задачі з копії
+(менеджер, виконавці) на них не вкажуть — це окремий розбір, а не крок цієї інструкції.
+
+**Справжнє відновлення** — рішення людини після інциденту, не агента:
+
+1. Завантажити артефакт `supabase-backup` потрібного дня; розшифрувати локально `gpg -d backup-<UTC>.tgz.gpg > backup.tgz`
+   (фразу вводить людина), розпакувати `tar -xzf backup.tgz`.
+2. Створити **новий** проєкт Supabase і відновити за інструкцією Supabase «Backup and restore using the CLI»:
+   `roles.sql` → `schema.sql` → `data.sql`. Поверх живих даних — ніколи.
+3. Нові `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` → Vercel (розділ 4), `SUPABASE_DB_URL` →
+   GitHub (`production`), Redirect URLs у Supabase → Redeploy → smoke прод зелений.
+4. Розшифровані файли видалити з ноутбука; запис в issue інциденту — що й з якої копії відновлено, без даних.
+
+Червоний нічний прогін `backup` алерту в Telegram не шле: GitHub надсилає лист про збій розкладу. Перевіряйте Actions →
+`backup` хоча б раз на тиждень. Ротація фрази: нова фраза → секрет `BACKUP_PASSPHRASE` → ручний прогін `backup`
+зелений; копії попередніх днів лишаються зашифровані старою фразою, доки не зникнуть за 7 днів.
+
+## 9. Чого ніколи не робити
 
 - `supabase migration down`, `supabase migration repair`, `supabase db reset --linked` (чи `--db-url`) і
   `supabase db push` з ноутбука проти нашого проєкту — **знищують дані** або розводять базу з `main`. Схема змінюється
