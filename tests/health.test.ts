@@ -1,6 +1,6 @@
 // D0: /api/health відрізняє «база відповіла» від «база недоступна, призупинена чи ключ хибний».
 import { describe, expect, it } from "vitest";
-import { appEnvOf, classifyDbProbe, missingEnv, networkCause, suspectEnv } from "@/lib/health";
+import { appEnvOf, classifyDbProbe, missingEnv, networkCause, supabaseRefOf, suspectEnv } from "@/lib/health";
 
 describe("classifyDbProbe (/api/health)", () => {
   it("рахує базу живою, коли запит пройшов або Postgres відмовив у правах (42501)", () => {
@@ -52,6 +52,22 @@ describe("appEnvOf (/api/health, WS11)", () => {
     expect(appEnvOf("https://evil.example.test")).toBeNull();
     expect(appEnvOf("sb_secret_abcdefghijklmnopqrstuvwxyz0123456789")).toBeNull();
     expect(appEnvOf("staging env")).toBeNull();
+  });
+});
+
+describe("supabaseRefOf (/api/health, WS11: staging з окремою базою)", () => {
+  it("ref — перший сегмент хоста <ref>.supabase.co", () => {
+    expect(supabaseRefOf("https://abcdefghijklmnopqrst.supabase.co")).toBe("abcdefghijklmnopqrst");
+    expect(supabaseRefOf("https://ABCDEFGHIJKLMNOPQRST.supabase.co/")).toBe("abcdefghijklmnopqrst");
+  });
+
+  it("немає змінної, невалідна адреса чи не хост Supabase (локальна база, інший домен) — null", () => {
+    expect(supabaseRefOf(undefined)).toBeNull();
+    expect(supabaseRefOf("")).toBeNull();
+    expect(supabaseRefOf("not a url")).toBeNull();
+    expect(supabaseRefOf("http://127.0.0.1:54321")).toBeNull();
+    expect(supabaseRefOf("https://abc.supabase.co.evil.example.test")).toBeNull();
+    expect(supabaseRefOf("https://a.b.supabase.co")).toBeNull();
   });
 });
 

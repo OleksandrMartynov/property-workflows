@@ -36,6 +36,21 @@ export function appEnvOf(raw: string | undefined): string | null {
   return APP_ENV.test(value) ? value : null;
 }
 
+const SUPABASE_HOST = /^([a-z0-9]{1,40})\.supabase\.co$/;
+
+/**
+ * WS11, staging з окремою базою: ref проєкту Supabase — перший сегмент хоста NEXT_PUBLIC_SUPABASE_URL
+ * (`https://<ref>.supabase.co`). Не секрет: браузер і так отримує цю адресу. За ним видно, що прод і staging (і
+ * PR-preview) ходять у різні бази. Немає змінної, невалідна адреса чи не хост Supabase — null.
+ */
+export function supabaseRefOf(raw: string | undefined): string | null {
+  try {
+    return new URL(raw ?? "").hostname.toLowerCase().match(SUPABASE_HOST)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── WS11, дія з postmortem docs/incidents/2026-11-19-staging-bad-supabase-url.md ────────────────────────────────────
 // На дрілі /api/health казав лише «status-0»: запит до бази не дійшов, але чому і що перевірити — невідомо, а в
 // журналі Vercel не лишалося жодного рядка. Тепер: причина мережевого збою (dns / refused / timeout / tls) і НАЗВА

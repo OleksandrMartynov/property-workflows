@@ -1,5 +1,7 @@
-// D0: публічна перевірка здоров'я проду — GET /api/health → { ok, sha, env, appEnv, db, reason, check }.
+// D0: публічна перевірка здоров'я проду — GET /api/health → { ok, sha, env, appEnv, supabaseRef, db, reason, check }.
 // WS11: appEnv — середовище з APP_ENV (Vercel, лише гілка staging): на staging VERCEL_ENV теж «preview».
+// WS11, staging з окремою базою: supabaseRef — ref проєкту Supabase з публічної адреси бази (не секрет): прод і
+// staging (та PR-preview) мають показувати різні.
 // WS11, дія з postmortem docs/incidents/2026-11-19-staging-bad-supabase-url.md: замість «status-0» — причина мережевого
 // збою (unreachable-dns / -refused / -timeout / -tls) і check — НАЗВА змінної, яку варто перевірити; при збої — один
 // рядок health.db_down у журналі Vercel. Значень змінних і хоста ніде немає.
@@ -8,7 +10,7 @@
 // Читають: scripts/smoke.mjs, .github/workflows/smoke.yml і перевірка розгортань курсу.
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { appEnvOf, classifyDbProbe, missingEnv, networkCause, suspectEnv } from "@/lib/health";
+import { appEnvOf, classifyDbProbe, missingEnv, networkCause, supabaseRefOf, suspectEnv } from "@/lib/health";
 import type { Database } from "@/lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +56,7 @@ export async function GET() {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? "local";
   const env = process.env.VERCEL_ENV ?? "local";
   const appEnv = appEnvOf(process.env.APP_ENV);
+  const supabaseRef = supabaseRefOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const health = await probeDb();
   const check =
     health.reason === "missing-env" ? missingEnv(process.env).join(",") : health.reason === "invalid-env" ? "NEXT_PUBLIC_SUPABASE_URL" : suspectEnv(health.reason);
@@ -62,7 +65,7 @@ export async function GET() {
     console.error(JSON.stringify({ event: "health.db_down", reason: health.reason, check, env, appEnv, sha: sha.slice(0, 7) }));
   }
   return NextResponse.json(
-    { ok: health.db === "ok", sha, env, appEnv, ...health, ...(check ? { check } : {}) },
+    { ok: health.db === "ok", sha, env, appEnv, supabaseRef, ...health, ...(check ? { check } : {}) },
     { status: health.db === "ok" ? 200 : 503, headers: { "cache-control": "no-store" } },
   );
 }
