@@ -34,6 +34,7 @@
 | Прогони smoke | Actions → `smoke`: job `prod` — прод (після деплою `main` і щодня ≈ 07:23 за Києвом), job `deploy` — кожен preview і staging за адресою саме цього деплою |
 | Vercel | проєкт `property-workflows` → Deployments, Logs |
 | Supabase | проєкт застосунку → Logs, Advisors (MCP — лише `read_only=true`) |
+| Бази за середовищами | прод — проєкт `tdscfcilebnmjeapiems` (змінні Supabase для Production); staging і кожен preview з PR — окремий проєкт `otguzuprwoeerntjdgzu` (змінні Supabase для Preview, прод-ключів у Preview немає). Перевірка — `supabaseRef` у `/api/health`: на staging і preview — ref staging, на проді — ref проду. Ref — частина публічної адреси проєкту, не секрет. Змінили змінні Supabase у Vercel — лише Redeploy без build cache застосує їх: `NEXT_PUBLIC_*` вбудовуються під час збірки. Порожнє значення дає 500 на кожній сторінці («Your project's URL and Key are required…», 2026-11-21) |
 | Захист деплоїв | Vercel Authentication — **Standard Protection**: preview і staging закриті входом Vercel, прод відкритий (D0 і курс читають прод без входу). Smoke проходить захист заголовком `x-vercel-protection-bypass` (секрет `VERCEL_AUTOMATION_BYPASS_SECRET`) |
 | Доступ PM до staging | **спільне посилання Vercel** (Share на деплої staging, адреса гілки + `?_vercel_share=…`), обрано 2026-11-18: PM не потрібен акаунт Vercel; на Hobby — одне посилання на акаунт. Посилання містить токен — лише особистим повідомленням PM, у публічних файлах — адреса без параметрів. Перевипуск: Vercel → деплой staging → Share → нове посилання (старе відкликати) |
 
