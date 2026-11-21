@@ -40,6 +40,10 @@ updates:
       # OpenSpec закріплено на 1.14.1 разом із глобальним CLI тієї ж версії (AGENTS.md, «Команди»): будь-яке оновлення —
       # свідомим PR разом з оновленням CLI.
       - dependency-name: "@fission-ai/openspec"
+      # @vitest/eslint-plugin 1.6.28 вимагає typescript >= 6 (peerOptional), а в нас ^5 (AGENTS.md, «Стек і версії»):
+      # npm install у Vercel падає з ERESOLVE (група #112, 17.11.2026). Повертаємось, коли TS 6+ пройде ADR.
+      - dependency-name: "@vitest/eslint-plugin"
+        versions: [">= 1.6.28"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
