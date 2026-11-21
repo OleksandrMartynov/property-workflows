@@ -5,13 +5,14 @@
 // Кроки: playwright test → pack.mjs → review.mjs (claude -p) → combine.mjs → report.mjs.
 // Звіт пишеться завжди, навіть якщо тести червоні: FAIL — теж результат для PM. Код виходу 1, якщо є FAIL.
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pack } from "./pack.mjs";
 import { review } from "./review.mjs";
 import { combine } from "./combine.mjs";
 import { report } from "./report.mjs";
 import { ROOT, WORK, rel } from "./lib.mjs";
+import { checkUatTarget, fetchHealthRef, supabaseRefFromUrl } from "./ref-guard.mjs";
 
 const argv = process.argv.slice(2);
 const take = (name) => {
@@ -45,6 +46,20 @@ async function deployedSha(base) {
     return (await res.json()).sha ?? null;
   } catch {
     return null;
+  }
+}
+
+// Розгорнута адреса: перед першим записом — та сама база, що в .env.local (scripts/uat/ref-guard.mjs).
+if (url) {
+  if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+  const problem = checkUatTarget({
+    base: url,
+    healthRef: await fetchHealthRef(url),
+    localRef: supabaseRefFromUrl(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  });
+  if (problem) {
+    console.error(`UAT зупинено: ${problem}`);
+    process.exit(1);
   }
 }
 

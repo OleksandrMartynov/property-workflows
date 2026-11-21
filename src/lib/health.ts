@@ -35,3 +35,57 @@ export function appEnvOf(raw: string | undefined): string | null {
   const value = raw?.trim().toLowerCase() ?? "";
   return APP_ENV.test(value) ? value : null;
 }
+
+const SUPABASE_HOST = /^([a-z0-9]{1,40})\.supabase\.co$/;
+
+/**
+ * WS11, staging з окремою базою: ref проєкту Supabase — перший сегмент хоста NEXT_PUBLIC_SUPABASE_URL
+ * (`https://<ref>.supabase.co`). Не секрет: браузер і так отримує цю адресу. За ним видно, що прод і staging (і
+ * PR-preview) ходять у різні бази. Немає змінної, невалідна адреса чи не хост Supabase — null.
+ */
+export function supabaseRefOf(raw: string | undefined): string | null {
+  try {
+    return new URL(raw ?? "").hostname.toLowerCase().match(SUPABASE_HOST)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ── WS11, дія з postmortem docs/incidents/2026-11-19-staging-bad-supabase-url.md ────────────────────────────────────
+// На дрілі /api/health казав лише «status-0»: запит до бази не дійшов, але чому і що перевірити — невідомо, а в
+// журналі Vercel не лишалося жодного рядка. Тепер: причина мережевого збою (dns / refused / timeout / tls) і НАЗВА
+// змінної, яку варто перевірити. Значень змінних і хоста у відповіді немає.
+
+/** Змінні, без яких /api/health не може навіть спробувати запит до бази. */
+export const REQUIRED_ENV = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] as const;
+
+/** Яких обов'язкових змінних немає (лише назви). */
+export function missingEnv(env: Readonly<Record<string, string | undefined>>): string[] {
+  return REQUIRED_ENV.filter((name) => !env[name]?.trim());
+}
+
+export type NetworkCause = "dns" | "refused" | "timeout" | "tls" | "network";
+
+const CAUSES: [RegExp, NetworkCause][] = [
+  [/^(ENOTFOUND|EAI_AGAIN)$/, "dns"],
+  [/^(ECONNREFUSED|ECONNRESET)$/, "refused"],
+  [/^(ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|TimeoutError|AbortError)$/, "timeout"],
+  [/^(CERT_|ERR_TLS|DEPTH_ZERO|UNABLE_TO_VERIFY|SELF_SIGNED)/, "tls"],
+];
+
+/** Помилка fetch → вид мережевого збою за кодом причини (undici кладе його в error.cause.code). */
+export function networkCause(error: unknown): NetworkCause {
+  const e = error as { name?: unknown; code?: unknown; cause?: { code?: unknown; name?: unknown } } | null;
+  // Лише непорожні рядки: DOMException «TimeoutError» з AbortSignal.timeout() має числовий code (23), який інакше
+  // затінив би name і дав «network» замість «timeout».
+  const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+  const code = text(e?.cause?.code) ?? text(e?.code) ?? text(e?.cause?.name) ?? text(e?.name) ?? "";
+  return CAUSES.find(([re]) => re.test(code))?.[1] ?? "network";
+}
+
+/** Яку змінну перевірити за причиною збою; null — справа не в змінних (пауза бази, 5xx Supabase). */
+export function suspectEnv(reason: string): string | null {
+  if (reason.startsWith("unreachable-")) return "NEXT_PUBLIC_SUPABASE_URL";
+  if (reason === "invalid-api-key") return "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
+  return null;
+}
