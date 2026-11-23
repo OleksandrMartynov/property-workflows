@@ -7,7 +7,7 @@
 у https://github.com/koldovsky/2026-quitcode-11-devops-operations-hw); зміст — про наш продукт: агенція з управління
 нерухомістю, шаблони процесів, запуски, задачі, підрядники, AI-розбір документів.
 
-Останнє оновлення: 2026-11-19 (після інцидент-дрілу; staging переїхав на окрему базу), версія продукту: до `v1.0.0` (тег ставимо після приймання PM).
+Останнє оновлення: 2026-11-23 (після інцидент-дрілу 2026-11-19; staging на окремій базі з 2026-11-21), версія продукту: до `v1.0.0` (тег ставимо після приймання PM).
 
 ## Хто отримує алерт і кого кликати
 
@@ -31,11 +31,11 @@
 | Прод | https://property-workflows-rho.vercel.app (гілка `main`) |
 | Staging | https://property-workflows-git-staging-flambs-projects.vercel.app (гілка `staging`, змінна лише для гілки `APP_ENV=staging`; за захистом Vercel) |
 | Здоров'я | `<адреса>/api/health` → `{"ok":true,"sha":"…","env":"production","appEnv":null,"supabaseRef":"tdscfcilebnmjeapiems","db":"ok","reason":""}`; на staging `"appEnv":"staging"` і `"supabaseRef":"otguzuprwoeerntjdgzu"`, на PR-preview — теж ref staging |
-| Бази Supabase (з 2026-11-19 — окремі) | прод — проєкт `property-workflows`, ref `tdscfcilebnmjeapiems`; staging, PR-preview і локальна розробка — проєкт `property-workflows-staging`, ref `otguzuprwoeerntjdgzu`. Ref не секрет (він у публічній адресі бази); ключів і рядків підключення тут немає |
 | Міграції | лише CI після злиття в `main`: `db-deploy-staging` (environment `staging`) → лише якщо зелено, `db-deploy` (environment `production`). Обидва спершу звіряють ref рядка підключення зі змінними репо `SUPABASE_STAGING_REF` / `SUPABASE_PROD_REF` і друкують «Ціль міграцій: проєкт <ref> (…)» |
 | Прогони smoke | Actions → `smoke`: job `prod` — прод (після деплою `main` і щодня ≈ 07:23 за Києвом), job `deploy` — кожен preview і staging за адресою саме цього деплою |
 | Vercel | проєкт `property-workflows` → Deployments, Logs |
 | Supabase | потрібний проєкт (прод чи staging — за `supabaseRef` у health) → Logs, Advisors (MCP — лише `read_only=true`) |
+| Бази за середовищами | прод — проєкт `tdscfcilebnmjeapiems` (змінні Supabase для Production); staging і кожен preview з PR — окремий проєкт `otguzuprwoeerntjdgzu` (змінні Supabase для Preview, прод-ключів у Preview немає). Перевірка — `supabaseRef` у `/api/health`: на staging і preview — ref staging, на проді — ref проду. Ref — частина публічної адреси проєкту, не секрет. Змінили змінні Supabase у Vercel — лише Redeploy без build cache застосує їх: `NEXT_PUBLIC_*` вбудовуються під час збірки. Порожнє значення дає 500 на кожній сторінці («Your project's URL and Key are required…», 2026-11-21) |
 | Захист деплоїв | Vercel Authentication — **Standard Protection**: preview і staging закриті входом Vercel, прод відкритий (D0 і курс читають прод без входу). Smoke проходить захист заголовком `x-vercel-protection-bypass` (секрет `VERCEL_AUTOMATION_BYPASS_SECRET`) |
 | Доступ PM до staging | **спільне посилання Vercel** (Share на деплої staging, адреса гілки + `?_vercel_share=…`), обрано 2026-11-18: PM не потрібен акаунт Vercel; на Hobby — одне посилання на акаунт. Посилання містить токен — лише особистим повідомленням PM, у публічних файлах — адреса без параметрів. Перевипуск: Vercel → деплой staging → Share → нове посилання (старе відкликати) |
 
@@ -150,15 +150,15 @@ staging: база staging на паузі → `db-deploy-staging` червони
 
 - Гілка `staging` отримує зміни лише з `main` — `git merge --ff-only origin/main` або PR `main → staging`; окремої
   розробки на ній немає.
-- **Окрема база з 2026-11-19:** staging, усі PR-preview і локальна розробка працюють з проєктом
+- **Окрема база (проєкт створено 2026-11-19, змінні Vercel перемкнуто 2026-11-21):** staging, усі PR-preview і локальна розробка працюють з проєктом
   `property-workflows-staging` (ref `otguzuprwoeerntjdgzu`); прод — з `property-workflows` (ref `tdscfcilebnmjeapiems`).
-  До цієї дати staging ділив базу з продом (так проходив і дріл 2026-11-19 — без змін даних).
+  До перемикання staging ділив базу з продом (так проходив і дріл 2026-11-19 — без змін даних).
 - Дані staging — лише синтетичні: міграції (стартові шаблони), тестові акаунти з `accounts.zip` (`*@example.test`, ті
   самі паролі, що на проді; створює `npm run users:demo` з `.env.local` = staging) і записи, введені через застосунок.
   **Прод-дані в staging не копіюємо ніколи.**
 - Змінні Vercel по середовищах: `NEXT_PUBLIC_SUPABASE_URL` і `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Production =
   прод, Preview (усі гілки) = staging; лише для гілки `staging` — `APP_ENV=staging`; `SUPABASE_SECRET_KEY` у Vercel
-  немає. Змінні діють лише після Redeploy; старі preview-адреси, зібрані до 2026-11-19, ходять у прод — не надсилайте їх.
+  немає. Змінні діють лише після Redeploy; старі preview-адреси, зібрані до 2026-11-21, ходять у прод — не надсилайте їх.
 - Перевірка, що бази окремі: `supabaseRef` у `/api/health` проду ≠ staging; у журналі smoke деплою staging і PR-preview —
   ref staging.
 - Auth: у проєкті staging Site URL — адреса staging, Redirect URLs — адреса staging, `https://*-flambs-projects.vercel.app/**`
