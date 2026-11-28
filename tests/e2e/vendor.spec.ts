@@ -5,6 +5,7 @@
 // (tests/db/vendor-db.test.ts) і SQL-мутанти V07, V09; тут — прямий запит тим самим ключем, що в браузері підрядника,
 // і крок, який показує на екрані «що не змінилося».
 import { expect, test, type Page } from "@playwright/test";
+import { adminClient } from "./support/admin";
 import { attachRuntimeErrors, given, when } from "./support/uat";
 import {
   ADMINISTRATOR,
@@ -24,6 +25,16 @@ test.afterEach(async ({ page }) => attachRuntimeErrors(page));
 
 const fx = () => readFixture();
 const taskName = (n: number) => fx().tasks[n - 1].name;
+
+// Незалежна перевірка з боку бази для AC-VENDOR-09 (відгук викладача до WS9): усі запуски бачить лише сервісний ключ —
+// ні підрядник, ні менеджер не побачили б запуску, створеного підрядником.
+async function runsCount(column: "template_id" | "case_name", value: string): Promise<number> {
+  const { count, error } = await adminClient().from("runs").select("id", { count: "exact", head: true }).eq(column, value);
+  if (error) throw error;
+  return count ?? 0;
+}
+const tenantRuns = () => runsCount("template_id", TENANT_MOVE_IN);
+const apartment16 = () => runsCount("case_name", "Apartment 16, move-in");
 
 /** Усі адреси @example.test, які видно на сторінці. */
 async function visibleEmails(page: Page): Promise<string[]> {
@@ -372,10 +383,12 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
       let before: string[] = [];
       let refusal = "";
       let created: unknown = null;
+      let tenantBefore = 0;
       await given("підрядник V, який увійшов, і шаблон «Tenant move-in» з поточною версією", async () => {
         await page.goto("/runs");
         await expect(page.getByTestId("user-email")).toHaveText(emails.vendor);
         before = await page.getByTestId("run-row").allTextContents();
+        tenantBefore = await tenantRuns();
       });
 
       await when("V намагається запустити цей шаблон напряму, оминаючи сторінки застосунку", async () => {
@@ -393,11 +406,17 @@ test.describe("Підрядник V із задачами 3 і 4", () => {
         {
           clause: "no run is created, and the list of runs does not change.",
           visible: ["список запусків V — той самий, що до запиту: лише «Apartment 12, move-in»"],
-          hidden: ["запит відхилено: функція бази повернула LAUNCH_NOT_ALLOWED і жодного id запуску", "запуску «Apartment 16, move-in» немає"],
+          hidden: [
+            "запит відхилено: функція бази повернула LAUNCH_NOT_ALLOWED і жодного id запуску",
+            "запуску «Apartment 16, move-in» немає",
+            "у базі (сервісний ключ) запуску «Apartment 16, move-in» немає, а кількість запусків «Tenant move-in» та сама",
+          ],
         },
         async () => {
           expect(refusal).toContain("LAUNCH_NOT_ALLOWED");
           expect(created).toBeNull();
+          expect(await apartment16()).toBe(0);
+          expect(await tenantRuns()).toBe(tenantBefore);
           await expect(page.getByTestId("run-row")).toHaveText(before);
           await expect(page.getByText("Apartment 16, move-in")).toHaveCount(0);
         },
