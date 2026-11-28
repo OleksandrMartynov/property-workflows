@@ -4,7 +4,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { classifyError, proposeDraft } from "@/lib/ai/draft";
 import { JUDGE_MODEL, PRODUCT_MODELS, makeJudgeModel, makeProductModel } from "@/lib/ai/models";
 import { DRAFT_PROMPT_VERSION } from "@/lib/ai/prompts/draft";
-import { DraftSchema } from "@/lib/ai/schema";
 import { judgeSummary, judgedText, passRate, scoreFields, type GoldenCase } from "@/lib/ai/scorer";
 import casesJson from "../tests/fixtures/golden/cases.json";
 
@@ -34,7 +33,7 @@ const NEEDED = RUNS * (cases.length + cases.filter((c) => c.rubric).length);
 // ≤ 20 запитів/хв навіть тоді, коли дві перші моделі ланцюжка відповідають 429 (тоді кейс — до 4 запитів).
 const GAP_MS = Math.max(0, Number(process.env.EVAL_GAP_MS ?? 15_000) || 0);
 
-type Recording = { modelId: string; recordedAt: string; promptVersion: string; text: string };
+type Recording = { modelId: string; recordedAt: string; promptVersion: string; raw?: boolean; text: string };
 // notRun — кейс не запускали через ліміт (429): у частку успіху не входить, у звіті — окремим рядком з причиною.
 type Row = { run: number; id: string; modelId: string; fields: boolean; judge?: boolean; pass: boolean; notRun?: boolean; why?: string };
 const rows: Row[] = [];
@@ -100,7 +99,10 @@ describe.skipIf(!key)("golden cases, живий прогін (безкоштов
             modelId: result.modelId,
             recordedAt: new Date().toISOString(),
             promptVersion: DRAFT_PROMPT_VERSION,
-            text: JSON.stringify(DraftSchema.parse(result.draft)),
+            // Сира відповідь моделі, а не пропозиція після правил коду (відгук викладача до WS10, пункт 5): тоді
+            // офлайн-реплей справді проходить через applyRules і flagInstructions і ловить їхню регресію.
+            raw: true,
+            text: result.rawText,
           };
         }
         expect(fields.mismatches).toEqual([]);

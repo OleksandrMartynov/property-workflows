@@ -124,6 +124,39 @@ test.describe("Менеджер A на сторінці свого запуск�
       );
     },
   );
+
+  // Відгук викладача до WS10, пункт 6: «Тоді» AC-DOCAI-12 — видимий текст у блоці, а не лише isPlainTextFile.
+  test(
+    "AC-DOCAI-12: A завантажує «photo.png» через «Upload a text file» — блок показує «Only plain text files (.txt) are accepted», значень немає",
+    { tag: ["@uat"], annotation: { type: "ac", description: "AC-DOCAI-12" } },
+    async ({ page }) => {
+      const { emails, runs } = fx();
+      await given("менеджер A на сторінці запуску з блоком «Parse a document»", async () => {
+        await page.goto(`/runs/${runs.apartment12}`);
+        await expect(page.getByTestId("user-email")).toHaveText(emails.manager);
+        await expect(block(page).getByRole("button", { name: "Upload a text file" })).toBeVisible();
+      });
+
+      await when("A завантажує файл «photo.png» через «Upload a text file»", async () => {
+        await block(page)
+          .locator("input[type=file]")
+          .setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: Buffer.from("not a text file") });
+      });
+
+      await thenSettled(
+        page,
+        {
+          clause: 'the block shows "Only plain text files (.txt) are accepted" and no value is proposed.',
+          visible: ["у блоці «Parse a document» — «Only plain text files (.txt) are accepted»", "немає форми «Values» з пропозицією AI"],
+        },
+        async () => {
+          await expect(block(page).getByText("Only plain text files (.txt) are accepted")).toBeVisible();
+          await expect(block(page).getByText("AI proposal")).toHaveCount(0);
+          await expect(block(page).getByRole("button", { name: "Save values" })).toHaveCount(0);
+        },
+      );
+    },
+  );
 });
 
 test.describe("Підрядник V із задачами 3 і 4", () => {

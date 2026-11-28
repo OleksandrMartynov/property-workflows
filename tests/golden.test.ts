@@ -11,7 +11,7 @@ import recordedJson from "./fixtures/golden/recorded.json";
 // Перевіряє КОД навколо моделі (промпт, межа <document>, схема, мапінг помилок, оцінювач), а НЕ якість моделі —
 // якість міряє живий прогін `npm run eval` (evals/golden.live.eval.ts).
 
-type Recording = { modelId: string; recordedAt: string; promptVersion?: string; text: string };
+type Recording = { modelId: string; recordedAt: string; promptVersion?: string; raw?: boolean; text: string };
 const cases = casesJson as GoldenCase[];
 const recorded = recordedJson as Record<string, Recording>;
 
@@ -97,9 +97,18 @@ describe("golden cases, офлайн-реплей", () => {
     expect(new Set(covered).size).toBe(covered.length);
   });
 
-  it("кейс 8 PM: розбіжність суми кошторису позначає КОД, навіть якщо модель її не помітила", async () => {
-    const result = await proposeDraft({ text: "x" }, replay(recorded["GC-08"].text));
-    expect(okDraft(result).notes).toContain("items add up to 220.00, the stated total is 200.00");
+  // Відгук викладача до WS10, пункт 5: запис, у якому попередження вже є, не доводить, що його ставить код. Тож
+  // відповідь моделі тут — запис кейсу 8 БЕЗ приміток (модель розбіжності не помітила), і без applyRules тест упаде.
+  it("AC-DOCAI-08: розбіжність суми кошторису позначає КОД, навіть якщо модель її не помітила", async () => {
+    const answer = JSON.stringify({ ...JSON.parse(recorded["GC-08"].text), notes: [] });
+    const result = await proposeDraft({ text: casesOf("GC-08")[0].input }, replay(answer));
+    expect(okDraft(result).notes).toEqual(["items add up to 220.00, the stated total is 200.00"]);
+  });
+
+  it("AC-DOCAI-10: примітку про інструкції ставить КОД за текстом документа, навіть якщо модель її не написала", async () => {
+    const answer = JSON.stringify({ ...JSON.parse(recorded["GC-10"].text), notes: [] });
+    const result = await proposeDraft({ text: casesOf("GC-10")[0].input }, replay(answer));
+    expect(okDraft(result).notes).toEqual(["the text contains instructions to the AI that were ignored"]);
   });
 
   it("кейс 9 PM: відмова — жодного значення, навіть якщо модель їх повернула", async () => {
