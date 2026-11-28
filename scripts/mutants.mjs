@@ -85,10 +85,18 @@ export const mutants = [
     replace: "and (true or assignee_id = (select auth.uid()))",
   },
   {
-    id: "V06", kind: "sql", ac: "AC-VENDOR-06", file: VENDOR, tests: [VENDOR_DB],
+    // Відгук викладача до WS9: це правило «шаблон і версію підряднику не видно» — його доводить тест AC-VENDOR-04, тож і
+    // мутант під AC-VENDOR-04; правило AC-VENDOR-06 (чужий запуск) тримає V06b нижче.
+    id: "V06", kind: "sql", ac: "AC-VENDOR-04", file: VENDOR, tests: [VENDOR_DB],
     what: "runs_select_visible: рядок запуску (з шаблоном і версією) підряднику відкрито напряму",
     find: "    and (select private.current_app_role()) is distinct from 'vendor'\n  );",
     replace: "    and true\n  );",
+  },
+  {
+    id: "V06b", kind: "sql", ac: "AC-VENDOR-06", file: VENDOR, tests: [VENDOR_DB],
+    what: "vendor_runs: left join замість join — підрядник отримує чужий запуск без своїх задач за прямим посиланням",
+    find: "  join public.run_tasks as t on t.run_id = r.id and t.assignee_id = (select auth.uid())",
+    replace: "  left join public.run_tasks as t on t.run_id = r.id and t.assignee_id = (select auth.uid())",
   },
   {
     id: "V07", kind: "sql", ac: "AC-VENDOR-07", file: CLARIFY, tests: [VENDOR_DB, CLARIFY_DB],
