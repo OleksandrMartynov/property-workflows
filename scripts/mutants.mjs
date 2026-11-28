@@ -38,7 +38,7 @@ export const mutants = [
   {
     id: "Q4", kind: "sql", ac: "AC-DOCAI-04", file: HARDEN, tests: [DOCS_DB],
     what: "save_run_document без перевірки непробільного символу і з btrim лише пробілів: назва з переносу рядка зберігається",
-    find: "                   when (e.item ->> 'name') !~ '[^[:space:]]' then true\n                   else char_length(regexp_replace(e.item ->> 'name', '^[[:space:]]+|[[:space:]]+$', '', 'g')) not between 1 and 120",
+    find: /                   when \(e\.item ->> 'name'\) !~ '\[\^[^\n]*\n                   else char_length\(regexp_replace\(e\.item ->> 'name'[^\n]*not between 1 and 120/,
     replace: "                   else char_length(btrim(e.item ->> 'name')) not between 1 and 120",
   },
   // ── Зріз 4 «Parse a document» (solomchaak/property-workflows-spec#59, AC-DOCAI-01…16) ───────────────────────────
@@ -61,13 +61,14 @@ export const mutants = [
     replace: "  if v_run.id is null then",
   },
   {
-    id: "D4", kind: "sql", ac: "(зріз 4: форма позицій)", file: DOCS, tests: [DOCS_DB],
-    what: "перевірка типу поля позиції через <> замість IS DISTINCT FROM: позиція без name ({}) проходить",
+    // D4 і D5 мутують останнє визначення save_run_document (HARDEN): старе в DOCS перекриває create or replace.
+    id: "D4", kind: "sql", ac: "(зріз 4: форма позицій)", file: HARDEN, tests: [DOCS_DB],
+    what: "перевірка типу поля позиції через <> замість IS DISTINCT FROM: позиція з трьома ключами без name проходить",
     find: "                   when jsonb_typeof(e.item -> 'name') is distinct from 'string' then true",
     replace: "                   when jsonb_typeof(e.item -> 'name') <> 'string' then true",
   },
   {
-    id: "D5", kind: "sql", ac: "(зріз 4: межа позицій)", file: DOCS, tests: [DOCS_DB],
+    id: "D5", kind: "sql", ac: "(зріз 4: межа позицій)", file: HARDEN, tests: [DOCS_DB],
     what: "save_run_document без межі 30 позицій кошторису",
     find: "         when jsonb_array_length(p_items) > 30 then true\n",
     replace: "",
