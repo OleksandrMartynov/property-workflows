@@ -35,3 +35,24 @@ describe("Хто бачить кнопку «Mark as done»", () => {
     expect(canCompleteTask(B, taskOfB, { ...run, status: "completed" })).toBe(false);
   });
 });
+
+describe("Необов'язкова задача завершеного запуску", () => {
+  const completed = { ...run, status: "completed" };
+  it("AC-TASK-19: у запуску «completed» виконавець бачить «Mark as done» на необов'язковій задачі «to do»", () => {
+    expect(canCompleteTask(B, { ...taskOfB, required: false }, completed)).toBe(true);
+    expect(canCompleteTask(A, { ...taskOfB, required: false }, completed)).toBe(true);
+  });
+
+  it("AC-TASK-19: на обов'язковій задачі, на виконаній і для стороннього менеджера в запуску «completed» — ні", () => {
+    expect(canCompleteTask(B, { ...taskOfB, required: true }, completed)).toBe(false);
+    expect(canCompleteTask(B, taskOfB, completed)).toBe(false);
+    expect(canCompleteTask(B, { ...taskOfB, required: false, status: "done" }, completed)).toBe(false);
+    expect(canCompleteTask(C, { ...taskOfB, required: false }, completed)).toBe(false);
+  });
+
+  it("AC-VENDOR-16: підрядник у запуску «completed» бачить «Mark as done» лише на своїй необов'язковій задачі «to do»", () => {
+    const V = { id: "v", role: "vendor" as const };
+    expect(canCompleteTask(V, { assignee_id: "v", status: "to_do", required: false }, completed)).toBe(true);
+    expect(canCompleteTask(V, { assignee_id: "b", status: "to_do", required: false }, completed)).toBe(false);
+  });
+});

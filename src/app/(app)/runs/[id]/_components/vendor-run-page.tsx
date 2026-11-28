@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { runStatusLabel, runStatusTone } from "@/lib/runs/labels";
 import type { requireViewer } from "@/lib/supabase/viewer";
 import { isUuid } from "@/lib/templates/current";
 import { PageShell } from "@/app/_components/ui";
@@ -15,8 +13,9 @@ import { VendorRunDetail } from "./vendor-run-detail";
 type ViewerSession = Awaited<ReturnType<typeof requireViewer>>;
 
 /**
- * Сторінка запуску для підрядника (AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06): лише його задачі (RLS run_tasks), назва
- * випадку й статус — із vendor_runs (рядка runs із шаблоном і версією база йому не віддає); запуск без його задач —
+ * Сторінка запуску для підрядника (AC-VENDOR-04, AC-VENDOR-05, AC-VENDOR-06, AC-VENDOR-11): лише його задачі (RLS run_tasks),
+ * назва випадку як заголовок і «Your tasks: N of K done»; статусу запуску, назви й версії шаблону немає (AC-VENDOR-11). Назва
+ * випадку — із vendor_runs (рядка runs із шаблоном і версією база йому не віддає); запуск без його задач —
  * 0 рядків → notFound() і «Run not found».
  */
 export async function VendorRunPage({
@@ -50,7 +49,6 @@ export async function VendorRunPage({
       title={run.case_name}
       titleMorph={morphName("run", run.id)}
       back={{ href: "/runs", label: "Runs" }}
-      actions={<StatusBadge status={runStatusTone(run.status)}>{runStatusLabel(run.status)}</StatusBadge>}
     >
       <DoneTaskNotice tasks={tasks ?? []} done={doneTaskId ? "task" : undefined} task={doneTaskId ?? undefined} />
       {message ? (
