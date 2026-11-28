@@ -17,7 +17,8 @@
 | PM (говорить із клієнтом) | @solomchaak | SEV1–SEV2 — одразу; SEV3 — у робочий час |
 | Резерв | немає (команда з одного розробника на це репо) | — |
 
-- **Канал алерту:** група Telegram команди (назву запише черговий після створення групи), у ній — розробник і PM.
+- **Канал алерту:** група Telegram «Property Workflows Notifications». Учасники: черговий розробник
+  (@OleksandrMartynov), PM (@solomchaak) і бот застосунку, який лише пише повідомлення.
   Бот пише туди з `.github/workflows/smoke.yml` (секрети GitHub `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) і з
   `src/instrumentation.ts` (ті самі назви — змінні Vercel, Production і Preview).
 - **Серйозність** — за матрицею SEV1–3 в операційних вимогах PM (репо https://github.com/solomchaak/property-workflows-spec).
