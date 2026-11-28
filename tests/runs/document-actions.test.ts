@@ -74,8 +74,9 @@ describe("requestDocumentDraft: AI пропонує, нічого не збер�
       draft: { status: "ok", kind: "request", phone: "555-0101", category: "plumbing", urgency: "not_urgent", notes: [] },
       notice: null,
     });
-    // Єдиний виклик бази — перевірка прав менеджера запуску; жодного save_run_document і жодного запису в таблиці.
-    expect(rpc.mock.calls).toEqual([["check_run_document", { p_run_id: RUN }]]);
+    // Виклики бази — перевірка прав менеджера запуску й лічильник ліміту на людину; жодного save_run_document і жодного
+    // запису в таблиці документів.
+    expect(rpc.mock.calls).toEqual([["check_run_document", { p_run_id: RUN }], ["consume_ai_quota"]]);
     expect(from).not.toHaveBeenCalled();
   });
 
@@ -157,6 +158,22 @@ describe("requestDocumentDraft: AI пропонує, нічого не збер�
     rpc.mockResolvedValue({ data: null, error: { message: "DOCUMENT_NOT_ALLOWED" } });
     expect(await requestDocumentDraft(null, requestForm("Some text"))).toEqual({ status: "error", message: "Not enough rights" });
     expect(spy.doGenerateCalls).toHaveLength(0);
+  });
+});
+
+describe("requestDocumentDraft: денний ліміт на людину (відгук викладача до WS10)", () => {
+  it("AC-DOCAI-13: ліміт користувача вичерпано — «недоступний», поля для ручного введення, модель не викликано", async () => {
+    const spy = answering(recorded["GC-01"].text);
+    model = spy;
+    rpc.mockImplementation(async (fn: string) => (fn === "consume_ai_quota" ? { data: null, error: { message: "DAILY_LIMIT" } } : { data: true, error: null }));
+    expect(await requestDocumentDraft(null, requestForm("The kitchen tap drips. 555-0101"))).toEqual({ status: "unavailable", message: ASSISTANT_UNAVAILABLE });
+    expect(spy.doGenerateCalls).toHaveLength(0);
+  });
+
+  it("AC-DOCAI-16: без права на запуск ліміт не витрачається — до лічильника не доходимо", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "DOCUMENT_NOT_ALLOWED" } });
+    await requestDocumentDraft(null, requestForm("The kitchen tap drips. 555-0101"));
+    expect(rpc.mock.calls.map(([fn]) => fn)).toEqual(["check_run_document"]);
   });
 });
 

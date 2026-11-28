@@ -9,7 +9,7 @@ import {
 } from "ai";
 import { DRAFT_INSTRUCTIONS, wrapDocument } from "./prompts/draft";
 import { DraftSchema, type Draft } from "./schema";
-import { applyRules } from "./rules";
+import { applyRules, flagInstructions } from "./rules";
 
 // `ProviderOptions` не експортується з "ai" 7.0.162 — беремо тип із параметрів generateText.
 type ProviderOptions = NonNullable<Parameters<typeof generateText>[0]["providerOptions"]>;
@@ -59,7 +59,7 @@ export async function proposeDraft(input: DraftInput, model: LanguageModel, opts
     // перевірити кодом (формат телефону, сума кошторису, порожні значення відмови), — тут, а не лише в промпті.
     return {
       ok: true,
-      draft: applyRules(result.output),
+      draft: flagInstructions(applyRules(result.output), input.text),
       modelId: result.response.modelId,
       // Лише числа токенів — для журналу llm.call (src/lib/ai/llm-log.ts); тексту відповіді тут немає.
       inputTokens: result.usage.inputTokens,

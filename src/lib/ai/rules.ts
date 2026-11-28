@@ -24,6 +24,30 @@ export function normalizeNotes(notes: string[]): string[] {
   return [...new Set(out)];
 }
 
+// Друга лінія захисту від ін'єкції (відгук викладача до WS10, пункт 3): примітку для людини ставить КОД за текстом
+// документа, а не лише модель, коли сама її напише. Шаблони — явні спроби керувати моделлю з тексту документа; слово
+// «instructions» саме по собі (інструкція виробника) їх не вмикає.
+const INJECTION_PATTERNS = [
+  /\b(ignore|disregard|forget)\s+(all\s+|any\s+|the\s+)?((previous|prior|above|earlier|your)\s+)?(instructions|rules|prompts?)\b/i,
+  /\bsystem\s+prompt\b/i,
+  /\b(reveal|print|show|write)\s+(me\s+)?(your|the)\s+(instructions|prompt|rules)\b/i,
+];
+
+const MAX_NOTES = 5; // як у DraftSchema.notes
+
+/** Чи містить текст документа спробу керувати моделлю (AC-DOCAI-10). */
+export const hasInjection = (text: string) => INJECTION_PATTERNS.some((pattern) => pattern.test(text));
+
+/**
+ * AC-DOCAI-10: у тексті є інструкції до AI — примітка INSTRUCTIONS_NOTE є, навіть якщо модель її не написала. Без
+ * повторів; відмові (refused) приміток не додаємо — у неї значень і приміток немає (AC-DOCAI-09).
+ */
+export function flagInstructions(draft: Draft, text: string): Draft {
+  if (draft.status === "refused" || !hasInjection(text) || draft.notes.includes(INSTRUCTIONS_NOTE)) return draft;
+  // Схема дозволяє не більше 5 приміток: обов'язковій примітці безпеки звільняємо місце замість останньої.
+  return { ...draft, notes: [...draft.notes.slice(0, MAX_NOTES - 1), INSTRUCTIONS_NOTE] };
+}
+
 /** Телефон з документа в одній формі 555-0101; не телефон (не 7 цифр) — null, а не вигадана форма. */
 export function normalizePhone(phone: string | null): string | null {
   if (!phone) return null;
