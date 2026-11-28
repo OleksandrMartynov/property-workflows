@@ -4,11 +4,12 @@ import { JUDGE_INSTRUCTIONS, judgePrompt } from "./prompts/judge";
 import type { Draft } from "./schema";
 
 // Один golden case від PM: вхід → очікуване. Формат файлу — tests/fixtures/golden/cases.json.
-export type ExpectedField = "status" | "kind" | "phone" | "category" | "urgency" | "items" | "total";
+export type ExpectedField = "status" | "kind" | "phone" | "category" | "urgency" | "items" | "total" | "notes";
 export type GoldenCase = {
   id: string; // "GC-01" — номер кейсу PM у solomchaak/property-workflows-spec#40
   input: string;
-  // Лише ті значення, які PM фіксує однозначно (телефон, категорія, терміновість, позиції, сума). Порівнюються точно.
+  // Лише ті значення, які PM фіксує однозначно (телефон, категорія, терміновість, позиції, сума, примітки). Порівнюються
+  // точно: правило PM від 16.11 (solomchaak/property-workflows-spec#40) — «warnings, notes and refusals must match exactly».
   expected: Partial<Pick<Draft, ExpectedField>>;
   // Слова PM: що опис і примітки мають містити / чого не мають. Оцінює LLM-суддя лише в живому eval.
   rubric?: string;
@@ -24,11 +25,16 @@ function canonical(value: unknown): string {
   return JSON.stringify(value) ?? "null";
 }
 
+/** Примітки — набір: порядок не важить, текст — дослівно, зайва примітка теж розбіжність. */
+const sortedNotes = (notes: unknown) => (Array.isArray(notes) ? [...notes].sort() : notes);
+
 // (1) Детермінована частина: точний збіг значень, зафіксованих PM (масиви позицій — поелементно, порядок ключів
-// об'єкта не важить).
+// об'єкта не важить; примітки — набором).
 export function scoreFields(expected: GoldenCase["expected"], actual: Draft) {
+  const same = (k: ExpectedField) =>
+    k === "notes" ? canonical(sortedNotes(expected.notes)) === canonical(sortedNotes(actual.notes)) : canonical(expected[k]) === canonical(actual[k]);
   const mismatches = (Object.keys(expected) as ExpectedField[])
-    .filter((k) => canonical(expected[k]) !== canonical(actual[k]))
+    .filter((k) => !same(k))
     .map((k) => ({ field: k, expected: expected[k], actual: actual[k] }));
   return { pass: mismatches.length === 0, mismatches };
 }

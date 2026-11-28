@@ -27,7 +27,15 @@ export type DraftInput = {
 };
 
 export type DraftResult =
-  | { ok: true; draft: Draft; modelId: string; inputTokens?: number; outputTokens?: number }
+  | {
+      ok: true;
+      draft: Draft;
+      modelId: string;
+      inputTokens?: number;
+      outputTokens?: number;
+      /** Сира відповідь моделі ДО правил коду — лише для запису golden cases (eval); у журнал і в інтерфейс не йде. */
+      rawText: string;
+    }
   | { ok: false; reason: "invalid_output" | "rate_limited" | "timeout" | "provider_error"; message: string };
 
 export type DraftOptions = {
@@ -61,6 +69,7 @@ export async function proposeDraft(input: DraftInput, model: LanguageModel, opts
       ok: true,
       draft: flagInstructions(applyRules(result.output), input.text),
       modelId: result.response.modelId,
+      rawText: result.text,
       // Лише числа токенів — для журналу llm.call (src/lib/ai/llm-log.ts); тексту відповіді тут немає.
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
