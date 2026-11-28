@@ -19,6 +19,8 @@ const NAV = [
   { href: "/templates", label: "Templates", icon: "M3.5 3h9v10h-9zM6 6h4M6 8.5h4M6 11h2" },
   { href: "/runs", label: "Runs", icon: "M3 4.5h10M3 8h10M3 11.5h6" },
 ] as const;
+/** Власний профіль (матриця прав «See own profile»): у навігації підрядника поруч із Runs (AC-VENDOR-13). */
+const PROFILE = { href: "/profile", label: "Profile", icon: "M8 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3.5 13c.6-2.3 2.4-3.5 4.5-3.5s3.9 1.2 4.5 3.5" } as const;
 
 function NavIcon({ d }: { d: string }) {
   return (
@@ -28,8 +30,10 @@ function NavIcon({ d }: { d: string }) {
   );
 }
 
-/** Підрядник (vendor) працює лише зі своїми задачами: у навігації — лише Runs (шаблонів і головної агенції не бачить). */
-export const navFor = (role?: string) => (role === "vendor" ? NAV.filter((item) => item.href === "/runs") : NAV);
+/** Підрядник (vendor) працює лише зі своїми задачами: у навігації — лише Runs і Profile (AC-VENDOR-13); шаблонів і головної
+ * агенції не бачить. */
+export const navFor = (role?: string) =>
+  role === "vendor" ? [...NAV.filter((item) => item.href === "/runs"), PROFILE] : NAV;
 
 /** Команди переходу в ⌘K — ті самі сторінки, що й навігація; «Launch a template» — лише тим, хто запускає шаблони. */
 export const navigationCommands = (role?: string) => [

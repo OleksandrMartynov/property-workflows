@@ -9,6 +9,9 @@ const VERSIONS_DB = "tests/db/template-versions-db.test.ts";
 const VENDOR = "supabase/migrations/20261030125515_vendor_role.sql";
 const VENDOR_DB = "tests/db/vendor-db.test.ts";
 const LAUNCH = "supabase/migrations/20261102105500_launch_run_hide_draft.sql";
+// Остання версія private.complete_task (уточнення зрізу 3): мутуємо її, а не попередні — їх перекриває create or replace.
+const CLARIFY = "supabase/migrations/20261128193951_vendor_clarify.sql";
+const CLARIFY_DB = "tests/db/vendor-clarify-db.test.ts";
 const VIEWER = "src/lib/supabase/viewer.ts";
 const VENDOR_PAGES = "tests/vendor/vendor-pages.test.tsx";
 const DOCS = "supabase/migrations/20261116162440_run_documents.sql";
@@ -109,16 +112,48 @@ export const mutants = [
     replace: "and (true or assignee_id = (select auth.uid()))",
   },
   {
-    id: "V06", kind: "sql", ac: "AC-VENDOR-06", file: VENDOR, tests: [VENDOR_DB],
+    // Відгук викладача до WS9: це правило «шаблон і версію підряднику не видно» — його доводить тест AC-VENDOR-04, тож і
+    // мутант під AC-VENDOR-04; правило AC-VENDOR-06 (чужий запуск) тримає V06b нижче.
+    id: "V06", kind: "sql", ac: "AC-VENDOR-04", file: VENDOR, tests: [VENDOR_DB],
     what: "runs_select_visible: рядок запуску (з шаблоном і версією) підряднику відкрито напряму",
     find: "    and (select private.current_app_role()) is distinct from 'vendor'\n  );",
     replace: "    and true\n  );",
   },
   {
-    id: "V07", kind: "sql", ac: "AC-VENDOR-07", file: VENDOR, tests: [VENDOR_DB],
-    what: "complete_task: підрядник позначає задачу, де він не виконавець (лишається лише перевірка менеджера запуску)",
-    find: "  if v_role = 'vendor' and v_task.assignee_id is distinct from v_uid then",
-    replace: "  if false and v_task.assignee_id is distinct from v_uid then",
+    id: "V06b", kind: "sql", ac: "AC-VENDOR-06", file: VENDOR, tests: [VENDOR_DB],
+    what: "vendor_runs: left join замість join — підрядник отримує чужий запуск без своїх задач за прямим посиланням",
+    find: "  join public.run_tasks as t on t.run_id = r.id and t.assignee_id = (select auth.uid())",
+    replace: "  left join public.run_tasks as t on t.run_id = r.id and t.assignee_id = (select auth.uid())",
+  },
+  {
+    id: "V07", kind: "sql", ac: "AC-VENDOR-07", file: CLARIFY, tests: [VENDOR_DB, CLARIFY_DB],
+    what: "complete_task (остання версія): підрядник позначає задачу, де він не виконавець (лишається лише перевірка менеджера запуску)",
+    find: "    if v_task.assignee_id is distinct from v_uid then",
+    replace: "    if false and v_task.assignee_id is distinct from v_uid then",
+  },
+  {
+    id: "V07m", kind: "sql", ac: "AC-VENDOR-07", file: CLARIFY, tests: [CLARIFY_DB],
+    what: "complete_task: відмова в праві без тексту PM (прямий запит не отримує повідомлення)",
+    find: "  c_not_allowed   constant text := 'Only the task''s assignee, the run manager, or an administrator can mark a task as done';",
+    replace: "  c_not_allowed   constant text := '';",
+  },
+  {
+    id: "V15", kind: "sql", ac: "AC-VENDOR-15", file: CLARIFY, tests: [CLARIFY_DB],
+    what: "complete_task: задача запуску без задач підрядника — NOT_ALLOWED замість «Run not found» (відповідь розкриває запуск)",
+    find: "    if not exists (select 1 from public.run_tasks as t where t.run_id = v_run.id and t.assignee_id = v_uid) then",
+    replace: "    if false then",
+  },
+  {
+    id: "V16", kind: "sql", ac: "AC-VENDOR-16, AC-TASK-19", file: CLARIFY, tests: [CLARIFY_DB],
+    what: "complete_task: у завершеному запуску позначки знову заборонені (RUN_COMPLETED і для необов'язкової задачі)",
+    find: "  if v_run.status <> 'in_progress' and (v_run.status <> 'completed' or v_task.required) then",
+    replace: "  if v_run.status <> 'in_progress' then",
+  },
+  {
+    id: "T19", kind: "sql", ac: "AC-TASK-19", file: CLARIFY, tests: [CLARIFY_DB],
+    what: "complete_task: позначка в завершеному запуску знову «завершує» його — completed_at змінюється",
+    find: "  if v_run.status = 'in_progress' and not exists (",
+    replace: "  if not exists (",
   },
   {
     id: "V08", kind: "sql", ac: "AC-VENDOR-08", file: VERSIONS, tests: [VENDOR_DB],
