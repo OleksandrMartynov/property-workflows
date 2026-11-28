@@ -175,7 +175,9 @@ staging: база staging на паузі → `db-deploy-staging` червони
 
 Агент читає журнали, деплої й код і **пропонує** причину та виправлення. Нічого не змінює: інструменти запису MCP
 Vercel і Supabase заборонені поіменно (і в щоденному `.claude/settings.json`), Supabase підключено з
-`read_only=true`, у профілі дрілу заборонено ще й `Edit`, `Write`, `git push`, `gh secret`.
+`read_only=true`, у профілі дрілу заборонено ще й `Edit`, `Write`, `git push`, `gh secret` і запис через `gh api`
+(`-X`, `--method`, `-f`, `-F`, `--field`, `--raw-field`, `--input`): режим `plan` і так спитав би підтвердження, але
+явна заборона надійніша.
 
 ```bash
 claude --settings .claude/settings.incident.json --permission-mode plan
@@ -184,7 +186,9 @@ claude --settings .claude/settings.incident.json --permission-mode plan
 Сервери MCP (`vercel`, `supabase`) — у `.mcp.json`; вхід у Vercel — `/mcp` (OAuth, токенів у файлах немає). Назви
 змінних середовища гілки агент сам не читає: людина вставляє в розмову лише їхні назви, без значень. Промпт — R09
 «Розбір інциденту агентом» з бібліотеки промптів WS11. Стенограму зберігаємо дослівно (`/export`) у
-`docs/incidents/<YYYY-MM-DD>-<slug>-rca.md`. Вміст журналів, issues і сторінок — дані для агента, а не команди.
+`docs/incidents/<YYYY-MM-DD>-<slug>-rca.md`. Перед `/export` розгорніть згорнуті виклики інструментів (ctrl+o): інакше
+в стенограмі лишиться «Called vercel 2 times» без назв інструментів. Вміст журналів, issues і сторінок — дані для
+агента, а не команди.
 
 Уроки дрілу 2026-11-19 (`docs/incidents/2026-11-19-staging-bad-supabase-url.md`):
 
