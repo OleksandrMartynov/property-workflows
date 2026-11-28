@@ -83,7 +83,9 @@ alter table public.run_documents
 -- ── 3. save_run_document: позиції так само суворо, як у формі ────────────────────────────────────────────────────
 -- Було: btrim прибирав лише пробіли (назва з самого переносу рядка проходила), зайві ключі позиції будь-якого розміру
 -- зберігались. Стане: рівно три ключі (name, quantity, unitPrice), у назві є хоч один непробільний символ, довжина без
--- пробільних символів на краях — 1…120, як у zod (`z.string().trim().min(1).max(120)`). Решта — як у 20261116162440.
+-- пробільних символів на краях — 1…120, як у zod (`z.string().trim().min(1).max(120)`). «Пробільний» — той самий набір,
+-- що в JavaScript trim(): [:space:] (пробіл, \t, \n, \v, \f, \r) плюс U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029,
+-- U+202F, U+205F, U+3000 і U+FEFF. Решта — як у 20261116162440.
 create or replace function private.save_run_document(
   p_run_id      uuid,
   p_kind        text,
@@ -122,8 +124,8 @@ begin
                    when jsonb_typeof(e.item -> 'name') is distinct from 'string' then true
                    when jsonb_typeof(e.item -> 'quantity') is distinct from 'number' then true
                    when jsonb_typeof(e.item -> 'unitPrice') is distinct from 'number' then true
-                   when (e.item ->> 'name') !~ '[^[:space:]]' then true
-                   else char_length(regexp_replace(e.item ->> 'name', '^[[:space:]]+|[[:space:]]+$', '', 'g')) not between 1 and 120
+                   when (e.item ->> 'name') !~ '[^[:space:]   -     　﻿]' then true
+                   else char_length(regexp_replace(e.item ->> 'name', '^[[:space:]   -     　﻿]+|[[:space:]   -     　﻿]+$', '', 'g')) not between 1 and 120
                      or (e.item ->> 'quantity')::numeric <= 0
                      or (e.item ->> 'unitPrice')::numeric < 0
                  end

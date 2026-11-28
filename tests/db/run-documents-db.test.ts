@@ -141,6 +141,11 @@ describe("База: відгук викладача до WS10 — форма й 
       { kind: "estimate", items: [{ name: "\n", quantity: 1, unitPrice: 1 }] },
       { kind: "estimate", items: [{ name: "\t \n", quantity: 1, unitPrice: 1 }] },
       { kind: "estimate", items: [{ name: "Faucet", quantity: 1, unitPrice: 1, note: "x".repeat(10_000) }] },
+      // Три ключі, але без name: кількість ключів пройде, тип name — ні (мутант D4).
+      { kind: "estimate", items: [{ title: "Faucet", quantity: 1, unitPrice: 1 }] },
+      // Лише символи, які прибирає JavaScript trim(), але не [:space:] (U+FEFF, U+00A0, U+3000).
+      { kind: "estimate", items: [{ name: "\ufeff", quantity: 1, unitPrice: 1 }] },
+      { kind: "estimate", items: [{ name: "\u00a0\u3000", quantity: 1, unitPrice: 1 }] },
     ];
     for (const doc of bad) expect(await errorOf(save(MANAGER_A, runId, doc))).toContain("DOCUMENT_INVALID");
     const nan = t.asUser(MANAGER_A, "select public.save_run_document($1, 'estimate', null, null, null, null, null, 'NaN'::numeric)", [runId]);
@@ -151,7 +156,8 @@ describe("База: відгук викладача до WS10 — форма й 
   it("AC-DOCAI-04: назва з пробілами на краях і 120 символів без них — приймається, як у формі", async () => {
     const runId = await runOfA("Apartment 12, trimmed name");
     await save(MANAGER_A, runId, { kind: "estimate", items: [{ name: ` ${"a".repeat(120)}\n`, quantity: 1, unitPrice: 1 }] });
-    expect(await stored(runId)).toHaveLength(1);
+    await save(MANAGER_A, runId, { kind: "estimate", items: [{ name: `\ufeff\u00a0${"b".repeat(120)}\u3000`, quantity: 1, unitPrice: 1 }] });
+    expect(await stored(runId)).toHaveLength(2);
   });
 
   it("AC-DOCAI-13: ліміт на людину — 10 викликів на добу, 11-й DAILY_LIMIT; лічильник іншого користувача окремий", async () => {
