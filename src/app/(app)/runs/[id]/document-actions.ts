@@ -47,7 +47,7 @@ async function checkAccess(runId: string) {
 
 export async function requestDocumentDraft(_prev: DocumentDraftState, formData: FormData): Promise<DocumentDraftState> {
   // Авторизація ДО виклику моделі: інакше будь-хто витратив би денний ліміт безкоштовних моделей.
-  const { denied } = await checkAccess(String(formData.get("run_id") ?? ""));
+  const { supabase, denied } = await checkAccess(String(formData.get("run_id") ?? ""));
   if (denied) return failed(denied);
 
   const text = String(formData.get("text") ?? "");
@@ -57,6 +57,15 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
 
   // Немає ключа, ліміт, тайм-аут, нечитана відповідь — «недоступний»: значення людина вводить сама (AC-DOCAI-13).
   const model = productModel();
+  // Денний ліміт на людину рахує база до виклику моделі (відгук викладача до WS10, пункт 2): інакше один користувач
+  // вичерпав би спільний ліміт безкоштовних моделей для всіх. Без ключа модель не кличемо й ліміт не витрачаємо.
+  if (model) {
+    const { error: quotaError } = await supabase.rpc("consume_ai_quota");
+    if (quotaError) {
+      logDraftCall(null, 0, quotaError.message?.includes("DAILY_LIMIT") ? "user_daily_limit" : "quota_error");
+      return { status: "unavailable", message: ASSISTANT_UNAVAILABLE };
+    }
+  }
   const started = performance.now();
   const result = model ? await proposeDraft({ text }, model) : null;
   logDraftCall(result, performance.now() - started);
@@ -75,7 +84,7 @@ export async function requestDocumentDraft(_prev: DocumentDraftState, formData: 
  * версія промпту, id запиту. Тексту документа, промпту й відповіді моделі в журналі немає: їх сюди не передаємо, а
  * схема журналу таких полів не має. Без ключа модель не викликалась — стан unavailable з кодом no_key.
  */
-function logDraftCall(result: DraftResult | null, latencyMs: number) {
+function logDraftCall(result: DraftResult | null, latencyMs: number, refusedBy?: "user_daily_limit" | "quota_error") {
   const primary = PRODUCT_MODELS[0];
   const answered = result?.ok ? result.modelId : primary;
   logLlmCall({
@@ -88,7 +97,7 @@ function logDraftCall(result: DraftResult | null, latencyMs: number) {
     inputTokens: result?.ok ? result.inputTokens : undefined,
     outputTokens: result?.ok ? result.outputTokens : undefined,
     promptVersion: DRAFT_PROMPT_VERSION,
-    errorKind: result ? (result.ok ? undefined : result.reason) : "no_key",
+    errorKind: result ? (result.ok ? undefined : result.reason) : (refusedBy ?? "no_key"),
   });
 }
 

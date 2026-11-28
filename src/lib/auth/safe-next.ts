@@ -11,14 +11,17 @@ export function safeNext(value: unknown): string {
   if (typeof value !== "string" || value.length === 0 || value.length > 2048) return FALLBACK;
   if (CONTROL.test(value)) return FALLBACK;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return FALLBACK;
-  // Розбір відносно фіктивного походження: якщо результат веде на інше походження, це не локальний шлях.
+  // Розбір відносно фіктивного походження: якщо результат веде на інше походження, це не локальний шлях. Повертаємо
+  // РОЗІБРАНИЙ шлях, а не сирий рядок (відгук викладача до WS10, пункт 1): `/a/..//evil.example/x` проходить перевірку
+  // походження, але після нормалізації стає `//evil.example/x`, і клієнтський роутер Next повів би на інший хост.
   try {
     const base = "http://local.invalid";
-    if (new URL(value, base).origin !== base) return FALLBACK;
+    const url = new URL(value, base);
+    if (url.origin !== base || url.pathname.startsWith("//") || url.pathname.includes("\\")) return FALLBACK;
+    return url.pathname + url.search + url.hash;
   } catch {
     return FALLBACK;
   }
-  return value;
 }
 
 /** Адреса входу з `next` (лише для безпечного шляху, не для кореня): `/login?next=%2Fruns%2F…`. */
