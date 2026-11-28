@@ -231,7 +231,21 @@
       "mcp__supabase__run_notebook",
       "mcp__supabase__delete_notebook",
       "mcp__supabase__submit_feedback",
-      "mcp__supabase__delete_feedback"
+      "mcp__supabase__delete_feedback",
+      "Bash(gh api *-X*)",
+      "Bash(gh api *--method*)",
+      "Bash(gh api *-f *)",
+      "Bash(gh api *--field*)",
+      "Bash(gh api *-F *)",
+      "Bash(gh api *--raw-field*)",
+      "Bash(gh api *--input*)",
+      "PowerShell(gh api *-X*)",
+      "PowerShell(gh api *--method*)",
+      "PowerShell(gh api *-f *)",
+      "PowerShell(gh api *--field*)",
+      "PowerShell(gh api *-F *)",
+      "PowerShell(gh api *--raw-field*)",
+      "PowerShell(gh api *--input*)"
     ]
   }
 }
