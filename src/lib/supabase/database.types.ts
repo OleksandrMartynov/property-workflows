@@ -184,6 +184,12 @@ export type Database = {
           },
         ];
       };
+      ai_usage: {
+        Row: { user_id: string; day: string; count: number };
+        Insert: { user_id: string; day: string; count?: number };
+        Update: { user_id?: string; day?: string; count?: number };
+        Relationships: [];
+      };
       run_documents: {
         Row: {
           id: string;
@@ -314,6 +320,10 @@ export type Database = {
       check_run_document: {
         Args: { p_run_id: string };
         Returns: boolean;
+      };
+      consume_ai_quota: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
       };
       complete_task: {
         Args: { p_task_id: string; p_confirmed?: boolean };

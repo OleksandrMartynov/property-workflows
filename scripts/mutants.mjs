@@ -13,8 +13,34 @@ const VIEWER = "src/lib/supabase/viewer.ts";
 const VENDOR_PAGES = "tests/vendor/vendor-pages.test.tsx";
 const DOCS = "supabase/migrations/20261116162440_run_documents.sql";
 const DOCS_DB = "tests/db/run-documents-db.test.ts";
+const HARDEN = "supabase/migrations/20261128193401_ws10_feedback_hardening.sql";
 
 export const mutants = [
+  // ── Відгук викладача до WS10: ліміт AI на людину і save_run_document суворо як форма ───────────────────────────
+  {
+    id: "Q1", kind: "sql", ac: "AC-DOCAI-13", file: HARDEN, tests: [DOCS_DB],
+    what: "consume_ai_quota без межі: лічильник росте без кінця, 11-й виклик проходить",
+    find: "    where u.count < v_limit\n",
+    replace: "",
+  },
+  {
+    id: "Q2", kind: "sql", ac: "AC-DOCAI-04", file: HARDEN, tests: [DOCS_DB],
+    what: "без обмеження run_documents_total_finite: сума NaN зберігається",
+    find: "  add constraint run_documents_total_finite check (total <> 'NaN'::numeric);",
+    replace: "  add constraint run_documents_total_finite check (true);",
+  },
+  {
+    id: "Q3", kind: "sql", ac: "AC-DOCAI-04", file: HARDEN, tests: [DOCS_DB],
+    what: "save_run_document без перевірки кількості ключів: зайвий ключ позиції будь-якого розміру зберігається",
+    find: "                   when (select count(*) from jsonb_object_keys(e.item)) <> 3 then true\n",
+    replace: "",
+  },
+  {
+    id: "Q4", kind: "sql", ac: "AC-DOCAI-04", file: HARDEN, tests: [DOCS_DB],
+    what: "save_run_document без перевірки непробільного символу і з btrim лише пробілів: назва з переносу рядка зберігається",
+    find: "                   when (e.item ->> 'name') !~ '[^[:space:]]' then true\n                   else char_length(regexp_replace(e.item ->> 'name', '^[[:space:]]+|[[:space:]]+$', '', 'g')) not between 1 and 120",
+    replace: "                   else char_length(btrim(e.item ->> 'name')) not between 1 and 120",
+  },
   // ── Зріз 4 «Parse a document» (solomchaak/property-workflows-spec#59, AC-DOCAI-01…16) ───────────────────────────
   {
     id: "D1", kind: "sql", ac: "AC-DOCAI-16", file: DOCS, tests: [DOCS_DB],

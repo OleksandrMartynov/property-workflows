@@ -44,6 +44,20 @@ describe("safeNext: куди повернути після входу", () => {
     }
   });
 
+  // Відгук викладача до WS10, пункт 1: шлях, що після нормалізації починається з «//», — інший хост для роутера Next.
+  it.each(["/a/..//evil.example/x", "/.//evil.example", "/%2e%2e//evil.example", "/runs/../..//evil.example"])(
+    "AC-DSYS-08: %s лишається на нашому походженні — повертаємо розібраний шлях, а не сирий рядок",
+    (value) => {
+      const url = new URL(safeNext(value), "https://app.test/login");
+      expect(url.origin).toBe("https://app.test");
+      expect(url.pathname.startsWith("//")).toBe(false);
+    },
+  );
+
+  it("AC-DSYS-08: звичайний шлях після розбору той самий (з query й фрагментом)", () => {
+    expect(safeNext("/runs/abc?view=preview#task-1")).toBe("/runs/abc?view=preview#task-1");
+  });
+
   it("AC-DSYS-08: надто довгий next відхилено", () => {
     expect(safeNext(`/${"a".repeat(3000)}`)).toBe("/");
   });

@@ -133,3 +133,47 @@ describe("База: хто бачить записи", () => {
     expect(await errorOf(t.asUser(MANAGER_A, "select public.check_task_document($1)", [TASK_1]))).toMatch(/does not exist/);
   });
 });
+
+describe("База: відгук викладача до WS10 — форма й база відхиляють те саме, ліміт AI на людину", () => {
+  it("AC-DOCAI-04: назва з самого переносу рядка, зайвий ключ позиції і сума NaN — DOCUMENT_INVALID, нічого не записано", async () => {
+    const runId = await runOfA("Apartment 12, invalid items");
+    const bad = [
+      { kind: "estimate", items: [{ name: "\n", quantity: 1, unitPrice: 1 }] },
+      { kind: "estimate", items: [{ name: "\t \n", quantity: 1, unitPrice: 1 }] },
+      { kind: "estimate", items: [{ name: "Faucet", quantity: 1, unitPrice: 1, note: "x".repeat(10_000) }] },
+    ];
+    for (const doc of bad) expect(await errorOf(save(MANAGER_A, runId, doc))).toContain("DOCUMENT_INVALID");
+    const nan = t.asUser(MANAGER_A, "select public.save_run_document($1, 'estimate', null, null, null, null, null, 'NaN'::numeric)", [runId]);
+    expect(await errorOf(nan)).toContain("DOCUMENT_INVALID");
+    expect(await stored(runId)).toEqual([]);
+  });
+
+  it("AC-DOCAI-04: назва з пробілами на краях і 120 символів без них — приймається, як у формі", async () => {
+    const runId = await runOfA("Apartment 12, trimmed name");
+    await save(MANAGER_A, runId, { kind: "estimate", items: [{ name: ` ${"a".repeat(120)}\n`, quantity: 1, unitPrice: 1 }] });
+    expect(await stored(runId)).toHaveLength(1);
+  });
+
+  it("AC-DOCAI-13: ліміт на людину — 10 викликів на добу, 11-й DAILY_LIMIT; лічильник іншого користувача окремий", async () => {
+    const calls = async (userId: string, n: number) => {
+      const out: string[] = [];
+      for (let i = 0; i < n; i++) out.push(await errorOf(t.asUser(userId, "select public.consume_ai_quota()")));
+      return out;
+    };
+    const first = await calls(MANAGER_A, 11);
+    expect(first.slice(0, 10)).toEqual(Array(10).fill(""));
+    expect(first[10]).toContain("DAILY_LIMIT");
+    expect(await calls(ADMIN, 1)).toEqual([""]);
+    const own = await t.asUser<{ count: number }>(MANAGER_A, "select count from public.ai_usage");
+    expect(own).toEqual([{ count: 10 }]);
+  });
+
+  it("AC-DOCAI-16: лічильник ліміту не змінити напряму й не прочитати чужий; без входу функції немає", async () => {
+    await t.asUser(MANAGER_B, "select public.consume_ai_quota()");
+    expect(await t.asUser(VENDOR_V, "select user_id from public.ai_usage")).toEqual([]);
+    expect(await errorOf(t.asUser(MANAGER_B, "update public.ai_usage set count = 0"))).toMatch(/permission denied/);
+    expect(await errorOf(t.asUser(MANAGER_B, "delete from public.ai_usage"))).toMatch(/permission denied/);
+    expect(await errorOf(t.asAnon("select public.consume_ai_quota()"))).toMatch(/permission denied/);
+    expect(await errorOf(t.asAuthenticatedWithoutUid("select public.consume_ai_quota()"))).toContain("NOT_ALLOWED");
+  });
+});

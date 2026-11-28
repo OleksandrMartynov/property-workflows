@@ -30,6 +30,7 @@ export const DRAFT_INSTRUCTIONS = [
 // Недовірений текст завжди загортаємо як дані: теги-межі з самого тексту вирізаємо (інакше документ міг би «закрити»
 // межу й дописати інструкції поза нею), довжину обмежуємо.
 export function wrapDocument(text: string): string {
-  const clean = text.replace(/<\/?\s*document\s*>/gi, " ").slice(0, MAX_DOCUMENT_CHARS);
+  // Будь-який тег document — і з атрибутами (`</document id="x">`): інакше він виглядав би для моделі як кінець межі.
+  const clean = text.replace(/<\/?\s*document\b[^>]*>/gi, " ").slice(0, MAX_DOCUMENT_CHARS);
   return `<document>\n${clean}\n</document>`;
 }

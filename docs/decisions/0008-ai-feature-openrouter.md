@@ -3,7 +3,10 @@
 Взято з `koldovsky/2026-quitcode-10-ai-features-hw/materials/ai-feature/docs/decisions/NNNN-ai-feature-openrouter.md`,
 контекст переписано під нашу функцію.
 
-- Статус: прийнято
+- Статус: прийнято; **частково замінено ADR 0009** (2026-11-16): «Людина в контурі» (діалог у рядку задачі) і
+  «Зберігання» (`run_task_documents`) — тепер блок «Parse a document» на сторінці запуску й `run_documents`; файли PDF,
+  PNG і JPEG — тепер лише текст (вставлений чи з файлу .txt) до 8000 символів. Вибір моделей, AI SDK, схема відповіді,
+  правила коду й golden cases — чинні.
 - Дата: 2026-11-15
 - AC: — (вимоги зрізу 4 з AC у PM ще немає; golden cases PM — solomchaak/property-workflows-spec#40; рядок roadmap WS10
   в solomchaak/property-workflows-spec#1)
